@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "eamodio.gitlens",
+    "vincaslt.highlight-matching-tag",
+    "esbenp.prettier-vscode"
+  ],
+  "unwantedRecommendations": []
+}

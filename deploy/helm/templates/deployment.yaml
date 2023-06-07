@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fdpg.fullname" . }}
+  labels:
+  {{- include "fdpg.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+  {{- include "fdpg.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.rollDeployment }}
+        rollme: {{ randAlphaNum 5 | quote }}
+      {{- end }}
+      {{- with .Values.podAnnotations }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+    {{- include "fdpg.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: {{ .Values.appConfig.environment.applicationInsightsConnectionString }}
+            - name: ENABLE_TELEMETRY
+              value: {{ .Values.appConfig.environment.enableTelemetry | quote}}
+            - name: RELEASE_DATE
+              value: {{ .Values.appConfig.environment.releaseDate | quote }}
+            - name: RELEASE_NO_OF_DATE
+              value: {{ .Values.appConfig.environment.releaseNoOfDate | quote }}
+            - name: RELEASE_TIME
+              value: {{ .Values.appConfig.environment.releaseTime | quote }}
+            - name: SOFTWARE_VERSION
+              value: {{ .Values.appConfig.environment.softwareVersion }}
+            - name: ENV
+              value: {{ .Values.appConfig.environment.env }}
+            - name: CORS_ORIGINS
+              value: {{ .Values.appConfig.environment.corsOrigins }}
+            - name: IS_ENABLED
+              value: {{ .Values.appConfig.environment.isEnabled }}
+            - name: KEYCLOAK_HOST
+              value: {{ .Values.appConfig.environment.keycloakHost }}
+            - name: FEASIBILITY_HOST
+              value: {{ .Values.appConfig.environment.feasibilityHost }}
+            - name: PORTAL_HOST
+              value: {{ .Values.appConfig.environment.portalHost }}
+            - name: PDF_SERVICE_HOST
+              value: {{ .Values.appConfig.environment.pdfServiceHost }}
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.appConfig.environment.keycloakRealm }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.appConfig.environment.keycloakClientId }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: {{ .Values.appConfig.environment.keycloakClientSecret }}
+            - name: KEYCLOAK_CLIENT_FOR_FEASIBILITY_ID
+              value: {{ .Values.appConfig.environment.keycloakClientForFeasibilityId }}
+            - name: KEYCLOAK_CLIENT_FOR_FEASIBILITY_SECRET
+              value: {{ .Values.appConfig.environment.keycloakClientForFeasibilitySecret }}
+            - name: SENDGRID_API_KEY
+              value: {{ .Values.appConfig.environment.sendgridApiKey }}
+            - name: SENDGRID_SENDER_MAIL
+              value: {{ .Values.appConfig.environment.sendgridSenderMail }}
+            - name: SENDGRID_SENDER_NAME
+              value: {{ .Values.appConfig.environment.sendgridSenderName }}
+            - name: MONGO_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "fdpg.fullname" . }}-mongo-secrets"
+                  key: connectionString
+            - name: OAUTH2_CLIENT
+              value: {{ .Values.appConfig.environment.oauth2Client }}
+            - name: STORAGE_ACCOUNT_KEY
+              value: {{ .Values.appConfig.environment.storageAccountKey }}
+            - name: STORAGE_ACCOUNT_NAME
+              value: {{ .Values.appConfig.environment.storageAccountName }}
+            - name: STORAGE_CONTAINER_NAME
+              value: {{ .Values.appConfig.environment.storageContainerName }}
+            - name: EMAIL_SERVICE_PREVENT_ALL
+              value: {{ .Values.appConfig.environment.emailServicePreventAll | quote }}
+            - name: EMAIL_SERVICE_PREVENT_TASK_COMPLETED_BY_FDPG
+              value: {{ .Values.appConfig.environment.emailServicePreventTaskCompletedByFdpg | quote }}
+            - name: EMAIL_SERVICE_PREVENT_TASK_COMPLETED_BY_OWNER
+              value: {{ .Values.appConfig.environment.emailServicePreventTaskCompletedByOwner | quote }}
+            - name: EMAIL_SERVICE_PREVENT_TASK_CREATION_FOR_OWNER
+              value: {{ .Values.appConfig.environment.emailServicePreventTaskCreationForOwner | quote }}
+            - name: EMAIL_SERVICE_PREVENT_TASK_CREATION_FOR_FDPG
+              value: {{ .Values.appConfig.environment.emailServicePreventTaskCreationForFdpg | quote }}
+            - name: EMAIL_SERVICE_PREVENT_MESSAGE_TO_LOCATION_CREATION
+              value: {{ .Values.appConfig.environment.emailServicePreventMessageToLocationCreation | quote }}
+            - name: EMAIL_SERVICE_PREVENT_MESSAGE_TO_FDPG_CREATION
+              value: {{ .Values.appConfig.environment.emailServicePreventMessageToFdpgCreation | quote }}
+            - name: EMAIL_SERVICE_PREVENT_MESSAGE_TO_OWNER_CREATION
+              value: {{ .Values.appConfig.environment.emailServicePreventMessageToOwnerCreation | quote }}
+            - name: EMAIL_SERVICE_PREVENT_MESSAGE_TO_LOCATION_ANSWER
+              value: {{ .Values.appConfig.environment.emailServicePreventMessageToLocationCreation | quote }}
+            - name: EMAIL_SERVICE_PREVENT_MESSAGE_TO_FDPG_ANSWER
+              value: {{ .Values.appConfig.environment.emailServicePreventMessageToFdpgCreation | quote }}
+            - name: EMAIL_SERVICE_PREVENT_MESSAGE_TO_OWNER_ANSWER
+              value: {{ .Values.appConfig.environment.emailServicePreventMessageToOwnerCreation | quote }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 100
+            timeoutSeconds: 2
+            periodSeconds: 3
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 100
+            timeoutSeconds: 2
+            periodSeconds: 8
+            failureThreshold: 1
+          resources:
+      {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+  {{- toYaml . | nindent 8 }}
+  {{- end }}

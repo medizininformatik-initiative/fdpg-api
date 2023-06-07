@@ -1,0 +1,72 @@
+replicaCount: 1
+fullnameOverride: 'fdpg-api'
+
+image:
+  repository: tmffdpgregistry.azurecr.io/fdpg-api
+  pullPolicy: Always
+  tag: 'latest'
+
+service:
+  type: ClusterIP
+  port: 3000
+  tlsEnabled: true
+
+rollDeployment: true
+
+podAnnotations: { type: backend }
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 50m
+  limits:
+    memory: 1024Mi
+
+appConfig:
+  ingressUrl: api.dev.forschen-fuer-gesundheit.de
+  environment:
+    applicationInsightsConnectionString: FILLED_BY_PIPELINE
+    enableTelemetry: true
+    releaseDate: FILLED_BY_PIPELINE
+    releaseNoOfDate: FILLED_BY_PIPELINE
+    releaseTime: FILLED_BY_PIPELINE
+    softwareVersion: FILLED_BY_PIPELINE
+    env: dev
+    corsOrigins: http://localhost:8080,http://localhost:8081,https://antrag.dev.forschen-fuer-gesundheit.de
+    keycloakHost: https://keycloak.dev.forschen-fuer-gesundheit.de
+    feasibilityHost: https://feasibility.dev.forschen-fuer-gesundheit.de
+    portalHost: https://antrag.dev.forschen-fuer-gesundheit.de
+    pdfServiceHost: http://fdpg-pdf-service:3000
+    keycloakRealm: fdpg
+    keycloakClientId: fdpg-api
+    keycloakClientForFeasibilityId: fdpg-api-for-feasibility
+    keycloakClientSecret: FILLED_BY_PIPELINE
+    keycloakClientForFeasibilitySecret: FILLED_BY_PIPELINE
+    sendgridApiKey: FILLED_BY_PIPELINE
+    sendgridSenderName: "Forschen Für Gesundheit"
+    sendgridSenderMail: noreply@antrag.dev.forschen-fuer-gesundheit.de
+    mongoConnectionString: FILLED_BY_PIPELINE
+    oauth2Client: swagger-client
+    storageAccountKey: FILLED_BY_PIPELINE
+    storageAccountName: FILLED_BY_PIPELINE
+    storageContainerName: FILLED_BY_PIPELINE
+    emailServicePreventAll: false
+    emailServicePreventTaskCompletedByFdpg: true
+    emailServicePreventTaskCompletedByOwner: true
+    emailServicePreventTaskCreationForOwner: true
+    emailServicePreventTaskCreationForFdpg: true
+    emailServicePreventMessageToLocationCreation: false
+    emailServicePreventMessageToFdpgCreation: false
+    emailServicePreventMessageToOwnerCreation: false
+    emailServicePreventMessageToLocationAnswer: false
+    emailServicePreventMessageToFdpgAnswer: false
+    emailServicePreventMessageToOwnerAnswer: false
+
+nodeSelector:
+  agentpool: dev

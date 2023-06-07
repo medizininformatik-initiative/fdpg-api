@@ -1,0 +1,83 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { plainToClass } from 'class-transformer';
+import { IRequestUser } from 'src/shared/types/request-user.interface';
+import { AzureStorageService } from '../../azure-storage/azure-storage.service';
+import { UploadDto, UploadGetDto } from '../dto/upload.dto';
+import { DirectUpload } from '../enums/upload-type.enum';
+import { ProposalCrudService } from './proposal-crud.service';
+import { Proposal } from '../schema/proposal.schema';
+import { addUpload, getBlobName } from '../utils/proposal.utils';
+import { validateUploadDeletion } from '../utils/validate-upload-deletion.util';
+
+@Injectable()
+export class ProposalUploadService {
+  constructor(private proposalCrudService: ProposalCrudService, private azureStorageService: AzureStorageService) {}
+
+  async upload(
+    proposalId: string,
+    file: Express.Multer.File,
+    type: DirectUpload,
+    user: IRequestUser,
+  ): Promise<UploadGetDto> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    const blobName = getBlobName(proposal._id, type);
+    await this.azureStorageService.uploadFile(blobName, file, user);
+    const upload = new UploadDto(blobName, file, type, user);
+
+    addUpload(proposal, upload);
+
+    const saveResult = await proposal.save();
+    const uploadResult = JSON.parse(JSON.stringify(saveResult.uploads.at(-1)));
+    return plainToClass(UploadGetDto, uploadResult, { strategy: 'excludeAll' });
+  }
+
+  async getDownloadUrl(proposalId: string, uploadId: string, user: IRequestUser): Promise<string> {
+    const uploadProjection: Partial<Record<NestedPath<Proposal>, number>> = {
+      uploads: 1,
+      // Needed for access control:
+      openDizChecks: 1,
+      dizApprovedLocations: 1,
+      uacApprovedLocations: 1,
+      conditionalApprovals: 1,
+      signedContracts: 1,
+      requestedButExcludedLocations: 1,
+      contractAcceptedByResearcher: 1,
+      contractRejectedByResearcher: 1,
+      status: 1,
+    };
+    const partialProposal = await this.proposalCrudService.findDocument(proposalId, user, uploadProjection);
+    const upload = partialProposal.uploads.find((upload) => upload._id.toString() === uploadId);
+
+    if (upload?.blobName) {
+      return await this.azureStorageService.getSasUrl(upload.blobName);
+    } else {
+      throw new NotFoundException('Upload does not exist');
+    }
+  }
+
+  async deleteUpload(proposalId: string, uploadId: string, user: IRequestUser): Promise<void> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    const uploadIndex = proposal.uploads.findIndex((upload) => upload._id.toString() === uploadId);
+
+    if (uploadIndex === -1) {
+      return;
+    }
+
+    const upload = proposal.uploads[uploadIndex];
+
+    validateUploadDeletion(proposal, upload, user);
+
+    await this.azureStorageService.deleteBlob(upload.blobName);
+
+    proposal.uploads.splice(uploadIndex, 1);
+
+    try {
+      await proposal.save();
+    } catch (error) {
+      // Restore the upload if the DB update fails.
+      await this.azureStorageService.unDeleteBlob(upload.blobName);
+      throw new Error(error);
+    }
+  }
+}

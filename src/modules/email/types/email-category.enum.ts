@@ -1,0 +1,15 @@
+export enum EmailCategory {
+  _Api = 'API',
+  StatusChange = 'STATUS_CHANGE',
+  StatusReminder = 'STATUS_REMINDER',
+  CommentTask = 'COMMENT_TASK',
+  LocationVote = 'LOCATION_VOTE',
+  ContractSign = 'CONTRACT_SIGN',
+  ProposalLock = 'PROPOSAL_LOCK',
+  ReportCreate = 'REPORT_CREATE',
+  ReportUpdate = 'REPORT_UPDATE',
+  ReportDelete = 'REPORT_DELETE',
+  PublicationCreate = 'PUBLICATION_CREATE',
+  PublicationUpdate = 'PUBLICATION_UPDATE',
+  PublicationDelete = 'PUBLICATION_DELETE',
+}

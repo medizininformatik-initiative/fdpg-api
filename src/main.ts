@@ -1,33 +1,28 @@
+import { configureTelemetry } from './telemetry';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: `.env.local` });
+dotenv.config();
+
+configureTelemetry({
+  env: process.env.ENV,
+  connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
+  enableTelemetry: (process.env.ENABLE_TELEMETRY ?? '').toLowerCase() === 'true',
+  softwareVersion: process.env.SOFTWARE_VERSION,
+});
+
+import { ConfigService } from '@nestjs/config';
 import { INestApplication, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import {
-  DocumentBuilder,
-  SwaggerCustomOptions,
-  SwaggerModule,
-} from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import * as mongoose from 'mongoose';
+import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/swagger';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
-import { ConfigService } from '@nestjs/config';
+import { useContainer } from 'class-validator';
+import * as mongoose from 'mongoose';
+import { ValidationExceptionFilter } from './exceptions/validation/validation-exception.filter';
+import { AppModule } from './modules/app/app.module';
+import { API_PREFIX } from './shared/constants/global.constants';
 
-async function configureApplicationInsights() {
-  if (process.env.ENV !== 'local') {
-    const appInsights = await import('applicationinsights');
-    appInsights
-      .setup()
-      .setAutoDependencyCorrelation(true)
-      .setAutoCollectRequests(true)
-      .setAutoCollectPerformance(true)
-      .setAutoCollectExceptions(true)
-      .setAutoCollectDependencies(true)
-      .setAutoCollectConsole(true)
-      .setUseDiskRetryCaching(true)
-      .setSendLiveMetrics(true)
-      .setAutoCollectHeartbeat(true)
-      .start();
-  }
-}
-
+// Configure swagger function
 function configureSwagger(app: INestApplication) {
   if (process.env.ENV !== 'production') {
     const configService = app.get(ConfigService);
@@ -53,29 +48,25 @@ function configureSwagger(app: INestApplication) {
       customJs: '/swagger-fix.js',
       swaggerOptions: {
         oauth2RedirectUrl: swaggerPath,
-        oauth: {
+        initOAuth: {
           clientId: oauth2Client,
           realm: keycloakRealm,
-          appName:
-            '\n\n !!! Public Client !!! Client Secret should remain empty !!!',
+          appName: '\n\n !!! Public Client !!! Client Secret should remain empty !!!',
           scopeSeparator: ',',
         },
       },
     };
 
     const buildInfo = [
-      `Build Date: ${configService.get('BUILD_DATE')}`,
-      `Build Time: ${configService.get('BUILD_TIME')}`,
-      `Build Number of Date: ${configService.get('BUILD_NO_OF_DATE')}`,
-      `Source Branch: ${configService.get('SOURCE_BRANCH')}`,
+      `Release Date: ${configService.get('RELEASE_DATE')}`,
+      `Release Time: ${configService.get('RELEASE_TIME')}`,
+      `Release Number of Date: ${configService.get('RELEASE_NO_OF_DATE')}`,
       `Environment: ${configService.get('ENV')}`,
     ];
 
     const swaggerConfig = new DocumentBuilder()
       .setTitle('FDPG API')
-      .setDescription(
-        '<h3> Build Information:</strong> </h3>' + buildInfo.join('</br>'),
-      )
+      .setDescription('<h3> Build Information:</strong> </h3>' + buildInfo.join('</br>'))
       .setVersion(softwareVersion)
       .addOAuth2(securitySchemeObject)
       .addBearerAuth()
@@ -87,16 +78,52 @@ function configureSwagger(app: INestApplication) {
   }
 }
 
+function configureCors(app: INestApplication): void {
+  const configService = app.get(ConfigService);
+  const environment = configService.get('ENV');
+
+  const corsDefaults = {
+    origin: ['http://localhost:8080', 'http://localhost:8081'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  };
+
+  if (environment == 'local') {
+    app.enableCors(corsDefaults);
+  } else {
+    const corsOrigins = configService.get('CORS_ORIGINS');
+    const origins = [];
+    try {
+      corsOrigins.split(',').forEach((origin) => origins.push(origin));
+    } catch (error) {
+      console.log(`Failed parsing CORS Origins from env INPUT: ${corsOrigins} `);
+      console.log(`Failed parsing CORS Origins from env ERROR: ${error} `);
+    }
+    app.enableCors({
+      ...corsDefaults,
+      origin: origins,
+    });
+  }
+}
+
 async function bootstrap() {
-  configureApplicationInsights();
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix(API_PREFIX);
+  app.useGlobalFilters(new ValidationExceptionFilter());
   app.enableVersioning({ type: VersioningType.URI });
-  configureSwagger(app);
 
-  // TODO: Check: Needed for Application Insights?
-  mongoose.set('debug', true);
+  configureSwagger(app);
+  configureCors(app);
+
+  if (process.env.ENV !== 'production') {
+    mongoose.set('debug', true);
+  }
+
+  // Adds DI for validators:
+  // https://github.com/nestjs/nest/issues/528
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   await app.listen(3000);
 }

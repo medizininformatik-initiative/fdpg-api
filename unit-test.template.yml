@@ -1,0 +1,39 @@
+parameters:
+- name: YARN_CACHE_FOLDER
+  type: string
+  default: $(Build.SourcesDirectory)/node_modules
+
+steps:
+  - task: Cache@2
+    inputs:
+      key: 'yarn | "$(Agent.OS)" | yarn.lock'
+      restoreKeys: |
+        yarn | "$(Agent.OS)"
+        yarn
+      path: ${{ parameters.YARN_CACHE_FOLDER }}
+      cacheHitVar: CACHE_RESTORED
+    displayName: Cache Yarn packages
+
+  - script: |
+      yarn install
+    condition: ne(variables.CACHE_RESTORED, 'true')
+    displayName: Installing Modules
+
+  - script: |
+      yarn test
+    name: UnitTest
+    displayName: Jest Unit Testing
+
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results'
+    inputs:
+      testResultsFiles: '**/reports/junit.xml'
+      mergeTestResults: true
+      failTaskOnFailedTests: true
+      testRunTitle: 'Unit Tests'
+
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish Code Coverage'
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/reports/coverage/cobertura-coverage.xml'

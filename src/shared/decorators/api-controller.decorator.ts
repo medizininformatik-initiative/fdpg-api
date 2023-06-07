@@ -1,9 +1,4 @@
-import {
-  applyDecorators,
-  Controller,
-  ControllerOptions,
-  VERSION_NEUTRAL,
-} from '@nestjs/common';
+import { applyDecorators, Controller, ControllerOptions, VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 /**
@@ -21,24 +16,19 @@ const toPascalCase = (text: string) => text.replace(/-/, '').toUpperCase();
 /**
  * Shorthand Decorator for Controller and ApiTags
  * @param path The api-path for this controller
+ * @param version
  * @returns nestjs/common Controller and nestjs/swagger ApiTags decorators
  */
-export function ApiController(
-  path: string,
-  version: string | typeof VERSION_NEUTRAL = '1',
-) {
+export function ApiController(path: string, version: string | typeof VERSION_NEUTRAL = '1', group?: string) {
   const controllerOptions: ControllerOptions = {
     path,
     version: version,
   };
 
-  const versionTag =
-    version === VERSION_NEUTRAL || version === '1' ? '' : `v${version}`;
+  const versionTag = version === VERSION_NEUTRAL || version === '1' ? '' : `v${version}`;
 
   const tag = path.replace(REGEX, toPascalCase);
+  const groupTag = group ? `${tag} // ${group}` : tag;
 
-  return applyDecorators(
-    Controller(controllerOptions),
-    ApiTags(`${tag} ${versionTag}`),
-  );
+  return applyDecorators(Controller(controllerOptions), ApiTags(`${groupTag} ${versionTag}`));
 }

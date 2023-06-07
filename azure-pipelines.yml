@@ -3,53 +3,223 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- develop
+  branches:
+    include:
+      - main
+      - dev
 
 resources:
-- repo: self
+  - repo: self
 
 variables:
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: 'a58ea0cf-22b4-48a6-bbfb-c180143a4451'
-  imageRepository: 'fdpgtest'
-  containerRegistry: 'fdpgtestregistry.azurecr.io'
-  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
-  tag: '$(Build.BuildId)'
+  - name: imageRepository
+    value: 'fdpg-api'
+  - name: containerRegistry
+    value: 'tmffdpgregistry.azurecr.io'
+  - name: registryServiceConnectionName
+    value: 'tmffdpgregistry_service_connection'
+  - name: dockerfilePath
+    value: '$(Build.SourcesDirectory)/Dockerfile'
+  - name: azureSubscription
+    value: 'fdpg_deployment_service_connection'
+  - name: azureResourceGroup
+    value: tmf-fdpg-shared
+  - name: mongoBaseUrl
+    value: mongo.cosmos.azure.com:10255
+  - name: tag
+    value: '$(Build.BuildId)'
+  - name: isMain
+    value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  - name: isDev
+    value: $[eq(variables['Build.SourceBranch'], 'refs/heads/dev')]
+  - name: pipeDate
+    value: $[format('{0:yyyyMMdd}', pipeline.startTime)]
+  - name: pipeTime
+    value: $[format('{0:HHmmss}', pipeline.startTime)]
+  - name: buildNumberOfDate
+    value: $[counter(format('{0}_{1:yyyyMMdd}', variables['Build.SourceBranch'], pipeline.startTime), 1)]
 
   # Agent VM image name
-  vmImageName: 'ubuntu-latest'
+  - name: vmImageName
+    value: 'ubuntu-latest'
 
 stages:
-- stage: Build
-  displayName: Build and push stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: $(vmImageName)
-    steps:
-    - task: PowerShell@2
-      displayName: 'Generate BuildInfo and set BuildNumber'
-      inputs:
-        filePath: '$(Build.SourcesDirectory)/azure-buildInfo.ps1'
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish BuildInfo'
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/buildInfo.json'
-        ArtifactName: 'buildInfo'
-        publishLocation: 'Container'
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish Release Variable Script'
-      inputs:
-        PathtoPublish: '$(Build.SourcesDirectory)/azure-release-variables.ps1'
-        ArtifactName: 'releaseScript'
-        publishLocation: 'Container'
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
+  - stage: Quality_Gate
+    displayName: Quality Gate
+    jobs:
+      - job: Prepare
+        displayName: Prepare quality gate
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '16.x'
+            displayName: 'Install Node.js v16'
+
+      - job: Run_Unit_Test
+        displayName: Run Unit Tests
+        dependsOn: Prepare
+        condition: succeeded()
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - template: unit-test.template.yml
+            parameters:
+              YARN_CACHE_FOLDER: $(Build.SourcesDirectory)/node_modules
+          - task: PublishBuildArtifacts@1
+            displayName: 'Upload test reports'
+            inputs:
+              pathtoPublish: '$(System.DefaultWorkingDirectory)/reports'
+              artifactName: reports
+
+      - job: SonarCloud_Run
+        displayName: Run SonarCloud
+        dependsOn: Run_Unit_Test
+        condition: succeeded()
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download test reports'
+            inputs:
+              artifactName: reports
+              downloadPath: $(System.DefaultWorkingDirectory)
+          - task: SonarCloudPrepare@1
+            displayName: SonarCloud Prepare
+            inputs:
+              SonarCloud: 'SonarCloud'
+              organization: 'appsfactory'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: 'TMF-FDPG-API'
+              cliProjectName: 'TMF-FDPG-API'
+              cliSources: './src'
+              extraProperties: |
+                # Additional properties that will be passed to the scanner,
+                # Put one key=value per line, example:
+                # sonar.verbose=true
+                sonar.javascript.lcov.reportPaths=./reports/coverage/lcov.info
+                sonar.exclusions=**/*.spec.ts,**/__mocks__/**,**/test/**,**/*.mock.ts
+
+          - task: SonarCloudAnalyze@1
+            displayName: SonarCloud Analyze
+
+          - task: SonarCloudPublish@1
+            displayName: SonarCloud Publish
+            inputs:
+              pollingTimeoutSec: '300'
+
+  - stage: Build
+    displayName: Build and push stage
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - script: |
+              npmVersionString=$(node -p "require('./package.json').version")
+              echo "##vso[task.setvariable variable=softwareVersion;isOutput=true]$npmVersionString"
+
+              if [ $(isDev) = True ]; then
+                echo "##vso[task.setvariable variable=tag;isOutput=true]latest"
+                echo "##vso[build.updatebuildnumber]latest_${npmVersionString}_$(pipeDate)_$(buildNumberOfDate)"
+              elif [ $(isMain) = True ]; then
+                echo "##vso[task.setvariable variable=tag;isOutput=true]${npmVersionString}_$(pipeDate)_$(buildNumberOfDate)"
+                echo "##vso[build.updatebuildnumber]${npmVersionString}_$(pipeDate)_$(buildNumberOfDate)"
+              else
+                echo "##vso[task.setvariable variable=tag;isOutput=true]test-latest"
+                echo "##vso[build.updatebuildnumber]test-latest_${npmVersionString}_$(pipeDate)_$(buildNumberOfDate)"
+              fi
+            name: dockerTag
+
+          - task: Docker@2
+            displayName: Build container
+            inputs:
+              command: 'build'
+              repository: $(imageRepository)
+              dockerfile: $(dockerfilePath)
+              containerRegistry: $(registryServiceConnectionName)
+              tags: |
+                $(dockerTag.tag)
+              arguments: >-
+                --build-arg SOFTWARE_VERSION=$(dockerTag.softwareVersion)
+                --build-arg BUILD_DATE=$(pipeDate)
+                --build-arg BUILD_TIME=$(pipeTime)
+                --build-arg BUILD_NO_OF_DATE=$(buildNumberOfDate)
+                --build-arg SOURCE_BRANCH=$(Build.SourceBranch)
+
+          - task: Docker@2
+            displayName: Push container to registry
+            condition: or(eq(variables.isDev, true), eq(variables.isMain, true))
+            inputs:
+              command: 'push'
+              repository: $(imageRepository)
+              containerRegistry: $(registryServiceConnectionName)
+              addPipelineData: true
+              tags: |
+                $(dockerTag.tag)
+
+  - stage: Helm_Deployment_Dev
+    displayName: 'Push Helm chart to registry and deploy to Dev'
+    condition: or(eq(variables.isDev, true), eq(variables.isMain, true))
+    jobs:
+      - job: helm_deploy
+        displayName: 'Push the helm chart to registry and deploy to dev via helm upgrade'
+        steps:
+          - task: AzureKeyVault@2
+            inputs:
+              azureSubscription: $(azureSubscription)
+              KeyVaultName: 'tmffdpg-keyvault'
+              SecretsFilter: '*'
+              RunAsPreJob: false
+          - task: HelmInstaller@1
+            displayName: Helm installer
+            inputs:
+              helmVersionToInstall: 3.7.1
+          - task: AzureCLI@2
+            displayName: 'Push the Helm chart to ACR'
+            inputs:
+              scriptType: bash
+              scriptLocation: inlineScript
+              azureSubscription: $(azureSubscription)
+              inlineScript: |
+                export HELM_EXPERIMENTAL_OCI=1
+                export HELM_VERSION=$(grep -A3 'version:' deploy/helm/Chart.yaml | awk '{ print $2}')
+                export ACR_USERNAME="00000000-0000-0000-0000-000000000000"
+                export ACR_PASSWORD=$(az acr login --name tmffdpgregistry --expose-token --output tsv --query accessToken)
+                helm registry login tmffdpgregistry.azurecr.io --username $ACR_USERNAME --password $ACR_PASSWORD
+                helm package ./deploy/helm
+                helm push fdpg-api-$HELM_VERSION.tgz oci://tmffdpgregistry.azurecr.io/helm
+
+          - task: HelmDeploy@0
+            condition: and(succeeded(), eq(variables.isDev, true))
+            displayName: 'helm upgrade'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              azureResourceGroup: $(azureResourceGroup)
+              kubernetesCluster: $(kubernetesCluster)
+              useClusterAdmin: true
+              namespace: $(devClusterNamespaceName)
+              command: upgrade
+              argument: --install
+              chartType: FilePath
+              chartPath: 'deploy/helm'
+              releaseName: 'fdpg-api'
+              waitForExecution: false
+              overrideValues: |
+                appConfig.environment.mongoConnectionString=mongodb://$(mongodb-account-name-dev):$(mongodb-fdpg-db-key-dev)@$(mongodb-account-name-dev).$(mongoBaseUrl)/fdpg?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@$(mongodb-account-name-dev)@
+                appConfig.environment.env=dev
+                appConfig.environment.applicationInsightsConnectionString=$(devFdpgApplicationInsightsConnectionString)
+                appConfig.environment.storageAccountKey=$(devfdpgStorageAccountKey)
+                appConfig.environment.storageAccountName=$(devfdpgStorageAccountName)
+                appConfig.environment.storageContainerName=$(devfdpgStorageContainerName)
+                appConfig.environment.keycloakClientSecret=$(keycloak-api-client-secret-dev)
+                appConfig.environment.keycloakClientForFeasibilitySecret=$(keycloak-api-client-for-feasibility-secret-dev)
+                appConfig.environment.sendgridApiKey=$(sendgrid-apikey-api-dev)
+                appConfig.environment.releaseDate=$(pipeDate)
+                appConfig.environment.releaseTime=$(pipeTime)
+                appConfig.environment.releaseNoOfDate=$(buildNumberOfDate)
+                appConfig.environment.softwareVersion=$(Build.BuildNumber)

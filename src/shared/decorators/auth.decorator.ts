@@ -1,18 +1,13 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiForbiddenResponse,
-  ApiOAuth2,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RoleGuard } from 'src/auth/guards/role.guard';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiOAuth2, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RoleGuard } from 'src/modules/auth/guards/role.guard';
 import { Role } from '../enums/role.enum';
 import { Roles } from './role.decorator';
 
 export function Auth(...roles: Role[]) {
   const decorators: (ClassDecorator | MethodDecorator | PropertyDecorator)[] = [
-    ApiUnauthorizedResponse(),
+    ApiUnauthorizedResponse({ description: 'Unauthorized. User is not logged in or access token is not valid' }),
     ApiBearerAuth(),
     ApiOAuth2([]),
     UseGuards(JwtAuthGuard),
@@ -22,7 +17,9 @@ export function Auth(...roles: Role[]) {
     decorators.push(Roles(...roles));
     decorators.push(
       ApiForbiddenResponse({
-        description: `Required roles: </br> ${roles.join(', ')}`,
+        description: `Forbidden. Item access could be (temporary) restricted or required roles are not given for the user. </br> Required roles:  ${roles.join(
+          ', ',
+        )}`,
       }),
     );
     decorators.push(UseGuards(RoleGuard));
