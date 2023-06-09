@@ -38,15 +38,13 @@ export class ProposalValidationPipe implements PipeTransform<any> {
           });
           return targets.length > 0;
         } else {
-          return false;
+          return !(error.target instanceof FileDto);
         }
       });
 
       if (filteredErrors.length <= 0) {
         return object;
       } else {
-        console.log('filteredErrors', filteredErrors);
-
         throw new ValidationException(errorMessages);
       }
     }

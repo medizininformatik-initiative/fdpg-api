@@ -64,8 +64,8 @@ export class ProposalContractingService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     validateUacApproval(toBeUpdated, user);
+    const hasCondition = !!file?.buffer && vote.value;
 
-    const hasCondition = isNotEmptyObject(file) && vote.value;
     if (hasCondition) {
       const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractCondition);
       await this.azureStorageService.uploadFile(blobName, file, user);

@@ -10,24 +10,24 @@ export class ProjectResponsibleDto {
   @ValidateNested()
   @IsObject()
   @Type(() => ResearcherDto)
-  @ValidateIf((o) => o.applicantIsProjectResponsible)
-  @Transform(({ obj, value }) => (obj.applicantIsProjectResponsible ? undefined : value))
+  @ValidateIf((o: ProjectResponsibleDto) => !o.projectResponsibility.applicantIsProjectResponsible)
+  @Transform(({ obj, value }) => (obj.projectResponsibility.applicantIsProjectResponsible ? undefined : value))
   researcher: ResearcherDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
   @Type(() => InstituteDto)
-  @ValidateIf((o) => o.applicantIsProjectResponsible)
-  @Transform(({ obj, value }) => (obj.applicantIsProjectResponsible ? undefined : value))
+  @ValidateIf((o: ProjectResponsibleDto) => !o.projectResponsibility.applicantIsProjectResponsible)
+  @Transform(({ obj, value }) => (obj.projectResponsibility.applicantIsProjectResponsible ? undefined : value))
   institute: InstituteDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
   @Type(() => ParticipantCategoryDto)
-  @ValidateIf((o) => o.applicantIsProjectResponsible)
-  @Transform(({ obj, value }) => (obj.applicantIsProjectResponsible ? undefined : value))
+  @ValidateIf((o: ProjectResponsibleDto) => !o.projectResponsibility.applicantIsProjectResponsible)
+  @Transform(({ obj, value }) => (obj.projectResponsibility.applicantIsProjectResponsible ? undefined : value))
   participantCategory: ParticipantCategoryDto;
 
   @Expose()

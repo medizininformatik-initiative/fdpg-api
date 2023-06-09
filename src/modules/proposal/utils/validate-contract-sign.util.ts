@@ -16,7 +16,7 @@ export const validateContractSign = (
   file?: Express.Multer.File,
 ) => {
   if (vote.value === true) {
-    const hasContractAttached = file && isNotEmptyObject(file);
+    const hasContractAttached = file?.buffer;
     if (!hasContractAttached) {
       const errorInfo = new ValidationErrorInfo({
         constraint: 'hasContract',

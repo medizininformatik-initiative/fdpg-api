@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { isNumber, IsOptional } from 'class-validator';
+import { isNumber, IsOptional, MaxLength } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { isNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -30,5 +30,6 @@ export class FeasibilityDto extends WithIdForObjectDto {
     { groups: [ProposalValidation.IsNotDraft] },
   )
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @MaxLength(10_000)
   details?: string;
 }
