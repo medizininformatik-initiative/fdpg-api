@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AzureStorageService } from 'src/modules/azure-storage/azure-storage.service';
+import { StorageService } from 'src/modules/storage/storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
@@ -82,7 +82,7 @@ describe('ProposalContractingService', () => {
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
-  let azureStorageService: jest.Mocked<AzureStorageService>;
+  let storageService: jest.Mocked<StorageService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
 
   const request = {
@@ -139,7 +139,7 @@ describe('ProposalContractingService', () => {
           },
         },
         {
-          provide: AzureStorageService,
+          provide: StorageService,
           useValue: {
             uploadFile: jest.fn(),
           },
@@ -157,7 +157,7 @@ describe('ProposalContractingService', () => {
     proposalContractingService = module.get<ProposalContractingService>(ProposalContractingService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
-    azureStorageService = module.get<AzureStorageService>(AzureStorageService) as jest.Mocked<AzureStorageService>;
+    storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
   });
 
@@ -218,7 +218,7 @@ describe('ProposalContractingService', () => {
           expect.objectContaining({ blobName: 'blobName' }),
           vote,
         );
-        expect(azureStorageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
+        expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
       } else {
         expect(addUacApproval).toHaveBeenCalledWith(proposalDocument, request.user, vote);
       }
@@ -242,7 +242,7 @@ describe('ProposalContractingService', () => {
         request.user,
         !isValidStatus,
       );
-      expect(azureStorageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
+      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
       expect(addUpload).toHaveBeenCalledWith(proposalDocument, expect.objectContaining({ blobName: 'blobName' }));
       expect(statusChangeService.handleEffects).toHaveBeenCalledWith(expectedDocument, proposalStatus, request.user);
       expect(addHistoryItemForStatus).toHaveBeenCalledWith(expectedDocument, request.user, proposalStatus);
