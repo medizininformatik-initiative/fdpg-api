@@ -1,4 +1,3 @@
-import { AzureMonitorTraceExporter } from '@azure/monitor-opentelemetry-exporter';
 import { diag, DiagConsoleLogger, DiagLogLevel, SpanStatusCode } from '@opentelemetry/api';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
@@ -11,6 +10,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import { IncomingMessage } from 'http';
 import { MongooseInstrumentation, SerializerPayload } from 'opentelemetry-instrumentation-mongoose';
 import { IRequestUser } from './shared/types/request-user.interface';
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
 
 export const configureTelemetry = (config: {
   connectionString: string;
@@ -31,8 +31,8 @@ export const configureTelemetry = (config: {
 
     const provider = new NodeTracerProvider({ resource });
 
-    const exporter = new AzureMonitorTraceExporter({
-      connectionString: config.connectionString,
+    const exporter = new OTLPTraceExporter({
+      url: config.connectionString
     });
 
     provider.addSpanProcessor(new BatchSpanProcessor(exporter));

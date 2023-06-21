@@ -31,7 +31,7 @@ resources:
 appConfig:
   ingressUrl: api.dev.forschen-fuer-gesundheit.de
   environment:
-    applicationInsightsConnectionString: FILLED_BY_PIPELINE
+    otelExporterConnectionString: FILLED_BY_PIPELINE
     enableTelemetry: true
     releaseDate: FILLED_BY_PIPELINE
     releaseNoOfDate: FILLED_BY_PIPELINE
