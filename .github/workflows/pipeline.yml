@@ -120,7 +120,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: ${{env.isMain == 'true' || env.isDev == 'true' }}
-          tags: ${{env.containerRegistry}}/${{env.imageName}}:${{env.imageTag}}
+          tags: ${{env.containerRegistry}}/fdpg/${{env.imageName}}:${{env.imageTag}}
           build-args: |
             SOFTWARE_VERSION=${{github.ref}}
             BUILD_DATE=${{env.pipeDate}}
