@@ -39,7 +39,7 @@ jobs:
           fail_on_failure: true
 
       - run: ls -al ./reports
-      - run: ls -al ./reports/coverate
+      - run: ls -al ./reports/coverage
 
       - name: "Publish Code Coverage"
         uses: 5monkeys/cobertura-action@master
