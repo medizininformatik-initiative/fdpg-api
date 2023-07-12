@@ -42,7 +42,7 @@ jobs:
         uses: 5monkeys/cobertura-action@master
         if: success() || failure()  # always run even if the previous step fails
         with:
-          path: reports/coverage/cobertura-coverage.xml
+          path: ./reports/coverage/cobertura-coverage.xml
           minimum_coverage: 75
           fail_below_threshold: false
           only_changed_files: true
