@@ -38,14 +38,11 @@ jobs:
           report_paths: '**/reports/junit.xml'
           fail_on_failure: true
 
-      - run: ls -al ./reports
-      - run: ls -al ./reports/coverage
-
       - name: "Publish Code Coverage"
         uses: 5monkeys/cobertura-action@master
         if: success() || failure()  # always run even if the previous step fails
         with:
-          path: ./reports/coverage/cobertura-coverage.xml
+          path: '**/reports/coverage/cobertura-coverage.xml'
           minimum_coverage: 75
           fail_below_threshold: false
           only_changed_files: true
