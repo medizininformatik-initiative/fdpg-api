@@ -9,7 +9,7 @@ env:
   imageName: fdpg-pdf
   isMain: ${{ github.ref == 'refs/heads/main' }}
   isDev: ${{ github.ref == 'refs/heads/dev' }}
-  nodeVersion: 18
+  nodeVersion: "18.16.1"
 
 
 jobs:
