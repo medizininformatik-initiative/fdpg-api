@@ -2,6 +2,7 @@ name: Pipeline
 
 on:
   push:
+  pull_request:
 
 
 env:
@@ -40,7 +41,7 @@ jobs:
 
       - name: "Publish Code Coverage"
         uses: 5monkeys/cobertura-action@master
-        if: success() || failure()  # always run even if the previous step fails
+        if: ${{github.event_name == 'pull_request' }}
         with:
           path: '**/reports/coverage/cobertura-coverage.xml'
           minimum_coverage: 75
