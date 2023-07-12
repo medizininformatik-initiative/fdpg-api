@@ -6,7 +6,7 @@ on:
 
 env:
   containerRegistry: container-registry.cr.de-fra.ionos.com
-  imageName: fdpg-pdf
+  imageName: fdpg-api
   isMain: ${{ github.ref == 'refs/heads/main' }}
   isDev: ${{ github.ref == 'refs/heads/dev' }}
   nodeVersion: "18.16.1"
