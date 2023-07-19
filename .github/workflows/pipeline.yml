@@ -11,10 +11,6 @@ env:
   isMain: ${{ github.ref == 'refs/heads/main' }}
   isDev: ${{ github.ref == 'refs/heads/dev' }}
   nodeVersion: "18.16.1"
-  sonarUrl: "TODO"
-  sonarOrganisation: "appsfactory"
-  sonarProjectKey: "TMF-FDPG-API"
-  sonarProjectName: "TMF-FDPG-API"
 
 
 jobs:
@@ -51,24 +47,6 @@ jobs:
           minimum_coverage: 75
           fail_below_threshold: false
           only_changed_files: true
-
-
-  sonar_cloud:
-    name: "Run SonarCloud"
-    runs-on: ubuntu-latest
-    needs: qualitiy_gate
-    if: false   # TODO sonar URL and token are currently missing
-    steps:
-      - uses: sonarsource/sonarcloud-github-action@v1.9.1
-        with:
-          projectBaseDir: ./src
-          args: >
-            -Dsonar.organization=${{ env.sonarOrganisation }}
-            -Dsonar.projectKey=${{ env.sonarProjectKey }}
-            -Dsonar.projectName=${{ env.sonarProjectName }}
-            -Dsonar.host.url=${{ env.sonarUrl }}
-            -Dsonar.javascript.lcov.reportPaths=./reports/coverage/lcov.info
-            -Dsonar.exclusions=**/*.spec.ts,**/__mocks__/**,**/test/**,**/*.mock.ts
 
 
   build_container_image:
