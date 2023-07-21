@@ -1,4 +1,4 @@
-import { AzureStorageService } from 'src/modules/azure-storage/azure-storage.service';
+import { StorageService } from 'src/modules/storage/storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { ProposalCrudService } from '../proposal-crud.service';
 import { StatusChangeService } from '../status-change.service';
@@ -69,7 +69,7 @@ describe('ProposalMiscService', () => {
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
-  let azureStorageService: jest.Mocked<AzureStorageService>;
+  let storageService: jest.Mocked<StorageService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let keycloakService: jest.Mocked<KeycloakService>;
   let pdfEngineService: jest.Mocked<PdfEngineService>;
@@ -157,7 +157,7 @@ describe('ProposalMiscService', () => {
           },
         },
         {
-          provide: AzureStorageService,
+          provide: StorageService,
           useValue: {
             uploadFile: jest.fn(),
           },
@@ -205,7 +205,7 @@ describe('ProposalMiscService', () => {
     proposalMiscService = module.get<ProposalMiscService>(ProposalMiscService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
-    azureStorageService = module.get<AzureStorageService>(AzureStorageService) as jest.Mocked<AzureStorageService>;
+    storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
     keycloakService = module.get<KeycloakService>(KeycloakService) as jest.Mocked<KeycloakService>;
     pdfEngineService = module.get<PdfEngineService>(PdfEngineService) as jest.Mocked<PdfEngineService>;
@@ -321,7 +321,7 @@ describe('ProposalMiscService', () => {
         originalname: 'Machbarkeits-Anfrage.json',
         mimetype: SupportedMimetype.Json,
       });
-      expect(azureStorageService.uploadFile).toBeCalledWith('blobName', expectedFile, request.user);
+      expect(storageService.uploadFile).toBeCalledWith('blobName', expectedFile, request.user);
     });
 
     it('should set status for LocationCheck and get the pdf', async () => {
@@ -361,7 +361,7 @@ describe('ProposalMiscService', () => {
         originalname: `${proposalDocument.projectAbbreviation}.pdf`,
         mimetype: SupportedMimetype.Pdf,
       });
-      expect(azureStorageService.uploadFile).toBeCalledWith('blobName', expectedFile, request.user);
+      expect(storageService.uploadFile).toBeCalledWith('blobName', expectedFile, request.user);
       expect(addUpload).toBeCalledWith(proposalDocument, expect.anything());
     });
   });

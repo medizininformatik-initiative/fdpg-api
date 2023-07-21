@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AzureStorageModule } from 'src/modules/azure-storage/azure-storage.module';
+import { StorageModule } from 'src/modules/storage/storage.module';
 import { Comment, CommentSchema } from 'src/modules/comment/schema/comment.schema';
 import { Proposal, ProposalSchema } from 'src/modules/proposal/schema/proposal.schema';
 import { SchedulerModule } from 'src/modules/scheduler/scheduler.module';
@@ -18,7 +18,7 @@ import { SharedService } from './shared.service';
         schema: CommentSchema,
       },
     ]),
-    AzureStorageModule,
+    StorageModule,
     SchedulerModule,
   ],
   controllers: [],
