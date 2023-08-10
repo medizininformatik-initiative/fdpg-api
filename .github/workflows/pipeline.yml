@@ -99,9 +99,10 @@ jobs:
         with:
           push: ${{env.isMain == 'true' || env.isDev == 'true' }}
           tags: ${{env.containerRegistry}}/fdpg/${{env.imageName}}:${{env.imageTag}}
-          build-args: |
-            SOFTWARE_VERSION=${{github.ref}}
+          labels:
             BUILD_DATE=${{env.pipeDate}}
             BUILD_TIME=${{env.pipeTime}}
             BUILD_NO_OF_DATE=${{env.buildNumberOfDate}}
             SOURCE_BRANCH=${{github.ref}}
+          build-args: |
+            SOFTWARE_VERSION=${{github.ref}}
