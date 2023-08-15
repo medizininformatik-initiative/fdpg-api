@@ -9,7 +9,7 @@ export class Migration000 implements IDbMigration {
     console.log('Setup Initial DB Migration');
     const model = new this.migrationModel();
     model.updatedAt = new Date();
-    await model.save();
+    await model.save({ validateBeforeSave: false });
   }
 
   async down() {

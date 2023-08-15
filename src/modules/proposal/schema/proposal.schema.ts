@@ -237,6 +237,9 @@ export class Proposal {
 
   @Prop()
   migrationError?: string;
+
+  @Prop()
+  fdpgCheckNotes?: string;
 }
 
 const ProposalSchema = SchemaFactory.createForClass(Proposal);

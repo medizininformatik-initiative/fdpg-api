@@ -12,7 +12,7 @@ export class DeclineReason {
   type: DeclineType;
 
   @Prop()
-  reason: string;
+  reason?: string;
 
   @Prop(String)
   location: MiiLocation;

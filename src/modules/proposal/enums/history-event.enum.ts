@@ -26,6 +26,9 @@ export enum HistoryEventType {
   UacConditionAccept = 'UAC_CONDITION_ACCEPT',
   UacConditionDecline = 'UAC_CONDITION_DECLINE',
 
+  /** FDPG Veto */
+  FdpgApprovedLocationRemoved = 'FDPG_APPROVED_LOCATION_REMOVED',
+
   /** Data Delivery */
 
   /** Contracting */

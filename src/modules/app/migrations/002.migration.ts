@@ -36,38 +36,54 @@ export class Migration002 implements IDbMigration {
       _id: new Types.ObjectId().toString(),
     };
 
-    const institute: Institute = {
-      _id: new Types.ObjectId().toString(),
-      isDone: proposal.status === ProposalStatus.Draft ? false : true,
-      miiLocation: miiLocation,
-      city: miiLocation ? undefined : keycloakUser?.attributes['organization.city']?.[0] ?? placeholderLong,
-      country: miiLocation ? undefined : keycloakUser?.attributes['organization.country']?.[0] ?? CountryCode.De,
-      email: miiLocation ? undefined : keycloakUser?.attributes['organization.email']?.[0] ?? placeholderEmail,
-      houseNumber: miiLocation
-        ? undefined
-        : keycloakUser?.attributes['organization.houseNumber']?.[0] ?? placeholderShort,
-      name: miiLocation ? undefined : keycloakUser?.attributes['organization.name']?.[0] ?? placeholderLong,
-      postalCode: miiLocation
-        ? undefined
-        : keycloakUser?.attributes['organization.postalCode']?.[0] ?? placeHolderPostalCode,
-      streetAddress: miiLocation ? undefined : keycloakUser?.attributes['organization.street']?.[0] ?? placeholderLong,
-    };
+    try {
+      const institute: Institute = {
+        _id: new Types.ObjectId().toString(),
+        isDone: proposal.status === ProposalStatus.Draft ? false : true,
+        miiLocation: miiLocation,
+        city: miiLocation ? undefined : keycloakUser?.attributes?.['organization.city']?.[0] ?? placeholderLong,
+        country: miiLocation ? undefined : keycloakUser?.attributes?.['organization.country']?.[0] ?? CountryCode.De,
+        email: miiLocation ? undefined : keycloakUser?.attributes?.['organization.email']?.[0] ?? placeholderEmail,
+        houseNumber: miiLocation
+          ? undefined
+          : keycloakUser?.attributes?.['organization.houseNumber']?.[0] ?? placeholderShort,
+        name: miiLocation ? undefined : keycloakUser?.attributes?.['organization.name']?.[0] ?? placeholderLong,
+        postalCode: miiLocation
+          ? undefined
+          : keycloakUser?.attributes?.['organization.postalCode']?.[0] ?? placeHolderPostalCode,
+        streetAddress: miiLocation
+          ? undefined
+          : keycloakUser?.attributes?.['organization.street']?.[0] ?? placeholderLong,
+      };
 
-    const researcher: Researcher = {
-      _id: new Types.ObjectId().toString(),
-      isDone: proposal.status === ProposalStatus.Draft ? false : true,
-      affiliation: keycloakUser?.attributes['affiliation']?.[0] ?? placeholderLong,
-      email: owner.email ?? keycloakUser?.email ?? placeholderEmail,
-      firstName: owner.firstName ?? keycloakUser?.firstName ?? placeholderLong,
-      lastName: owner.lastName ?? keycloakUser?.lastName ?? placeholderLong,
-      title: keycloakUser?.attributes['title']?.[0] ?? '',
-    };
+      const researcher: Researcher = {
+        _id: new Types.ObjectId().toString(),
+        isDone: proposal.status === ProposalStatus.Draft ? false : true,
+        affiliation: keycloakUser?.attributes?.['affiliation']?.[0] ?? placeholderLong,
+        email: owner.email ?? keycloakUser?.email ?? placeholderEmail,
+        firstName: owner.firstName ?? keycloakUser?.firstName ?? placeholderLong,
+        lastName: owner.lastName ?? keycloakUser?.lastName ?? placeholderLong,
+        title: keycloakUser?.attributes?.['title']?.[0] ?? '',
+      };
 
-    proposal.applicant = {
-      participantCategory,
-      institute,
-      researcher,
-    };
+      proposal.applicant = {
+        participantCategory,
+        institute,
+        researcher,
+      };
+    } catch (error) {
+      console.log(
+        `Migration002: Error while migrating applicant for proposal ${proposal._id.toString()} error: ${JSON.stringify(
+          error,
+        )}`,
+      );
+      console.log(
+        `Migration002: Error while migrating applicant for proposal ${proposal._id.toString()} keycloakUser: ${JSON.stringify(
+          keycloakUser,
+        )}`,
+      );
+      Promise.reject(error);
+    }
   }
 
   private migrateProjectResponsible(proposal: Proposal) {
@@ -100,7 +116,7 @@ export class Migration002 implements IDbMigration {
         proposal.migrationVersion = migrationVersion;
         proposal.migrationError = undefined;
 
-        await proposal.save();
+        await proposal.save({ validateBeforeSave: false });
       } catch (error) {
         const proposalId = proposal._id.toString();
         const stringifiedError = JSON.stringify(error);

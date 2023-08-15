@@ -11,7 +11,7 @@ import { UserModule } from '../user/user.module';
 import { ProposalModule } from '../proposal/proposal.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { StorageModule } from '../storage/storage.module';
+import { AzureStorageModule } from '../azure-storage/azure-storage.module';
 import { PdfEngineModule } from '../pdf-engine/pdf-engine.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AdminModule } from '../admin/admin.module';
@@ -69,7 +69,7 @@ import { DataPrivacyConfig, DataPrivacyConfigSchema } from '../admin/schema/data
     ProposalModule,
     CommentModule,
     UserModule,
-    StorageModule,
+    AzureStorageModule,
     PdfEngineModule,
     FeasibilityModule,
   ],

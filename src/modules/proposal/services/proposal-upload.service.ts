@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
-import { StorageService } from '../../storage/storage.service';
+import { AzureStorageService } from '../../azure-storage/azure-storage.service';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { DirectUpload } from '../enums/upload-type.enum';
 import { ProposalCrudService } from './proposal-crud.service';
@@ -11,7 +11,7 @@ import { validateUploadDeletion } from '../utils/validate-upload-deletion.util';
 
 @Injectable()
 export class ProposalUploadService {
-  constructor(private proposalCrudService: ProposalCrudService, private storageService: StorageService) {}
+  constructor(private proposalCrudService: ProposalCrudService, private azureStorageService: AzureStorageService) {}
 
   async upload(
     proposalId: string,
@@ -22,7 +22,7 @@ export class ProposalUploadService {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     const blobName = getBlobName(proposal._id, type);
-    await this.storageService.uploadFile(blobName, file, user);
+    await this.azureStorageService.uploadFile(blobName, file, user);
     const upload = new UploadDto(blobName, file, type, user);
 
     addUpload(proposal, upload);
@@ -50,7 +50,7 @@ export class ProposalUploadService {
     const upload = partialProposal.uploads.find((upload) => upload._id.toString() === uploadId);
 
     if (upload?.blobName) {
-      return await this.storageService.getSasUrl(upload.blobName);
+      return await this.azureStorageService.getSasUrl(upload.blobName);
     } else {
       throw new NotFoundException('Upload does not exist');
     }
@@ -68,13 +68,15 @@ export class ProposalUploadService {
 
     validateUploadDeletion(proposal, upload, user);
 
-    await this.storageService.deleteBlob(upload.blobName);
+    await this.azureStorageService.deleteBlob(upload.blobName);
 
     proposal.uploads.splice(uploadIndex, 1);
 
     try {
       await proposal.save();
     } catch (error) {
+      // Restore the upload if the DB update fails.
+      await this.azureStorageService.unDeleteBlob(upload.blobName);
       throw new Error(error);
     }
   }

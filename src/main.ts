@@ -6,7 +6,7 @@ dotenv.config();
 
 configureTelemetry({
   env: process.env.ENV,
-  connectionString: process.env.OTEL_EXPORTER_CONNECTION_STRING,
+  connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
   enableTelemetry: (process.env.ENABLE_TELEMETRY ?? '').toLowerCase() === 'true',
   softwareVersion: process.env.SOFTWARE_VERSION,
 });

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SharedModule } from 'src/shared/shared.module';
 import { AdminModule } from '../admin/admin.module';
-import { StorageModule } from '../storage/storage.module';
+import { AzureStorageModule } from '../azure-storage/azure-storage.module';
 import { EventEngineModule } from '../event-engine/event-engine.module';
 import { FeasibilityModule } from '../feasibility/feasibility.module';
 import { PdfEngineModule } from '../pdf-engine/pdf-engine.module';
@@ -34,7 +34,7 @@ import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviat
     ]),
     UserModule,
     EventEngineModule,
-    StorageModule,
+    AzureStorageModule,
     PdfEngineModule,
     SharedModule,
     FeasibilityModule,

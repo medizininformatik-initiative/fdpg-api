@@ -31,7 +31,7 @@ resources:
 appConfig:
   ingressUrl: api.dev.forschen-fuer-gesundheit.de
   environment:
-    otelExporterConnectionString: FILLED_BY_PIPELINE
+    applicationInsightsConnectionString: FILLED_BY_PIPELINE
     enableTelemetry: true
     releaseDate: FILLED_BY_PIPELINE
     releaseNoOfDate: FILLED_BY_PIPELINE
@@ -48,9 +48,9 @@ appConfig:
     keycloakClientForFeasibilityId: fdpg-api-for-feasibility
     keycloakClientSecret: FILLED_BY_PIPELINE
     keycloakClientForFeasibilitySecret: FILLED_BY_PIPELINE
-    sendgridApiKey: FILLED_BY_PIPELINE
-    sendgridSenderName: "Forschen Für Gesundheit"
-    sendgridSenderMail: noreply@antrag.dev.forschen-fuer-gesundheit.de
+    sendinblueApiKey: FILLED_BY_PIPELINE
+    sendinblueSenderName: "Forschen Für Gesundheit"
+    sendinblueSenderMail: noreply@antrag.dev.forschen-fuer-gesundheit.de
     mongoConnectionString: FILLED_BY_PIPELINE
     oauth2Client: swagger-client
     storageAccountKey: FILLED_BY_PIPELINE

@@ -13,7 +13,7 @@ export class Migration006 implements IDbMigration {
   private async seedDataPrivacyConfig() {
     console.log('Seeding Terms And Conditions for Platform MII...');
     const model = new this.dataPrivacyConfigModel(dataPrivacySeedMii);
-    await model.save();
+    await model.save({ validateBeforeSave: false });
   }
 
   async up(migrationVersion: number) {
@@ -23,14 +23,12 @@ export class Migration006 implements IDbMigration {
       try {
         const currentTypeOfUseUsage = proposal.userProject.typeOfUse.usage;
 
-        if (!Array.isArray(currentTypeOfUseUsage)) {
-          proposal.userProject.typeOfUse.usage = [currentTypeOfUseUsage];
-        }
+        proposal.userProject.typeOfUse.usage = JSON.parse(JSON.stringify(currentTypeOfUseUsage));
 
         proposal.migrationVersion = migrationVersion;
         proposal.migrationError = undefined;
 
-        await proposal.save();
+        await proposal.save({ validateBeforeSave: false });
       } catch (error) {
         const proposalId = proposal._id.toString();
         const stringifiedError = JSON.stringify(error);

@@ -7,7 +7,7 @@ import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.
 import { SupportedLanguages } from 'src/shared/constants/global.constants';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
-import { StorageService } from '../../storage/storage.service';
+import { AzureStorageService } from '../../azure-storage/azure-storage.service';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { FeasibilityService } from '../../feasibility/feasibility.service';
 import { PdfEngineService } from '../../pdf-engine/pdf-engine.service';
@@ -24,17 +24,18 @@ import { addFdpgChecklist } from '../utils/add-fdpg-checklist.util';
 import { flattenToLanguage } from '../utils/flatten-to-language.util';
 import { addHistoryItemForProposalLock, addHistoryItemForStatus } from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
-import { validateFdpgChecklist } from '../utils/validate-fdpg-checklist.util';
+import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
 import { ProposalCrudService } from './proposal-crud.service';
 import { StatusChangeService } from './status-change.service';
+import { OutputGroup } from 'src/shared/enums/output-group.enum';
 
 @Injectable()
 export class ProposalMiscService {
   constructor(
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
-    private storageService: StorageService,
+    private azureStorageService: AzureStorageService,
     private statusChangeService: StatusChangeService,
     private keycloakService: KeycloakService,
     private pdfEngineService: PdfEngineService,
@@ -145,7 +146,7 @@ export class ProposalMiscService {
         } as Express.Multer.File;
 
         const feasibilityBlobName = getBlobName(proposal._id, UseCaseUpload.FeasibilityQuery);
-        await this.storageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
+        await this.azureStorageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
         const feasibilityUpload = new UploadDto(
           feasibilityBlobName,
           feasibilityFile,
@@ -158,7 +159,7 @@ export class ProposalMiscService {
       const plain = proposal.toObject();
       const getDto = plainToClass(ProposalGetDto, plain, {
         strategy: 'excludeAll',
-        groups: [ProposalValidation.IsOutput],
+        groups: [ProposalValidation.IsOutput, OutputGroup.PdfOutput],
       });
       const pdfBuffer = await this.pdfEngineService.createProposalPdf(getDto, dataPrivacyTextForUsage);
       const pdfFile: Express.Multer.File = {
@@ -168,7 +169,7 @@ export class ProposalMiscService {
         size: Buffer.byteLength(pdfBuffer),
       } as Express.Multer.File;
       const pdfBlobName = getBlobName(proposal._id, UseCaseUpload.ProposalPDF);
-      await this.storageService.uploadFile(pdfBlobName, pdfFile, user);
+      await this.azureStorageService.uploadFile(pdfBlobName, pdfFile, user);
       const pdfUpload = new UploadDto(pdfBlobName, pdfFile, UseCaseUpload.ProposalPDF, user);
       addUpload(proposal, pdfUpload);
 
@@ -184,7 +185,7 @@ export class ProposalMiscService {
 
   async setFdpgChecklist(proposalId: string, checklist: FdpgChecklistSetDto, user: IRequestUser): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
-    validateFdpgChecklist(toBeUpdated);
+    validateFdpgCheckStatus(toBeUpdated);
     addFdpgChecklist(toBeUpdated, checklist);
     await toBeUpdated.save();
   }
@@ -201,5 +202,12 @@ export class ProposalMiscService {
     proposal.set(path, isDone);
 
     await proposal.save();
+  }
+
+  async setFdpgCheckNotes(proposalId: string, text: string, user: IRequestUser): Promise<void> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user);
+    validateFdpgCheckStatus(toBeUpdated);
+    toBeUpdated.fdpgCheckNotes = text;
+    await toBeUpdated.save();
   }
 }

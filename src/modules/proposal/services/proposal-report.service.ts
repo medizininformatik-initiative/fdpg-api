@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { removeInPlaceAndReturnRemoved } from 'src/shared/utils/array.utils';
-import { StorageService } from '../../storage/storage.service';
+import { AzureStorageService } from '../../azure-storage/azure-storage.service';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { ReportCreateDto, ReportDto, ReportGetDto, ReportUpdateDto } from '../dto/proposal/report.dto';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
@@ -18,7 +18,7 @@ export class ProposalReportService {
   constructor(
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
-    private storageService: StorageService,
+    private azureStorageService: AzureStorageService,
   ) {}
 
   async createReport(
@@ -35,7 +35,7 @@ export class ProposalReportService {
     const uploadTasks = files.map(async (file) => {
       const uploadType = UseCaseUpload.ReportUpload;
       const blobName = getBlobName(proposal._id, uploadType, report._id);
-      await this.storageService.uploadFile(blobName, file, user);
+      await this.azureStorageService.uploadFile(blobName, file, user);
       const upload = new UploadDto(blobName, file, uploadType, user);
       return upload;
     });
@@ -55,7 +55,7 @@ export class ProposalReportService {
 
     report.uploads.forEach((upload) => {
       const task = async () => {
-        const downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
+        const downloadUrl = await this.azureStorageService.getSasUrl(upload.blobName, true);
         (upload as UploadGetDto).downloadUrl = downloadUrl;
       };
       downloadTasks.push(task());
@@ -82,7 +82,7 @@ export class ProposalReportService {
     proposal.reports.forEach((report) => {
       report.uploads.forEach((upload) => {
         const task = async () => {
-          const downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
+          const downloadUrl = await this.azureStorageService.getSasUrl(upload.blobName, true);
           (upload as UploadGetDto).downloadUrl = downloadUrl;
         };
         tasks.push(task());
@@ -132,13 +132,13 @@ export class ProposalReportService {
     const removedUploads = removeInPlaceAndReturnRemoved(proposal.reports[reportIdx].uploads, conditionToRemove);
 
     if (removedUploads.length > 0) {
-      await this.storageService.deleteManyBlobs(removedUploads.map((upload) => upload.blobName));
+      await this.azureStorageService.deleteManyBlobs(removedUploads.map((upload) => upload.blobName));
     }
 
     const uploadTasks = files.map(async (file) => {
       const uploadType = UseCaseUpload.ReportUpload;
       const blobName = getBlobName(proposal._id, uploadType, reportId);
-      await this.storageService.uploadFile(blobName, file, user);
+      await this.azureStorageService.uploadFile(blobName, file, user);
       const upload = new UploadDto(blobName, file, uploadType, user);
       return upload;
     });
@@ -161,7 +161,7 @@ export class ProposalReportService {
     const plainReport = report.toObject();
     plainReport.uploads.forEach((upload) => {
       const task = async () => {
-        const downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
+        const downloadUrl = await this.azureStorageService.getSasUrl(upload.blobName, true);
         (upload as UploadGetDto).downloadUrl = downloadUrl;
       };
       downloadLinkTasks.push(task());
@@ -186,7 +186,7 @@ export class ProposalReportService {
     }
 
     if (proposal.reports[reportIdx].uploads.length > 0) {
-      await this.storageService.deleteManyBlobs(
+      await this.azureStorageService.deleteManyBlobs(
         proposal.reports[reportIdx].uploads.map((upload) => upload.blobName),
       );
     }

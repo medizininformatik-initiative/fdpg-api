@@ -5,6 +5,7 @@ import { Proposal } from '../schema/proposal.schema';
 import { ConditionalApproval } from '../schema/sub-schema/conditional-approval.schema';
 import { UacApproval } from '../schema/sub-schema/uac-approval.schema';
 import { addHistoryItemForContractSystemReject, addHistoryItemForUacCondition } from './proposal-history.util';
+import { excludeUnselectedLocations } from './unselect-approved-location.util';
 
 export const clearLocationsVotes = (proposal: Proposal, location: MiiLocation) => {
   proposal.openDizChecks = proposal.openDizChecks.filter((filterLocation) => filterLocation !== location);
@@ -30,6 +31,23 @@ export const excludeAllRequestedLocations = (proposal: Proposal) => {
   proposal.dizApprovedLocations = [];
   proposal.uacApprovedLocations = [];
   proposal.signedContracts = [];
+};
+
+export const declineUnselectedLocations = (
+  proposal: Proposal,
+  user: IRequestUser,
+  selectedLocations: MiiLocation[],
+) => {
+  proposal.uacApprovals.forEach((approval) => {
+    if (!selectedLocations.includes(approval.location)) {
+      excludeUnselectedLocations(proposal, user, approval);
+    }
+  });
+  proposal.conditionalApprovals.forEach((condition) => {
+    if (!selectedLocations.includes(condition.location)) {
+      excludeUnselectedLocations(proposal, user, condition);
+    }
+  });
 };
 
 export const declineUnansweredConditions = (proposal: Proposal, user: IRequestUser) => {

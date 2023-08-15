@@ -35,6 +35,7 @@ import { RequestedDataDto } from './requested-data.dto';
 import { UacApprovalGetDto } from './uac-approval.dto';
 import { UserProjectDto } from './user-project.dto';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { OutputGroup } from 'src/shared/enums/output-group.enum';
 
 @Exclude()
 export class ProposalBaseDto {
@@ -228,6 +229,9 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
   @Type(() => DeclineReasonDto)
   declineReasons: DeclineReasonDto[];
+
+  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember, OutputGroup.PdfOutput] })
+  fdpgCheckNotes?: string;
 }
 
 export class ProposalGetListDto {

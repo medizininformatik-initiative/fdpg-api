@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StorageService } from 'src/modules/storage/storage.service';
+import { AzureStorageService } from 'src/modules/azure-storage/azure-storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
@@ -26,6 +26,7 @@ import { ProposalCrudService } from '../proposal-crud.service';
 import { StatusChangeService } from '../status-change.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { NoErrorThrownError, getError } from 'test/get-error';
+import { InitContractingDto } from '../../dto/proposal/init-contracting.dto';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -82,7 +83,7 @@ describe('ProposalContractingService', () => {
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
-  let storageService: jest.Mocked<StorageService>;
+  let azureStorageService: jest.Mocked<AzureStorageService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
 
   const request = {
@@ -139,7 +140,7 @@ describe('ProposalContractingService', () => {
           },
         },
         {
-          provide: StorageService,
+          provide: AzureStorageService,
           useValue: {
             uploadFile: jest.fn(),
           },
@@ -157,7 +158,7 @@ describe('ProposalContractingService', () => {
     proposalContractingService = module.get<ProposalContractingService>(ProposalContractingService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
-    storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    azureStorageService = module.get<AzureStorageService>(AzureStorageService) as jest.Mocked<AzureStorageService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
   });
 
@@ -218,7 +219,7 @@ describe('ProposalContractingService', () => {
           expect.objectContaining({ blobName: 'blobName' }),
           vote,
         );
-        expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
+        expect(azureStorageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
       } else {
         expect(addUacApproval).toHaveBeenCalledWith(proposalDocument, request.user, vote);
       }
@@ -233,8 +234,9 @@ describe('ProposalContractingService', () => {
 
       jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
       const file = { buffer: 'buffer' } as any as Express.Multer.File;
+      const selectedLocations = { locations: ['MRI'] } as any as InitContractingDto;
 
-      await proposalContractingService.initContracting(proposalId, file, request.user);
+      await proposalContractingService.initContracting(proposalId, file, selectedLocations, request.user);
 
       expect(validateStatusChange).toHaveBeenCalledWith(
         proposalDocument,
@@ -242,9 +244,11 @@ describe('ProposalContractingService', () => {
         request.user,
         !isValidStatus,
       );
-      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
+      expect(azureStorageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
       expect(addUpload).toHaveBeenCalledWith(proposalDocument, expect.objectContaining({ blobName: 'blobName' }));
-      expect(statusChangeService.handleEffects).toHaveBeenCalledWith(expectedDocument, proposalStatus, request.user);
+      expect(statusChangeService.handleEffects).toHaveBeenCalledWith(expectedDocument, proposalStatus, request.user, [
+        'MRI',
+      ]);
       expect(addHistoryItemForStatus).toHaveBeenCalledWith(expectedDocument, request.user, proposalStatus);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(eventEngineService.handleProposalStatusChange).toHaveBeenCalledWith(

@@ -7,6 +7,7 @@ import { ProposalDocument } from '../../schema/proposal.schema';
 import {
   clearLocationsVotes,
   declineUnansweredConditions,
+  declineUnselectedLocations,
   declineUnansweredContracts,
   excludeAllRequestedLocations,
 } from '../location-flow.util';
@@ -33,6 +34,7 @@ const proposalContent = {
   conditionalApprovals: [conditionalApproval],
   uacApprovals: [uacApproval],
   history: [],
+  declineReasons: [],
 };
 const getProposalDocument = () => {
   const proposalDocument = {
@@ -97,6 +99,17 @@ describe('location-flow.util', () => {
       expect(proposal.conditionalApprovals[0].isContractSigned).toEqual(false);
 
       expect(proposal.history.length).toEqual(1);
+    });
+  });
+
+  describe('declineUnselectedLocations', () => {
+    it('should decline unanswered conditions', () => {
+      const proposal = getProposalDocument();
+      declineUnselectedLocations(proposal, requestContent.user, [MiiLocation.Charité]);
+      expect(proposal.uacApprovedLocations.length).toEqual(1);
+      expect(proposal.uacApprovals[0].isContractSigned).toEqual(false);
+
+      expect(proposal.history.length).toEqual(2);
     });
   });
 

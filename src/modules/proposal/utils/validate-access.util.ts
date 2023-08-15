@@ -15,7 +15,7 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
   }
 
   if (user.roles.includes(Role.FdpgMember)) {
-    checkAccessForFdpgMember(proposal);
+    checkAccessForFdpgMember(proposal, willBeModified);
   }
 
   if (user.roles.includes(Role.DizMember)) {
@@ -33,8 +33,8 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
     throwForbiddenError(`Proposal has a different owner than this researcher`);
   }
 };
-const checkAccessForFdpgMember = (proposal: ProposalDocument) => {
-  if (proposal.status === ProposalStatus.Draft) {
+const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
+  if (proposal.status === ProposalStatus.Draft && willBeModified) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
   }
 };

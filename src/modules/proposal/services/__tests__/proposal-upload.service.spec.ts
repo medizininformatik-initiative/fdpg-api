@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StorageService } from 'src/modules/storage/storage.service';
+import { AzureStorageService } from 'src/modules/azure-storage/azure-storage.service';
 import { ProposalCrudService } from '../proposal-crud.service';
 import { ProposalUploadService } from '../proposal-upload.service';
 
@@ -7,7 +7,7 @@ describe('ProposalUploadService', () => {
   let proposalUploadService: ProposalUploadService;
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
-  let storageService: jest.Mocked<StorageService>;
+  let azureStorageService: jest.Mocked<AzureStorageService>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -21,7 +21,7 @@ describe('ProposalUploadService', () => {
           },
         },
         {
-          provide: StorageService,
+          provide: AzureStorageService,
           useValue: {
             handleSomething: jest.fn(),
           },
@@ -32,7 +32,7 @@ describe('ProposalUploadService', () => {
 
     proposalUploadService = module.get<ProposalUploadService>(ProposalUploadService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
-    storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    azureStorageService = module.get<AzureStorageService>(AzureStorageService) as jest.Mocked<AzureStorageService>;
   });
 
   it('should be defined', () => {

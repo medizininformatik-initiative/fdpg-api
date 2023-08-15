@@ -11,7 +11,7 @@ export class Migration001 implements IDbMigration {
   async up() {
     console.log('Seeding Terms And Conditions for Platform MII...');
     const model = new this.termsConfigModel(termsAndConditionsSeedMii);
-    await model.save();
+    await model.save({ validateBeforeSave: false });
   }
 
   async down() {

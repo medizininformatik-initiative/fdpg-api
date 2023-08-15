@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { StorageService } from 'src/modules/storage/storage.service';
+import { AzureStorageService } from 'src/modules/azure-storage/azure-storage.service';
 import { Comment, CommentDocument } from 'src/modules/comment/schema/comment.schema';
 import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
@@ -13,7 +13,7 @@ export class SharedService {
   constructor(
     @InjectModel(Comment.name)
     private commentModel: Model<CommentDocument>,
-    private storageService: StorageService,
+    private azureStorageService: AzureStorageService,
     private schedulerService: SchedulerService,
   ) {}
 
@@ -31,7 +31,7 @@ export class SharedService {
     const allBlobs = [...uploadBlobs, ...reportUploadBlobs];
 
     if (allBlobs && allBlobs.length > 0) {
-      await this.storageService.deleteManyBlobs(allBlobs);
+      await this.azureStorageService.deleteManyBlobs(allBlobs);
     }
 
     await this.commentModel.deleteMany({ referenceDocumentId: proposal._id });

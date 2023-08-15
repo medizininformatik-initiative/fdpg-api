@@ -24,7 +24,7 @@ export class Migration005 implements IDbMigration {
         proposal.migrationVersion = migrationVersion;
         proposal.migrationError = undefined;
 
-        await proposal.save();
+        await proposal.save({ validateBeforeSave: false });
       } catch (error) {
         const proposalId = proposal._id.toString();
         const stringifiedError = JSON.stringify(error);

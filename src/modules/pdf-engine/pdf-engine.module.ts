@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { StorageModule } from '../storage/storage.module';
+import { AzureStorageModule } from '../azure-storage/azure-storage.module';
 import { PdfEngineClient } from './pdf-engine.client';
 import { PdfEngineService } from './pdf-engine.service';
 
 @Module({
-  imports: [StorageModule],
+  imports: [AzureStorageModule],
   providers: [PdfEngineClient, PdfEngineService],
   exports: [PdfEngineService],
 })

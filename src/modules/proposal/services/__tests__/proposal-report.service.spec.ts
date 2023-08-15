@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StorageService } from 'src/modules/storage/storage.service';
+import { AzureStorageService } from 'src/modules/azure-storage/azure-storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
@@ -76,7 +76,7 @@ describe('ProposalReportService', () => {
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
-  let storageService: jest.Mocked<StorageService>;
+  let azureStorageService: jest.Mocked<AzureStorageService>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -98,7 +98,7 @@ describe('ProposalReportService', () => {
           },
         },
         {
-          provide: StorageService,
+          provide: AzureStorageService,
           useValue: {
             uploadFile: jest.fn(),
             deleteManyBlobs: jest.fn(),
@@ -112,7 +112,7 @@ describe('ProposalReportService', () => {
     proposalReportService = module.get<ProposalReportService>(ProposalReportService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
-    storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    azureStorageService = module.get<AzureStorageService>(AzureStorageService) as jest.Mocked<AzureStorageService>;
   });
 
   it('should be defined', () => {
@@ -151,7 +151,7 @@ describe('ProposalReportService', () => {
       expect(result.title).toBe('title');
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
       expect(getBlobName).toBeCalledWith(proposalId, UseCaseUpload.ReportUpload, result._id);
-      expect(storageService.uploadFile).toBeCalledWith('blobName', file, request.user);
+      expect(azureStorageService.uploadFile).toBeCalledWith('blobName', file, request.user);
       expect(addReportUpload).toBeCalledWith(
         expect.objectContaining({ title: 'title' }),
         expect.objectContaining({ blobName: 'blobName' }),
@@ -162,7 +162,7 @@ describe('ProposalReportService', () => {
         proposalDocument,
         expect.objectContaining({ title: 'title' }),
       );
-      expect(storageService.getSasUrl).toBeCalledWith('blobName', true);
+      expect(azureStorageService.getSasUrl).toBeCalledWith('blobName', true);
     });
   });
 
@@ -200,7 +200,7 @@ describe('ProposalReportService', () => {
       expect(result[0].title).toBe('title');
       expect(result[0].uploads[0].downloadUrl).toBe('downloadUrl');
 
-      expect(storageService.getSasUrl).toBeCalledWith('blobName', true);
+      expect(azureStorageService.getSasUrl).toBeCalledWith('blobName', true);
     });
   });
 
@@ -396,7 +396,7 @@ describe('ProposalReportService', () => {
       expect(result.uploads[1].downloadUrl).toBe('downloadUrl');
       expect(result.title).toBe(updatedTitle);
 
-      expect(storageService.deleteManyBlobs).toBeCalledWith(['removeMe']);
+      expect(azureStorageService.deleteManyBlobs).toBeCalledWith(['removeMe']);
     });
 
     it('should throw an error if report does not exist', async () => {
@@ -480,7 +480,7 @@ describe('ProposalReportService', () => {
         expect.objectContaining({ _id: proposalId }),
         expect.objectContaining({ content: 'content' }),
       );
-      expect(storageService.deleteManyBlobs).toBeCalledWith(['blobName']);
+      expect(azureStorageService.deleteManyBlobs).toBeCalledWith(['blobName']);
     });
 
     it('should do nothing if report does not exist', async () => {
@@ -510,7 +510,7 @@ describe('ProposalReportService', () => {
 
       expect(proposalDocument.save).not.toBeCalled();
       expect(eventEngineService.handleProposalReportDelete).not.toBeCalled();
-      expect(storageService.deleteManyBlobs).not.toBeCalled();
+      expect(azureStorageService.deleteManyBlobs).not.toBeCalled();
     });
   });
 });
