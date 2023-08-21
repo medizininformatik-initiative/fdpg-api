@@ -1,4 +1,4 @@
-import { AzureMonitorTraceExporter } from '@azure/monitor-opentelemetry-exporter';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { diag, DiagConsoleLogger, DiagLogLevel, SpanStatusCode } from '@opentelemetry/api';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
@@ -31,8 +31,8 @@ export const configureTelemetry = (config: {
 
     const provider = new NodeTracerProvider({ resource });
 
-    const exporter = new AzureMonitorTraceExporter({
-      connectionString: config.connectionString,
+    const exporter = new OTLPTraceExporter({
+      url: config.connectionString,
     });
 
     provider.addSpanProcessor(new BatchSpanProcessor(exporter));
