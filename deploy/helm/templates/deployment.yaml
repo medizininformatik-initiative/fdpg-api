@@ -39,8 +39,8 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
-            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
-              value: {{ .Values.appConfig.environment.applicationInsightsConnectionString }}
+            - name: OTEL_EXPORTER_CONNECTION_STRING
+              value: {{ .Values.appConfig.environment.otelExporterConnectionString }}
             - name: ENABLE_TELEMETRY
               value: {{ .Values.appConfig.environment.enableTelemetry | quote}}
             - name: RELEASE_DATE
