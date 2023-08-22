@@ -75,8 +75,6 @@ export class ProposalUploadService {
     try {
       await proposal.save();
     } catch (error) {
-      // Restore the upload if the DB update fails.
-      await this.storageService.unDeleteBlob(upload.blobName);
       throw new Error(error);
     }
   }
