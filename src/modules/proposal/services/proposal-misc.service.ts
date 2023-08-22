@@ -7,7 +7,7 @@ import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.
 import { SupportedLanguages } from 'src/shared/constants/global.constants';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
-import { AzureStorageService } from '../../azure-storage/azure-storage.service';
+import { StorageService } from '../../storage/storage.service';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { FeasibilityService } from '../../feasibility/feasibility.service';
 import { PdfEngineService } from '../../pdf-engine/pdf-engine.service';
@@ -35,7 +35,7 @@ export class ProposalMiscService {
   constructor(
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
-    private azureStorageService: AzureStorageService,
+    private storageService: StorageService,
     private statusChangeService: StatusChangeService,
     private keycloakService: KeycloakService,
     private pdfEngineService: PdfEngineService,
@@ -146,7 +146,7 @@ export class ProposalMiscService {
         } as Express.Multer.File;
 
         const feasibilityBlobName = getBlobName(proposal._id, UseCaseUpload.FeasibilityQuery);
-        await this.azureStorageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
+        await this.storageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
         const feasibilityUpload = new UploadDto(
           feasibilityBlobName,
           feasibilityFile,
@@ -169,7 +169,7 @@ export class ProposalMiscService {
         size: Buffer.byteLength(pdfBuffer),
       } as Express.Multer.File;
       const pdfBlobName = getBlobName(proposal._id, UseCaseUpload.ProposalPDF);
-      await this.azureStorageService.uploadFile(pdfBlobName, pdfFile, user);
+      await this.storageService.uploadFile(pdfBlobName, pdfFile, user);
       const pdfUpload = new UploadDto(pdfBlobName, pdfFile, UseCaseUpload.ProposalPDF, user);
       addUpload(proposal, pdfUpload);
 

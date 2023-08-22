@@ -4,7 +4,7 @@ import { isNotEmptyObject } from 'class-validator';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { convertUserToGroups } from 'src/shared/utils/user-group.utils';
-import { AzureStorageService } from '../../azure-storage/azure-storage.service';
+import { StorageService } from '../../storage/storage.service';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
 import { SetUacApprovalDto } from '../dto/set-uac-approval.dto';
@@ -44,7 +44,7 @@ export class ProposalContractingService {
   constructor(
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
-    private azureStorageService: AzureStorageService,
+    private storageService: StorageService,
     private statusChangeService: StatusChangeService,
   ) {}
 
@@ -72,7 +72,7 @@ export class ProposalContractingService {
 
     if (hasCondition) {
       const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractCondition);
-      await this.azureStorageService.uploadFile(blobName, file, user);
+      await this.storageService.uploadFile(blobName, file, user);
       const upload = new UploadDto(blobName, file, UseCaseUpload.ContractCondition, user);
       addUpload(toBeUpdated, upload);
       addUacApprovalWithCondition(toBeUpdated, user.miiLocation, upload, vote);
@@ -101,7 +101,7 @@ export class ProposalContractingService {
       validateStatusChange(toBeUpdated, ProposalStatus.Contracting, user, throwValidation);
 
       const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractDraft);
-      await this.azureStorageService.uploadFile(blobName, file, user);
+      await this.storageService.uploadFile(blobName, file, user);
       const upload = new UploadDto(blobName, file, UseCaseUpload.ContractDraft, user);
 
       addUpload(toBeUpdated, upload);
@@ -136,7 +136,7 @@ export class ProposalContractingService {
       const uploadType =
         user.singleKnownRole === Role.Researcher ? UseCaseUpload.ResearcherContract : UseCaseUpload.LocationContract;
       const blobName = getBlobName(toBeUpdated.id, uploadType);
-      await this.azureStorageService.uploadFile(blobName, file, user);
+      await this.storageService.uploadFile(blobName, file, user);
       const upload = new UploadDto(blobName, file, uploadType, user);
       addUpload(toBeUpdated, upload);
     }
