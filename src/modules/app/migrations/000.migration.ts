@@ -2,9 +2,8 @@ import { Model } from 'mongoose';
 import { MigrationDocument } from '../schema/migration.schema';
 import { IDbMigration } from '../types/db-migration.interface';
 import { TermsConfigDocument } from 'src/modules/admin/schema/terms/terms-config.schema';
-import { termsAndConditionsSeedMii } from './constants/001.migration.constants';
+import { termsAndConditionsSeedMii, dataPrivacySeedMii } from './constants/000.migration.constants';
 import { DataPrivacyConfigDocument } from 'src/modules/admin/schema/data-privacy/data-privacy-config.schema';
-import { dataPrivacySeedMii } from './constants/006.migration.constants';
 
 export class Migration000 implements IDbMigration {
   constructor(

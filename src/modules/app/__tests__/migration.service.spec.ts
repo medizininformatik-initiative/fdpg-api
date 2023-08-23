@@ -4,20 +4,12 @@ import { Model } from 'mongoose';
 import { TermsConfigDocument } from 'src/modules/admin/schema/terms/terms-config.schema';
 import { AppDbIdentifier } from '../enums/app-db-identifier.enum';
 import { MigrationService } from '../migration.service';
-import {
-  Migration000,
-  Migration001,
-  Migration002,
-  Migration003,
-  Migration004,
-  Migration005,
-  Migration006,
-} from '../migrations';
+import { Migration000 } from '../migrations';
 import { Migration, MigrationDocument } from '../schema/migration.schema';
 import { Connection } from 'mongoose';
 import { getError } from 'test/get-error';
-import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { KeycloakService } from 'src/modules/user/keycloak.service';
+import { DataPrivacyConfigDocument } from 'src/modules/admin/schema/data-privacy/data-privacy-config.schema';
 
 jest.mock('../migrations');
 
@@ -26,15 +18,9 @@ describe('MigrationService', () => {
   let connection: Connection;
   let migrationModel: Model<MigrationDocument>;
   let termsConfigModel: Model<TermsConfigDocument>;
-  let proposalModel: Model<ProposalDocument>;
+  let dataPrivacyConfigModel: Model<DataPrivacyConfigDocument>;
 
   let migration000: jest.Mocked<Migration000>;
-  let migration001: jest.Mocked<Migration001>;
-  let migration002: jest.Mocked<Migration002>;
-  let migration003: jest.Mocked<Migration003>;
-  let migration004: jest.Mocked<Migration004>;
-  let migration005: jest.Mocked<Migration005>;
-  let migration006: jest.Mocked<Migration006>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -81,13 +67,11 @@ describe('MigrationService', () => {
     service = module.get<MigrationService>(MigrationService);
     migrationModel = module.get<Model<MigrationDocument>>(getModelToken('Migration'));
     termsConfigModel = module.get<Model<TermsConfigDocument>>(getModelToken('TermsConfig'));
-    proposalModel = module.get<Model<ProposalDocument>>(getModelToken('Proposal'));
+    dataPrivacyConfigModel = module.get<Model<DataPrivacyConfigDocument>>(getModelToken('DataPrivacyConfig'));
 
     connection = module.get<Connection>(getConnectionToken('Database'));
 
-    migration000 = new Migration000(migrationModel) as jest.Mocked<Migration000>;
-    migration001 = new Migration001(termsConfigModel) as jest.Mocked<Migration001>;
-
+    migration000 = new Migration000(migrationModel,termsConfigModel,dataPrivacyConfigModel) as jest.Mocked<Migration000>;
     jest.clearAllMocks();
   });
 
@@ -129,7 +113,6 @@ describe('MigrationService', () => {
 
       expect(migrationModel.findOne).toHaveBeenCalledWith({ id: AppDbIdentifier.Migration });
       expect(migration000.up).not.toHaveBeenCalled();
-      expect(migration001.up).toHaveBeenCalledTimes(1);
     });
 
     test.each([true, false])('should downgrade the db if desired', async (preventDowngrade: boolean) => {
@@ -149,14 +132,7 @@ describe('MigrationService', () => {
 
       expect(migrationModel.findOne).toHaveBeenCalledWith({ id: AppDbIdentifier.Migration });
       expect(migration000.up).not.toHaveBeenCalled();
-      expect(migration001.up).not.toHaveBeenCalled();
 
-      if (preventDowngrade) {
-        expect(migration001.down).not.toHaveBeenCalledTimes(1);
-      } else {
-        expect(migration001.down).toHaveBeenCalledTimes(1);
-      }
-    });
   });
 
   describe('DB Sessions', () => {
