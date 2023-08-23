@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@opentelemetry/exporter-trace-otlp-proto": "^0.40.0",
-    "@azure/storage-blob": "^12.14.0",
     "@nestjs/axios": "^2.0.0",
     "@nestjs/cache-manager": "^1.0.0",
     "@nestjs/common": "^9.4.2",

@@ -71,7 +71,11 @@ describe('MigrationService', () => {
 
     connection = module.get<Connection>(getConnectionToken('Database'));
 
-    migration000 = new Migration000(migrationModel,termsConfigModel,dataPrivacyConfigModel) as jest.Mocked<Migration000>;
+    migration000 = new Migration000(
+      migrationModel,
+      termsConfigModel,
+      dataPrivacyConfigModel,
+    ) as jest.Mocked<Migration000>;
     jest.clearAllMocks();
   });
 
@@ -132,9 +136,8 @@ describe('MigrationService', () => {
 
       expect(migrationModel.findOne).toHaveBeenCalledWith({ id: AppDbIdentifier.Migration });
       expect(migration000.up).not.toHaveBeenCalled();
-
+    });
   });
-
   describe('DB Sessions', () => {
     it('should start and end a session', async () => {
       (service as any).desiredDbVersion = 0;
