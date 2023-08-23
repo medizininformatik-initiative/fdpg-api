@@ -38,9 +38,6 @@ export class MigrationService implements OnModuleInit {
       await this.upgrade(currentVersion);
       // Check for next migration
       await this.onModuleInit();
-    } else if (currentVersion > this.desiredDbVersion && !this.preventDowngrade) {
-      // Check for next migration
-      await this.onModuleInit();
     }
   }
 
