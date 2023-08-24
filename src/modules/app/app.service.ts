@@ -16,7 +16,6 @@ export class AppService {
   }
 
   getHealth(): HealthDto {
-
     return this.health;
   }
 
