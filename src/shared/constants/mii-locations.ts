@@ -63,7 +63,7 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.KUM]: {
-    display: 'Klinikum der Universität München',
+    display: 'LMU Klinikum',
     definition: 'DIFUTURE',
   },
 
@@ -123,7 +123,7 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.UKM]: {
-    display: 'Universitätsklinikum Münster',
+    display: 'Westfälische Wilhelms-Universität Münster',
     definition: 'HiGHmed',
   },
 
@@ -133,7 +133,7 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.UKDD]: {
-    display: 'Universitätsklinikum Carl Gustav Carus Dresden',
+    display: 'Technische Universität Dresden',
     definition: 'MIRACUM',
   },
 
@@ -168,7 +168,7 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.UMMD]: {
-    display: 'Universitätsklinikum Magdeburg',
+    display: 'Universitätsmedizin Magdeburg',
     definition: 'MIRACUM',
   },
 
@@ -183,7 +183,7 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.UKA]: {
-    display: 'Uniklinik RWTH Aachen',
+    display: 'Universitätsklinikum Aachen',
     definition: 'SMITH',
   },
 

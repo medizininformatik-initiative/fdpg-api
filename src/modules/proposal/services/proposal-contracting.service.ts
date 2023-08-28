@@ -34,6 +34,10 @@ import { validateContractSign } from '../utils/validate-contract-sign.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
 import { validateDizApproval, validateUacApproval } from '../utils/validate-vote.util';
 import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
+import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
+import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 
 @Injectable()
 export class ProposalContractingService {
@@ -82,24 +86,40 @@ export class ProposalContractingService {
     await this.eventEngineService.handleProposalUacApproval(saveResult, vote.value, user.miiLocation);
   }
 
-  async initContracting(proposalId: string, file: Express.Multer.File, user: IRequestUser): Promise<void> {
-    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
-    const oldStatus = toBeUpdated.status;
+  async initContracting(
+    proposalId: string,
+    file: Express.Multer.File,
+    locations: InitContractingDto,
+    user: IRequestUser,
+  ): Promise<void> {
+    const locationList = locations.locations;
+    if (locationList.length > 0) {
+      const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+      const oldStatus = toBeUpdated.status;
 
-    const throwValidation = toBeUpdated.status !== ProposalStatus.LocationCheck;
-    validateStatusChange(toBeUpdated, ProposalStatus.Contracting, user, throwValidation);
+      const throwValidation = toBeUpdated.status !== ProposalStatus.LocationCheck;
+      validateStatusChange(toBeUpdated, ProposalStatus.Contracting, user, throwValidation);
 
-    const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractDraft);
-    await this.storageService.uploadFile(blobName, file, user);
-    const upload = new UploadDto(blobName, file, UseCaseUpload.ContractDraft, user);
+      const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractDraft);
+      await this.storageService.uploadFile(blobName, file, user);
+      const upload = new UploadDto(blobName, file, UseCaseUpload.ContractDraft, user);
 
-    addUpload(toBeUpdated, upload);
+      addUpload(toBeUpdated, upload);
 
-    toBeUpdated.status = ProposalStatus.Contracting;
-    await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
-    addHistoryItemForStatus(toBeUpdated, user, oldStatus);
-    const saveResult = await toBeUpdated.save();
-    await this.eventEngineService.handleProposalStatusChange(saveResult);
+      toBeUpdated.status = ProposalStatus.Contracting;
+      await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user, locationList);
+      addHistoryItemForStatus(toBeUpdated, user, oldStatus);
+      const saveResult = await toBeUpdated.save();
+      await this.eventEngineService.handleProposalStatusChange(saveResult);
+    } else {
+      const errorInfo = new ValidationErrorInfo({
+        constraint: 'hasLocation',
+        message: 'No Location assigned',
+        property: 'locations',
+        code: BadRequestError.LocationNotAssignedToContract,
+      });
+      throw new ValidationException([errorInfo]);
+    }
   }
 
   async signContract(

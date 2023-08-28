@@ -26,6 +26,7 @@ import { ProposalCrudService } from '../proposal-crud.service';
 import { StatusChangeService } from '../status-change.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { NoErrorThrownError, getError } from 'test/get-error';
+import { InitContractingDto } from '../../dto/proposal/init-contracting.dto';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -233,8 +234,9 @@ describe('ProposalContractingService', () => {
 
       jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
       const file = { buffer: 'buffer' } as any as Express.Multer.File;
+      const selectedLocations = { locations: ['MRI'] } as any as InitContractingDto;
 
-      await proposalContractingService.initContracting(proposalId, file, request.user);
+      await proposalContractingService.initContracting(proposalId, file, selectedLocations, request.user);
 
       expect(validateStatusChange).toHaveBeenCalledWith(
         proposalDocument,
@@ -244,7 +246,9 @@ describe('ProposalContractingService', () => {
       );
       expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
       expect(addUpload).toHaveBeenCalledWith(proposalDocument, expect.objectContaining({ blobName: 'blobName' }));
-      expect(statusChangeService.handleEffects).toHaveBeenCalledWith(expectedDocument, proposalStatus, request.user);
+      expect(statusChangeService.handleEffects).toHaveBeenCalledWith(expectedDocument, proposalStatus, request.user, [
+        'MRI',
+      ]);
       expect(addHistoryItemForStatus).toHaveBeenCalledWith(expectedDocument, request.user, proposalStatus);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(eventEngineService.handleProposalStatusChange).toHaveBeenCalledWith(

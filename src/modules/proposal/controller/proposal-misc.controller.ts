@@ -10,6 +10,7 @@ import { ProposalValidation } from '../decorators/validation.decorator';
 import { FdpgChecklistSetDto } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { SetBooleanStatusDto, SetProposalStatusDto } from '../dto/set-status.dto';
+import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
 
 @ApiController('proposals', undefined, 'misc')
@@ -85,5 +86,20 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     return await this.proposalMiscService.markSectionAsDone(mainId, subId, value, user);
+  }
+
+  @Auth(Role.FdpgMember)
+  @Put(':id/fdpgCheckNotes')
+  @ApiNotFoundResponse({ description: 'Item could not be found' })
+  @ApiNoContentResponse({ description: 'General Text successfully updated.' })
+  @HttpCode(204)
+  @ProposalValidation()
+  @ApiOperation({ summary: 'Updates the fdpgCheckNotes field value.' })
+  async setFdpgCheckNotes(
+    @Param() { id }: MongoIdParamDto,
+    @Body() { value }: SetFdpgCheckNotesDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<void> {
+    return await this.proposalMiscService.setFdpgCheckNotes(id, value, user);
   }
 }

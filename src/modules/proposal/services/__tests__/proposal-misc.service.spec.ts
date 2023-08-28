@@ -22,7 +22,7 @@ import { addUpload, getBlobName } from '../../utils/proposal.utils';
 import { UseCaseUpload } from '../../enums/upload-type.enum';
 import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { FdpgChecklistSetDto } from '../../dto/proposal/fdpg-checklist.dto';
-import { validateFdpgChecklist } from '../../utils/validate-fdpg-checklist.util';
+import { validateFdpgCheckStatus } from '../../utils/validate-fdpg-check-status.util';
 import { addFdpgChecklist } from '../../utils/add-fdpg-checklist.util';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { getError } from 'test/get-error';
@@ -52,8 +52,8 @@ jest.mock('../../utils/proposal.utils', () => ({
   getBlobName: jest.fn().mockReturnValue('blobName'),
 }));
 
-jest.mock('../../utils/validate-fdpg-checklist.util', () => ({
-  validateFdpgChecklist: jest.fn(),
+jest.mock('../../utils/validate-fdpg-check-status.util', () => ({
+  validateFdpgCheckStatus: jest.fn(),
 }));
 
 jest.mock('../../utils/add-fdpg-checklist.util', () => ({
@@ -414,7 +414,7 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.setFdpgChecklist(proposalId, checklist, request.user);
 
-      expect(validateFdpgChecklist).toBeCalledWith(proposalDocument);
+      expect(validateFdpgCheckStatus).toBeCalledWith(proposalDocument);
       expect(addFdpgChecklist).toBeCalledWith(proposalDocument, checklist);
       expect(proposalDocument.save).toBeCalled();
     });
@@ -461,6 +461,19 @@ describe('ProposalMiscService', () => {
       const error = await getError(async () => await call);
 
       expect(error).toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('setFdpgCheckNotes', () => {
+    it('should set fdpg checkNotes', async () => {
+      const proposalDocument = getProposalDocument();
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument);
+      const text = 'text';
+
+      await proposalMiscService.setFdpgCheckNotes(proposalId, text, request.user);
+
+      expect(validateFdpgCheckStatus).toBeCalledWith(proposalDocument);
+      expect(proposalDocument.save).toBeCalled();
     });
   });
 });

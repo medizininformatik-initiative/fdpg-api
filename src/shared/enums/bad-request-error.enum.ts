@@ -11,4 +11,5 @@ export enum BadRequestError {
   ProposalStatusNotSwitchable = '400-010',
   DeclineReason = '400-011',
   ReportsMaxUploadCount = '400-012',
+  LocationNotAssignedToContract = '400-013',
 }

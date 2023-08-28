@@ -8,6 +8,7 @@ import { ResearcherIdentityDto } from '../../dto/proposal/participants/researche
 import { SetProposalStatusDto } from '../../dto/set-status.dto';
 import { ProposalMiscController } from '../proposal-misc.controller';
 import { ProposalMiscService } from '../../services/proposal-misc.service';
+import { SetFdpgCheckNotesDto } from '../../dto/set-fdpg-check-notes.dto';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -105,6 +106,19 @@ describe('ProposalMiscController', () => {
         input.value,
         request.user,
       );
+    });
+  });
+
+  describe('setFdpgCheckNotes', () => {
+    it('should set the fdpg checkNotes of the proposal', async () => {
+      const params = {
+        id: 'mongoId',
+      };
+      const input = new SetFdpgCheckNotesDto();
+      jest.spyOn(proposalMiscService, 'setFdpgCheckNotes');
+
+      await proposalController.setFdpgCheckNotes(params, input, request);
+      expect(proposalMiscService.setFdpgCheckNotes).toHaveBeenCalledWith(params.id, input.value, request.user);
     });
   });
 });

@@ -23,7 +23,7 @@ export class FeasibilityClient {
   private currentAccessToken: string;
 
   private configureService() {
-    this.keycloakHost = this.configService.get('FEASIBILITY_KEYCLOAK_HOST') || this.configService.get('KEYCLOAK_HOST');
+    this.keycloakHost = this.configService.get('KEYCLOAK_HOST');
     const feasibilityHost = this.configService.get('FEASIBILITY_HOST');
     const keycloakRealm = this.configService.get('KEYCLOAK_REALM');
     this.clientId = this.configService.get('KEYCLOAK_CLIENT_FOR_FEASIBILITY_ID');

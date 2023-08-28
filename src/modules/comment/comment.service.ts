@@ -12,7 +12,7 @@ import { FdpgTaskType } from '../proposal/enums/fdpg-task-type.enum';
 import { ProposalDocument } from '../proposal/schema/proposal.schema';
 import { addFdpgTaskAndReturnId, removeFdpgTask } from '../proposal/utils/add-fdpg-task.util';
 import { filterAllowedAnswers, getAnswer, getAnswersLocations, validateAnswer } from './comment.utils';
-import { AnswerCreateDto, AnswerUpdateDto } from './dto/answer.dto';
+import { AnswerCreateDto, AnswerGetDto, AnswerUpdateDto } from './dto/answer.dto';
 import { CommentCreateReferenceDto, CommentReferenceDto } from './dto/comment-query.dto';
 import { CommentCreateDto, CommentGetDto, CommentUpdateDto } from './dto/comment.dto';
 import { CommentType } from './enums/comment-type.enum';
@@ -118,13 +118,24 @@ export class CommentService {
     }
 
     const saveResult = await mainComment.save();
-    const plain = saveResult.toObject();
 
     await this.eventEngineService.handleProposalCommentAnswerCreation(proposal, saveResult, answerModel, user);
 
     saveResult.answers = filterAllowedAnswers(user, saveResult);
-
-    return plainToClass(CommentGetDto, plain, { groups: [user.singleKnownRole] });
+    const finalAnswers = saveResult.answers.map((answer) => {
+      const answerGroups: string[] = [user.singleKnownRole];
+      if (answer.owner.id === user.userId) {
+        answerGroups.push(ValidationGroup.IsOwnLocation);
+      }
+      return plainToClass(AnswerGetDto, JSON.parse(JSON.stringify(answer)), {
+        groups: answerGroups,
+      });
+    });
+    saveResult.answers = [];
+    const plain = saveResult.toObject();
+    const finalComment = plainToClass(CommentGetDto, plain, { groups: [user.singleKnownRole] });
+    finalComment.answers = finalAnswers;
+    return finalComment;
   }
 
   async findForItem(commentReference: CommentReferenceDto, user: IRequestUser): Promise<CommentGetDto[]> {
@@ -148,9 +159,22 @@ export class CommentService {
       }
 
       comment.answers = filterAllowedAnswers(user, comment);
-
+      const finalAnswers = comment.answers.map((answer) => {
+        const answerGroups: string[] = [user.singleKnownRole];
+        if (answer.owner.id === user.userId) {
+          answerGroups.push(ValidationGroup.IsOwnLocation);
+        }
+        return plainToClass(AnswerGetDto, JSON.parse(JSON.stringify(answer)), {
+          groups: answerGroups,
+        });
+      });
+      comment.answers = [];
       const plain = comment.toObject();
-      return plainToClass(CommentGetDto, plain, { groups });
+      const finalComment = plainToClass(CommentGetDto, plain, {
+        groups,
+      });
+      finalComment.answers = finalAnswers;
+      return finalComment;
     });
   }
 
@@ -160,7 +184,11 @@ export class CommentService {
     user: IRequestUser,
   ): Promise<CommentGetDto> {
     const mainComment = await this.findDocument(commentId);
-    if (mainComment.owner.id !== user.userId) {
+
+    if (
+      !(mainComment.owner.role === Role.FdpgMember && user.singleKnownRole === Role.FdpgMember) &&
+      mainComment.owner.id !== user.userId
+    ) {
       throw new ForbiddenException();
     }
 
@@ -186,7 +214,10 @@ export class CommentService {
     const mainComment = await this.findDocument(commentId);
     const { answer } = getAnswer(mainComment, answerId);
 
-    if (answer.owner.id !== user.userId) {
+    if (
+      !(answer.owner.role === Role.FdpgMember && user.singleKnownRole === Role.FdpgMember) &&
+      answer.owner.id !== user.userId
+    ) {
       throw new ForbiddenException();
     }
 

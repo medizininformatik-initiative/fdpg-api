@@ -75,12 +75,12 @@ spec:
               value: {{ .Values.appConfig.environment.keycloakClientForFeasibilityId }}
             - name: KEYCLOAK_CLIENT_FOR_FEASIBILITY_SECRET
               value: {{ .Values.appConfig.environment.keycloakClientForFeasibilitySecret }}
-            - name: SENDGRID_API_KEY
-              value: {{ .Values.appConfig.environment.sendgridApiKey }}
-            - name: SENDGRID_SENDER_MAIL
-              value: {{ .Values.appConfig.environment.sendgridSenderMail }}
-            - name: SENDGRID_SENDER_NAME
-              value: {{ .Values.appConfig.environment.sendgridSenderName }}
+            - name: SENDINBLUE_API_KEY
+              value: {{ .Values.appConfig.environment.sendinblueApiKey }}
+            - name: SENDINBLUE_SENDER_MAIL
+              value: {{ .Values.appConfig.environment.sendinblueSenderMail }}
+            - name: SENDINBLUE_SENDER_NAME
+              value: {{ .Values.appConfig.environment.sendinblueSenderName }}
             - name: MONGO_CONNECTION_STRING
               valueFrom:
                 secretKeyRef:

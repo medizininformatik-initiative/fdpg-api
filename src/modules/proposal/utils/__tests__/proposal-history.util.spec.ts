@@ -12,6 +12,7 @@ import {
   addHistoryItemForContractSign,
   addHistoryItemForContractSystemReject,
   addHistoryItemForProposalLock,
+  addHistoryItemForUnselectedLocation,
 } from '../proposal-history.util';
 
 const proposalId = 'proposalId';
@@ -173,6 +174,20 @@ describe('ProposalHistoryUtil', () => {
 
       expect(proposal.history.length).toBe(1);
       expect(proposal.history[0].type).toBe(type);
+    });
+  });
+
+  describe('addHistoryItemForFdpgApprovedLocationRemoved', () => {
+    it(`should add history item for unselecting approved location from contracting`, () => {
+      const request = getRequest();
+      const proposal = getProposalDocument();
+
+      addHistoryItemForUnselectedLocation(proposal, request.user, request.user.miiLocation);
+
+      expect(proposal.history.length).toBe(1);
+
+      const expectedType = HistoryEventType.FdpgApprovedLocationRemoved;
+      expect(proposal.history[0].type).toBe(expectedType);
     });
   });
 

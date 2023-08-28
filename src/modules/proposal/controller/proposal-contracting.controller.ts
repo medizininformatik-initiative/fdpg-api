@@ -26,6 +26,7 @@ import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { SetUacApprovalDto, SetUacApprovalWithFileDto } from '../dto/set-uac-approval.dto';
 import { SignContractDto, SignContractWithFileDto } from '../dto/sign-contract.dto';
 import { ProposalContractingService } from '../services/proposal-contracting.service';
+import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
 
 @ApiController('proposals', undefined, 'contracting')
 export class ProposalContractingController {
@@ -78,9 +79,10 @@ export class ProposalContractingController {
   async initContracting(
     @Param() { id }: MongoIdParamDto,
     @UploadedFile() file: Express.Multer.File,
+    @Body() locations: InitContractingDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    return await this.proposalContractingService.initContracting(id, file, user);
+    return await this.proposalContractingService.initContracting(id, file, locations, user);
   }
 
   @Auth(Role.DizMember, Role.Researcher)

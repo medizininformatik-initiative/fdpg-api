@@ -121,6 +121,16 @@ export const addHistoryItemForUacCondition = (
   pushHistoryItem(proposalAfterChanges, user, type, location);
 };
 
+export const addHistoryItemForUnselectedLocation = (
+  proposalAfterChanges: Proposal,
+  user: IRequestUser,
+  location: MiiLocation,
+): void => {
+  const type = HistoryEventType.FdpgApprovedLocationRemoved;
+
+  pushHistoryItem(proposalAfterChanges, user, type, location);
+};
+
 export const addHistoryItemForContractSign = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,

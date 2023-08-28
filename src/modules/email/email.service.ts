@@ -1,16 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as SendGrid from '@sendgrid/mail';
+import * as SendInBlue from '@sendinblue/client';
 import { EmailCategory } from './types/email-category.enum';
 import { IEmail } from './types/email.interface';
-
 @Injectable()
 export class EmailService {
+  private apiInstance: SendInBlue.TransactionalEmailsApi;
   constructor(private readonly configService: ConfigService) {
-    SendGrid.setApiKey(this.configService.get<string>('SENDGRID_API_KEY'));
+    this.apiInstance = new SendInBlue.TransactionalEmailsApi();
 
-    this.senderInformation.email = this.configService.get<string>('SENDGRID_SENDER_MAIL');
-    this.senderInformation.name = this.configService.get<string>('SENDGRID_SENDER_NAME');
+    const apiKey = this.configService.get<string>('SENDINBLUE_API_KEY');
+    this.apiInstance.setApiKey(SendInBlue.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+    this.senderInformation.email = this.configService.get<string>('SENDINBLUE_SENDER_MAIL');
+    this.senderInformation.name = this.configService.get<string>('SENDINBLUE_SENDER_NAME');
     this.preventEmailSending =
       (this.configService.get<string>('EMAIL_SERVICE_PREVENT_ALL') ?? '').toLowerCase() === 'true';
     this.environment = this.configService.get<string>('ENV');
@@ -20,7 +22,6 @@ export class EmailService {
     name: '',
     email: '',
   };
-
   private preventEmailSending: boolean;
   private environment: string;
 
@@ -38,12 +39,25 @@ export class EmailService {
 
     email.categories = [...email.categories, ...baseCategories];
 
-    const sendGridMail: SendGrid.MailDataRequired = {
-      ...email,
-      from: this.senderInformation,
-    };
+    const transactionalEmail = new SendInBlue.SendSmtpEmail();
+    if (isMultiple) {
+      transactionalEmail.messageVersions = email.to.map((email) => ({
+        to: [{ email }],
+      }));
+    } else {
+      transactionalEmail.to = email.to.map((email) => ({ email }));
+    }
+    transactionalEmail.sender = this.senderInformation;
+    transactionalEmail.tags = email.categories;
+    transactionalEmail.subject = email.subject;
+    if ('html' in email) {
+      transactionalEmail.htmlContent = email.html;
+    }
+    if ('text' in email) {
+      transactionalEmail.textContent = email.text;
+    }
     try {
-      await SendGrid.send(sendGridMail, isMultiple);
+      await this.apiInstance.sendTransacEmail(transactionalEmail);
     } catch (error) {
       console.log('Failed sending email');
       console.log(error);

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ALL_ACTIVE_LOCATIONS } from 'src/shared/constants/mii-locations';
+import { ALL_ACTIVE_LOCATIONS, INACTIVE_LOCATIONS, MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ScheduleType } from '../../scheduler/enums/schedule-type.enum';
 import { SchedulerService } from '../../scheduler/scheduler.service';
@@ -10,6 +10,7 @@ import { removeFdpgTasksForContracting, removeFdpgTasksForDataDelivery } from '.
 import { setDueDate } from '../utils/due-date.util';
 import {
   declineUnansweredConditions,
+  declineUnselectedLocations,
   declineUnansweredContracts,
   excludeAllRequestedLocations,
 } from '../utils/location-flow.util';
@@ -18,7 +19,12 @@ import {
 export class StatusChangeService {
   constructor(private schedulerService: SchedulerService) {}
 
-  async handleEffects(proposalAfterChanges: Proposal, oldStatus: ProposalStatus, user: IRequestUser): Promise<void> {
+  async handleEffects(
+    proposalAfterChanges: Proposal,
+    oldStatus: ProposalStatus,
+    user: IRequestUser,
+    locationList?: MiiLocation[],
+  ): Promise<void> {
     if (proposalAfterChanges.status === oldStatus) {
       return;
     }
@@ -47,8 +53,19 @@ export class StatusChangeService {
         proposalAfterChanges.uacApprovedLocations = [];
         proposalAfterChanges.requestedButExcludedLocations = [];
 
-        // All active locations get it
-        proposalAfterChanges.openDizChecks = [...ALL_ACTIVE_LOCATIONS];
+        const wantsAllLocationsOrNothing =
+          proposalAfterChanges.userProject.addressees.desiredLocations.includes(MiiLocation.VirtualAll) ||
+          !proposalAfterChanges.userProject.addressees.desiredLocations.length;
+
+        const requestedLocations = wantsAllLocationsOrNothing
+          ? [...ALL_ACTIVE_LOCATIONS]
+          : [
+              ...proposalAfterChanges.userProject.addressees.desiredLocations.filter(
+                (desiredLocation) => !INACTIVE_LOCATIONS.includes(desiredLocation),
+              ),
+            ];
+
+        proposalAfterChanges.openDizChecks = requestedLocations;
         proposalAfterChanges.numberOfRequestedLocations = proposalAfterChanges.openDizChecks.length;
 
         proposalAfterChanges.statusChangeToLocationCheckAt = new Date();
@@ -64,19 +81,20 @@ export class StatusChangeService {
       case ProposalStatus.Contracting:
         // Decline method needs to be at first
         declineUnansweredConditions(proposalAfterChanges, user);
+        declineUnselectedLocations(proposalAfterChanges, user, locationList);
 
         proposalAfterChanges.requestedButExcludedLocations = [
-          ...proposalAfterChanges.requestedButExcludedLocations,
-          ...proposalAfterChanges.openDizChecks,
-          ...proposalAfterChanges.dizApprovedLocations,
-          ...proposalAfterChanges.signedContracts,
+          ...new Set([
+            ...proposalAfterChanges.requestedButExcludedLocations,
+            ...proposalAfterChanges.openDizChecks,
+            ...proposalAfterChanges.dizApprovedLocations,
+            ...proposalAfterChanges.signedContracts,
+          ]),
         ];
 
         proposalAfterChanges.openDizChecks = [];
         proposalAfterChanges.dizApprovedLocations = [];
         proposalAfterChanges.signedContracts = [];
-
-        // We leave untouched: proposalAfterChanges.uacApprovedLocations
 
         proposalAfterChanges.numberOfApprovedLocations = proposalAfterChanges.uacApprovedLocations.length;
         removeFdpgTasksForContracting(proposalAfterChanges);
@@ -92,10 +110,12 @@ export class StatusChangeService {
         declineUnansweredContracts(proposalAfterChanges, user);
 
         proposalAfterChanges.requestedButExcludedLocations = [
-          ...proposalAfterChanges.requestedButExcludedLocations,
-          ...proposalAfterChanges.openDizChecks,
-          ...proposalAfterChanges.dizApprovedLocations,
-          ...proposalAfterChanges.uacApprovedLocations,
+          ...new Set([
+            ...proposalAfterChanges.requestedButExcludedLocations,
+            ...proposalAfterChanges.openDizChecks,
+            ...proposalAfterChanges.dizApprovedLocations,
+            ...proposalAfterChanges.uacApprovedLocations,
+          ]),
         ];
         proposalAfterChanges.openDizChecks = [];
         proposalAfterChanges.dizApprovedLocations = [];

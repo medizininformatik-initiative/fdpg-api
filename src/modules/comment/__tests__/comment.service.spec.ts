@@ -229,13 +229,12 @@ describe('CommentService', () => {
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
       CommentModel.findById.mockResolvedValueOnce(mainComment);
-
       const result = await service.createAnswer(answerCreateDto, commentId, user);
       expect(validateAnswer).toBeCalledWith(mainComment, user);
       expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.Comment);
       expect(proposal.save).toBeCalledTimes(1);
       expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
-      expect(result.answers.length).toBe(1);
+      expect(result.answers.length).toBe(0);
       expect(eventEngineService.handleProposalCommentAnswerCreation).toBeCalledWith(
         proposal,
         expect.objectContaining({ content: 'comment' }),
@@ -248,7 +247,7 @@ describe('CommentService', () => {
   describe('findForItem', () => {
     test.each([Role.Researcher, Role.DizMember])('', async (role) => {
       const mainComment = {
-        toObject: jest.fn().mockReturnValue('toObjectResult'),
+        toObject: jest.fn().mockReturnValue({ answers: ['toObjectResult'] }),
 
         referenceType: ReferenceType.Proposal,
         owner: {
@@ -280,7 +279,7 @@ describe('CommentService', () => {
 
       expect(CommentModel.find).toBeCalledWith(filter);
       expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
-      expect(result).toEqual(['toObjectResult']);
+      expect(result).toEqual([{ answers: [] }]);
     });
   });
 
@@ -402,6 +401,42 @@ describe('CommentService', () => {
       expect(error).toBeDefined();
       expect(error).toBeInstanceOf(ForbiddenException);
     });
+
+    it('should not throw for updates from different owner but both Fdpg member', async () => {
+      const user = {
+        singleKnownRole: Role.FdpgMember,
+        userId: 'someOtherUserId',
+      } as unknown as IRequestUser;
+      const newContent = 'new Content';
+      const newLocations = [MiiLocation.UKL];
+      const oldLocations = [MiiLocation.UMG];
+
+      const mainComment = {
+        save: jest.fn().mockResolvedValue({
+          toObject: jest.fn().mockReturnValue('toObjectResult'),
+        }),
+
+        referenceType: ReferenceType.Proposal,
+        owner: {
+          id: 'ownerId',
+          role: Role.FdpgMember,
+        },
+        locations: oldLocations,
+        content: 'oldContent',
+      };
+
+      const commentId = 'commentId';
+      const updateCommentDto = {
+        content: newContent,
+        locations: newLocations,
+      } as unknown as CommentUpdateDto;
+
+      CommentModel.findById.mockResolvedValueOnce(mainComment);
+
+      const result = await service.updateComment(commentId, updateCommentDto, user);
+      expect(mainComment.save).toBeCalledTimes(1);
+      expect(result).toEqual('toObjectResult');
+    });
   });
 
   describe('updateAnswer', () => {
@@ -511,7 +546,7 @@ describe('CommentService', () => {
       expect(answer.content).toEqual(newContent);
     });
 
-    it('should throw on updating an answer from another user', async () => {
+    it('should update the answer for different fdpg member', async () => {
       const commentId = 'commentId';
       const answerId = 'answerId';
       const newContent = 'new Content';
@@ -535,6 +570,60 @@ describe('CommentService', () => {
 
       const user = {
         singleKnownRole: Role.FdpgMember,
+        userId: 'otherOwnerId',
+      } as unknown as IRequestUser;
+
+      const updateAnswerDto = {
+        content: newContent,
+        locations: newLocations,
+      };
+
+      const answer = {
+        content: oldContent,
+        locations: oldLocations,
+        owner: {
+          id: 'ownerId',
+          role: Role.FdpgMember,
+        },
+      };
+
+      CommentModel.findById.mockResolvedValueOnce(mainComment);
+      (getAnswer as any).mockReturnValue({ answer });
+      (getAnswersLocations as any).mockReturnValue([MiiLocation.KUM]);
+
+      const result = await service.updateAnswer(commentId, answerId, updateAnswerDto, user);
+
+      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(result).toEqual('toObjectResult');
+      expect(answer.locations).not.toEqual(oldLocations);
+      expect(answer.locations).toEqual(newLocations);
+      expect(answer.content).toEqual(newContent);
+    });
+
+    it('should throw on updating an answer from another user if they are not both fdpg member', async () => {
+      const commentId = 'commentId';
+      const answerId = 'answerId';
+      const newContent = 'new Content';
+      const oldContent = 'old Content';
+      const newLocations = [MiiLocation.UKL];
+      const oldLocations = [MiiLocation.UMG];
+
+      const mainComment = {
+        save: jest.fn().mockResolvedValue({
+          toObject: jest.fn().mockReturnValue('toObjectResult'),
+        }),
+
+        referenceType: ReferenceType.Proposal,
+        owner: {
+          id: 'ownerId',
+          role: Role.FdpgMember,
+        },
+        locations: oldLocations,
+        content: 'oldContent',
+      };
+
+      const user = {
+        singleKnownRole: Role.DizMember,
         userId: 'anotherUserId',
       } as unknown as IRequestUser;
 

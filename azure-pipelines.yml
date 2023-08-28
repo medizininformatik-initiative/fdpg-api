@@ -218,7 +218,7 @@ stages:
                 appConfig.environment.storageContainerName=$(devfdpgStorageContainerName)
                 appConfig.environment.keycloakClientSecret=$(keycloak-api-client-secret-dev)
                 appConfig.environment.keycloakClientForFeasibilitySecret=$(keycloak-api-client-for-feasibility-secret-dev)
-                appConfig.environment.sendgridApiKey=$(sendgrid-apikey-api-dev)
+                appConfig.environment.sendinblueApiKey=$(sendinblue-apikey-dev)
                 appConfig.environment.releaseDate=$(pipeDate)
                 appConfig.environment.releaseTime=$(pipeTime)
                 appConfig.environment.releaseNoOfDate=$(buildNumberOfDate)

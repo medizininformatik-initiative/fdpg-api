@@ -8,9 +8,14 @@ import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { setDueDate } from '../../utils/due-date.util';
 import { ScheduleType } from 'src/modules/scheduler/enums/schedule-type.enum';
-import { declineUnansweredConditions, excludeAllRequestedLocations } from '../../utils/location-flow.util';
+import {
+  declineUnansweredConditions,
+  declineUnselectedLocations,
+  excludeAllRequestedLocations,
+} from '../../utils/location-flow.util';
 import { removeFdpgTasksForContracting, removeFdpgTasksForDataDelivery } from '../../utils/add-fdpg-task.util';
 import { declineUnansweredContracts } from '../../utils/location-flow.util';
+import { UacApproval } from '../../schema/sub-schema/uac-approval.schema';
 
 jest.mock('../../utils/due-date.util', () => ({
   setDueDate: jest.fn(),
@@ -18,6 +23,7 @@ jest.mock('../../utils/due-date.util', () => ({
 
 jest.mock('../../utils/location-flow.util', () => ({
   declineUnansweredConditions: jest.fn(),
+  declineUnselectedLocations: jest.fn(),
   declineUnansweredContracts: jest.fn(),
   excludeAllRequestedLocations: jest.fn(),
 }));
@@ -53,11 +59,17 @@ const proposalContent = {
     mayor: 1,
     minor: 0,
   },
+  userProject: {
+    addressees: {
+      desiredLocations: [MiiLocation.UKL],
+    },
+  },
   requestedButExcludedLocations: [],
   openDizChecks: [MiiLocation.Charité, MiiLocation.KC],
   dizApprovedLocations: [MiiLocation.KUM, MiiLocation.MHH],
   signedContracts: [MiiLocation.MRI, MiiLocation.UKA],
   uacApprovedLocations: [MiiLocation.UKAU, MiiLocation.UKB],
+  uacApprovals: [{}] as UacApproval[],
 };
 
 const getProposalDocument = () => {
@@ -152,34 +164,39 @@ describe('StatusChangeService', () => {
     });
 
     describe(ProposalStatus.LocationCheck, () => {
-      it('should handle the new status correctly', async () => {
-        const oldStatus = ProposalStatus.FdpgCheck;
-        const proposalDocument = getProposalDocument();
-        proposalDocument.status = ProposalStatus.LocationCheck;
+      test.each([true, false])(
+        'should handle the new status correctly (allLocations: %s)',
+        async (allLocations: boolean) => {
+          const oldStatus = ProposalStatus.FdpgCheck;
+          const proposalDocument = getProposalDocument();
+          proposalDocument.status = ProposalStatus.LocationCheck;
+          const locationsRequested = allLocations ? ALL_ACTIVE_LOCATIONS : [MiiLocation.UKL];
+          proposalContent.userProject.addressees.desiredLocations = [...locationsRequested];
 
-        await statusChangeService.handleEffects(proposalDocument, oldStatus, request.user);
+          await statusChangeService.handleEffects(proposalDocument, oldStatus, request.user);
 
-        expect(setDueDate).toHaveBeenCalledWith(proposalDocument);
-        expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, [
-          ScheduleType.ReminderFdpgCheck,
-        ]);
-        expect(schedulerService.createEvents).toHaveBeenCalledWith({
-          proposal: proposalDocument,
-          types: [
-            ScheduleType.ReminderLocationCheck1,
-            ScheduleType.ReminderLocationCheck2,
-            ScheduleType.ReminderLocationCheck3,
-          ],
-        });
+          expect(setDueDate).toHaveBeenCalledWith(proposalDocument);
+          expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, [
+            ScheduleType.ReminderFdpgCheck,
+          ]);
+          expect(schedulerService.createEvents).toHaveBeenCalledWith({
+            proposal: proposalDocument,
+            types: [
+              ScheduleType.ReminderLocationCheck1,
+              ScheduleType.ReminderLocationCheck2,
+              ScheduleType.ReminderLocationCheck3,
+            ],
+          });
 
-        expect(proposalDocument.signedContracts).toEqual([]);
-        expect(proposalDocument.dizApprovedLocations).toEqual([]);
-        expect(proposalDocument.uacApprovedLocations).toEqual([]);
-        expect(proposalDocument.requestedButExcludedLocations).toEqual([]);
-        expect(proposalDocument.openDizChecks).toEqual([...ALL_ACTIVE_LOCATIONS]);
-        expect(proposalDocument.numberOfRequestedLocations).toBe(proposalDocument.openDizChecks.length);
-        expect(proposalDocument.statusChangeToLocationCheckAt).toBeDefined();
-      });
+          expect(proposalDocument.signedContracts).toEqual([]);
+          expect(proposalDocument.dizApprovedLocations).toEqual([]);
+          expect(proposalDocument.uacApprovedLocations).toEqual([]);
+          expect(proposalDocument.requestedButExcludedLocations).toEqual([]);
+          expect(proposalDocument.openDizChecks).toEqual([...locationsRequested]);
+          expect(proposalDocument.numberOfRequestedLocations).toBe(proposalDocument.openDizChecks.length);
+          expect(proposalDocument.statusChangeToLocationCheckAt).toBeDefined();
+        },
+      );
     });
 
     describe(ProposalStatus.Contracting, () => {
@@ -188,7 +205,7 @@ describe('StatusChangeService', () => {
         const proposalDocument = getProposalDocument();
         proposalDocument.status = ProposalStatus.Contracting;
 
-        await statusChangeService.handleEffects(proposalDocument, oldStatus, request.user);
+        await statusChangeService.handleEffects(proposalDocument, oldStatus, request.user, [MiiLocation.UKAU]);
 
         expect(setDueDate).toHaveBeenCalledWith(proposalDocument);
 
@@ -216,6 +233,9 @@ describe('StatusChangeService', () => {
         expect(schedulerService.createEvents).toHaveBeenCalledWith({ proposal: proposalDocument, types: [] });
 
         expect(declineUnansweredConditions).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user);
+        expect(declineUnselectedLocations).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user, [
+          MiiLocation.UKAU,
+        ]);
         expect(removeFdpgTasksForContracting).toBeCalledWith(expect.objectContaining({ _id: proposalId }));
       });
     });

@@ -186,9 +186,7 @@ export class ProposalReportService {
     }
 
     if (proposal.reports[reportIdx].uploads.length > 0) {
-      await this.storageService.deleteManyBlobs(
-        proposal.reports[reportIdx].uploads.map((upload) => upload.blobName),
-      );
+      await this.storageService.deleteManyBlobs(proposal.reports[reportIdx].uploads.map((upload) => upload.blobName));
     }
 
     const deletedReports = proposal.reports.splice(reportIdx, 1);

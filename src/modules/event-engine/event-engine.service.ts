@@ -21,6 +21,7 @@ import { Publication } from '../proposal/schema/sub-schema/publication.schema';
 import { PublicationsService } from './events/publications/publications.service';
 import { Answer } from '../comment/schema/answer.schema';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
+import { CommentType } from '../comment/enums/comment-type.enum';
 
 type MongoDocument = Document<any, any, any> & { _id: any };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
@@ -104,14 +105,20 @@ export class EventEngineService {
   }
 
   async handleProposalCommentCreation(proposal: Proposal, comment: Comment, user: IRequestUser) {
-    if (proposal && comment && user && proposal.status !== ProposalStatus.Draft) {
+    if (
+      (proposal && comment && user && proposal.status !== ProposalStatus.Draft) ||
+      (proposal.status === ProposalStatus.Draft && comment.type === CommentType.ProposalMessageToOwner)
+    ) {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.commentEventService.handleCommentCreation(proposal, comment, user, proposalUrl);
     }
   }
 
   async handleProposalCommentAnswerCreation(proposal: Proposal, comment: Comment, answer: Answer, user: IRequestUser) {
-    if (proposal && answer && user && proposal.status !== ProposalStatus.Draft) {
+    if (
+      (proposal && answer && user && proposal.status !== ProposalStatus.Draft) ||
+      (proposal.status === ProposalStatus.Draft && comment.type === CommentType.ProposalMessageToOwner)
+    ) {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.commentAnswerEventService.handleCommentAnswerCreation(proposal, comment, answer, user, proposalUrl);
     }
