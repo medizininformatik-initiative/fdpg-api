@@ -16,7 +16,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const requestUser = user as IRequestUser;
     const httpRequestContext = this.context.switchToHttp().getRequest();
     const currentAccessHeader = httpRequestContext.headers.authorization ?? 'NOT_EXISTING';
-
     if (err || !requestUser) {
       const tracer = trace.getTracer('basic');
       tracer
@@ -29,6 +28,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         })
         .end();
       throw err || new UnauthorizedException();
+    } else if (!requestUser.singleKnownRole) {
+      throw new ForbiddenException('singleKnownRole is required');
     } else if (requestUser.isFromLocation && !requestUser.isKnownLocation) {
       // We set the user to the request to let telemetry know about the context
       httpRequestContext.user = requestUser;
