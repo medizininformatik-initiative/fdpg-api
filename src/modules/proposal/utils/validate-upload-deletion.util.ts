@@ -13,19 +13,19 @@ const generalAccessTypes = [
 ] as UploadType[];
 
 export const validateUploadDeletion = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
-  if (user.roles.includes(Role.Researcher)) {
+  if (user.singleKnownRole === Role.Researcher) {
     checkForResearcher(proposal, upload, user);
   }
 
-  if (user.roles.includes(Role.FdpgMember)) {
+  if (user.singleKnownRole === Role.FdpgMember) {
     checkForFdpgMember(proposal);
   }
 
-  if (user.roles.includes(Role.DizMember)) {
+  if (user.singleKnownRole === Role.DizMember) {
     checkForLocationMember(proposal, upload);
   }
 
-  if (user.roles.includes(Role.UacMember)) {
+  if (user.singleKnownRole === Role.UacMember) {
     checkForLocationMember(proposal, upload);
   }
 };

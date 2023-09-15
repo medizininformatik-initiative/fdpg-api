@@ -23,10 +23,6 @@ export class UpdateUserDto {
   lastName: string;
 
   @Expose()
-  @IsEmail()
-  email: string;
-
-  @Expose()
   @IsNotEmptyString()
   affiliation: string;
 
@@ -35,7 +31,6 @@ export class UpdateUserDto {
     const mergedUser = {
       firstName: this.firstName,
       lastName: this.lastName,
-      email: this.email,
       attributes: {
         ...keycloakUser.attributes,
         salutation: [this.salutation],

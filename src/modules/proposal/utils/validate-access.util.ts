@@ -10,19 +10,19 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     throwForbiddenError('Proposal is currently locked to modifications');
   }
 
-  if (user.roles.includes(Role.Researcher)) {
+  if (user.singleKnownRole === Role.Researcher) {
     checkAccessForResearcher(proposal, user);
   }
 
-  if (user.roles.includes(Role.FdpgMember)) {
+  if (user.singleKnownRole === Role.FdpgMember) {
     checkAccessForFdpgMember(proposal, willBeModified);
   }
 
-  if (user.roles.includes(Role.DizMember)) {
+  if (user.singleKnownRole === Role.DizMember) {
     checkAccessForDizMember(proposal, user);
   }
 
-  if (user.roles.includes(Role.UacMember)) {
+  if (user.singleKnownRole === Role.UacMember) {
     checkAccessForUacMember(proposal, user);
   }
 };

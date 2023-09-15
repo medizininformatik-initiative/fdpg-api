@@ -51,5 +51,4 @@ export interface ICreateKeycloakUser extends IBaseKeycloakUser {}
 export interface ICachedKeycloakUser extends Pick<IGetKeycloakUser, 'id' | 'email' | 'attributes'> {}
 
 // All existing attributes must be merged to the update. Otherwise only updated will be persisted
-export interface IUpdateKeycloakProfile
-  extends Pick<IBaseKeycloakUser, 'firstName' | 'lastName' | 'email' | 'attributes'> {}
+export interface IUpdateKeycloakProfile extends Pick<IBaseKeycloakUser, 'firstName' | 'lastName' | 'attributes'> {}

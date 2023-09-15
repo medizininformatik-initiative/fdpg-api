@@ -5,7 +5,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ALL_LOCATIONS, INACTIVE_LOCATIONS } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
-import { getSingleKnownRole } from 'src/shared/utils/get-single-known-role.util';
 import { JwksProvider } from './jwks.provider';
 
 @Injectable()
@@ -17,13 +16,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       issuer: `${configService.get('KEYCLOAK_HOST')}/auth/realms/${configService.get('KEYCLOAK_REALM')}`,
       algorithms: ['RS256'],
       secretOrKeyProvider: jwksProvider.provide(),
+      passReqToCallback: true,
     });
   }
 
-  async validate(payload: any): Promise<IRequestUser> {
+  async validate(req: Request, payload: any): Promise<IRequestUser> {
     // Validation is performed in jwt-auth.guard.ts
     const roles = payload.realm_access?.roles ?? [];
-    const singleKnownRole = getSingleKnownRole(roles);
+    const singleKnownRole = roles.find((role) => role === req.headers['x-selected-role']);
     const isFromLocation = singleKnownRole === Role.DizMember || singleKnownRole === Role.UacMember;
     const isKnownLocation = ALL_LOCATIONS.includes(payload.MII_LOCATION);
     const isInactiveLocation = INACTIVE_LOCATIONS.includes(payload.MII_LOCATION);

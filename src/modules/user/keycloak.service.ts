@@ -135,7 +135,7 @@ export class KeycloakService {
   }
 
   async updateProfile(userId: string, updateUserDto: UpdateUserDto, user: IRequestUser): Promise<void> {
-    if (userId !== user.userId && !user.roles.includes(Role.FdpgMember)) {
+    if (userId !== user.userId && user.singleKnownRole !== Role.FdpgMember) {
       throw new ForbiddenException(`UserId does not match the userId of the user requesting the action`);
     }
 
@@ -245,7 +245,7 @@ export class KeycloakService {
     passwordResetDto: PasswordResetDto,
     user: IRequestUser,
   ): Promise<void> {
-    if (userId !== user.userId && !user.roles.includes(Role.FdpgMember)) {
+    if (userId !== user.userId && user.singleKnownRole !== Role.FdpgMember) {
       throw new ForbiddenException(`UserId does not match the userId of the user requesting the action`);
     }
     const actions = [KeycloakRequiredAction.UpdatePassword];
