@@ -44,7 +44,7 @@ export enum MiiLocation {
   UKD = 'UKD',
   UKRUB = 'UKRUB',
   KC = 'KC',
-
+  CTK = 'CTK',
   VirtualAll = 'VIRTUAL_ALL',
 }
 
@@ -235,6 +235,11 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   [MiiLocation.KC]: {
     display: 'Klinikum Chemnitz gGmbH',
     definition: 'MIRACUM',
+  },
+
+  [MiiLocation.CTK]: {
+    display: 'Thiem Research GmbH',
+    definition: 'HiGHmed',
   },
 
   [MiiLocation.VirtualAll]: {
