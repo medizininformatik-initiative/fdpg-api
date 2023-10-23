@@ -1,5 +1,5 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiForbiddenResponse, ApiOAuth2, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiHeader, ApiOAuth2, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RoleGuard } from 'src/modules/auth/guards/role.guard';
 import { Role } from '../enums/role.enum';
@@ -11,6 +11,13 @@ export function Auth(...roles: Role[]) {
     ApiBearerAuth(),
     ApiOAuth2([]),
     UseGuards(JwtAuthGuard),
+    ApiHeader({
+      name: 'x-selected-role',
+      description: 'Selected role of the user',
+      required: roles?.length > 0,
+      allowEmptyValue: !roles || roles.length === 0,
+      enum: roles,
+    }),
   ];
 
   if (roles?.length > 0) {
