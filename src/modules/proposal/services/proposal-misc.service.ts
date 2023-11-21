@@ -29,6 +29,7 @@ import { validateStatusChange } from '../utils/validate-status-change.util';
 import { ProposalCrudService } from './proposal-crud.service';
 import { StatusChangeService } from './status-change.service';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
+import { ProposalDocument } from '../schema/proposal.schema';
 
 @Injectable()
 export class ProposalMiscService {
@@ -116,24 +117,8 @@ export class ProposalMiscService {
 
   private fetchFeasibilityAndGeneratePdf(proposalId: string, user: IRequestUser) {
     const task = async () => {
-      const pdfLanguage: SupportedLanguages = 'de';
       const proposal = await this.proposalCrudService.findDocument(proposalId, user);
-
-      let dataPrivacyTextForUsage = [];
-      if (proposal.userProject.typeOfUse.usage.length !== 0) {
-        const dataPrivacyText = await this.adminConfigService.getDataPrivacyConfig(
-          proposal.platform ?? PlatformIdentifier.Mii,
-        );
-
-        const dataPrivacyTextForLanguage = flattenToLanguage<DataPrivacyTextSingleLanguage>(
-          dataPrivacyText.messages,
-          pdfLanguage,
-        );
-
-        dataPrivacyTextForUsage = proposal.userProject.typeOfUse.usage.map(
-          (usage) => dataPrivacyTextForLanguage[usage],
-        );
-      }
+      const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
 
       if (proposal.userProject.feasibility.id !== undefined) {
         const queryContent = await this.feasibilityService.getQueryContentById(proposal.userProject.feasibility.id);
@@ -156,12 +141,7 @@ export class ProposalMiscService {
         addUpload(proposal, feasibilityUpload);
       }
 
-      const plain = proposal.toObject();
-      const getDto = plainToClass(ProposalGetDto, plain, {
-        strategy: 'excludeAll',
-        groups: [ProposalValidation.IsOutput, OutputGroup.PdfOutput],
-      });
-      const pdfBuffer = await this.pdfEngineService.createProposalPdf(getDto, dataPrivacyTextForUsage);
+      const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
       const pdfFile: Express.Multer.File = {
         buffer: pdfBuffer,
         originalname: `${proposal.projectAbbreviation}.pdf`,
@@ -181,6 +161,43 @@ export class ProposalMiscService {
     const name = `ContractTimeout-${proposalId}`;
     const timeout = setTimeout(async () => await task(), milliseconds);
     this.schedulerRegistry.addTimeout(name, timeout);
+  }
+
+  async getDraftProposalFile(proposalId: string, user: IRequestUser): Promise<Buffer> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+    if (proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck) {
+      const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
+      const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
+      return pdfBuffer;
+    }
+  }
+
+  async createPdfBuffer(proposal: ProposalDocument, dataPrivacyTextForUsage: any[]): Promise<Buffer> {
+    const plain = proposal.toObject();
+    const getDto = plainToClass(ProposalGetDto, plain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput, OutputGroup.PdfOutput],
+    });
+    const pdfBuffer = await this.pdfEngineService.createProposalPdf(getDto, dataPrivacyTextForUsage);
+    return pdfBuffer;
+  }
+
+  async createPrivacyTextForUsage(proposal: ProposalDocument): Promise<any[]> {
+    const pdfLanguage: SupportedLanguages = 'de';
+    let dataPrivacyTextForUsage = [];
+    if (proposal.userProject.typeOfUse.usage.length !== 0) {
+      const dataPrivacyText = await this.adminConfigService.getDataPrivacyConfig(
+        proposal.platform ?? PlatformIdentifier.Mii,
+      );
+
+      const dataPrivacyTextForLanguage = flattenToLanguage<DataPrivacyTextSingleLanguage>(
+        dataPrivacyText.messages,
+        pdfLanguage,
+      );
+
+      dataPrivacyTextForUsage = proposal.userProject.typeOfUse.usage.map((usage) => dataPrivacyTextForLanguage[usage]);
+    }
+    return dataPrivacyTextForUsage;
   }
 
   async setFdpgChecklist(proposalId: string, checklist: FdpgChecklistSetDto, user: IRequestUser): Promise<void> {
