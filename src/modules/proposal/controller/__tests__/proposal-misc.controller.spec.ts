@@ -122,17 +122,17 @@ describe('ProposalMiscController', () => {
     });
   });
 
-  describe('getDraftProposalFile', () => {
+  describe('getPdfProposalFile', () => {
     it('should generate and return a pdf of the draft proposal', async () => {
       const params = {
         id: 'mongoId',
       };
-      jest.spyOn(proposalMiscService, 'getDraftProposalFile').mockImplementation(() => {
+      jest.spyOn(proposalMiscService, 'getPdfProposalFile').mockImplementation(() => {
         return {} as any;
       });
 
-      await proposalController.getDraftProposalFile(params, request);
-      expect(proposalMiscService.getDraftProposalFile).toHaveBeenCalledWith(params.id, request.user);
+      await proposalController.getPdfProposalFile(params, request);
+      expect(proposalMiscService.getPdfProposalFile).toHaveBeenCalledWith(params.id, request.user);
     });
   });
 });

@@ -1,17 +1,4 @@
-import {
-  Body,
-  Get,
-  Header,
-  HttpCode,
-  Param,
-  Put,
-  Request,
-  Res,
-  Response,
-  StreamableFile,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Body, Get, HttpCode, Param, Put, Request, StreamableFile, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiNoContentResponse, ApiNotFoundResponse, ApiOperation, ApiProduces } from '@nestjs/swagger';
 import { MarkAsDoneDto } from 'src/modules/comment/dto/mark-as-done.dto';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
@@ -58,15 +45,15 @@ export class ProposalMiscController {
   }
 
   @Auth(Role.Researcher, Role.FdpgMember)
-  @Get(':id/proposalFile')
+  @Get(':id/proposalPdfFile')
   @ApiNotFoundResponse({ description: 'Proposal file could not be created' })
   @HttpCode(200)
   @ApiOperation({ summary: 'Generates and returns proposal pdf file of draft.' })
-  async getDraftProposalFile(
+  async getPdfProposalFile(
     @Param() { id }: MongoIdParamDto,
     @Request() { user }: FdpgRequest,
   ): Promise<StreamableFile> {
-    const buffer = await this.proposalMiscService.getDraftProposalFile(id, user);
+    const buffer = await this.proposalMiscService.getPdfProposalFile(id, user);
     return new StreamableFile(buffer);
   }
 

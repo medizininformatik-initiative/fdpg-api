@@ -163,13 +163,11 @@ export class ProposalMiscService {
     this.schedulerRegistry.addTimeout(name, timeout);
   }
 
-  async getDraftProposalFile(proposalId: string, user: IRequestUser): Promise<Buffer> {
+  async getPdfProposalFile(proposalId: string, user: IRequestUser): Promise<Buffer> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
-    if (proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck) {
-      const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
-      const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
-      return pdfBuffer;
-    }
+    const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
+    const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
+    return pdfBuffer;
   }
 
   async createPdfBuffer(proposal: ProposalDocument, dataPrivacyTextForUsage: any[]): Promise<Buffer> {

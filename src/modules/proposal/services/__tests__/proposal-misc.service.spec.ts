@@ -366,7 +366,7 @@ describe('ProposalMiscService', () => {
     });
   });
 
-  describe('getDraftProposalFile', () => {
+  describe('getPdfProposalFile', () => {
     it('should call api to generate pdf and return buffer', async () => {
       const proposal = getProposalDocument();
       const proposalDocument = {
@@ -384,7 +384,7 @@ describe('ProposalMiscService', () => {
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument);
 
-      await proposalMiscService.getDraftProposalFile(proposalId, request.user);
+      await proposalMiscService.getPdfProposalFile(proposalId, request.user);
 
       expect(proposalCrudService.findDocument).toBeCalledTimes(1);
 
