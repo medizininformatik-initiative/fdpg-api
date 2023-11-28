@@ -121,4 +121,18 @@ describe('ProposalMiscController', () => {
       expect(proposalMiscService.setFdpgCheckNotes).toHaveBeenCalledWith(params.id, input.value, request.user);
     });
   });
+
+  describe('getPdfProposalFile', () => {
+    it('should generate and return a pdf of the draft proposal', async () => {
+      const params = {
+        id: 'mongoId',
+      };
+      jest.spyOn(proposalMiscService, 'getPdfProposalFile').mockImplementation(() => {
+        return {} as any;
+      });
+
+      await proposalController.getPdfProposalFile(params, request);
+      expect(proposalMiscService.getPdfProposalFile).toHaveBeenCalledWith(params.id, request.user);
+    });
+  });
 });

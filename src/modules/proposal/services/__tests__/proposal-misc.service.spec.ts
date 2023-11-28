@@ -366,6 +366,37 @@ describe('ProposalMiscService', () => {
     });
   });
 
+  describe('getPdfProposalFile', () => {
+    it('should call api to generate pdf and return buffer', async () => {
+      const proposal = getProposalDocument();
+      const proposalDocument = {
+        ...proposal,
+        userProject: {
+          ...proposal.userProject,
+          feasibility: {
+            id: undefined,
+          },
+        },
+        toObject: function () {
+          return JSON.parse(JSON.stringify(this));
+        },
+      } as any as ProposalDocument;
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument);
+
+      await proposalMiscService.getPdfProposalFile(proposalId, request.user);
+
+      expect(proposalCrudService.findDocument).toBeCalledTimes(1);
+
+      const expectedDataPrivacy = [{ headline: 'headlineDE', text: 'textDE' }];
+      expect(pdfEngineService.createProposalPdf).toBeCalledWith(
+        expect.objectContaining({ projectAbbreviation: proposalDocument.projectAbbreviation }),
+        expectedDataPrivacy,
+      );
+      expect(pdfEngineService.createProposalPdf).not.toBeUndefined();
+    });
+  });
+
   describe('setIsLockedStatus', () => {
     it('should set isLocked status for a changed status', async () => {
       const proposalDocument = getProposalDocument();
