@@ -21,6 +21,7 @@ import { ValidationGroup } from './enums/validation-group.enum';
 import { Answer } from './schema/answer.schema';
 import { validateIsDoneAccess } from './utils/is-done-access.util';
 import { ProposalCrudService } from '../proposal/services/proposal-crud.service';
+import { ProposalStatus } from '../proposal/enums/proposal-status.enum';
 
 @Injectable()
 export class CommentService {
@@ -142,9 +143,18 @@ export class CommentService {
     const filter: FilterQuery<Comment> = {
       ...commentReference,
     };
+    const projection = { status: 1 };
+    const proposal = await this.proposalCrudService.findDocument(
+      commentReference.referenceDocumentId,
+      user,
+      projection,
+      false,
+    );
 
-    if (user.singleKnownRole === Role.Researcher) {
+    if (user.singleKnownRole === Role.Researcher && proposal.status === ProposalStatus.Rework) {
       filter.type = { $in: [CommentType.ProposalMessageToOwner, CommentType.ProposalTask] };
+    } else if (user.singleKnownRole === Role.Researcher) {
+      filter.type = { $in: [CommentType.ProposalMessageToOwner] };
     } else if (user.isFromLocation) {
       filter.type = { $in: [CommentType.ProposalMessageToLocation, CommentType.ProposalTaskFdpg] };
       filter.locations = { $in: [user.miiLocation, MiiLocation.VirtualAll] };
