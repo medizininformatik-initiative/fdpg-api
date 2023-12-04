@@ -20,6 +20,7 @@ import { CommentType } from '../enums/comment-type.enum';
 import { ReferenceType } from '../enums/reference-type.enum';
 import { CommentDocument } from '../schema/comment.schema';
 import { ProposalCrudService } from 'src/modules/proposal/services/proposal-crud.service';
+import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
 
 class CommentModel {
   constructor(private data) {}
@@ -263,15 +264,23 @@ describe('CommentService', () => {
         isFromLocation: role === Role.Researcher ? false : true,
       } as unknown as IRequestUser;
 
+      const proposal = {
+        status: ProposalStatus.Rework,
+      } as unknown as ProposalDocument;
+
       CommentModel.find.mockResolvedValue([mainComment]);
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
 
       const result = await service.findForItem(commentReferenceDto, user);
       let filter: FilterQuery<Comment> = {
         ...commentReferenceDto,
       };
 
-      if (role === Role.Researcher) {
+      if (role === Role.Researcher && proposal.status === ProposalStatus.Rework) {
         filter.type = { $in: [CommentType.ProposalMessageToOwner, CommentType.ProposalTask] };
+      } else if (role === Role.Researcher) {
+        filter.type = { $in: [CommentType.ProposalMessageToOwner] };
       } else {
         filter.type = { $in: [CommentType.ProposalMessageToLocation, CommentType.ProposalTaskFdpg] };
         filter.locations = { $in: [user.miiLocation, MiiLocation.VirtualAll] };
