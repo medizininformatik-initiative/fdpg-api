@@ -11,6 +11,12 @@ export class ProjectResponsibility {
   })
   applicantIsProjectResponsible: boolean;
 
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isDone: boolean;
+
   _id: string;
 }
 export const ProjectResponsibilitySchema = SchemaFactory.createForClass(ProjectResponsibility);
