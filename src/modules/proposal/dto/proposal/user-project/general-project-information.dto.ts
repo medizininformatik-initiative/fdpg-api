@@ -14,7 +14,7 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   @Expose()
   @Type(() => Date)
   @IsDate()
-  @IsAfterToday()
+  @IsAfterToday({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   desiredStartTime: Date;
 
