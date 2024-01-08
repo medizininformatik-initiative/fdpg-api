@@ -23,6 +23,7 @@ import { addHistoryItemForStatus } from '../utils/proposal-history.util';
 import { validateProposalAccess } from '../utils/validate-access.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../dto/check-unique-proposal.dto';
+import { Role } from 'src/shared/enums/role.enum';
 
 @Injectable()
 export class ProposalCrudService {
@@ -65,6 +66,21 @@ export class ProposalCrudService {
 
     if (projection === undefined) {
       dbProjection['reports.content'] = 0;
+    } else if (user.singleKnownRole === Role.DizMember) {
+      dbProjection.owner = 1;
+      dbProjection.conditionalApprovals = 1;
+      dbProjection.openDizChecks = 1;
+      dbProjection.dizApprovedLocations = 1;
+      dbProjection.uacApprovedLocations = 1;
+      dbProjection.signedContracts = 1;
+      dbProjection.requestedButExcludedLocations = 1;
+    } else if (user.singleKnownRole === Role.UacMember) {
+      dbProjection.owner = 1;
+      dbProjection.conditionalApprovals = 1;
+      dbProjection.dizApprovedLocations = 1;
+      dbProjection.uacApprovedLocations = 1;
+      dbProjection.signedContracts = 1;
+      dbProjection.requestedButExcludedLocations = 1;
     } else {
       dbProjection.owner = 1;
     }
@@ -72,11 +88,6 @@ export class ProposalCrudService {
 
     if (proposal) {
       validateProposalAccess(proposal, user, willBeModified);
-      // owner must be available to check access
-      if (projection && projection.owner !== 1) {
-        // This reset + a new save would cause the owner to be overwritten with null!
-        proposal.owner = null;
-      }
       return proposal;
     } else {
       throw new NotFoundException();
