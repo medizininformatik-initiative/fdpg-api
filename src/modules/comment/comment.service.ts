@@ -147,7 +147,7 @@ export class CommentService {
     const proposal = await this.proposalCrudService.findDocument(
       commentReference.referenceDocumentId,
       user,
-      projection,
+      undefined,
       false,
     );
 
