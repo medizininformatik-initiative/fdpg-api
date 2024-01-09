@@ -228,7 +228,7 @@ describe('ProposalCrudService', () => {
       const desiredProjection = { ['reports.content']: 1 };
       const willBeModified = true;
 
-      const proposal = { _id: proposalId, owner: null } as any as ProposalDocument;
+      const proposal = { _id: proposalId, owner: { name: 'Lars' } } as any as ProposalDocument;
       const proposalWithOwner = { ...proposal, owner: { name: 'Lars' } } as any as ProposalDocument;
       ProposalModel.findById.mockResolvedValueOnce(proposalWithOwner);
 
@@ -241,6 +241,57 @@ describe('ProposalCrudService', () => {
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toBeCalledWith(proposalId, expectedProjection);
       expect(validateProposalAccess).toBeCalledWith(proposal, request.user, willBeModified);
+    });
+
+    it('should find a proposal with diz member projection', async () => {
+      const proposalId = 'proposalId';
+      const user = { ...request.user, singleKnownRole: Role.DizMember };
+      const expectedProjection = {
+        ['reports.content']: 1,
+        owner: 1,
+        conditionalApprovals: 1,
+        openDizChecks: 1,
+        dizApprovedLocations: 1,
+        uacApprovedLocations: 1,
+        signedContracts: 1,
+        requestedButExcludedLocations: 1,
+      };
+      const desiredProjection = { ['reports.content']: 1 };
+      const willBeModified = true;
+
+      const proposal = { _id: proposalId, owner: { name: 'Lars' } } as any as ProposalDocument;
+      const proposalWithOwner = { ...proposal, owner: { name: 'Lars' } } as any as ProposalDocument;
+      ProposalModel.findById.mockResolvedValueOnce(proposalWithOwner);
+
+      const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
+      expect(result).toEqual(proposal);
+      expect(ProposalModel.findById).toBeCalledWith(proposalId, expectedProjection);
+      expect(validateProposalAccess).toBeCalledWith(proposal, user, willBeModified);
+    });
+
+    it('should find a proposal with uac member projection', async () => {
+      const proposalId = 'proposalId';
+      const user = { ...request.user, singleKnownRole: Role.UacMember };
+      const expectedProjection = {
+        ['reports.content']: 1,
+        owner: 1,
+        conditionalApprovals: 1,
+        dizApprovedLocations: 1,
+        uacApprovedLocations: 1,
+        signedContracts: 1,
+        requestedButExcludedLocations: 1,
+      };
+      const desiredProjection = { ['reports.content']: 1 };
+      const willBeModified = true;
+
+      const proposal = { _id: proposalId, owner: { name: 'Lars' } } as any as ProposalDocument;
+      const proposalWithOwner = { ...proposal, owner: { name: 'Lars' } } as any as ProposalDocument;
+      ProposalModel.findById.mockResolvedValueOnce(proposalWithOwner);
+
+      const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
+      expect(result).toEqual(proposal);
+      expect(ProposalModel.findById).toBeCalledWith(proposalId, expectedProjection);
+      expect(validateProposalAccess).toBeCalledWith(proposal, user, willBeModified);
     });
 
     it('should throw 404 if not found', async () => {
