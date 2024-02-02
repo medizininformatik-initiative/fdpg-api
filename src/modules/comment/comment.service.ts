@@ -92,6 +92,7 @@ export class CommentService {
     validateAnswer(mainComment, user);
 
     const answerModel = plainToClass(Answer, createAnswerDto);
+    answerModel.createdAt = new Date();
 
     answerModel.owner = getOwner(user);
 

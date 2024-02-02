@@ -25,8 +25,19 @@ export class MigrationService implements OnModuleInit {
   // Migration downgrades are not supported while downgrading the software version. So it's disabled by default.
   private readonly preventDowngrade = true;
 
+  private readonly dummyMigration: IDbMigration = {
+    up: async () => {},
+    down: async () => {},
+  };
+
   private readonly migrations: Record<number, IDbMigration> = {
     0: new Migration000(this.migrationModel, this.termsConfigModel, this.dataPrivacyConfigModel),
+    1: this.dummyMigration,
+    2: this.dummyMigration,
+    3: this.dummyMigration,
+    4: this.dummyMigration,
+    5: this.dummyMigration,
+    6: this.dummyMigration,
   };
 
   private async runMigration(currentVersion?: number) {

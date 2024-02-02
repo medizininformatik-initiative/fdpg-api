@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as SendInBlue from '@sendinblue/client';
 import { EmailCategory } from './types/email-category.enum';
-import { IEmail } from './types/email.interface';
+import { IEmail, ITemplateEmail } from './types/email.interface';
 @Injectable()
 export class EmailService {
   private apiInstance: SendInBlue.TransactionalEmailsApi;
@@ -25,7 +25,7 @@ export class EmailService {
   private preventEmailSending: boolean;
   private environment: string;
 
-  async send(email: IEmail): Promise<void> {
+  async send(email: IEmail | ITemplateEmail): Promise<void> {
     if (this.preventEmailSending && this.environment === 'local') {
       console.log('Prevent sending emails to: ', email.to);
     }
@@ -55,6 +55,10 @@ export class EmailService {
     }
     if ('text' in email) {
       transactionalEmail.textContent = email.text;
+    }
+    if ('templateId' in email) {
+      transactionalEmail.templateId = email.templateId;
+      transactionalEmail.params = email.params;
     }
     try {
       await this.apiInstance.sendTransacEmail(transactionalEmail);
