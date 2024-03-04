@@ -19,3 +19,12 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
+
+  # PDF Service must be first build in PDF Service Repository
+  pdf:
+    image: fdpgpdfservice:latest
+    restart: always
+    ports:
+      - 8081:3000
+    environment:
+      ENABLE_TELEMETRY: false
