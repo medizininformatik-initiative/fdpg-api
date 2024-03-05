@@ -48,7 +48,7 @@ export enum MiiLocation {
   VirtualAll = 'VIRTUAL_ALL',
 }
 
-export const INACTIVE_LOCATIONS = [MiiLocation.UKS, MiiLocation.UMR, MiiLocation.UKD, MiiLocation.UKRUB];
+export const INACTIVE_LOCATIONS = [MiiLocation.UMR, MiiLocation.UKD, MiiLocation.UKRUB];
 export const ALL_LOCATIONS = Object.values(MiiLocation).filter((location) => location !== MiiLocation.VirtualAll);
 export const ALL_ACTIVE_LOCATIONS = ALL_LOCATIONS.filter((location) => !INACTIVE_LOCATIONS.includes(location));
 
@@ -83,7 +83,7 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.UKS]: {
-    display: 'Universitätsklinikum des Saarlandes',
+    display: 'Universität des Saarlandes / Universitätsklinikum des Saarlandes',
     definition: 'DIFUTURE',
   },
 
