@@ -123,7 +123,7 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.UKM]: {
-    display: 'Westfälische Wilhelms-Universität Münster',
+    display: 'Universität Münster',
     definition: 'HiGHmed',
   },
 
