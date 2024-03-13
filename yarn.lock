@@ -5053,7 +5053,7 @@ mongodb@5.9.1:
   optionalDependencies:
     "@mongodb-js/saslprep" "^1.1.0"
 
-mongoose@^7.2.2:
+mongoose@^7.6.9:
   version "7.6.9"
   resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-7.6.9.tgz#a0596d1e37737f13af1d975f27115adb192eaccd"
   integrity sha512-3lR1fA/gS1E9Bn0woFqIysnnjCFDYtVo3yY+rGsVg1Q7kHX+gUTgAHTEKXrkwKxk2gHFdUfAsLt/Zjrdf6+nZA==
