@@ -131,6 +131,16 @@ export const addHistoryItemForUnselectedLocation = (
   pushHistoryItem(proposalAfterChanges, user, type, location);
 };
 
+export const addHistoryItemForRevertLocationDecision = (
+  proposalAfterChanges: Proposal,
+  user: IRequestUser,
+  location: MiiLocation,
+): void => {
+  const type = HistoryEventType.FdpgRevertedLocationDecision;
+
+  pushHistoryItem(proposalAfterChanges, user, type, location);
+};
+
 export const addHistoryItemForContractSign = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,

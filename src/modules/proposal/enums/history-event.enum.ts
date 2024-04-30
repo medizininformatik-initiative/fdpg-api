@@ -29,6 +29,9 @@ export enum HistoryEventType {
   /** FDPG Veto */
   FdpgApprovedLocationRemoved = 'FDPG_APPROVED_LOCATION_REMOVED',
 
+  /** FDPG reverts DIZ and UAC decision */
+  FdpgRevertedLocationDecision = 'FDPG_REVERTED_LOCATION_DECISION',
+
   /** Data Delivery */
 
   /** Contracting */

@@ -1,6 +1,6 @@
+import { ProposalUploadService } from './proposal-upload.service';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { isNotEmptyObject } from 'class-validator';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { convertUserToGroups } from 'src/shared/utils/user-group.utils';
@@ -21,23 +21,26 @@ import {
   addUacApproval,
   addUacApprovalWithCondition,
   addUacConditionReview,
-} from '../utils/add-location-vote.util';
+  handleLocationDecision,
+} from '../utils/handle-location-vote.util';
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
   addHistoryItemForStatus,
   addHistoryItemForUacApproval,
   addHistoryItemForUacCondition,
+  addHistoryItemForRevertLocationDecision,
 } from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateContractSign } from '../utils/validate-contract-sign.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
-import { validateDizApproval, validateUacApproval } from '../utils/validate-vote.util';
+import { validateDizApproval, validateUacApproval, validateRevertLocationDecision } from '../utils/validate-vote.util';
 import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
+import { MiiLocation } from 'src/shared/constants/mii-locations';
 
 @Injectable()
 export class ProposalContractingService {
@@ -46,6 +49,7 @@ export class ProposalContractingService {
     private eventEngineService: EventEngineService,
     private storageService: StorageService,
     private statusChangeService: StatusChangeService,
+    private proposalUploadService: ProposalUploadService,
   ) {}
 
   async setDizApproval(proposalId: string, vote: SetDizApprovalDto, user: IRequestUser): Promise<void> {
@@ -84,6 +88,16 @@ export class ProposalContractingService {
 
     const saveResult = await toBeUpdated.save();
     await this.eventEngineService.handleProposalUacApproval(saveResult, vote.value, user.miiLocation);
+  }
+
+  async revertLocationDecision(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    validateRevertLocationDecision(toBeUpdated);
+
+    await handleLocationDecision(toBeUpdated, location, user, this.proposalUploadService);
+    addHistoryItemForRevertLocationDecision(toBeUpdated, user, location);
+
+    await toBeUpdated.save();
   }
 
   async initContracting(

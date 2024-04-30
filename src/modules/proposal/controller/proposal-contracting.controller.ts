@@ -1,3 +1,4 @@
+import { ProposalContractingService } from './../services/proposal-contracting.service';
 import {
   Body,
   HttpCode,
@@ -24,8 +25,8 @@ import { ContractingUploadDto } from '../dto/contracting-upload.dto';
 import { ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
 import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { SetUacApprovalDto, SetUacApprovalWithFileDto } from '../dto/set-uac-approval.dto';
+import { RevertLocationDecisionDto } from '../dto/revert-location-decision.dto';
 import { SignContractDto, SignContractWithFileDto } from '../dto/sign-contract.dto';
-import { ProposalContractingService } from '../services/proposal-contracting.service';
 import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
 
 @ApiController('proposals', undefined, 'contracting')
@@ -64,6 +65,22 @@ export class ProposalContractingController {
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     return await this.proposalContractingService.setUacApproval(id, vote, file, user);
+  }
+
+  @Auth(Role.FdpgMember)
+  @Put(':id/revertLocationDecision')
+  @UsePipes(ValidationPipe)
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  @ApiOperation({ summary: 'Reverts the Location Decision' })
+  @ApiNoContentResponse({ description: 'Location Decision reverted. No content returns.' })
+  @HttpCode(204)
+  @ApiBody({ type: RevertLocationDecisionDto })
+  async revertLocationDecision(
+    @Param() { id }: MongoIdParamDto,
+    @Body() { location }: RevertLocationDecisionDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<void> {
+    return await this.proposalContractingService.revertLocationDecision(id, location, user);
   }
 
   @Auth(Role.FdpgMember)

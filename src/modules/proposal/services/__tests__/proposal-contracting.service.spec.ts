@@ -1,3 +1,4 @@
+import { handleLocationDecision } from './../../utils/handle-location-vote.util';
 import { Test, TestingModule } from '@nestjs/testing';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
@@ -10,23 +11,29 @@ import { SignContractDto } from '../../dto/sign-contract.dto';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { addContractSign } from '../../utils/add-contract-sign.util';
-import { addDizApproval, addUacApproval, addUacApprovalWithCondition } from '../../utils/add-location-vote.util';
+import { addDizApproval, addUacApproval, addUacApprovalWithCondition } from '../../utils/handle-location-vote.util';
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
   addHistoryItemForStatus,
   addHistoryItemForUacApproval,
+  addHistoryItemForRevertLocationDecision,
 } from '../../utils/proposal-history.util';
 import { addUpload } from '../../utils/proposal.utils';
 import { validateContractSign } from '../../utils/validate-contract-sign.util';
 import { validateStatusChange } from '../../utils/validate-status-change.util';
-import { validateDizApproval, validateUacApproval } from '../../utils/validate-vote.util';
+import {
+  validateDizApproval,
+  validateRevertLocationDecision,
+  validateUacApproval,
+} from '../../utils/validate-vote.util';
 import { ProposalContractingService } from '../proposal-contracting.service';
 import { ProposalCrudService } from '../proposal-crud.service';
 import { StatusChangeService } from '../status-change.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { NoErrorThrownError, getError } from 'test/get-error';
 import { InitContractingDto } from '../../dto/proposal/init-contracting.dto';
+import { ProposalUploadService } from '../proposal-upload.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -39,13 +46,15 @@ jest.mock('class-transformer', () => {
 jest.mock('../../utils/validate-vote.util', () => ({
   validateDizApproval: jest.fn(),
   validateUacApproval: jest.fn(),
+  validateRevertLocationDecision: jest.fn(),
 }));
 
-jest.mock('../../utils/add-location-vote.util', () => ({
+jest.mock('../../utils/handle-location-vote.util', () => ({
   addDizApproval: jest.fn(),
   addUacApproval: jest.fn(),
   addUacApprovalWithCondition: jest.fn(),
   addUacConditionReview: jest.fn(),
+  handleLocationDecision: jest.fn(),
 }));
 
 jest.mock('../../utils/proposal-history.util', () => ({
@@ -54,6 +63,7 @@ jest.mock('../../utils/proposal-history.util', () => ({
   addHistoryItemForStatus: jest.fn(),
   addHistoryItemForUacApproval: jest.fn(),
   addHistoryItemForUacCondition: jest.fn(),
+  addHistoryItemForRevertLocationDecision: jest.fn(),
 }));
 
 jest.mock('../../utils/proposal.utils', () => ({
@@ -85,6 +95,7 @@ describe('ProposalContractingService', () => {
   let eventEngineService: jest.Mocked<EventEngineService>;
   let storageService: jest.Mocked<StorageService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
+  let proposalUploadService: jest.Mocked<ProposalUploadService>;
 
   const request = {
     user: {
@@ -137,6 +148,7 @@ describe('ProposalContractingService', () => {
             handleProposalUacApproval: jest.fn(),
             handleProposalStatusChange: jest.fn(),
             handleProposalContractSign: jest.fn(),
+            handleLocationDecision: jest.fn(),
           },
         },
         {
@@ -151,6 +163,12 @@ describe('ProposalContractingService', () => {
             handleEffects: jest.fn(),
           },
         },
+        {
+          provide: ProposalUploadService,
+          useValue: {
+            handleEffects: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -160,6 +178,9 @@ describe('ProposalContractingService', () => {
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
     storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
+    proposalUploadService = module.get<ProposalUploadService>(
+      ProposalUploadService,
+    ) as jest.Mocked<ProposalUploadService>;
   });
 
   it('should be defined', () => {
@@ -223,6 +244,29 @@ describe('ProposalContractingService', () => {
       } else {
         expect(addUacApproval).toHaveBeenCalledWith(proposalDocument, request.user, vote);
       }
+    });
+  });
+
+  describe('revertLocationDecision', () => {
+    it('should revert the location decision', async () => {
+      const proposalDocument = getProposalDocument();
+      jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
+
+      await proposalContractingService.revertLocationDecision(proposalId, request.user.miiLocation, request.user);
+
+      expect(validateRevertLocationDecision).toHaveBeenCalledWith(proposalDocument);
+      expect(handleLocationDecision).toHaveBeenCalledWith(
+        proposalDocument,
+        request.user.miiLocation,
+        request.user,
+        proposalUploadService,
+      );
+      expect(addHistoryItemForRevertLocationDecision).toHaveBeenCalledWith(
+        proposalDocument,
+        request.user,
+        request.user.miiLocation,
+      );
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
     });
   });
 

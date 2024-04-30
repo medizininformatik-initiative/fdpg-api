@@ -28,3 +28,4 @@ services:
       - 8081:3000
     environment:
       ENABLE_TELEMETRY: false
+      PRINT_FRONTEND_HOST: http://localhost:3000

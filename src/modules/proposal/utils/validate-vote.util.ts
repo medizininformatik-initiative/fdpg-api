@@ -22,3 +22,9 @@ export const validateUacApproval = (proposal: Proposal, user: IRequestUser) => {
     throw new ForbiddenException('The location is not allowed to provide a vote. It might have already voted');
   }
 };
+
+export const validateRevertLocationDecision = (proposal: Proposal) => {
+  if (proposal.status !== ProposalStatus.LocationCheck) {
+    throw new ForbiddenException('The current status does not allow to revert the location decision');
+  }
+};
