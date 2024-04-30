@@ -1,46 +1,46 @@
-import { ProposalUploadService } from './proposal-upload.service';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
+import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { convertUserToGroups } from 'src/shared/utils/user-group.utils';
-import { StorageService } from '../../storage/storage.service';
 import { EventEngineService } from '../../event-engine/event-engine.service';
+import { StorageService } from '../../storage/storage.service';
+import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
 import { ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
+import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { SetUacApprovalDto } from '../dto/set-uac-approval.dto';
 import { SignContractDto } from '../dto/sign-contract.dto';
 import { UploadDto } from '../dto/upload.dto';
 import { ProposalValidation } from '../enums/porposal-validation.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { UseCaseUpload } from '../enums/upload-type.enum';
-import { ProposalCrudService } from './proposal-crud.service';
-import { StatusChangeService } from './status-change.service';
 import { addContractSign } from '../utils/add-contract-sign.util';
 import {
   addDizApproval,
   addUacApproval,
   addUacApprovalWithCondition,
   addUacConditionReview,
-  handleLocationDecision,
-} from '../utils/handle-location-vote.util';
+} from '../utils/add-location-vote.util';
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
+  addHistoryItemForRevertLocationVote,
   addHistoryItemForStatus,
   addHistoryItemForUacApproval,
   addHistoryItemForUacCondition,
-  addHistoryItemForRevertLocationDecision,
 } from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
+import { revertLocationVote } from '../utils/revert-location-vote.util';
 import { validateContractSign } from '../utils/validate-contract-sign.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
-import { validateDizApproval, validateUacApproval, validateRevertLocationDecision } from '../utils/validate-vote.util';
-import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
-import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
-import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
-import { ValidationException } from 'src/exceptions/validation/validation.exception';
-import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { validateDizApproval, validateRevertLocationVote, validateUacApproval } from '../utils/validate-vote.util';
+import { ProposalCrudService } from './proposal-crud.service';
+import { ProposalUploadService } from './proposal-upload.service';
+import { StatusChangeService } from './status-change.service';
 
 @Injectable()
 export class ProposalContractingService {
@@ -90,12 +90,12 @@ export class ProposalContractingService {
     await this.eventEngineService.handleProposalUacApproval(saveResult, vote.value, user.miiLocation);
   }
 
-  async revertLocationDecision(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
+  async handleLocationVote(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
-    validateRevertLocationDecision(toBeUpdated);
+    validateRevertLocationVote(toBeUpdated);
 
-    await handleLocationDecision(toBeUpdated, location, user, this.proposalUploadService);
-    addHistoryItemForRevertLocationDecision(toBeUpdated, user, location);
+    await revertLocationVote(toBeUpdated, location, user, this.proposalUploadService);
+    addHistoryItemForRevertLocationVote(toBeUpdated, user, location);
 
     await toBeUpdated.save();
   }

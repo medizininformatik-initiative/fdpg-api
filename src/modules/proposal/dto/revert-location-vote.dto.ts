@@ -3,7 +3,7 @@ import { IsEnum } from 'class-validator';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 
 @Exclude()
-export class RevertLocationDecisionDto {
+export class RevertLocationVoteDto {
   @Expose()
   @IsEnum(MiiLocation)
   location: MiiLocation;

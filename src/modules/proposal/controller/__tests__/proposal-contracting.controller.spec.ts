@@ -5,7 +5,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { SetDizApprovalDto } from '../../dto/set-diz-approval.dto';
 import { SetUacApprovalDto } from '../../dto/set-uac-approval.dto';
-import { RevertLocationDecisionDto } from '../../dto/revert-location-decision.dto';
+import { RevertLocationVoteDto } from '../../dto/revert-location-vote.dto';
 import { SignContractDto } from '../../dto/sign-contract.dto';
 import { ProposalContractingController } from '../proposal-contracting.controller';
 import { ProposalContractingService } from '../../services/proposal-contracting.service';
@@ -76,16 +76,16 @@ describe('ProposalContractingController', () => {
     });
   });
 
-  describe('revertLocationDecision', () => {
-    it('should revert the location decision', async () => {
+  describe('revertLocationVote', () => {
+    it('should revert the location vote', async () => {
       const params = {
         id: 'mongoId',
       };
-      const input = new RevertLocationDecisionDto();
-      jest.spyOn(proposalContractingService, 'revertLocationDecision');
+      const input = new RevertLocationVoteDto();
+      jest.spyOn(proposalContractingService, 'handleLocationVote');
 
-      await proposalContractingController.revertLocationDecision(params, input, request);
-      expect(proposalContractingService.revertLocationDecision).toHaveBeenCalledWith(
+      await proposalContractingController.revertLocationVote(params, input, request);
+      expect(proposalContractingService.handleLocationVote).toHaveBeenCalledWith(
         params.id,
         input.location,
         request.user,

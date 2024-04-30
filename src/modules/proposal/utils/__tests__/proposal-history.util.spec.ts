@@ -13,7 +13,7 @@ import {
   addHistoryItemForContractSystemReject,
   addHistoryItemForProposalLock,
   addHistoryItemForUnselectedLocation,
-  addHistoryItemForRevertLocationDecision,
+  addHistoryItemForRevertLocationVote,
 } from '../proposal-history.util';
 
 const proposalId = 'proposalId';
@@ -192,16 +192,16 @@ describe('ProposalHistoryUtil', () => {
     });
   });
 
-  describe('addHistoryItemForRevertLocationDecision', () => {
-    it('should add history item for reverted location decision', () => {
+  describe('addHistoryItemForRevertLocationVote', () => {
+    it('should add history item for reverted location vote', () => {
       const request = getRequest();
       const proposal = getProposalDocument();
       const location = MiiLocation.UKRUB;
 
-      addHistoryItemForRevertLocationDecision(proposal, request.user, location);
+      addHistoryItemForRevertLocationVote(proposal, request.user, location);
       expect(proposal.history.length).toBe(1);
 
-      const expectedType = HistoryEventType.FdpgRevertedLocationDecision;
+      const expectedType = HistoryEventType.FdpgRevertedLocationVote;
       expect(proposal.history[0].type).toBe(expectedType);
     });
   });

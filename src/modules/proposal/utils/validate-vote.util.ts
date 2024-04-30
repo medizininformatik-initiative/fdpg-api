@@ -23,8 +23,8 @@ export const validateUacApproval = (proposal: Proposal, user: IRequestUser) => {
   }
 };
 
-export const validateRevertLocationDecision = (proposal: Proposal) => {
+export const validateRevertLocationVote = (proposal: Proposal) => {
   if (proposal.status !== ProposalStatus.LocationCheck) {
-    throw new ForbiddenException('The current status does not allow to revert the location decision');
+    throw new ForbiddenException('The current status does not allow to revert the location vote');
   }
 };

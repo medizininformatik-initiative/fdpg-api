@@ -1,4 +1,3 @@
-import { ProposalContractingService } from './../services/proposal-contracting.service';
 import {
   Body,
   HttpCode,
@@ -25,9 +24,10 @@ import { ContractingUploadDto } from '../dto/contracting-upload.dto';
 import { ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
 import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { SetUacApprovalDto, SetUacApprovalWithFileDto } from '../dto/set-uac-approval.dto';
-import { RevertLocationDecisionDto } from '../dto/revert-location-decision.dto';
+import { RevertLocationVoteDto } from '../dto/revert-location-vote.dto';
 import { SignContractDto, SignContractWithFileDto } from '../dto/sign-contract.dto';
 import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
+import { ProposalContractingService } from '../services/proposal-contracting.service';
 
 @ApiController('proposals', undefined, 'contracting')
 export class ProposalContractingController {
@@ -68,19 +68,19 @@ export class ProposalContractingController {
   }
 
   @Auth(Role.FdpgMember)
-  @Put(':id/revertLocationDecision')
+  @Put(':id/revertLocationVote')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
-  @ApiOperation({ summary: 'Reverts the Location Decision' })
-  @ApiNoContentResponse({ description: 'Location Decision reverted. No content returns.' })
+  @ApiOperation({ summary: 'FDPG member reverts locations vote ' })
+  @ApiNoContentResponse({ description: 'Locations vote reverted. No content returns.' })
   @HttpCode(204)
-  @ApiBody({ type: RevertLocationDecisionDto })
-  async revertLocationDecision(
+  @ApiBody({ type: RevertLocationVoteDto })
+  async revertLocationVote(
     @Param() { id }: MongoIdParamDto,
-    @Body() { location }: RevertLocationDecisionDto,
+    @Body() { location }: RevertLocationVoteDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    return await this.proposalContractingService.revertLocationDecision(id, location, user);
+    return await this.proposalContractingService.handleLocationVote(id, location, user);
   }
 
   @Auth(Role.FdpgMember)

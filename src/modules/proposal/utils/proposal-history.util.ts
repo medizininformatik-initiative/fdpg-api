@@ -131,12 +131,12 @@ export const addHistoryItemForUnselectedLocation = (
   pushHistoryItem(proposalAfterChanges, user, type, location);
 };
 
-export const addHistoryItemForRevertLocationDecision = (
+export const addHistoryItemForRevertLocationVote = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
   location: MiiLocation,
 ): void => {
-  const type = HistoryEventType.FdpgRevertedLocationDecision;
+  const type = HistoryEventType.FdpgRevertedLocationVote;
 
   pushHistoryItem(proposalAfterChanges, user, type, location);
 };

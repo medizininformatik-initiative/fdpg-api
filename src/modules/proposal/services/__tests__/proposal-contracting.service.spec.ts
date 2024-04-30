@@ -1,39 +1,35 @@
-import { handleLocationDecision } from './../../utils/handle-location-vote.util';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { StorageService } from 'src/modules/storage/storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
+import { StorageService } from 'src/modules/storage/storage.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
+import { NoErrorThrownError, getError } from 'test/get-error';
+import { InitContractingDto } from '../../dto/proposal/init-contracting.dto';
 import { SetDizApprovalDto } from '../../dto/set-diz-approval.dto';
 import { SetUacApprovalDto } from '../../dto/set-uac-approval.dto';
 import { SignContractDto } from '../../dto/sign-contract.dto';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { addContractSign } from '../../utils/add-contract-sign.util';
-import { addDizApproval, addUacApproval, addUacApprovalWithCondition } from '../../utils/handle-location-vote.util';
+import { addDizApproval, addUacApproval, addUacApprovalWithCondition } from '../../utils/add-location-vote.util';
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
+  addHistoryItemForRevertLocationVote,
   addHistoryItemForStatus,
   addHistoryItemForUacApproval,
-  addHistoryItemForRevertLocationDecision,
 } from '../../utils/proposal-history.util';
 import { addUpload } from '../../utils/proposal.utils';
+import { revertLocationVote } from '../../utils/revert-location-vote.util';
 import { validateContractSign } from '../../utils/validate-contract-sign.util';
 import { validateStatusChange } from '../../utils/validate-status-change.util';
-import {
-  validateDizApproval,
-  validateRevertLocationDecision,
-  validateUacApproval,
-} from '../../utils/validate-vote.util';
+import { validateDizApproval, validateRevertLocationVote, validateUacApproval } from '../../utils/validate-vote.util';
 import { ProposalContractingService } from '../proposal-contracting.service';
 import { ProposalCrudService } from '../proposal-crud.service';
-import { StatusChangeService } from '../status-change.service';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { NoErrorThrownError, getError } from 'test/get-error';
-import { InitContractingDto } from '../../dto/proposal/init-contracting.dto';
 import { ProposalUploadService } from '../proposal-upload.service';
+import { StatusChangeService } from '../status-change.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -46,15 +42,17 @@ jest.mock('class-transformer', () => {
 jest.mock('../../utils/validate-vote.util', () => ({
   validateDizApproval: jest.fn(),
   validateUacApproval: jest.fn(),
-  validateRevertLocationDecision: jest.fn(),
+  validateRevertLocationVote: jest.fn(),
 }));
 
-jest.mock('../../utils/handle-location-vote.util', () => ({
+jest.mock('../../utils/add-location-vote.util', () => ({
   addDizApproval: jest.fn(),
   addUacApproval: jest.fn(),
   addUacApprovalWithCondition: jest.fn(),
   addUacConditionReview: jest.fn(),
-  handleLocationDecision: jest.fn(),
+}));
+jest.mock('../../utils/revert-location-vote.util', () => ({
+  revertLocationVote: jest.fn(),
 }));
 
 jest.mock('../../utils/proposal-history.util', () => ({
@@ -63,7 +61,7 @@ jest.mock('../../utils/proposal-history.util', () => ({
   addHistoryItemForStatus: jest.fn(),
   addHistoryItemForUacApproval: jest.fn(),
   addHistoryItemForUacCondition: jest.fn(),
-  addHistoryItemForRevertLocationDecision: jest.fn(),
+  addHistoryItemForRevertLocationVote: jest.fn(),
 }));
 
 jest.mock('../../utils/proposal.utils', () => ({
@@ -148,7 +146,7 @@ describe('ProposalContractingService', () => {
             handleProposalUacApproval: jest.fn(),
             handleProposalStatusChange: jest.fn(),
             handleProposalContractSign: jest.fn(),
-            handleLocationDecision: jest.fn(),
+            handleLocationVote: jest.fn(),
           },
         },
         {
@@ -247,21 +245,21 @@ describe('ProposalContractingService', () => {
     });
   });
 
-  describe('revertLocationDecision', () => {
-    it('should revert the location decision', async () => {
+  describe('revertLocationVote', () => {
+    it('should revert the location vote', async () => {
       const proposalDocument = getProposalDocument();
       jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
 
-      await proposalContractingService.revertLocationDecision(proposalId, request.user.miiLocation, request.user);
+      await proposalContractingService.handleLocationVote(proposalId, request.user.miiLocation, request.user);
 
-      expect(validateRevertLocationDecision).toHaveBeenCalledWith(proposalDocument);
-      expect(handleLocationDecision).toHaveBeenCalledWith(
+      expect(validateRevertLocationVote).toHaveBeenCalledWith(proposalDocument);
+      expect(revertLocationVote).toHaveBeenCalledWith(
         proposalDocument,
         request.user.miiLocation,
         request.user,
         proposalUploadService,
       );
-      expect(addHistoryItemForRevertLocationDecision).toHaveBeenCalledWith(
+      expect(addHistoryItemForRevertLocationVote).toHaveBeenCalledWith(
         proposalDocument,
         request.user,
         request.user.miiLocation,
