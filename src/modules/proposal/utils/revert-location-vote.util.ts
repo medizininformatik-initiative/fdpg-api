@@ -14,6 +14,9 @@ export const revertLocationVote = async (
   proposalUploadService: ProposalUploadService,
 ) => {
   const locationState = getLocationState(proposal, user);
+  const locationDataAmount = proposal.uacApprovals.find((approval) => approval.location === location)?.dataAmount;
+  proposal.totalPromisedDataAmount = proposal.totalPromisedDataAmount - locationDataAmount;
+  const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
 
   if (locationState.requestedButExcluded) {
     proposal.declineReasons = proposal.declineReasons.filter((reason) => reason.location !== location);
@@ -21,6 +24,23 @@ export const revertLocationVote = async (
 
   if (locationState.uacApproved) {
     proposal.uacApprovals = proposal.uacApprovals.filter((approval) => approval.location !== location);
+    if (!isDataAmountReached) {
+      removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
+    }
+    const isUacApprovalComplete =
+      proposal.uacApprovedLocations.length + proposal.requestedButExcludedLocations.length ===
+      proposal.numberOfRequestedLocations;
+    if (!isUacApprovalComplete) {
+      removeFdpgTask(proposal, FdpgTaskType.UacApprovalComplete);
+    }
+  }
+
+  if (locationState.isConditionalApproval) {
+    const uploadId = proposal.conditionalApprovals.find((approval) => approval.location === location)?.uploadId;
+
+    if (uploadId) {
+      await proposalUploadService.deleteUpload(proposal._id, uploadId, user);
+    }
   }
 
   if (locationState.conditionalApprovalAccepted) {
@@ -30,22 +50,11 @@ export const revertLocationVote = async (
       (condition) => condition.location !== location,
     );
 
-    const locationDataAmount = proposal.uacApprovals.find((approval) => approval.location === location)?.dataAmount;
-
-    proposal.totalPromisedDataAmount = proposal.totalPromisedDataAmount - locationDataAmount;
-
-    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
     if (!isDataAmountReached) {
       removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
     }
   }
-  if (locationState.isConditionalApproval) {
-    const uploadId = proposal.conditionalApprovals.find((approval) => approval.location === location)?.uploadId;
 
-    if (uploadId) {
-      await proposalUploadService.deleteUpload(proposal._id, uploadId, user);
-    }
-  }
   clearLocationsVotes(proposal, location);
   proposal.openDizChecks.push(location);
 };

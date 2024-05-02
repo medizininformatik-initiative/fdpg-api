@@ -136,7 +136,7 @@ describe('revertLocationVoteUtil', () => {
       expect(proposal.openDizChecks).toEqual([uacApproval.location]);
     });
 
-    describe('should remove Fdpg Task in case of expected data amount reached', () => {
+    describe('should remove Fdpg Task in case of uacApproved and expected data amount reached', () => {
       const testCases = [
         {
           name: 'expected data amount is reached even withouth the location data amount',
@@ -169,7 +169,7 @@ describe('revertLocationVoteUtil', () => {
 
         getLocationStateMock.mockReturnValueOnce({
           ...locationStateDefault,
-          conditionalApprovalAccepted: true,
+          uacApproved: true,
         });
 
         expect(proposal.uacApprovals).toEqual([approval]);
@@ -179,6 +179,104 @@ describe('revertLocationVoteUtil', () => {
           expect(removeFdpgTask).not.toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
         } else {
           expect(removeFdpgTask).toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+        }
+        expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+        expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
+        expect(proposal.openDizChecks).toEqual([condition.location]);
+      });
+    });
+
+    describe('should remove Fdpg Task in case of uacApproved and uacApprovalComplete', () => {
+      const testCases = [
+        {
+          name: 'not completed',
+          isCompleted: false,
+        },
+        {
+          name: 'completed',
+          isCompleted: true,
+        },
+      ];
+
+      test.each(testCases)('%s', async ({ isCompleted }) => {
+        const approval = new UacApproval();
+        approval.location = MiiLocation.UKRUB;
+        const condition = new ConditionalApproval();
+        condition.location = MiiLocation.UKRUB;
+        condition.fdpgTaskId = FdpgTaskType.UacApprovalComplete;
+        const proposal = getProposalDocument();
+        proposal.uacApprovedLocations = [MiiLocation.UKRUB];
+        proposal.conditionalApprovals = [condition];
+        proposal.uacApprovals = [approval];
+        proposal.openDizChecks = [];
+        proposal.requestedButExcludedLocations = [MiiLocation.UMG, MiiLocation.UKL];
+
+        proposal.numberOfRequestedLocations = isCompleted ? 3 : 2;
+
+        const request = getRequest();
+
+        getLocationStateMock.mockReturnValueOnce({
+          ...locationStateDefault,
+          uacApproved: true,
+        });
+
+        expect(proposal.uacApprovals).toEqual([approval]);
+        await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
+        expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
+        if (!isCompleted) {
+          expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
+        } else {
+          expect(removeFdpgTask).not.toBeCalledWith(proposal, condition.fdpgTaskId);
+        }
+        expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+        expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
+        expect(proposal.openDizChecks).toEqual([condition.location]);
+      });
+    });
+
+    describe('should remove Fdpg Task in case of conditionalApprovalAccepted and expected data amount reached', () => {
+      const testCases = [
+        {
+          name: 'expected data amount is reached even withouth the location data amount',
+          dataAmount: 10,
+          expectedDataAmountReached: true,
+        },
+        {
+          name: 'expected data amount is not reached withouth the location data amount',
+          dataAmount: 12,
+          expectedDataAmountReached: false,
+        },
+      ];
+
+      test.each(testCases)('%s', async ({ dataAmount, expectedDataAmountReached }) => {
+        const approval = new UacApproval();
+        approval.location = MiiLocation.UKRUB;
+        approval.dataAmount = dataAmount;
+        const condition = new ConditionalApproval();
+        condition.location = MiiLocation.UKRUB;
+        condition.fdpgTaskId = FdpgTaskType.DataAmountReached;
+        condition.dataAmount = 10;
+        const proposal = getProposalDocument();
+        proposal.conditionalApprovals = [condition];
+        proposal.uacApprovals = [approval];
+        proposal.totalPromisedDataAmount = 21;
+        proposal.requestedData.desiredDataAmount = 11;
+        proposal.openDizChecks = [];
+
+        const request = getRequest();
+
+        getLocationStateMock.mockReturnValueOnce({
+          ...locationStateDefault,
+          conditionalApprovalAccepted: true,
+        });
+
+        expect(proposal.uacApprovals).toEqual([approval]);
+        await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
+        expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
+        if (expectedDataAmountReached) {
+          expect(removeFdpgTask).not.toBeCalledWith(proposal, condition.fdpgTaskId);
+        } else {
+          expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
         }
         expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
         expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
