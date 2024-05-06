@@ -14,7 +14,16 @@ export const revertLocationVote = async (
   proposalUploadService: ProposalUploadService,
 ) => {
   const locationState = getLocationState(proposal, user);
-  const locationDataAmount = proposal.uacApprovals.find((approval) => approval.location === location)?.dataAmount;
+
+  let locationDataAmount = 0;
+
+  if (locationState.isConditionalApproval) {
+    locationDataAmount =
+      proposal.conditionalApprovals.find((approval) => approval.location === location)?.dataAmount ?? 0;
+  } else {
+    locationDataAmount = proposal.uacApprovals.find((approval) => approval.location === location)?.dataAmount ?? 0;
+  }
+
   proposal.totalPromisedDataAmount = proposal.totalPromisedDataAmount - locationDataAmount;
   const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
 

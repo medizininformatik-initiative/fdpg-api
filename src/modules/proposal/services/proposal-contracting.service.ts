@@ -92,7 +92,7 @@ export class ProposalContractingService {
 
   async handleLocationVote(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
-    validateRevertLocationVote(toBeUpdated);
+    validateRevertLocationVote(toBeUpdated, location);
 
     await revertLocationVote(toBeUpdated, location, user, this.proposalUploadService);
     addHistoryItemForRevertLocationVote(toBeUpdated, user, location);

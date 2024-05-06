@@ -12,4 +12,5 @@ export enum BadRequestError {
   DeclineReason = '400-011',
   ReportsMaxUploadCount = '400-012',
   LocationNotAssignedToContract = '400-013',
+  LocationRevertValidation = '400-014',
 }
