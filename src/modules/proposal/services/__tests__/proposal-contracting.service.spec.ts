@@ -248,11 +248,12 @@ describe('ProposalContractingService', () => {
   describe('revertLocationVote', () => {
     it('should revert the location vote', async () => {
       const proposalDocument = getProposalDocument();
+      const location = MiiLocation.UKL;
       jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
 
       await proposalContractingService.handleLocationVote(proposalId, request.user.miiLocation, request.user);
 
-      expect(validateRevertLocationVote).toHaveBeenCalledWith(proposalDocument);
+      expect(validateRevertLocationVote).toHaveBeenCalledWith(proposalDocument, location);
       expect(revertLocationVote).toHaveBeenCalledWith(
         proposalDocument,
         request.user.miiLocation,
