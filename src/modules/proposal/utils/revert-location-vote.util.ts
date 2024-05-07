@@ -1,6 +1,6 @@
 import { getLocationState } from './validate-access.util';
 import { ProposalUploadService } from '../services/proposal-upload.service';
-import { Proposal } from '../schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { removeFdpgTask } from './add-fdpg-task.util';
@@ -8,7 +8,7 @@ import { FdpgTaskType } from '../enums/fdpg-task-type.enum';
 import { clearLocationsVotes } from './location-flow.util';
 
 export const revertLocationVote = async (
-  proposal: Proposal,
+  proposal: ProposalDocument,
   location: MiiLocation,
   user: IRequestUser,
   proposalUploadService: ProposalUploadService,
@@ -17,10 +17,10 @@ export const revertLocationVote = async (
 
   let locationDataAmount = 0;
 
-  if (locationState.isConditionalApproval) {
+  if (locationState.conditionalApprovalAccepted) {
     locationDataAmount =
       proposal.conditionalApprovals.find((approval) => approval.location === location)?.dataAmount ?? 0;
-  } else {
+  } else if (!locationState.isConditionalApproval && locationState.uacApproved) {
     locationDataAmount = proposal.uacApprovals.find((approval) => approval.location === location)?.dataAmount ?? 0;
   }
 
@@ -48,20 +48,17 @@ export const revertLocationVote = async (
     const uploadId = proposal.conditionalApprovals.find((approval) => approval.location === location)?.uploadId;
 
     if (uploadId) {
-      await proposalUploadService.deleteUpload(proposal._id, uploadId, user);
+      await proposalUploadService.delete2Upload(proposal, uploadId, user);
     }
-  }
-
-  if (locationState.conditionalApprovalAccepted) {
     removeFdpgTask(proposal, FdpgTaskType.ConditionApproval);
 
     proposal.conditionalApprovals = proposal.conditionalApprovals.filter(
       (condition) => condition.location !== location,
     );
+  }
 
-    if (!isDataAmountReached) {
-      removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
-    }
+  if (locationState.conditionalApprovalAccepted && !isDataAmountReached) {
+    removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
   }
 
   clearLocationsVotes(proposal, location);
