@@ -56,19 +56,7 @@ export class ProposalUploadService {
     }
   }
 
-  async deleteUpload(proposalId: string, uploadId: string, user: IRequestUser): Promise<void> {
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
-
-    await this.delete2Upload(proposal, uploadId, user);
-
-    try {
-      await proposal.save();
-    } catch (error) {
-      throw new Error(error);
-    }
-  }
-
-  async delete2Upload(proposal: ProposalDocument, uploadId: string, user: IRequestUser): Promise<void> {
+  async deleteUpload(proposal: ProposalDocument, uploadId: string, user: IRequestUser): Promise<void> {
     const uploadIndex = proposal.uploads.findIndex((upload) => upload._id.toString() === uploadId);
 
     if (uploadIndex === -1) {
@@ -82,5 +70,17 @@ export class ProposalUploadService {
     await this.storageService.deleteBlob(upload.blobName);
 
     proposal.uploads.splice(uploadIndex, 1);
+  }
+
+  async saveDeletedUpload(proposalId: string, uploadId: string, user: IRequestUser): Promise<void> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    await this.deleteUpload(proposal, uploadId, user);
+
+    try {
+      await proposal.save();
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 }

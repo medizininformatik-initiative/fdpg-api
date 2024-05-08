@@ -1,6 +1,6 @@
 import { getLocationState } from './validate-access.util';
 import { ProposalUploadService } from '../services/proposal-upload.service';
-import { Proposal, ProposalDocument } from '../schema/proposal.schema';
+import { ProposalDocument } from '../schema/proposal.schema';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { removeFdpgTask } from './add-fdpg-task.util';
@@ -48,7 +48,7 @@ export const revertLocationVote = async (
     const uploadId = proposal.conditionalApprovals.find((approval) => approval.location === location)?.uploadId;
 
     if (uploadId) {
-      await proposalUploadService.delete2Upload(proposal, uploadId, user);
+      await proposalUploadService.deleteUpload(proposal, uploadId, user);
     }
     removeFdpgTask(proposal, FdpgTaskType.ConditionApproval);
 
@@ -60,7 +60,6 @@ export const revertLocationVote = async (
   if (locationState.conditionalApprovalAccepted && !isDataAmountReached) {
     removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
   }
-
   clearLocationsVotes(proposal, location);
   proposal.openDizChecks.push(location);
 };

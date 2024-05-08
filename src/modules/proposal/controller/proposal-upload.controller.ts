@@ -65,6 +65,6 @@ export class ProposalUploadController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Deletes a proposal upload' })
   async deleteUpload(@Param() { mainId, subId }: MongoTwoIdsParamDto, @Request() { user }: FdpgRequest): Promise<void> {
-    return await this.proposalUploadService.deleteUpload(mainId, subId, user);
+    return await this.proposalUploadService.saveDeletedUpload(mainId, subId, user);
   }
 }

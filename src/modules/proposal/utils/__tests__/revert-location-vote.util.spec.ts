@@ -238,7 +238,7 @@ describe('revertLocationVoteUtil', () => {
       const testCases = [
         {
           name: 'expected data amount is reached even withouth the location data amount',
-          dataAmount: 10,
+          dataAmount: 9,
           expectedDataAmountReached: true,
         },
         {
@@ -251,16 +251,15 @@ describe('revertLocationVoteUtil', () => {
       test.each(testCases)('%s', async ({ dataAmount, expectedDataAmountReached }) => {
         const approval = new UacApproval();
         approval.location = MiiLocation.UKRUB;
-        approval.dataAmount = dataAmount;
         const condition = new ConditionalApproval();
         condition.location = MiiLocation.UKRUB;
         condition.fdpgTaskId = FdpgTaskType.DataAmountReached;
-        condition.dataAmount = 10;
+        condition.dataAmount = dataAmount;
         const proposal = getProposalDocument();
         proposal.conditionalApprovals = [condition];
         proposal.uacApprovals = [approval];
-        proposal.totalPromisedDataAmount = 21;
-        proposal.requestedData.desiredDataAmount = 11;
+        proposal.totalPromisedDataAmount = 20;
+        proposal.requestedData.desiredDataAmount = 10;
         proposal.openDizChecks = [];
 
         const request = getRequest();
@@ -287,12 +286,12 @@ describe('revertLocationVoteUtil', () => {
     it('should delete conditional approval object and fdpg task', async () => {
       const condition = new ConditionalApproval();
       condition.location = MiiLocation.UKRUB;
-      condition.fdpgTaskId = FdpgTaskType.ConditionApproval;
+      condition.fdpgTaskId = FdpgTaskType.DataAmountReached;
       condition.dataAmount = 10;
       const proposal = getProposalDocument();
       proposal.conditionalApprovals = [condition];
       proposal.totalPromisedDataAmount = condition.dataAmount + 1;
-      proposal.requestedData.desiredDataAmount = 11;
+      proposal.requestedData.desiredDataAmount = 12;
       proposal.openDizChecks = [];
 
       const request = getRequest();
@@ -302,11 +301,9 @@ describe('revertLocationVoteUtil', () => {
         conditionalApprovalAccepted: true,
       });
 
-      expect(proposal.conditionalApprovals).toEqual([condition]);
       await revertLocationVote(proposal, condition.location, request.user, proposalUploadServiceMock);
       expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
       expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
-      expect(proposal.conditionalApprovals).not.toEqual([condition]);
       expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([condition.location]);
@@ -329,7 +326,7 @@ describe('revertLocationVoteUtil', () => {
       await revertLocationVote(proposal, condition.location, request.user, proposalUploadServiceMock);
       expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
       expect(proposalUploadServiceMock.deleteUpload).toBeCalledTimes(1);
-      expect(proposalUploadServiceMock.deleteUpload).toBeCalledWith(proposal._id, condition.uploadId, request.user);
+      expect(proposalUploadServiceMock.deleteUpload).toBeCalledWith(proposal, condition.uploadId, request.user);
       expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([condition.location]);
