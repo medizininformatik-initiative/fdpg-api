@@ -15,51 +15,38 @@ export const revertLocationVote = async (
 ) => {
   const locationState = getLocationState(proposal, user);
 
-  let locationDataAmount = 0;
+  const uploadId = proposal.conditionalApprovals?.find((approval) => approval.location === location)?.uploadId;
+  if (uploadId) {
+    await proposalUploadService.deleteUpload(proposal, uploadId, user);
+  }
 
+  let locationDataAmount = 0;
   if (locationState.conditionalApprovalAccepted) {
     locationDataAmount =
-      proposal.conditionalApprovals.find((approval) => approval.location === location)?.dataAmount ?? 0;
+      proposal.conditionalApprovals?.find((approval) => approval.location === location)?.dataAmount ?? 0;
   } else if (!locationState.isConditionalApproval && locationState.uacApproved) {
-    locationDataAmount = proposal.uacApprovals.find((approval) => approval.location === location)?.dataAmount ?? 0;
+    locationDataAmount = proposal.uacApprovals?.find((approval) => approval.location === location)?.dataAmount ?? 0;
   }
-
   proposal.totalPromisedDataAmount = proposal.totalPromisedDataAmount - locationDataAmount;
-  const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
 
-  if (locationState.requestedButExcluded) {
-    proposal.declineReasons = proposal.declineReasons.filter((reason) => reason.location !== location);
-  }
+  proposal.uacApprovals = proposal.uacApprovals?.filter((approval) => approval.location !== location);
+  proposal.conditionalApprovals = proposal.conditionalApprovals?.filter((condition) => condition.location !== location);
+  proposal.declineReasons = proposal.declineReasons?.filter((reason) => reason.location !== location);
 
-  if (locationState.uacApproved) {
-    proposal.uacApprovals = proposal.uacApprovals.filter((approval) => approval.location !== location);
-    if (!isDataAmountReached) {
-      removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
-    }
-    const isUacApprovalComplete =
-      proposal.uacApprovedLocations.length + proposal.requestedButExcludedLocations.length ===
-      proposal.numberOfRequestedLocations;
-    if (!isUacApprovalComplete) {
-      removeFdpgTask(proposal, FdpgTaskType.UacApprovalComplete);
-    }
-  }
-
-  if (locationState.isConditionalApproval) {
-    const uploadId = proposal.conditionalApprovals.find((approval) => approval.location === location)?.uploadId;
-
-    if (uploadId) {
-      await proposalUploadService.deleteUpload(proposal, uploadId, user);
-    }
-    removeFdpgTask(proposal, FdpgTaskType.ConditionApproval);
-
-    proposal.conditionalApprovals = proposal.conditionalApprovals.filter(
-      (condition) => condition.location !== location,
-    );
-  }
-
-  if (locationState.conditionalApprovalAccepted && !isDataAmountReached) {
-    removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
-  }
   clearLocationsVotes(proposal, location);
   proposal.openDizChecks.push(location);
+
+  if (locationState.isConditionalApproval) {
+    removeFdpgTask(proposal, FdpgTaskType.ConditionApproval);
+  }
+  const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+  if (!isDataAmountReached) {
+    removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
+  }
+  const isUacApprovalComplete =
+    proposal.uacApprovedLocations.length + proposal.requestedButExcludedLocations.length ===
+    proposal.numberOfRequestedLocations;
+  if (!isUacApprovalComplete) {
+    removeFdpgTask(proposal, FdpgTaskType.UacApprovalComplete);
+  }
 };
