@@ -36,7 +36,11 @@ export const revertLocationVote = async (
   clearLocationsVotes(proposal, location);
   proposal.openDizChecks.push(location);
 
-  if (locationState.isConditionalApproval) {
+  if (
+    proposal.conditionalApprovals.every((conditionalApproval) =>
+      proposal.uacApprovedLocations.some((approvedLocation) => approvedLocation === conditionalApproval.location),
+    )
+  ) {
     removeFdpgTask(proposal, FdpgTaskType.ConditionApproval);
   }
 
@@ -44,11 +48,6 @@ export const revertLocationVote = async (
   if (!isDataAmountReached) {
     removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
   }
-  
-  const isUacApprovalComplete =
-    proposal.uacApprovedLocations.length + proposal.requestedButExcludedLocations.length ===
-    proposal.numberOfRequestedLocations;
-  if (!isUacApprovalComplete) {
-    removeFdpgTask(proposal, FdpgTaskType.UacApprovalComplete);
-  }
+
+  removeFdpgTask(proposal, FdpgTaskType.UacApprovalComplete);
 };
