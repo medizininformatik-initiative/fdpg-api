@@ -39,10 +39,12 @@ export const revertLocationVote = async (
   if (locationState.isConditionalApproval) {
     removeFdpgTask(proposal, FdpgTaskType.ConditionApproval);
   }
+
   const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
   if (!isDataAmountReached) {
     removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
   }
+  
   const isUacApprovalComplete =
     proposal.uacApprovedLocations.length + proposal.requestedButExcludedLocations.length ===
     proposal.numberOfRequestedLocations;
