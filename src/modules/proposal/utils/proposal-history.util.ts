@@ -136,7 +136,7 @@ export const addHistoryItemForRevertLocationVote = (
   user: IRequestUser,
   location: MiiLocation,
 ): void => {
-  const type = HistoryEventType.FdpgRevertedLocationVote;
+  const type = HistoryEventType.FdpgLocationVoteReverted;
 
   pushHistoryItem(proposalAfterChanges, user, type, location);
 };

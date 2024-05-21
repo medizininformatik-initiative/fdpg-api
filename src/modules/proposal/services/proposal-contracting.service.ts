@@ -90,7 +90,7 @@ export class ProposalContractingService {
     await this.eventEngineService.handleProposalUacApproval(saveResult, vote.value, user.miiLocation);
   }
 
-  async handleLocationVote(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
+  async revertLocationVote(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     validateRevertLocationVote(toBeUpdated, location);
 

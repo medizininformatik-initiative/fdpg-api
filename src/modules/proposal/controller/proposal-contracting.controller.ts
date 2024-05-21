@@ -68,7 +68,7 @@ export class ProposalContractingController {
   }
 
   @Auth(Role.FdpgMember)
-  @Put(':id/revertLocationVote')
+  @Post(':id/revertLocationVote')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
   @ApiOperation({ summary: 'FDPG member reverts locations vote ' })
@@ -80,7 +80,7 @@ export class ProposalContractingController {
     @Body() { location }: RevertLocationVoteDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    return await this.proposalContractingService.handleLocationVote(id, location, user);
+    return await this.proposalContractingService.revertLocationVote(id, location, user);
   }
 
   @Auth(Role.FdpgMember)

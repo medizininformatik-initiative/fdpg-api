@@ -146,7 +146,6 @@ describe('ProposalContractingService', () => {
             handleProposalUacApproval: jest.fn(),
             handleProposalStatusChange: jest.fn(),
             handleProposalContractSign: jest.fn(),
-            handleLocationVote: jest.fn(),
           },
         },
         {
@@ -251,7 +250,7 @@ describe('ProposalContractingService', () => {
       const location = MiiLocation.UKL;
       jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
 
-      await proposalContractingService.handleLocationVote(proposalId, request.user.miiLocation, request.user);
+      await proposalContractingService.revertLocationVote(proposalId, request.user.miiLocation, request.user);
 
       expect(validateRevertLocationVote).toHaveBeenCalledWith(proposalDocument, location);
       expect(revertLocationVote).toHaveBeenCalledWith(

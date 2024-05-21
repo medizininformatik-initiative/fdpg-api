@@ -27,9 +27,7 @@ export const revertLocationVote = async (
   proposal.totalPromisedDataAmount = proposal.totalPromisedDataAmount - locationDataAmount;
   const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
 
-  if (locationState.requestedButExcluded) {
-    proposal.declineReasons = proposal.declineReasons.filter((reason) => reason.location !== location);
-  }
+  proposal.declineReasons = proposal.declineReasons.filter((reason) => reason.location !== location);
 
   if (locationState.uacApproved) {
     proposal.uacApprovals = proposal.uacApprovals.filter((approval) => approval.location !== location);

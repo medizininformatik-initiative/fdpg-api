@@ -30,7 +30,7 @@ export enum HistoryEventType {
   FdpgApprovedLocationRemoved = 'FDPG_APPROVED_LOCATION_REMOVED',
 
   /** FDPG reverts DIZ and UAC vote */
-  FdpgRevertedLocationVote = 'FDPG_REVERTED_LOCATION_VOTE',
+  FdpgLocationVoteReverted = 'FDPG_REVERTED_LOCATION_VOTE',
 
   /** Data Delivery */
 
