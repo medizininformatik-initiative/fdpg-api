@@ -3,7 +3,7 @@ import { ProposalUploadService } from '../services/proposal-upload.service';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
-import { removeFdpgTask } from './add-fdpg-task.util';
+import { removeFdpgTask, removeFdpgTaskByType } from './add-fdpg-task.util';
 import { FdpgTaskType } from '../enums/fdpg-task-type.enum';
 import { clearLocationsVotes } from './location-flow.util';
 
@@ -37,17 +37,17 @@ export const revertLocationVote = async (
   proposal.openDizChecks.push(location);
 
   if (
-    proposal.conditionalApprovals.every((conditionalApproval) =>
-      proposal.uacApprovedLocations.some((approvedLocation) => approvedLocation === conditionalApproval.location),
+    proposal.conditionalApprovals?.every((conditionalApproval) =>
+      proposal.uacApprovedLocations?.some((approvedLocation) => approvedLocation === conditionalApproval.location),
     )
   ) {
-    removeFdpgTask(proposal, FdpgTaskType.ConditionApproval);
+    removeFdpgTaskByType(proposal, FdpgTaskType.ConditionApproval);
   }
 
   const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
   if (!isDataAmountReached) {
-    removeFdpgTask(proposal, FdpgTaskType.DataAmountReached);
+    removeFdpgTaskByType(proposal, FdpgTaskType.DataAmountReached);
   }
 
-  removeFdpgTask(proposal, FdpgTaskType.UacApprovalComplete);
+  removeFdpgTaskByType(proposal, FdpgTaskType.UacApprovalComplete);
 };

@@ -11,14 +11,14 @@ import { ProposalDocument } from '../../schema/proposal.schema';
 import { clearLocationsVotes } from '../location-flow.util';
 import { ConditionalApproval } from '../../schema/sub-schema/conditional-approval.schema';
 import { FdpgTaskType } from '../../enums/fdpg-task-type.enum';
-import { removeFdpgTask } from '../add-fdpg-task.util';
+import { removeFdpgTaskByType } from '../add-fdpg-task.util';
 
 jest.mock('../location-flow.util', () => ({
   clearLocationsVotes: jest.fn(),
 }));
 
 jest.mock('../add-fdpg-task.util', () => ({
-  removeFdpgTask: jest.fn(),
+  removeFdpgTaskByType: jest.fn(),
 }));
 jest.mock('../validate-access.util', () => ({
   getLocationState: jest.fn(),
@@ -176,9 +176,9 @@ describe('revertLocationVoteUtil', () => {
         await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
         expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
         if (expectedDataAmountReached) {
-          expect(removeFdpgTask).not.toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+          expect(removeFdpgTaskByType).not.toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
         } else {
-          expect(removeFdpgTask).toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+          expect(removeFdpgTaskByType).toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
         }
         expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
         expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
@@ -186,52 +186,33 @@ describe('revertLocationVoteUtil', () => {
       });
     });
 
-    describe('should remove Fdpg Task in case of uacApproved and uacApprovalComplete', () => {
-      const testCases = [
-        {
-          name: 'not completed',
-          isCompleted: false,
-        },
-        {
-          name: 'completed',
-          isCompleted: true,
-        },
-      ];
+    it('should remove Fdpg Task with type UacApprovalComplete', async () => {
+      const approval = new UacApproval();
+      approval.location = MiiLocation.UKRUB;
+      const condition = new ConditionalApproval();
+      condition.location = MiiLocation.UKRUB;
+      condition.fdpgTaskId = FdpgTaskType.UacApprovalComplete;
+      const proposal = getProposalDocument();
+      proposal.uacApprovedLocations = [MiiLocation.UKRUB];
+      proposal.conditionalApprovals = [condition];
+      proposal.uacApprovals = [approval];
+      proposal.openDizChecks = [];
+      proposal.requestedButExcludedLocations = [MiiLocation.UMG, MiiLocation.UKL];
 
-      test.each(testCases)('%s', async ({ isCompleted }) => {
-        const approval = new UacApproval();
-        approval.location = MiiLocation.UKRUB;
-        const condition = new ConditionalApproval();
-        condition.location = MiiLocation.UKRUB;
-        condition.fdpgTaskId = FdpgTaskType.UacApprovalComplete;
-        const proposal = getProposalDocument();
-        proposal.uacApprovedLocations = [MiiLocation.UKRUB];
-        proposal.conditionalApprovals = [condition];
-        proposal.uacApprovals = [approval];
-        proposal.openDizChecks = [];
-        proposal.requestedButExcludedLocations = [MiiLocation.UMG, MiiLocation.UKL];
+      const request = getRequest();
 
-        proposal.numberOfRequestedLocations = isCompleted ? 3 : 2;
-
-        const request = getRequest();
-
-        getLocationStateMock.mockReturnValueOnce({
-          ...locationStateDefault,
-          uacApproved: true,
-        });
-
-        expect(proposal.uacApprovals).toEqual([approval]);
-        await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
-        expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
-        if (!isCompleted) {
-          expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
-        } else {
-          expect(removeFdpgTask).not.toBeCalledWith(proposal, condition.fdpgTaskId);
-        }
-        expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
-        expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
-        expect(proposal.openDizChecks).toEqual([condition.location]);
+      getLocationStateMock.mockReturnValueOnce({
+        ...locationStateDefault,
+        uacApproved: true,
       });
+
+      expect(proposal.uacApprovals).toEqual([approval]);
+      await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
+      expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
+      expect(removeFdpgTaskByType).toBeCalledWith(proposal, condition.fdpgTaskId);
+      expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+      expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
+      expect(proposal.openDizChecks).toEqual([condition.location]);
     });
 
     describe('should remove Fdpg Task in case of conditionalApprovalAccepted and expected data amount reached', () => {
@@ -273,9 +254,9 @@ describe('revertLocationVoteUtil', () => {
         await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
         expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
         if (expectedDataAmountReached) {
-          expect(removeFdpgTask).not.toBeCalledWith(proposal, condition.fdpgTaskId);
+          expect(removeFdpgTaskByType).not.toBeCalledWith(proposal, condition.fdpgTaskId);
         } else {
-          expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
+          expect(removeFdpgTaskByType).toBeCalledWith(proposal, condition.fdpgTaskId);
         }
         expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
         expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
@@ -303,7 +284,7 @@ describe('revertLocationVoteUtil', () => {
 
       await revertLocationVote(proposal, condition.location, request.user, proposalUploadServiceMock);
       expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
-      expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
+      expect(removeFdpgTaskByType).toBeCalledWith(proposal, condition.fdpgTaskId);
       expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([condition.location]);

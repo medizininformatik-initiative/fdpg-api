@@ -48,16 +48,16 @@ export const removeFdpgTasksForContracting = (proposal: Proposal): void => {
     FdpgTaskType.DueDateReached,
   ];
 
-  toBeRemoved.forEach((type) => removeByType(proposal, type));
+  toBeRemoved.forEach((type) => removeFdpgTaskByType(proposal, type));
 };
 
 export const removeFdpgTasksForDataDelivery = (proposal: Proposal): void => {
   const toBeRemoved = [FdpgTaskType.ContractComplete, FdpgTaskType.DueDateReached];
 
-  toBeRemoved.forEach((type) => removeByType(proposal, type));
+  toBeRemoved.forEach((type) => removeFdpgTaskByType(proposal, type));
 };
 
-const removeByType = (proposal: Proposal, type: FdpgTaskType): void => {
+export const removeFdpgTaskByType = (proposal: Proposal, type: FdpgTaskType): void => {
   const taskIndex = proposal.openFdpgTasks.findIndex((task) => task.type === type);
   if (taskIndex !== -1) {
     proposal.openFdpgTasks.splice(taskIndex, 1);
