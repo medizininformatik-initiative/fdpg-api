@@ -82,10 +82,10 @@ describe('ProposalContractingController', () => {
         id: 'mongoId',
       };
       const input = new RevertLocationVoteDto();
-      jest.spyOn(proposalContractingService, 'handleLocationVote');
+      jest.spyOn(proposalContractingService, 'revertLocationVote');
 
       await proposalContractingController.revertLocationVote(params, input, request);
-      expect(proposalContractingService.handleLocationVote).toHaveBeenCalledWith(
+      expect(proposalContractingService.revertLocationVote).toHaveBeenCalledWith(
         params.id,
         input.location,
         request.user,

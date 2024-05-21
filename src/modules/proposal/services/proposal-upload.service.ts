@@ -72,7 +72,7 @@ export class ProposalUploadService {
     proposal.uploads.splice(uploadIndex, 1);
   }
 
-  async saveDeletedUpload(proposalId: string, uploadId: string, user: IRequestUser): Promise<void> {
+  async deleteUploadAndSaveProposal(proposalId: string, uploadId: string, user: IRequestUser): Promise<void> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     await this.deleteUpload(proposal, uploadId, user);

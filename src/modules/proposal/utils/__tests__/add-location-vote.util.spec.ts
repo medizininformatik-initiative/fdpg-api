@@ -19,7 +19,6 @@ import { clearLocationsVotes } from '../location-flow.util';
 
 jest.mock('../location-flow.util', () => ({
   clearLocationsVotes: jest.fn(),
-  deleteConditionalUpload: jest.fn(),
 }));
 
 jest.mock('../add-fdpg-task.util', () => ({

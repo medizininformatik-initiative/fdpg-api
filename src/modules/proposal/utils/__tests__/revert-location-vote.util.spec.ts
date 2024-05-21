@@ -105,7 +105,7 @@ describe('revertLocationVoteUtil', () => {
       await revertLocationVote(proposal, declineReason.location, request.user, proposalUploadServiceMock);
 
       expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
-      expect(proposal.declineReasons).not.toEqual([declineReason]);
+      expect(proposal.declineReasons).toEqual([declineReason]);
       expect(proposal.declineReasons.length).toEqual(0);
       expect(clearLocationsVotes).toBeCalledWith(proposal, declineReason.location);
       expect(proposal.requestedButExcludedLocations).not.toEqual([request.user.miiLocation]);

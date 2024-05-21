@@ -87,7 +87,11 @@ describe('ProposalUploadController', () => {
       jest.spyOn(proposalUploadService, 'deleteUpload');
 
       await proposalUploadController.deleteUpload(params, request);
-      expect(proposalUploadService.saveDeletedUpload).toHaveBeenCalledWith(params.mainId, params.subId, request.user);
+      expect(proposalUploadService.deleteUploadAndSaveProposal).toHaveBeenCalledWith(
+        params.mainId,
+        params.subId,
+        request.user,
+      );
     });
   });
 });

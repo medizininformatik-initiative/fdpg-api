@@ -12,7 +12,7 @@ export const ExposeHistory = () => (target: Object, propertyKey: string) => {
     const isFdpgMember = user.singleKnownRole === 'FdpgMember';
 
     const filteredEvents = params.obj[propertyKey].filter((event: HistoryEvent) => {
-      const isRevertEvent = event.type === HistoryEventType.FdpgRevertedLocationVote;
+      const isRevertEvent = event.type === HistoryEventType.FdpgLocationVoteReverted;
 
       if (isRevertEvent && isFdpgMember) {
         return true;

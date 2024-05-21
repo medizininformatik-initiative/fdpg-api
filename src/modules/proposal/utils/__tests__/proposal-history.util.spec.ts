@@ -196,12 +196,12 @@ describe('ProposalHistoryUtil', () => {
     it('should add history item for reverted location vote', () => {
       const request = getRequest();
       const proposal = getProposalDocument();
-      const location = MiiLocation.UKRUB;
+      const location = MiiLocation.UKL;
 
       addHistoryItemForRevertLocationVote(proposal, request.user, location);
       expect(proposal.history.length).toBe(1);
 
-      const expectedType = HistoryEventType.FdpgRevertedLocationVote;
+      const expectedType = HistoryEventType.FdpgLocationVoteReverted;
       expect(proposal.history[0].type).toBe(expectedType);
     });
   });
