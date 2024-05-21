@@ -19,6 +19,9 @@ export const revertLocationVote = async (
   if (uploadId) {
     await proposalUploadService.deleteUpload(proposal, uploadId, user);
   }
+  const conditionalApprovalFdpgTaskId = proposal.conditionalApprovals?.find(
+    (approval) => approval.location === location,
+  )?.fdpgTaskId;
 
   let locationDataAmount = 0;
   if (locationState.conditionalApprovalAccepted) {
@@ -36,12 +39,8 @@ export const revertLocationVote = async (
   clearLocationsVotes(proposal, location);
   proposal.openDizChecks.push(location);
 
-  if (
-    proposal.conditionalApprovals?.every((conditionalApproval) =>
-      proposal.uacApprovedLocations?.some((approvedLocation) => approvedLocation === conditionalApproval.location),
-    )
-  ) {
-    removeFdpgTaskByType(proposal, FdpgTaskType.ConditionApproval);
+  if (conditionalApprovalFdpgTaskId) {
+    removeFdpgTask(proposal, conditionalApprovalFdpgTaskId);
   }
 
   const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
