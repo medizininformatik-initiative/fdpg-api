@@ -14,6 +14,7 @@ import { clearLocationsVotes } from './location-flow.util';
 
 export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
+
   if (vote.value === true) {
     proposal.dizApprovedLocations.push(user.miiLocation);
   } else {
@@ -33,12 +34,14 @@ export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: Set
 
 export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: SetUacApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
+
   if (vote.value === true) {
     const uacApproval: Omit<UacApproval, '_id' | 'createdAt' | 'signedAt' | 'signedByOwnerId'> = {
       location: user.miiLocation,
       dataAmount: vote.dataAmount,
       isContractSigned: false,
     };
+
     // Flow:
     proposal.uacApprovedLocations.push(user.miiLocation);
     // Persistent:
@@ -46,6 +49,7 @@ export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: Set
     proposal.totalPromisedDataAmount = (proposal.totalPromisedDataAmount ?? 0) + (vote.dataAmount ?? 0);
 
     const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
     }
@@ -98,6 +102,7 @@ export const addUacApprovalWithCondition = (
   }
 
   // Flow:
+
   clearLocationsVotes(proposal, location);
   if (vote.value === true) {
     proposal.uacApprovedLocations.push(location);

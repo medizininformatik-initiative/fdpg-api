@@ -5,7 +5,7 @@ import { StorageService } from '../../storage/storage.service';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { DirectUpload } from '../enums/upload-type.enum';
 import { ProposalCrudService } from './proposal-crud.service';
-import { Proposal } from '../schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateUploadDeletion } from '../utils/validate-upload-deletion.util';
 
@@ -56,8 +56,7 @@ export class ProposalUploadService {
     }
   }
 
-  async deleteUpload(proposalId: string, uploadId: string, user: IRequestUser): Promise<void> {
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+  async deleteUpload(proposal: ProposalDocument, uploadId: string, user: IRequestUser): Promise<void> {
     const uploadIndex = proposal.uploads.findIndex((upload) => upload._id.toString() === uploadId);
 
     if (uploadIndex === -1) {
@@ -71,6 +70,12 @@ export class ProposalUploadService {
     await this.storageService.deleteBlob(upload.blobName);
 
     proposal.uploads.splice(uploadIndex, 1);
+  }
+
+  async deleteUploadAndSaveProposal(proposalId: string, uploadId: string, user: IRequestUser): Promise<void> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    await this.deleteUpload(proposal, uploadId, user);
 
     try {
       await proposal.save();

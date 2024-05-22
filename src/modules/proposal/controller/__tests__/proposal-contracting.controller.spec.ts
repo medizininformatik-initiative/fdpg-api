@@ -5,6 +5,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { SetDizApprovalDto } from '../../dto/set-diz-approval.dto';
 import { SetUacApprovalDto } from '../../dto/set-uac-approval.dto';
+import { RevertLocationVoteDto } from '../../dto/revert-location-vote.dto';
 import { SignContractDto } from '../../dto/sign-contract.dto';
 import { ProposalContractingController } from '../proposal-contracting.controller';
 import { ProposalContractingService } from '../../services/proposal-contracting.service';
@@ -72,6 +73,23 @@ describe('ProposalContractingController', () => {
 
       await proposalContractingController.setUacVote(params, file, input, request);
       expect(proposalContractingService.setUacApproval).toHaveBeenCalledWith(params.id, input, file, request.user);
+    });
+  });
+
+  describe('revertLocationVote', () => {
+    it('should revert the location vote', async () => {
+      const params = {
+        id: 'mongoId',
+      };
+      const input = new RevertLocationVoteDto();
+      jest.spyOn(proposalContractingService, 'revertLocationVote');
+
+      await proposalContractingController.revertLocationVote(params, input, request);
+      expect(proposalContractingService.revertLocationVote).toHaveBeenCalledWith(
+        params.id,
+        input.location,
+        request.user,
+      );
     });
   });
 
