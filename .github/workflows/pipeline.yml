@@ -10,7 +10,7 @@ env:
   imageName: fdpg-api
   isMain: ${{ github.ref == 'refs/heads/main' }}
   isDev: ${{ github.ref == 'refs/heads/dev' }}
-  nodeVersion: "18.16.1"
+  nodeVersion: "20.14.0"
 
 
 jobs:
