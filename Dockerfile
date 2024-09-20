@@ -1,4 +1,4 @@
-FROM node:18 AS build
+FROM node:20 AS build
 WORKDIR /usr/src/app
 COPY package*.json ./
 COPY yarn.lock ./
@@ -6,13 +6,13 @@ RUN yarn install
 COPY . .
 RUN yarn build
 
-FROM node:18-alpine as productionModules
+FROM node:20-alpine as productionModules
 WORKDIR /usr/src/app
 COPY package*.json ./
 COPY yarn.lock ./
 RUN yarn install --production=true
 
-FROM node:18-alpine as release
+FROM node:20-alpine as release
 ARG NODE_ENV=production
 ENV NODE_ENV=$NODE_ENV
 ARG SOFTWARE_VERSION=FILLED_BY_PIPELINE
