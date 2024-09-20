@@ -58,7 +58,8 @@ interface IMiiLocationInfo {
 }
 export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   [MiiLocation.MRI]: {
-    display: 'Klinikum rechts der Isar',
+    // Actual new identifier: 'TUM'
+    display: 'Klinikum der Technischen Universität München',
     definition: 'DIFUTURE',
   },
 
@@ -238,7 +239,8 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   },
 
   [MiiLocation.CTK]: {
-    display: 'Thiem Research GmbH',
+    // Actual new identifier: 'MUL-CT'
+    display: 'Medizinische Universität Lausitz - Carl Thiem',
     definition: 'HiGHmed',
   },
 
