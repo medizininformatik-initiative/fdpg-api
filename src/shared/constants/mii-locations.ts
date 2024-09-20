@@ -45,10 +45,12 @@ export enum MiiLocation {
   UKRUB = 'UKRUB',
   KC = 'KC',
   CTK = 'CTK',
+  UKOWL = 'UKOWL',
+  UOL = 'UOL',
   VirtualAll = 'VIRTUAL_ALL',
 }
 
-export const INACTIVE_LOCATIONS = [MiiLocation.UMR, MiiLocation.UKD, MiiLocation.UKRUB];
+export const INACTIVE_LOCATIONS = [MiiLocation.UKD, MiiLocation.UKRUB];
 export const ALL_LOCATIONS = Object.values(MiiLocation).filter((location) => location !== MiiLocation.VirtualAll);
 export const ALL_ACTIVE_LOCATIONS = ALL_LOCATIONS.filter((location) => !INACTIVE_LOCATIONS.includes(location));
 
@@ -241,6 +243,16 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
   [MiiLocation.CTK]: {
     // Actual new identifier: 'MUL-CT'
     display: 'Medizinische Universität Lausitz - Carl Thiem',
+    definition: 'HiGHmed',
+  },
+
+  [MiiLocation.UKOWL]: {
+    display: 'Universitätsklinikum OWL',
+    definition: 'HiGHmed',
+  },
+
+  [MiiLocation.UOL]: {
+    display: 'Carl von Ossietzky Universität Oldenburg',
     definition: 'HiGHmed',
   },
 
