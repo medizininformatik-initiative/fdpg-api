@@ -5,14 +5,9 @@ import { InitContractingDto } from './proposal/init-contracting.dto';
 @Exclude()
 export class ContractingUploadDto extends InitContractingDto {
   @ApiProperty({
-    type: 'file',
+    type: 'string',
     name: 'file',
-    properties: {
-      file: {
-        type: 'string',
-        format: 'binary',
-      },
-    },
+    format: 'binary',
   })
   file: any;
 }

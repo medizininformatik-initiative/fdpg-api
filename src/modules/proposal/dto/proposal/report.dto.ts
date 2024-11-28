@@ -61,17 +61,12 @@ export class ReportGetDto extends ReportBaseDto {
 export class ReportCreateWithFilesDto extends ReportCreateDto {
   @Expose()
   @ApiProperty({
-    type: 'file',
+    type: 'string',
     name: 'files',
     required: false,
     isArray: true,
-    properties: {
-      files: {
-        type: 'string',
-        format: 'binary',
-        nullable: true,
-      },
-    },
+    nullable: true,
+    format: 'binary',
   })
   @Type(() => FileDto)
   @IsArray()
@@ -83,19 +78,12 @@ export class ReportCreateWithFilesDto extends ReportCreateDto {
 export class ReportUpdateWithFilesDto extends ReportUpdateDto {
   @Expose()
   @ApiProperty({
-    type: 'file',
+    type: 'string',
     name: 'files',
     required: false,
     isArray: true,
-    properties: {
-      files: {
-        items: {
-          type: 'string',
-          format: 'binary',
-          nullable: true,
-        },
-      },
-    },
+    nullable: true,
+    format: 'binary',
   })
   @Type(() => FileDto)
   @IsArray()

@@ -24,8 +24,8 @@ const findIsDone = (obj: Proposal, path?: string) => {
         .filter((item) => item.length)
         .flat(10);
       acc.push(...items);
-    } else if (isObject(obj[key]) && typeof obj[key].getMonth !== 'function') {
-      acc.push(...findIsDone(obj[key], pathToValue));
+    } else if (isObject(obj[key]) && typeof (obj[key] as any).getMonth !== 'function') {
+      acc.push(...findIsDone(obj[key] as Proposal, pathToValue));
     }
 
     return acc;

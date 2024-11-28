@@ -47,7 +47,7 @@ const mergeDeep = (target, ...sources) => {
 
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
-      if (isObject(source[key]) && typeof source[key].getMonth !== 'function') {
+      if (isObject(source[key]) && typeof (source[key] as any).getMonth !== 'function') {
         if (!target[key]) Object.assign(target, { [key]: {} });
         mergeDeep(target[key], source[key]);
       } else {

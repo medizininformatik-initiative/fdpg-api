@@ -11,14 +11,9 @@ export class UploadTypeDto {
   type: DirectUpload;
 
   @ApiProperty({
-    type: 'file',
+    type: 'string',
     name: 'file',
-    properties: {
-      file: {
-        type: 'string',
-        format: 'binary',
-      },
-    },
+    format: 'binary',
   })
   file: any;
 }
