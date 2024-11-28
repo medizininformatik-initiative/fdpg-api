@@ -12,7 +12,10 @@ import { Publication } from 'src/modules/proposal/schema/sub-schema/publication.
 
 @Injectable()
 export class PublicationsService {
-  constructor(private keycloakUtilService: KeycloakUtilService, private emailService: EmailService) {}
+  constructor(
+    private keycloakUtilService: KeycloakUtilService,
+    private emailService: EmailService,
+  ) {}
 
   async handlePublicationCreate(proposal: Proposal, publication: PublicationCreateDto, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];

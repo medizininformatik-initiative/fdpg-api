@@ -11,7 +11,10 @@ import {
 
 @Injectable()
 export class ReportsService {
-  constructor(private keycloakUtilService: KeycloakUtilService, private emailService: EmailService) {}
+  constructor(
+    private keycloakUtilService: KeycloakUtilService,
+    private emailService: EmailService,
+  ) {}
 
   async handleReportCreate(proposal: Proposal, report: ReportDto, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];

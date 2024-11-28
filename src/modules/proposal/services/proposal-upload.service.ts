@@ -11,7 +11,10 @@ import { validateUploadDeletion } from '../utils/validate-upload-deletion.util';
 
 @Injectable()
 export class ProposalUploadService {
-  constructor(private proposalCrudService: ProposalCrudService, private storageService: StorageService) {}
+  constructor(
+    private proposalCrudService: ProposalCrudService,
+    private storageService: StorageService,
+  ) {}
 
   async upload(
     proposalId: string,

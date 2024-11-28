@@ -19,7 +19,10 @@ import {
 
 @Injectable()
 export class StatusChangeService {
-  constructor(private keycloakUtilService: KeycloakUtilService, private emailService: EmailService) {}
+  constructor(
+    private keycloakUtilService: KeycloakUtilService,
+    private emailService: EmailService,
+  ) {}
 
   private async handleProposalSubmit(proposal: Proposal, proposalUrl: string) {
     const ownerTask = async () => {

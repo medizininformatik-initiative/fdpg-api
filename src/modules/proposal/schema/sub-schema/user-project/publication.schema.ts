@@ -1,6 +1,6 @@
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { PublicationType } from '../../../enums/publication-type.enum'
+import { PublicationType } from '../../../enums/publication-type.enum';
 export type PublicationDocument = Publication & Document;
 
 @Schema({ _id: true })

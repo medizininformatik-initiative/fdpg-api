@@ -14,7 +14,7 @@ const generalAccessTypes = [
   UseCaseUpload.ProposalPDF,
   UseCaseUpload.ReportUpload,
 ] as UploadType[];
-export const ExposeUpload = () => (target: Object, propertyKey: string) => {
+export const ExposeUpload = () => (target: object, propertyKey: string) => {
   Expose()(target, propertyKey);
   Transform((params) => {
     const user = parseGroupToUser(params.options.groups);

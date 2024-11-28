@@ -9,7 +9,7 @@ interface IValidateWhenEmpty {
 }
 
 export function ValidateWhenEmpty(property: IValidateWhenEmpty, validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'validateWhenEmpty',
       target: object.constructor,

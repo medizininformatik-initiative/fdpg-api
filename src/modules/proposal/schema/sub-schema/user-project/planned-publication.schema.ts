@@ -19,9 +19,9 @@ export class PlannedPublication {
 
   @Prop({
     type: Boolean,
-    default: false
+    default: false,
   })
-  noPublicationPlanned: boolean
+  noPublicationPlanned: boolean;
 }
 
 export const PlannedPublicationSchema = SchemaFactory.createForClass(PlannedPublication);

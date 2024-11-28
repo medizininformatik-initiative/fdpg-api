@@ -5,7 +5,7 @@ import { HistoryEventGetDto } from '../dto/proposal/history-event.dto';
 import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
 import { HistoryEventType } from '../enums/history-event.enum';
 
-export const ExposeHistory = () => (target: Object, propertyKey: string) => {
+export const ExposeHistory = () => (target: object, propertyKey: string) => {
   Expose()(target, propertyKey);
   Transform((params) => {
     const user = parseGroupToUser(params.options.groups);

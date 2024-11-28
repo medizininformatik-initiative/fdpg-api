@@ -85,7 +85,7 @@ export class CommentAnswerEventService {
   ) {
     const commentLocation = answer.locations.includes(MiiLocation.VirtualAll)
       ? ALL_ACTIVE_LOCATIONS
-      : answer.locations ?? [];
+      : (answer.locations ?? []);
 
     const locations = reduceParticipatingLocations(proposal, commentLocation);
 

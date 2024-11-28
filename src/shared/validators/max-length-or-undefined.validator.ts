@@ -1,8 +1,8 @@
 import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
 import { maxLength } from 'class-validator';
 
-export function MaxLengthOrUndefined(maxCharacters:number, validationOptions?: ValidationOptions) {
-  return (object: Object, propertyName: string) => {
+export function MaxLengthOrUndefined(maxCharacters: number, validationOptions?: ValidationOptions) {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'maxLengthOrUndefined',
       target: object.constructor,
@@ -14,7 +14,7 @@ export function MaxLengthOrUndefined(maxCharacters:number, validationOptions?: V
           if (value === undefined) {
             return true;
           } else {
-            return maxLength(value, args.constraints[0])
+            return maxLength(value, args.constraints[0]);
           }
         },
         defaultMessage: (validationArguments?: ValidationArguments): string =>

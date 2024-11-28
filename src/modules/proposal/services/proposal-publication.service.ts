@@ -9,7 +9,10 @@ import { Publication, PublicationDocument } from '../schema/sub-schema/publicati
 
 @Injectable()
 export class ProposalPublicationService {
-  constructor(private proposalCrudService: ProposalCrudService, private eventEngineService: EventEngineService) {}
+  constructor(
+    private proposalCrudService: ProposalCrudService,
+    private eventEngineService: EventEngineService,
+  ) {}
 
   async createPublication(
     proposalId: string,

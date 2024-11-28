@@ -3,7 +3,7 @@ import { IsEnum, IsOptional, MaxLength } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
-import { PublicationType } from '../../../enums/publication-type.enum'
+import { PublicationType } from '../../../enums/publication-type.enum';
 
 export class PublicationDto extends WithIdForArrayDto {
   @Expose()
@@ -22,5 +22,4 @@ export class PublicationDto extends WithIdForArrayDto {
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
   authors: string;
-
 }

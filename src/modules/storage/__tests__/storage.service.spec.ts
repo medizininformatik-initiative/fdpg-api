@@ -17,7 +17,7 @@ describe('StorageService', () => {
     statObject: jest.fn(),
     removeObject: jest.fn(),
     removeObjects: jest.fn(),
-    presignedGetObject: jest.fn()
+    presignedGetObject: jest.fn(),
   };
 
   const configService = {

@@ -6,7 +6,10 @@ import { getProposalLockedEmailForOwner, getProposalUnlockedEmailForOwner } from
 
 @Injectable()
 export class ProposalLockService {
-  constructor(private keycloakUtilService: KeycloakUtilService, private emailService: EmailService) {}
+  constructor(
+    private keycloakUtilService: KeycloakUtilService,
+    private emailService: EmailService,
+  ) {}
 
   private async handleProposalLock(proposal: Proposal, proposalUrl: string) {
     const ownerTask = async () => {
