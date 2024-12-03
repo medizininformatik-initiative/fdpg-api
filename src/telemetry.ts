@@ -7,11 +7,7 @@ import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core'
 import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import {
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
-} from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { IncomingMessage } from 'http';
 import { IRequestUser } from './shared/types/request-user.interface';
 import { MongooseInstrumentation, SerializerPayload } from '@opentelemetry/instrumentation-mongoose';
@@ -28,7 +24,7 @@ export const configureTelemetry = (config: {
       new Resource({
         [ATTR_SERVICE_NAME]: 'FDPG-API_' + config.env,
         [ATTR_SERVICE_VERSION]: config.softwareVersion,
-        [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: config.env,
+        ['deployment.environment']: config.env,
         application: 'FDPG-API_' + config.env,
       }),
     );
@@ -43,7 +39,7 @@ export const configureTelemetry = (config: {
 
     const provider = new NodeTracerProvider({
       resource,
-      spanProcessors, // Pass the span processors here
+      spanProcessors,
     });
 
     provider.register({
