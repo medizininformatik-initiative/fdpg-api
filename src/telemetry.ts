@@ -13,8 +13,8 @@ import {
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from '@opentelemetry/semantic-conventions';
 import { IncomingMessage } from 'http';
-import { MongooseInstrumentation, SerializerPayload } from 'opentelemetry-instrumentation-mongoose';
 import { IRequestUser } from './shared/types/request-user.interface';
+import { MongooseInstrumentation, SerializerPayload } from '@opentelemetry/instrumentation-mongoose';
 
 export const configureTelemetry = (config: {
   connectionString: string;
