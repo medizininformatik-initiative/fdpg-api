@@ -11,7 +11,7 @@ export class FeasibilityService {
   constructor(private feasibilityClient: FeasibilityClient) {
     this.apiClient = this.feasibilityClient.client;
   }
-  private readonly basePath = 'api/v2/query';
+  private readonly basePath = 'api/v4/query';
   private apiClient: AxiosInstance;
 
   async getQueriesByUser(userId: string): Promise<FeasibilityUserQueryDetailDto[]> {
