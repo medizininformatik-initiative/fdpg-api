@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ITokenResult } from '../../shared/types/token-result.interface';
 @Injectable()
@@ -45,10 +44,10 @@ export class KeycloakClient {
       kind: SpanKind.CLIENT,
       root: true,
       attributes: {
-        [SemanticAttributes.HTTP_METHOD]: 'POST',
-        [SemanticAttributes.HTTP_HOST]: this.host,
-        [SemanticAttributes.HTTP_TARGET]: this.tokenEndpoint,
-        [SemanticAttributes.HTTP_URL]: this.tokenEndpoint,
+        ['http.method']: 'POST',
+        ['http.host']: this.host,
+        ['http.target']: this.tokenEndpoint,
+        ['http.url']: this.tokenEndpoint,
         ['keycloakClient.keycloakClientId']: this.clientId,
         ['keycloakClient.keycloakClientSecret']:
           '*******' + this.clientSecret.slice(this.clientSecret.length - 2, this.clientSecret.length),
