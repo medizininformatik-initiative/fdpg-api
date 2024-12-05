@@ -7,7 +7,7 @@ export const isAfterToday = (value: string): boolean => {
   return startOfToday <= incomingDate;
 };
 export function IsAfterToday(validationOptions?: ValidationOptions) {
-  return (object: Object, propertyName: string) => {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'isAfterToday',
       target: object.constructor,

@@ -33,16 +33,11 @@ export class SetUacApprovalDto {
 @Exclude()
 export class SetUacApprovalWithFileDto extends SetUacApprovalDto {
   @ApiProperty({
-    type: 'file',
+    type: 'string',
     name: 'file',
     required: false,
-    properties: {
-      file: {
-        type: 'string',
-        format: 'binary',
-        nullable: true,
-      },
-    },
+    nullable: true,
+    format: 'binary',
   })
   file: Express.Multer.File;
 }

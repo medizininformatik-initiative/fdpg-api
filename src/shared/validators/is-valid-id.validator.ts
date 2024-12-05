@@ -1,7 +1,7 @@
 import { isMongoId, registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
 
 export function IsValidId(validationOptions?: ValidationOptions) {
-  return (object: Object, propertyName: string) => {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'isValidId',
       target: object.constructor,

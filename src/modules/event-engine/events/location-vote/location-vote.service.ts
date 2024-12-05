@@ -7,7 +7,10 @@ import { getDizApprovalEmailForUacMembers, getVotingCompleteEmailForFdpgMember }
 
 @Injectable()
 export class LocationVoteService {
-  constructor(private keycloakUtilService: KeycloakUtilService, private emailService: EmailService) {}
+  constructor(
+    private keycloakUtilService: KeycloakUtilService,
+    private emailService: EmailService,
+  ) {}
 
   private isVotingComplete(proposal: Proposal): boolean {
     const numberOfVotedLocations = proposal.requestedButExcludedLocations.length + proposal.uacApprovedLocations.length;

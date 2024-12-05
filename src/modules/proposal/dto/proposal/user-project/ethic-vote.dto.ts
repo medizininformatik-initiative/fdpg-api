@@ -13,7 +13,7 @@ export class EthicVoteDto extends WithIdForObjectDto {
   @Expose()
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @ValidateIf((ethicVote: EthicVoteDto) => ethicVote.isExisting)
-  @Equals( true)
+  @Equals(true)
   admitReputationOfAttachment: boolean;
 
   @Expose()

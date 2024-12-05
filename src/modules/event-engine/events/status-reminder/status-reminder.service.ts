@@ -18,7 +18,10 @@ import {
 
 @Injectable()
 export class StatusReminderService {
-  constructor(private keycloakUtilService: KeycloakUtilService, private emailService: EmailService) {}
+  constructor(
+    private keycloakUtilService: KeycloakUtilService,
+    private emailService: EmailService,
+  ) {}
 
   private async handleFdpgCheckReminder(proposal: ProposalWithoutContent, proposalUrl: string) {
     const fdpgTask = async () => {

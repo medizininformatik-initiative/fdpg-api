@@ -31,7 +31,7 @@ export class IsUniqueAbbreviationConstraint implements ValidatorConstraintInterf
 }
 
 export function IsUniqueAbbreviation(validationOptions?: ValidationOptions) {
-  return (object: Object, propertyName: string) => {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       async: true,
       name: 'isUniqueAbbreviation',

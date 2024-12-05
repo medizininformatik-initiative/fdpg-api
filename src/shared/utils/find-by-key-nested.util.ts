@@ -12,7 +12,7 @@ interface IResult {
  * @returns Returns the found object and path where the key matches the value.
  */
 export const findByKeyNested = (
-  target: Array<any> | Object,
+  target: Array<any> | object,
   key: string,
   value: string | number | boolean,
   pathAcc: (string | number)[] = [],

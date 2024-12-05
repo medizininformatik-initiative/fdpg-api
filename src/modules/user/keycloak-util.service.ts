@@ -9,7 +9,10 @@ import { ICachedKeycloakUser, IGetKeycloakUser } from './types/keycloak-user.int
 
 @Injectable()
 export class KeycloakUtilService {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache, private keycloakService: KeycloakService) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private keycloakService: KeycloakService,
+  ) {}
 
   /** Cache time in milliseconds (since v5) => 30 Minutes */
   private readonly ROLE_CACHE_TIME = 30 * 60 * 1000;

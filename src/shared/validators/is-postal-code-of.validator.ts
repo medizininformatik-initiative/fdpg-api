@@ -2,7 +2,7 @@ import { isEnum, isPostalCode, registerDecorator, ValidationArguments, Validatio
 import { CountryCode } from '../enums/country-code.enum';
 
 export function IsPostalCodeOf(property: string, validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isPostalCodeOf',
       target: object.constructor,

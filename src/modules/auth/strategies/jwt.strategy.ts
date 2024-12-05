@@ -9,7 +9,10 @@ import { JwksProvider } from './jwks.provider';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(protected readonly configService: ConfigService, protected readonly jwksProvider: JwksProvider) {
+  constructor(
+    protected readonly configService: ConfigService,
+    protected readonly jwksProvider: JwksProvider,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,

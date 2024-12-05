@@ -66,7 +66,7 @@ describe('RoleGuard', () => {
         return { user };
       });
 
-      jest.spyOn(context, 'switchToHttp').mockImplementationOnce(() => ({ getRequest: getRequestMock } as any));
+      jest.spyOn(context, 'switchToHttp').mockImplementationOnce(() => ({ getRequest: getRequestMock }) as any);
       const result = guard.canActivate(context);
       expect(result).toEqual(false);
     });
@@ -82,7 +82,7 @@ describe('RoleGuard', () => {
         return { user };
       });
 
-      jest.spyOn(context, 'switchToHttp').mockImplementationOnce(() => ({ getRequest: getRequestMock } as any));
+      jest.spyOn(context, 'switchToHttp').mockImplementationOnce(() => ({ getRequest: getRequestMock }) as any);
       const result = guard.canActivate(context);
       expect(result).toEqual(true);
     });

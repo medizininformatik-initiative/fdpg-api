@@ -1,4 +1,5 @@
-import { CacheModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { KeycloakUtilService } from './keycloak-util.service';
 import { KeycloakClient } from './keycloak.client';
 import { KeycloakService } from './keycloak.service';

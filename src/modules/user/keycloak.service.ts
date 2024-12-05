@@ -5,9 +5,9 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { AxiosError, AxiosInstance } from 'axios';
 import { Cache } from 'cache-manager';
+import { AxiosError, AxiosInstance } from 'axios';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
@@ -28,7 +28,10 @@ import { ICreateKeycloakUser, IGetKeycloakUser } from './types/keycloak-user.int
 
 @Injectable()
 export class KeycloakService {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache, private keycloakClient: KeycloakClient) {
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private keycloakClient: KeycloakClient,
+  ) {
     this.apiClient = this.keycloakClient.client;
   }
 

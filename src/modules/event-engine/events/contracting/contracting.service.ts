@@ -8,7 +8,10 @@ import { getResearcherSignedEmailForDizMembers, getSigningCompleteEmailForFdpgMe
 
 @Injectable()
 export class ContractingService {
-  constructor(private keycloakUtilService: KeycloakUtilService, private emailService: EmailService) {}
+  constructor(
+    private keycloakUtilService: KeycloakUtilService,
+    private emailService: EmailService,
+  ) {}
 
   private async handleResearcherSign(proposal: Proposal, vote: boolean, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];

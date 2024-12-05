@@ -134,7 +134,7 @@ export class CommentEventService {
   private async handleProposalMessageToLocationCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
     const commentLocation = comment.locations.includes(MiiLocation.VirtualAll)
       ? ALL_ACTIVE_LOCATIONS
-      : comment.locations ?? [];
+      : (comment.locations ?? []);
 
     const locations = reduceParticipatingLocations(proposal, commentLocation);
 

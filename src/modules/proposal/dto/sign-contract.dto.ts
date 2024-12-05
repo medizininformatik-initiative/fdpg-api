@@ -21,16 +21,11 @@ export class SignContractDto {
 @Exclude()
 export class SignContractWithFileDto extends SignContractDto {
   @ApiProperty({
-    type: 'file',
+    type: 'string',
     name: 'file',
     required: false,
-    properties: {
-      file: {
-        type: 'string',
-        format: 'binary',
-        nullable: true,
-      },
-    },
+    format: 'binary',
+    nullable: true,
   })
   file: Express.Multer.File;
 }

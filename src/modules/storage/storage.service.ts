@@ -13,20 +13,20 @@ export class StorageService {
 
   constructor(private readonly configService: ConfigService) {
     const endPoint = this.configService.get('S3_ENDPOINT');
-    const port = parseInt(this.configService.get('S3_PORT') || "443");
+    const port = parseInt(this.configService.get('S3_PORT') || '443');
     const useSSL = (this.configService.get('S3_USE_SSL') || '').toLowerCase() === 'true';
-    const accessKey = this.configService.get("S3_ACCESSKEY")
-    const secretKey = this.configService.get("S3_SECRETKEY")
+    const accessKey = this.configService.get('S3_ACCESSKEY');
+    const secretKey = this.configService.get('S3_SECRETKEY');
 
     this.minioClient = new Client({
       endPoint,
       port,
       useSSL,
       accessKey,
-      secretKey
+      secretKey,
     });
 
-    this.bucketName = this.configService.get("S3_BUCKET");
+    this.bucketName = this.configService.get('S3_BUCKET');
   }
 
   async uploadFile(blobName: string, file: Express.Multer.File, user: IRequestUser): Promise<void> {
@@ -39,8 +39,8 @@ export class StorageService {
     const metadata: ItemBucketMetadata = {
       'Content-Type': file.mimetype,
       'Content-Disposition': `attachment; filename="${filenameRemovedNonAscii}"; filename*=UTF-8''${encodedFileName}`,
-      'userLocation': userLocationRemovedNonAscii,
-      'userId': user.userId
+      userLocation: userLocationRemovedNonAscii,
+      userId: user.userId,
     };
 
     try {
@@ -63,7 +63,7 @@ export class StorageService {
     return await this.minioClient.presignedGetObject(this.bucketName, blobName, lifetimeInSeconds);
   }
 
-  private async blobExists(blobName: string): Promise<Boolean> {
+  private async blobExists(blobName: string): Promise<boolean> {
     try {
       await this.minioClient.statObject(this.bucketName, blobName);
       return true;
