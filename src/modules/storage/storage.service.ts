@@ -4,12 +4,14 @@ import { ConfigService } from '@nestjs/config';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { validateMimetype } from 'src/shared/utils/validate-mimetype.util';
 import { SupportedMimetype } from '../proposal/enums/supported-mime-type.enum';
+import { trace, Tracer } from '@opentelemetry/api';
 
 @Injectable()
 export class StorageService {
   private readonly minioClient: Client;
   private readonly bucketName: string;
   private readonly supportedMimetypes = Object.values(SupportedMimetype);
+  private readonly tracer: Tracer;
 
   constructor(private readonly configService: ConfigService) {
     const endPoint = this.configService.get('S3_ENDPOINT');
@@ -27,9 +29,19 @@ export class StorageService {
     });
 
     this.bucketName = this.configService.get('S3_BUCKET');
+
+    this.tracer = trace.getTracer('storage-service');
   }
 
   async uploadFile(blobName: string, file: Express.Multer.File, user: IRequestUser): Promise<void> {
+    const span = this.tracer.startSpan('storage-service.uploadFile', {
+      attributes: {
+        bucket: this.bucketName,
+        object: blobName,
+        fileSize: file.size,
+      },
+    });
+
     validateMimetype(file, this.supportedMimetypes);
 
     const encodedFileName = encodeURIComponent(file.originalname);
@@ -44,11 +56,22 @@ export class StorageService {
     };
 
     try {
+      span.addEvent('Initiating upload');
+      const startUploadDate = new Date();
       await this.minioClient.putObject(this.bucketName, blobName, file.buffer, file.size, metadata);
+      const endUploadDate = new Date();
+
+      span.addEvent(`Upload completed`, {
+        start: startUploadDate.toISOString(),
+        end: endUploadDate.toISOString(),
+      });
     } catch (error) {
+      span.recordException(error);
       console.log('Failed to upload Blob: ', error);
       console.log('Failed blob options: ', metadata);
       throw new Error();
+    } finally {
+      span.end();
     }
   }
 
