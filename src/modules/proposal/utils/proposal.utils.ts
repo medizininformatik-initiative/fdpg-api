@@ -4,15 +4,17 @@ import { Proposal } from '../schema/proposal.schema';
 import { UploadDto } from '../dto/upload.dto';
 import { ReportDto } from '../dto/proposal/report.dto';
 
+const getBasePath = (proposalId: string, type: UploadType): string => `proposal/${proposalId}/${type}/`;
+
 export const getBlobName = (proposalId: string, type: UploadType, subId?: string): string => {
-  return `proposal/${proposalId}/${type}/${getSubPath(subId)}${uuid()}`;
+  return `${getBasePath(proposalId, type)}${getSubPath(subId)}${uuid()}`;
 };
 
 export const getProposalBlobName = (proposalId: string, projectAbbreviation: string, type: UploadType) => {
   if (type === UseCaseUpload.ProposalPDF) {
     const blobInstanceName = `${projectAbbreviation}_proposal`;
 
-    return `proposal/${proposalId}/${type}/${blobInstanceName}`;
+    return `${getBasePath(proposalId, type)}${blobInstanceName}`;
   }
 
   throw new Error(
