@@ -4,42 +4,40 @@ on:
   push:
   pull_request:
 
-
 env:
   containerRegistry: container-registry.cr.de-fra.ionos.com
   imageName: fdpg-api
   isMain: ${{ github.ref == 'refs/heads/main' }}
   isDev: ${{ github.ref == 'refs/heads/dev' }}
-  nodeVersion: "20.14.0"
-
+  nodeVersion: '22.12.0'
 
 jobs:
   qualitiy_gate:
-    name: "Qualitiy Gate"
+    name: 'Qualitiy Gate'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: "Setup Node"
+      - name: 'Setup Node'
         uses: actions/setup-node@v3
         with:
           node-version: ${{env.nodeVersion}}
           cache: yarn
 
-      - name: "Installing Modules"
+      - name: 'Installing Modules'
         run: yarn install
 
-      - name: "Jest Unit Testing"
+      - name: 'Jest Unit Testing'
         run: yarn test
 
-      - name: "Publish Test Results"
+      - name: 'Publish Test Results'
         uses: mikepenz/action-junit-report@v3
-        if: success() || failure()  # always run even if the previous step fails
+        if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: '**/reports/junit.xml'
           fail_on_failure: true
 
-      - name: "Publish Code Coverage"
+      - name: 'Publish Code Coverage'
         uses: 5monkeys/cobertura-action@master
         if: ${{github.event_name == 'pull_request' }}
         with:
@@ -48,9 +46,8 @@ jobs:
           fail_below_threshold: false
           only_changed_files: true
 
-
   build_container_image:
-    name: "Build Container Image"
+    name: 'Build Container Image'
     runs-on: ubuntu-latest
     needs: qualitiy_gate
     steps:
@@ -99,8 +96,7 @@ jobs:
         with:
           push: ${{env.isMain == 'true' || env.isDev == 'true' }}
           tags: ${{env.containerRegistry}}/fdpg/${{env.imageName}}:${{env.imageTag}}
-          labels:
-            BUILD_DATE=${{env.pipeDate}}
+          labels: BUILD_DATE=${{env.pipeDate}}
             BUILD_TIME=${{env.pipeTime}}
             BUILD_NO_OF_DATE=${{env.buildNumberOfDate}}
             SOURCE_BRANCH=${{github.ref}}
