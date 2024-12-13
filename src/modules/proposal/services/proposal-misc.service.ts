@@ -23,7 +23,7 @@ import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addFdpgChecklist } from '../utils/add-fdpg-checklist.util';
 import { flattenToLanguage } from '../utils/flatten-to-language.util';
 import { addHistoryItemForProposalLock, addHistoryItemForStatus } from '../utils/proposal-history.util';
-import { addUpload, getBlobName, getProposalBlobName } from '../utils/proposal.utils';
+import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
 import { ProposalCrudService } from './proposal-crud.service';
@@ -148,7 +148,7 @@ export class ProposalMiscService {
         mimetype: SupportedMimetype.Pdf,
         size: Buffer.byteLength(pdfBuffer),
       } as Express.Multer.File;
-      const pdfBlobName = getProposalBlobName(proposal._id, proposal.projectAbbreviation, UseCaseUpload.ProposalPDF);
+      const pdfBlobName = getBlobName(proposal._id, UseCaseUpload.ProposalPDF);
       await this.storageService.uploadFile(pdfBlobName, pdfFile, user);
       const pdfUpload = new UploadDto(pdfBlobName, pdfFile, UseCaseUpload.ProposalPDF, user);
       addUpload(proposal, pdfUpload);

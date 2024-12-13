@@ -18,7 +18,7 @@ import { IGetKeycloakUser } from 'src/modules/user/types/keycloak-user.interface
 import { addHistoryItemForProposalLock, addHistoryItemForStatus } from '../../utils/proposal-history.util';
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { setImmediate } from 'timers';
-import { addUpload, getBlobName, getProposalBlobName } from '../../utils/proposal.utils';
+import { addUpload, getBlobName } from '../../utils/proposal.utils';
 import { UseCaseUpload } from '../../enums/upload-type.enum';
 import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { FdpgChecklistSetDto } from '../../dto/proposal/fdpg-checklist.dto';
@@ -50,7 +50,6 @@ jest.mock('../../utils/proposal-history.util', () => ({
 jest.mock('../../utils/proposal.utils', () => ({
   addUpload: jest.fn(),
   getBlobName: jest.fn().mockReturnValue('blobName'),
-  getProposalBlobName: jest.fn().mockReturnValue('blobName_proposal'),
 }));
 
 jest.mock('../../utils/validate-fdpg-check-status.util', () => ({
@@ -363,8 +362,7 @@ describe('ProposalMiscService', () => {
         originalname: `${proposalDocument.projectAbbreviation}_proposal.pdf`,
         mimetype: SupportedMimetype.Pdf,
       });
-      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName_proposal', expectedFile, request.user);
-      expect(getProposalBlobName).toHaveBeenCalledWith(proposalId, projectAbbreviation, UseCaseUpload.ProposalPDF);
+      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', expectedFile, request.user);
       expect(addUpload).toHaveBeenCalledWith(proposalDocument, expect.anything());
     });
   });
