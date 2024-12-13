@@ -95,6 +95,7 @@ describe('ProposalMiscService', () => {
   } as FdpgRequest;
 
   const proposalId = 'proposalId';
+  const projectAbbreviation = 'projectAbbreviation';
   const researcher = {
     _id: 'userId',
     email: 'info@appsfactory.de',
@@ -102,7 +103,7 @@ describe('ProposalMiscService', () => {
   const participant = { researcher, participantCategory: ParticipantType.ProjectLeader };
   const proposalContent = {
     _id: proposalId,
-    projectAbbreviation: 'projectAbbreviation',
+    projectAbbreviation,
     status: ProposalStatus.FdpgCheck,
     participants: [participant],
     userProject: {
@@ -237,8 +238,8 @@ describe('ProposalMiscService', () => {
       expect(result[0].isRegistrationComplete).toEqual(true);
       expect(result[0].username).toEqual('username');
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user);
-      expect(keycloakService.getUsers).toBeCalledWith({ email: researcher.email, exact: true });
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user);
+      expect(keycloakService.getUsers).toHaveBeenCalledWith({ email: researcher.email, exact: true });
     });
   });
 
@@ -256,11 +257,11 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.setStatus(proposalId, newStatus, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, undefined, true);
-      expect(validateStatusChange).toBeCalledWith(proposalDocument, newStatus, request.user);
-      expect(statusChangeService.handleEffects).toBeCalledWith(expectedDocument, oldStatus, request.user);
-      expect(addHistoryItemForStatus).toBeCalledWith(expectedDocument, request.user, oldStatus);
-      expect(eventEngineService.handleProposalStatusChange).toBeCalledWith(
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
+      expect(validateStatusChange).toHaveBeenCalledWith(proposalDocument, newStatus, request.user);
+      expect(statusChangeService.handleEffects).toHaveBeenCalledWith(expectedDocument, oldStatus, request.user);
+      expect(addHistoryItemForStatus).toHaveBeenCalledWith(expectedDocument, request.user, oldStatus);
+      expect(eventEngineService.handleProposalStatusChange).toHaveBeenCalledWith(
         expect.objectContaining({ status: newStatus }),
       );
     });
@@ -278,11 +279,11 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.setStatus(proposalId, newStatus, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, undefined, true);
-      expect(validateStatusChange).not.toBeCalledWith(proposalDocument, newStatus, request.user);
-      expect(statusChangeService.handleEffects).not.toBeCalledWith(expectedDocument, oldStatus, request.user);
-      expect(addHistoryItemForStatus).not.toBeCalledWith(expectedDocument, request.user, oldStatus);
-      expect(eventEngineService.handleProposalStatusChange).not.toBeCalledWith(
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
+      expect(validateStatusChange).not.toHaveBeenCalledWith(proposalDocument, newStatus, request.user);
+      expect(statusChangeService.handleEffects).not.toHaveBeenCalledWith(expectedDocument, oldStatus, request.user);
+      expect(addHistoryItemForStatus).not.toHaveBeenCalledWith(expectedDocument, request.user, oldStatus);
+      expect(eventEngineService.handleProposalStatusChange).not.toHaveBeenCalledWith(
         expect.objectContaining({ status: newStatus }),
       );
     });
@@ -313,15 +314,15 @@ describe('ProposalMiscService', () => {
       const flushPromises = () => new Promise(setImmediate);
       await flushPromises();
 
-      expect(proposalCrudService.findDocument).toBeCalledTimes(2);
-      expect(feasibilityService.getQueryContentById).toBeCalledWith(feasibilityId);
-      expect(getBlobName).toBeCalledWith(proposalId, UseCaseUpload.FeasibilityQuery);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledTimes(2);
+      expect(feasibilityService.getQueryContentById).toHaveBeenCalledWith(feasibilityId);
+      expect(getBlobName).toHaveBeenCalledWith(proposalId, UseCaseUpload.FeasibilityQuery);
 
       const expectedFile = expect.objectContaining({
         originalname: 'Machbarkeits-Anfrage.json',
         mimetype: SupportedMimetype.Json,
       });
-      expect(storageService.uploadFile).toBeCalledWith('blobName', expectedFile, request.user);
+      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', expectedFile, request.user);
     });
 
     it('should set status for LocationCheck and get the pdf', async () => {
@@ -349,20 +350,20 @@ describe('ProposalMiscService', () => {
       const flushPromises = () => new Promise(setImmediate);
       await flushPromises();
 
-      expect(proposalCrudService.findDocument).toBeCalledTimes(2);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledTimes(2);
 
       const expectedDataPrivacy = [{ headline: 'headlineDE', text: 'textDE' }];
-      expect(pdfEngineService.createProposalPdf).toBeCalledWith(
+      expect(pdfEngineService.createProposalPdf).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: proposalDocument.projectAbbreviation }),
         expectedDataPrivacy,
       );
 
       const expectedFile = expect.objectContaining({
-        originalname: `${proposalDocument.projectAbbreviation}.pdf`,
+        originalname: `${proposalDocument.projectAbbreviation}_proposal.pdf`,
         mimetype: SupportedMimetype.Pdf,
       });
-      expect(storageService.uploadFile).toBeCalledWith('blobName', expectedFile, request.user);
-      expect(addUpload).toBeCalledWith(proposalDocument, expect.anything());
+      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', expectedFile, request.user);
+      expect(addUpload).toHaveBeenCalledWith(proposalDocument, expect.anything());
     });
   });
 
@@ -386,10 +387,10 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.getPdfProposalFile(proposalId, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledTimes(1);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledTimes(1);
 
       const expectedDataPrivacy = [{ headline: 'headlineDE', text: 'textDE' }];
-      expect(pdfEngineService.createProposalPdf).toBeCalledWith(
+      expect(pdfEngineService.createProposalPdf).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: proposalDocument.projectAbbreviation }),
         expectedDataPrivacy,
       );
@@ -410,8 +411,14 @@ describe('ProposalMiscService', () => {
       proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument);
 
       await proposalMiscService.setIsLockedStatus(proposalId, true, request.user);
-      expect(addHistoryItemForProposalLock).toBeCalledWith(expectedDocument, request.user, expectedDocument.isLocked);
-      expect(eventEngineService.handleProposalLockChange).toBeCalledWith(expect.objectContaining({ isLocked: true }));
+      expect(addHistoryItemForProposalLock).toHaveBeenCalledWith(
+        expectedDocument,
+        request.user,
+        expectedDocument.isLocked,
+      );
+      expect(eventEngineService.handleProposalLockChange).toHaveBeenCalledWith(
+        expect.objectContaining({ isLocked: true }),
+      );
     });
 
     it('should ignore the same status', async () => {
@@ -426,12 +433,12 @@ describe('ProposalMiscService', () => {
       proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument);
 
       await proposalMiscService.setIsLockedStatus(proposalId, true, request.user);
-      expect(addHistoryItemForProposalLock).not.toBeCalledWith(
+      expect(addHistoryItemForProposalLock).not.toHaveBeenCalledWith(
         expectedDocument,
         request.user,
         expectedDocument.isLocked,
       );
-      expect(eventEngineService.handleProposalLockChange).not.toBeCalledWith(
+      expect(eventEngineService.handleProposalLockChange).not.toHaveBeenCalledWith(
         expect.objectContaining({ isLocked: true }),
       );
     });
@@ -445,8 +452,8 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.setFdpgChecklist(proposalId, checklist, request.user);
 
-      expect(validateFdpgCheckStatus).toBeCalledWith(proposalDocument);
-      expect(addFdpgChecklist).toBeCalledWith(proposalDocument, checklist);
+      expect(validateFdpgCheckStatus).toHaveBeenCalledWith(proposalDocument);
+      expect(addFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist);
       expect(proposalDocument.save).toBeCalled();
     });
   });
@@ -464,15 +471,15 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.markSectionAsDone(proposalId, sectionId, true, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user);
-      expect(proposalDocument.save).toBeCalled();
-      expect(findByKeyNested).toBeCalledWith(
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user);
+      expect(proposalDocument.save).toHaveBeenCalled();
+      expect(findByKeyNested).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: 'projectAbbreviation' }),
         '_id',
         sectionId,
       );
 
-      expect(proposalDocument.set).toBeCalledWith('path.to.key.isDone', true);
+      expect(proposalDocument.set).toHaveBeenCalledWith('path.to.key.isDone', true);
     });
 
     it('should throw when section is not found', async () => {
@@ -503,8 +510,8 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.setFdpgCheckNotes(proposalId, text, request.user);
 
-      expect(validateFdpgCheckStatus).toBeCalledWith(proposalDocument);
-      expect(proposalDocument.save).toBeCalled();
+      expect(validateFdpgCheckStatus).toHaveBeenCalledWith(proposalDocument);
+      expect(proposalDocument.save).toHaveBeenCalled();
     });
   });
 });

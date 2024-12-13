@@ -144,7 +144,7 @@ export class ProposalMiscService {
       const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
       const pdfFile: Express.Multer.File = {
         buffer: pdfBuffer,
-        originalname: `${proposal.projectAbbreviation}.pdf`,
+        originalname: `${proposal.projectAbbreviation}_proposal.pdf`,
         mimetype: SupportedMimetype.Pdf,
         size: Buffer.byteLength(pdfBuffer),
       } as Express.Multer.File;
