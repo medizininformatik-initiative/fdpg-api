@@ -4,8 +4,14 @@ import { Proposal } from '../schema/proposal.schema';
 import { UploadDto } from '../dto/upload.dto';
 import { ReportDto } from '../dto/proposal/report.dto';
 
+const getBasePath = (proposalId: string, type: UploadType): string => `proposal/${proposalId}/${type}/`;
+
+const getSubPath = (subId?: string): string => {
+  return subId ? subId + '/' : '';
+};
+
 export const getBlobName = (proposalId: string, type: UploadType, subId?: string): string => {
-  return `proposal/${proposalId}/${type}/${subId ? subId + '/' : ''}${uuid()}`;
+  return `${getBasePath(proposalId, type)}${getSubPath(subId)}${uuid()}`;
 };
 
 export const addUpload = (proposal: Proposal, upload: UploadDto): void => {
