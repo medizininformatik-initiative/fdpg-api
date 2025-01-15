@@ -9,9 +9,6 @@ export class EthicVote {
   isExisting: boolean;
 
   @Prop()
-  admitReputationOfAttachment: boolean;
-
-  @Prop()
   ethicsCommittee: string;
 
   @Prop()
