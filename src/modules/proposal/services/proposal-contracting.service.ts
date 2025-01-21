@@ -72,14 +72,24 @@ export class ProposalContractingService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     validateUacApproval(toBeUpdated, user);
-    const hasCondition = !!file?.buffer && vote.value;
+    const hasCondition = vote.value && (!!file?.buffer || !!vote.conditionReasoning);
 
     if (hasCondition) {
-      const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractCondition);
-      await this.storageService.uploadFile(blobName, file, user);
-      const upload = new UploadDto(blobName, file, UseCaseUpload.ContractCondition, user);
-      addUpload(toBeUpdated, upload);
-      addUacApprovalWithCondition(toBeUpdated, user.miiLocation, upload, vote);
+      const upload: UploadDto | undefined = await (async () => {
+        if (!!file?.buffer) {
+          const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractCondition);
+          await this.storageService.uploadFile(blobName, file, user);
+          const upload = new UploadDto(blobName, file, UseCaseUpload.ContractCondition, user);
+          addUpload(toBeUpdated, upload);
+          return upload;
+        } else {
+          return;
+        }
+      })();
+
+      console.log({ upload });
+
+      addUacApprovalWithCondition(toBeUpdated, user.miiLocation, vote, upload, vote.conditionReasoning);
     } else {
       addUacApproval(toBeUpdated, user, vote);
     }

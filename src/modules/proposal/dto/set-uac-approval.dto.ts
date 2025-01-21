@@ -24,6 +24,10 @@ export class SetUacApprovalDto {
   dataAmount?: number;
 
   @Expose()
+  @MaxLength(10_000)
+  conditionReasoning?: string;
+
+  @Expose()
   @ValidateIf((obj: SetUacApprovalDto) => obj.value === false)
   @IsNotEmptyString()
   @MaxLength(10_000)

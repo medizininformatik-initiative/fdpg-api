@@ -34,8 +34,14 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
 
 const getFilterForRequested = (user: IRequestUser): FilterQuery<Proposal> => {
   return {
-    status: ProposalStatus.LocationCheck,
-    openDizChecks: user.miiLocation,
+    $and: [
+      {
+        status: ProposalStatus.LocationCheck,
+      },
+      {
+        $or: [{ openDizChecks: user.miiLocation }, { uacApprovedLocations: user.miiLocation }],
+      },
+    ],
   };
 };
 
@@ -47,7 +53,7 @@ const getFilterForPending = (user: IRequestUser): FilterQuery<Proposal> => {
           $in: [ProposalStatus.LocationCheck, ProposalStatus.Contracting],
         },
       },
-      { $or: [{ dizApprovedLocations: user.miiLocation }, { uacApprovedLocations: user.miiLocation }] },
+      { $or: [{ dizApprovedLocations: user.miiLocation }] },
     ],
   };
 };

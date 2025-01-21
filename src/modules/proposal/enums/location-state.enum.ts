@@ -2,6 +2,7 @@ export enum LocationState {
   IsDizCheck = 'DIZ_CHECK',
   DizApproved = 'DIZ_APPROVED',
   UacApproved = 'UAC_APPROVED',
+  DizConditionApproved = 'DIZ_CONDITION_APPROVED',
   SignedContract = 'SIGNED_CONTRACT',
   SignedContractAndContractingDone = 'SIGNED_CONTRACT_AND_CONTRACTING_DONE',
   RequestedButExcluded = 'REQUESTED_BUT_EXCLUDED',

@@ -209,6 +209,9 @@ export class ProposalGetDto extends ProposalBaseDto {
   uacApprovedLocations: MiiLocation[];
 
   @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  dizConditionApprovedLocations: MiiLocation[];
+
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
   requestedButExcludedLocations: MiiLocation[];
 
   @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
@@ -218,7 +221,7 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   // Conditional and UAC approval are stored additionally to the "flow-arrays" and are persistent
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
   @Type(() => ConditionalApprovalGetDto)
   conditionalApprovals: ConditionalApprovalGetDto[];
 

@@ -171,6 +171,9 @@ export class Proposal {
   uacApprovedLocations: MiiLocation[];
 
   @Prop([String])
+  dizConditionApprovedLocations: MiiLocation[];
+
+  @Prop([String])
   requestedButExcludedLocations: MiiLocation[];
 
   @Prop([String])

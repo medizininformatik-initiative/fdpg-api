@@ -11,13 +11,19 @@ export class ConditionalApprovalGetDto {
   isAccepted: boolean;
 
   @Expose()
+  isDizAccepted: boolean;
+
+  @Expose()
   isContractSigned?: boolean;
 
   @Expose()
   dataAmount: number;
 
-  @Expose({ groups: [Role.FdpgMember] })
-  uploadId: string;
+  @Expose({ groups: [Role.FdpgMember, Role.DizMember] })
+  uploadId?: string;
+
+  @Expose()
+  conditionalReasoning?: string;
 
   @ExposeId()
   _id: string;

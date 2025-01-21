@@ -48,11 +48,13 @@ export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: Set
     proposal.uacApprovals.push(uacApproval as UacApproval);
     proposal.totalPromisedDataAmount = (proposal.totalPromisedDataAmount ?? 0) + (vote.dataAmount ?? 0);
 
+    /*
     const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
 
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
     }
+      */
   } else {
     proposal.requestedButExcludedLocations.push(user.miiLocation);
     proposal.declineReasons = [
@@ -78,10 +80,11 @@ export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: Set
 export const addUacApprovalWithCondition = (
   proposal: Proposal,
   location: MiiLocation,
-  upload: UploadDto,
   vote: SetUacApprovalDto,
+  upload?: UploadDto,
+  conditionalReasoning?: string,
 ) => {
-  const fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.ConditionApproval);
+  //const fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.ConditionApproval);
 
   const conditionalApproval: Omit<
     ConditionalApproval,
@@ -92,8 +95,12 @@ export const addUacApprovalWithCondition = (
     uploadId: upload._id,
     dataAmount: vote.dataAmount,
     isContractSigned: false,
-    fdpgTaskId,
+    conditionalReasoning: conditionalReasoning,
+    isDizAccepted: false,
+    //fdpgTaskId,
   };
+
+  console.log({ conditionalApproval });
 
   if (proposal.conditionalApprovals) {
     proposal.conditionalApprovals.push(conditionalApproval as ConditionalApproval);
@@ -111,12 +118,12 @@ export const addUacApprovalWithCondition = (
     proposal.requestedButExcludedLocations.push(location);
   }
 
-  const isUacApprovalComplete =
+  /*const isUacApprovalComplete =
     proposal.uacApprovedLocations.length + proposal.requestedButExcludedLocations.length ===
     proposal.numberOfRequestedLocations;
   if (isUacApprovalComplete) {
     addFdpgTaskAndReturnId(proposal, FdpgTaskType.UacApprovalComplete);
-  }
+  }*/
 };
 
 export const addUacConditionReview = (
@@ -129,7 +136,7 @@ export const addUacConditionReview = (
   condition.reviewedAt = new Date();
   condition.reviewedByOwnerId = user.userId;
 
-  removeFdpgTask(proposal, condition.fdpgTaskId);
+  //removeFdpgTask(proposal, condition.fdpgTaskId);
 
   clearLocationsVotes(proposal, condition.location);
   if (vote === true) {
@@ -137,10 +144,10 @@ export const addUacConditionReview = (
     // Flow
     proposal.uacApprovedLocations.push(condition.location);
 
-    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+    /*const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
-    }
+    } */
   } else {
     // Flow
     proposal.requestedButExcludedLocations.push(condition.location);
