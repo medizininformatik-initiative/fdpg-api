@@ -23,7 +23,7 @@ export class ConditionalApprovalGetDto {
   uploadId?: string;
 
   @Expose()
-  conditionalReasoning?: string;
+  conditionReasoning?: string;
 
   @ExposeId()
   _id: string;

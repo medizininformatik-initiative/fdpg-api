@@ -15,12 +15,6 @@ export class ConditionalApproval {
   })
   isAccepted: boolean;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  isDizAccepted: boolean;
-
   @Prop()
   isContractSigned: boolean;
 
@@ -31,7 +25,7 @@ export class ConditionalApproval {
   uploadId?: string;
 
   @Prop()
-  conditionalReasoning?: string;
+  conditionReasoning?: string;
 
   @Prop()
   fdpgTaskId?: string;

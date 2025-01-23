@@ -168,10 +168,10 @@ export class Proposal {
   dizApprovedLocations: MiiLocation[];
 
   @Prop([String])
-  uacApprovedLocations: MiiLocation[];
+  openDizConditionChecks: MiiLocation[];
 
   @Prop([String])
-  dizConditionApprovedLocations: MiiLocation[];
+  uacApprovedLocations: MiiLocation[];
 
   @Prop([String])
   requestedButExcludedLocations: MiiLocation[];
@@ -181,6 +181,9 @@ export class Proposal {
   // LOCATION Tasks <----
 
   // Conditional and UAC approval are stored additionally to the "flow-arrays" and are persistent
+  @Prop([ConditionalApproval])
+  locationConditionDraft: ConditionalApproval[];
+
   @Prop([ConditionalApproval])
   conditionalApprovals: ConditionalApproval[];
 

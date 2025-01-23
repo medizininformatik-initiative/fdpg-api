@@ -1,4 +1,4 @@
-import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { ClassTransformOptions, Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsArray, IsEnum, IsObject, IsOptional, Matches, MaxLength, ValidateNested } from 'class-validator';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PROPOSAL_SHORTCUT_REGEX } from 'src/shared/constants/regex.constants';
@@ -36,6 +36,17 @@ import { UacApprovalGetDto } from './uac-approval.dto';
 import { UserProjectDto } from './user-project.dto';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
+
+const getRoleFromTransform = (options: ClassTransformOptions) => {
+  const [role] = options.groups
+    .filter((entry) => entry.startsWith('GROUP_USER_ROLE_'))
+    .map((roleStr) => roleStr.replace('GROUP_USER_ROLE_', ''));
+  const [location] = options.groups
+    .filter((entry) => entry.startsWith('GROUP_USER_LOCATION_'))
+    .map((locationStr) => locationStr.replace('GROUP_USER_LOCATION_', ''));
+
+  return { role, location };
+};
 
 @Exclude()
 export class ProposalBaseDto {
@@ -205,11 +216,22 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
   dizApprovedLocations: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
-  uacApprovedLocations: MiiLocation[];
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
+  @Transform(({ value, options }) => {
+    const { role, location } = getRoleFromTransform(options);
+
+    return value.filter((miiLoc: MiiLocation) => {
+      if (role === Role.DizMember) {
+        return miiLoc === location;
+      }
+
+      return true;
+    });
+  })
+  openDizConditionChecks: MiiLocation[];
 
   @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
-  dizConditionApprovedLocations: MiiLocation[];
+  uacApprovedLocations: MiiLocation[];
 
   @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
   requestedButExcludedLocations: MiiLocation[];
@@ -220,8 +242,22 @@ export class ProposalGetDto extends ProposalBaseDto {
   // LOCATION Tasks <----
 
   // Conditional and UAC approval are stored additionally to the "flow-arrays" and are persistent
-
   @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
+  @Type(() => ConditionalApprovalGetDto)
+  @Transform(({ value, options }) => {
+    const { role, location } = getRoleFromTransform(options);
+
+    return value.filter((approval: ConditionalApprovalGetDto) => {
+      if (role === Role.DizMember) {
+        return approval.location === location;
+      }
+
+      return true;
+    });
+  })
+  locationConditionDraft: ConditionalApprovalGetDto[];
+
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
   @Type(() => ConditionalApprovalGetDto)
   conditionalApprovals: ConditionalApprovalGetDto[];
 
@@ -320,6 +356,9 @@ export class ProposalMarkConditionAcceptedReturnDto {
 
   @Expose()
   openDizChecks: MiiLocation[];
+
+  @Expose()
+  openDizConditionChecks: MiiLocation[];
 
   @Expose()
   dizApprovedLocations: MiiLocation[];

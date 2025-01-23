@@ -17,6 +17,16 @@ export const validateDizApproval = (proposal: Proposal, user: IRequestUser) => {
   }
 };
 
+export const validateDizConditionApproval = (proposal: Proposal, user: IRequestUser) => {
+  if (proposal.status !== ProposalStatus.LocationCheck) {
+    throw new ForbiddenException('The current status does not allow to set the diz approval');
+  }
+
+  if (!proposal.openDizConditionChecks.includes(user.miiLocation)) {
+    throw new ForbiddenException('The location is not allowed to provide a vote. It might have already voted');
+  }
+};
+
 export const validateUacApproval = (proposal: Proposal, user: IRequestUser) => {
   if (proposal.status !== ProposalStatus.LocationCheck) {
     throw new ForbiddenException('The current status does not allow to set the uac approval');

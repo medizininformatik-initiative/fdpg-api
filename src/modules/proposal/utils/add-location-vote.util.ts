@@ -32,7 +32,53 @@ export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: Set
   }
 };
 
-export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: SetUacApprovalDto) => {
+export const addUacApprovalWithCondition = (
+  proposal: Proposal,
+  user: IRequestUser,
+  vote: SetUacApprovalDto,
+  upload?: UploadDto,
+  conditionReasoning?: string,
+) => {
+  const location = user.miiLocation;
+
+  // Flow:
+  clearLocationsVotes(proposal, location);
+  if (vote.value === true) {
+    const conditionalApproval: Omit<
+      ConditionalApproval,
+      '_id' | 'createdAt' | 'reviewedAt' | 'reviewedByOwnerId' | 'signedAt' | 'signedByOwnerId'
+    > = {
+      location,
+      isAccepted: false,
+      uploadId: upload._id,
+      dataAmount: vote.dataAmount,
+      isContractSigned: false,
+      conditionReasoning,
+    };
+
+    if (proposal.locationConditionDraft) {
+      proposal.locationConditionDraft.push(conditionalApproval as ConditionalApproval);
+    } else {
+      proposal.locationConditionDraft = [conditionalApproval as ConditionalApproval];
+    }
+
+    proposal.openDizConditionChecks.push(location);
+  } else {
+    proposal.requestedButExcludedLocations.push(location);
+    proposal.declineReasons = [
+      ...proposal.declineReasons,
+      {
+        location: user.miiLocation,
+        reason: vote.declineReason,
+        type: DeclineType.UacApprove,
+        owner: getOwner(user),
+        createdAt: new Date(),
+      },
+    ];
+  }
+};
+
+export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, vote: SetUacApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
 
   if (vote.value === true) {
@@ -48,13 +94,11 @@ export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: Set
     proposal.uacApprovals.push(uacApproval as UacApproval);
     proposal.totalPromisedDataAmount = (proposal.totalPromisedDataAmount ?? 0) + (vote.dataAmount ?? 0);
 
-    /*
     const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
 
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
     }
-      */
   } else {
     proposal.requestedButExcludedLocations.push(user.miiLocation);
     proposal.declineReasons = [
@@ -77,14 +121,13 @@ export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: Set
   }
 };
 
-export const addUacApprovalWithCondition = (
+export const addDizApprovalWithCondition = (
   proposal: Proposal,
   location: MiiLocation,
   vote: SetUacApprovalDto,
-  upload?: UploadDto,
-  conditionalReasoning?: string,
+  conditionReasoning: string,
 ) => {
-  //const fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.ConditionApproval);
+  const fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.ConditionApproval);
 
   const conditionalApproval: Omit<
     ConditionalApproval,
@@ -92,15 +135,17 @@ export const addUacApprovalWithCondition = (
   > = {
     location: location,
     isAccepted: false,
-    uploadId: upload._id,
     dataAmount: vote.dataAmount,
     isContractSigned: false,
-    conditionalReasoning: conditionalReasoning,
-    isDizAccepted: false,
-    //fdpgTaskId,
+    conditionReasoning: conditionReasoning,
+    fdpgTaskId,
   };
 
-  console.log({ conditionalApproval });
+  if (proposal.locationConditionDraft) {
+    proposal.locationConditionDraft = proposal.locationConditionDraft.filter(
+      (condition) => condition.location !== location,
+    );
+  }
 
   if (proposal.conditionalApprovals) {
     proposal.conditionalApprovals.push(conditionalApproval as ConditionalApproval);
@@ -118,15 +163,15 @@ export const addUacApprovalWithCondition = (
     proposal.requestedButExcludedLocations.push(location);
   }
 
-  /*const isUacApprovalComplete =
+  const isUacApprovalComplete =
     proposal.uacApprovedLocations.length + proposal.requestedButExcludedLocations.length ===
     proposal.numberOfRequestedLocations;
   if (isUacApprovalComplete) {
     addFdpgTaskAndReturnId(proposal, FdpgTaskType.UacApprovalComplete);
-  }*/
+  }
 };
 
-export const addUacConditionReview = (
+export const addDizConditionReview = (
   proposal: Proposal,
   condition: ConditionalApproval,
   vote: boolean,
@@ -136,7 +181,7 @@ export const addUacConditionReview = (
   condition.reviewedAt = new Date();
   condition.reviewedByOwnerId = user.userId;
 
-  //removeFdpgTask(proposal, condition.fdpgTaskId);
+  removeFdpgTask(proposal, condition.fdpgTaskId);
 
   clearLocationsVotes(proposal, condition.location);
   if (vote === true) {
@@ -144,10 +189,10 @@ export const addUacConditionReview = (
     // Flow
     proposal.uacApprovedLocations.push(condition.location);
 
-    /*const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
-    } */
+    }
   } else {
     // Flow
     proposal.requestedButExcludedLocations.push(condition.location);

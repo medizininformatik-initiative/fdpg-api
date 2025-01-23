@@ -68,16 +68,20 @@ export class ProposalCrudService {
       dbProjection['reports.content'] = 0;
     } else if (user.singleKnownRole === Role.DizMember) {
       dbProjection.owner = 1;
+      dbProjection.locationConditionDraft = 1;
       dbProjection.conditionalApprovals = 1;
       dbProjection.openDizChecks = 1;
       dbProjection.dizApprovedLocations = 1;
+      dbProjection.openDizConditionChecks = 1;
       dbProjection.uacApprovedLocations = 1;
       dbProjection.signedContracts = 1;
       dbProjection.requestedButExcludedLocations = 1;
     } else if (user.singleKnownRole === Role.UacMember) {
       dbProjection.owner = 1;
+      dbProjection.locationConditionDraft = 1;
       dbProjection.conditionalApprovals = 1;
       dbProjection.dizApprovedLocations = 1;
+      dbProjection.openDizConditionChecks = 1;
       dbProjection.uacApprovedLocations = 1;
       dbProjection.signedContracts = 1;
       dbProjection.requestedButExcludedLocations = 1;
@@ -98,6 +102,7 @@ export class ProposalCrudService {
     const document = await this.findDocument(proposalId, user);
     const plain = document.toObject();
     const userGroups = convertUserToGroups(user);
+
     return plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],

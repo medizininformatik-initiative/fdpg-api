@@ -36,11 +36,11 @@ const getFilterForRequested = (user: IRequestUser): FilterQuery<Proposal> => {
   return {
     $and: [
       {
-        status: ProposalStatus.LocationCheck,
+        status: {
+          $in: [ProposalStatus.LocationCheck],
+        },
       },
-      {
-        $or: [{ openDizChecks: user.miiLocation }, { uacApprovedLocations: user.miiLocation }],
-      },
+      { $or: [{ openDizChecks: user.miiLocation }, { openDizConditionChecks: user.miiLocation }] },
     ],
   };
 };
@@ -53,7 +53,7 @@ const getFilterForPending = (user: IRequestUser): FilterQuery<Proposal> => {
           $in: [ProposalStatus.LocationCheck, ProposalStatus.Contracting],
         },
       },
-      { $or: [{ dizApprovedLocations: user.miiLocation }] },
+      { $or: [{ dizApprovedLocations: user.miiLocation }, { uacApprovedLocations: user.miiLocation }] },
     ],
   };
 };
