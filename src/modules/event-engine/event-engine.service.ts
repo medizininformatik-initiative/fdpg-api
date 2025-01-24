@@ -96,7 +96,6 @@ export class EventEngineService {
       await this.locationVoteService.handleUacApproval(proposal, vote, location, proposalUrl);
     }
   }
-
   async handleProposalContractSign(proposal: Proposal, vote: boolean, user: IRequestUser) {
     if (proposal) {
       const proposalUrl = this.getProposalUrl(proposal);

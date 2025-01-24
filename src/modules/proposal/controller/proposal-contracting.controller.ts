@@ -69,17 +69,17 @@ export class ProposalContractingController {
 
   @Auth(Role.DizMember)
   @Post(':id/dizConditionApproval')
-  @UsePipes(ValidationPipe)
+  @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiNoContentResponse({ description: 'Vote successfully set. No content returns.' })
   @HttpCode(204)
-  @ApiOperation({ summary: 'Sets the DIZ vote of a proposal' })
+  @ApiOperation({ summary: 'Sets the UAC vote after a DIZ condition review of a proposal' })
+  @ApiBody({ type: SetUacApprovalDto })
   async dizConditionApproval(
     @Param() { id }: MongoIdParamDto,
     @Body() vote: SetUacApprovalDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    console.log({ vote });
     return await this.proposalContractingService.dizConditionApproval(id, vote, user);
   }
 

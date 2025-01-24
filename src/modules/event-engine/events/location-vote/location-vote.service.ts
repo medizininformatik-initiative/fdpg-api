@@ -3,7 +3,11 @@ import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
-import { getDizApprovalEmailForUacMembers, getVotingCompleteEmailForFdpgMember } from './location-approval.emails';
+import {
+  getDizApprovalEmailForUacMembers,
+  getUacApprovalEmailForDizConditionCheck,
+  getVotingCompleteEmailForFdpgMember,
+} from './location-approval.emails';
 
 @Injectable()
 export class LocationVoteService {
@@ -47,6 +51,17 @@ export class LocationVoteService {
 
   async handleUacApproval(proposal: Proposal, vote: boolean, location: MiiLocation, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
+
+    if (vote === true) {
+      const dizTask = async () => {
+        const validDizContacts = await this.keycloakUtilService
+          .getDizMembers()
+          .then((members) => this.keycloakUtilService.getLocationContacts([location], members));
+        const mail = getUacApprovalEmailForDizConditionCheck(validDizContacts, proposal, proposalUrl);
+        return await this.emailService.send(mail);
+      };
+      emailTasks.push(dizTask());
+    }
 
     if (this.isVotingComplete(proposal)) {
       const fdpgTask = async () => {

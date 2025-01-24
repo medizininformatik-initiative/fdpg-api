@@ -29,6 +29,7 @@ import {
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
+  addHistoryItemForDizConditionReviewApproval,
   addHistoryItemForRevertLocationVote,
   addHistoryItemForStatus,
   addHistoryItemForUacApproval,
@@ -78,7 +79,7 @@ export class ProposalContractingService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     validateUacApproval(toBeUpdated, user);
-    const hasCondition = vote.value && (!!file?.buffer || !!vote.conditionReasoning);
+    const hasCondition = vote.value && (!!file?.buffer || this.isValidConditionReason(vote.conditionReasoning));
 
     const upload: UploadDto | undefined = await (async () => {
       if (!!file?.buffer) {
@@ -103,17 +104,17 @@ export class ProposalContractingService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     validateDizConditionApproval(toBeUpdated, user);
-    const hasCondition = vote.value && !!vote.conditionReasoning;
+    const hasCondition = vote.value && this.isValidConditionReason(vote.conditionReasoning);
 
     if (hasCondition) {
       addDizApprovalWithCondition(toBeUpdated, user.miiLocation, vote, vote.conditionReasoning);
     } else {
       addDizConditionApproval(toBeUpdated, user, vote);
     }
-    addHistoryItemForUacApproval(toBeUpdated, user, vote.value, hasCondition);
 
-    const saveResult = await toBeUpdated.save();
-    await this.eventEngineService.handleProposalUacApproval(saveResult, vote.value, user.miiLocation);
+    addHistoryItemForDizConditionReviewApproval(toBeUpdated, user, vote.value, hasCondition);
+
+    await toBeUpdated.save();
   }
 
   async revertLocationVote(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
@@ -216,5 +217,9 @@ export class ProposalContractingService {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],
     });
+  }
+
+  isValidConditionReason(input?: string): boolean {
+    return typeof input === 'string' && input.trim() !== '';
   }
 }

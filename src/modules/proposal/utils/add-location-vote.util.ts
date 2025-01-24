@@ -141,22 +141,22 @@ export const addDizApprovalWithCondition = (
     fdpgTaskId,
   };
 
-  if (proposal.locationConditionDraft) {
-    proposal.locationConditionDraft = proposal.locationConditionDraft.filter(
-      (condition) => condition.location !== location,
-    );
-  }
-
-  if (proposal.conditionalApprovals) {
-    proposal.conditionalApprovals.push(conditionalApproval as ConditionalApproval);
-  } else {
-    proposal.conditionalApprovals = [conditionalApproval as ConditionalApproval];
-  }
-
-  // Flow:
-
-  clearLocationsVotes(proposal, location);
   if (vote.value === true) {
+    if (proposal.locationConditionDraft) {
+      proposal.locationConditionDraft = proposal.locationConditionDraft.filter(
+        (condition) => condition.location !== location,
+      );
+    }
+
+    if (proposal.conditionalApprovals) {
+      proposal.conditionalApprovals.push(conditionalApproval as ConditionalApproval);
+    } else {
+      proposal.conditionalApprovals = [conditionalApproval as ConditionalApproval];
+    }
+
+    // Flow:
+
+    clearLocationsVotes(proposal, location);
     proposal.uacApprovedLocations.push(location);
   } else {
     // Just to be sure. Shouldn't be a conditional approval if false

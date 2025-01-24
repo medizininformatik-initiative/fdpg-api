@@ -19,6 +19,22 @@ export const getDizApprovalEmailForUacMembers = (
   };
 };
 
+export const getUacApprovalEmailForDizConditionCheck = (
+  validContacts: string[],
+  proposal: Proposal,
+  proposalUrl: string,
+): IEmail => {
+  const dueDateString = getLocaleDateString(proposal.dueDateForStatus);
+  const locationCheckDateString = getLocaleDateString(proposal.statusChangeToLocationCheckAt);
+
+  return {
+    to: validContacts,
+    categories: [EmailCategory.LocationVote],
+    subject: 'TODO',
+    text: `TODO`,
+  };
+};
+
 export const getVotingCompleteEmailForFdpgMember = (
   validContacts: string[],
   proposal: Proposal,
