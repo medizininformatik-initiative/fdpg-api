@@ -24,7 +24,10 @@ export class SetUacApprovalDto {
   dataAmount?: number;
 
   @Expose()
-  @ValidateIf((obj: SetUacApprovalDto) => obj.value === true)
+  @ValidateIf(
+    (obj: SetUacApprovalDto) =>
+      obj.value === true && typeof obj.conditionReasoning === 'string' && obj.conditionReasoning.trim() !== '',
+  )
   @MaxLength(10_000)
   conditionReasoning?: string;
 

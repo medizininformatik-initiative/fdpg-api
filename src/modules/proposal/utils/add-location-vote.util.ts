@@ -50,7 +50,7 @@ export const addUacApprovalWithCondition = (
     > = {
       location,
       isAccepted: false,
-      uploadId: upload._id,
+      uploadId: upload?._id,
       dataAmount: vote.dataAmount,
       isContractSigned: false,
       conditionReasoning,
