@@ -70,7 +70,7 @@ export class StatusChangeService {
 
         proposalAfterChanges.statusChangeToLocationCheckAt = new Date();
 
-        //scheduleTypesToRemove.push(ScheduleType.ReminderFdpgCheck);
+        scheduleTypesToRemove.push(ScheduleType.ReminderFdpgCheck);
         scheduleTypesToAdd.push(
           ScheduleType.ReminderLocationCheck1,
           ScheduleType.ReminderLocationCheck2,

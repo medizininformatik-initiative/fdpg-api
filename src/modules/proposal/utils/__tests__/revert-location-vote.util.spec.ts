@@ -76,6 +76,7 @@ describe('revertLocationVoteUtil', () => {
     isDizCheck: false,
     dizApproved: false,
     uacApproved: false,
+    openDizConditionChecks: false,
     isConditionalApproval: false,
     conditionalApprovalAccepted: false,
     conditionalApprovalDeclined: false,
