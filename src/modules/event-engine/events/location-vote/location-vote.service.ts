@@ -57,7 +57,7 @@ export class LocationVoteService {
         const validDizContacts = await this.keycloakUtilService
           .getDizMembers()
           .then((members) => this.keycloakUtilService.getLocationContacts([location], members));
-        const mail = getUacApprovalEmailForDizConditionCheck(validDizContacts, proposal, proposalUrl);
+        const mail = getUacApprovalEmailForDizConditionCheck(validDizContacts, proposal);
         return await this.emailService.send(mail);
       };
       emailTasks.push(dizTask());
