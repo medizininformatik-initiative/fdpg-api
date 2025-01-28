@@ -18,6 +18,9 @@ export enum HistoryEventType {
   /** DIZ Votes */
   DizVoteAccept = 'DIZ_VOTE_ACCEPT',
   DizVoteDecline = 'DIZ_VOTE_DECLINE',
+  DizAcceptedWithConditions = 'DIZ_ACCEPT_WITH_CONDITIONS',
+  DizAcceptedWithoutConditions = 'DIZ_ACCEPT_WITHOUT_CONDITIONS',
+  DizDeclinedOnConditions = 'DIZ_DECLINE_ON_CONDITIONS',
 
   /** UAC Votes */
   UacVoteAccept = 'UAC_VOTE_ACCEPT',

@@ -13,7 +13,13 @@ import { SignContractDto } from '../../dto/sign-contract.dto';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { addContractSign } from '../../utils/add-contract-sign.util';
-import { addDizApproval, addUacApproval, addUacApprovalWithCondition } from '../../utils/add-location-vote.util';
+import {
+  addDizApproval,
+  addUacApprovalWithCondition,
+  addDizConditionReview,
+  addDizApprovalWithCondition,
+  addDizConditionApproval,
+} from '../../utils/add-location-vote.util';
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
@@ -49,7 +55,7 @@ jest.mock('../../utils/add-location-vote.util', () => ({
   addDizApproval: jest.fn(),
   addUacApproval: jest.fn(),
   addUacApprovalWithCondition: jest.fn(),
-  addUacConditionReview: jest.fn(),
+  addDizConditionReview: jest.fn(),
 }));
 jest.mock('../../utils/revert-location-vote.util', () => ({
   revertLocationVote: jest.fn(),
@@ -233,13 +239,20 @@ describe('ProposalContractingService', () => {
         expect(addUpload).toHaveBeenCalledWith(proposalDocument, expect.objectContaining({ blobName: 'blobName' }));
         expect(addUacApprovalWithCondition).toHaveBeenCalledWith(
           proposalDocument,
-          request.user.miiLocation,
-          expect.objectContaining({ blobName: 'blobName' }),
+          request.user,
           vote,
+          expect.objectContaining({ blobName: 'blobName' }),
+          undefined,
         );
         expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
       } else {
-        expect(addUacApproval).toHaveBeenCalledWith(proposalDocument, request.user, vote);
+        expect(addUacApprovalWithCondition).toHaveBeenCalledWith(
+          proposalDocument,
+          request.user,
+          vote,
+          undefined,
+          undefined,
+        );
       }
     });
   });

@@ -21,12 +21,14 @@ export interface IProposalGetListSchema {
   numberOfApprovedLocations?: number;
   openDizChecks: MiiLocation[];
   dizApprovedLocations: MiiLocation[];
+  openDizConditionChecks: MiiLocation[];
   uacApprovedLocations: MiiLocation[];
   signedContracts: MiiLocation[];
   requestedButExcludedLocations: MiiLocation[];
   requestedData: Pick<RequestedData, 'desiredDataAmount'>;
   totalPromisedDataAmount?: number;
   totalContractedDataAmount?: number;
+  locationConditionDraft: ConditionalApproval[];
   conditionalApprovals: ConditionalApproval[];
   contractAcceptedByResearcher: boolean;
   contractRejectedByResearcher: boolean;

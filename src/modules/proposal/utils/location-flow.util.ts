@@ -10,6 +10,9 @@ import { excludeUnselectedLocations } from './unselect-approved-location.util';
 export const clearLocationsVotes = (proposal: Proposal, location: MiiLocation) => {
   proposal.openDizChecks = proposal.openDizChecks.filter((filterLocation) => filterLocation !== location);
   proposal.dizApprovedLocations = proposal.dizApprovedLocations.filter((filterLocation) => filterLocation !== location);
+  proposal.openDizConditionChecks = proposal.openDizConditionChecks.filter(
+    (filterLocation) => filterLocation !== location,
+  );
   proposal.uacApprovedLocations = proposal.uacApprovedLocations.filter((filterLocation) => filterLocation !== location);
   proposal.signedContracts = proposal.signedContracts.filter((filterLocation) => filterLocation !== location);
   proposal.requestedButExcludedLocations = proposal.requestedButExcludedLocations.filter(

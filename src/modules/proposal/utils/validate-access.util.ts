@@ -43,6 +43,7 @@ type ProposalPick = Pick<
   ProposalDocument,
   | 'openDizChecks'
   | 'dizApprovedLocations'
+  | 'openDizConditionChecks'
   | 'uacApprovedLocations'
   | 'conditionalApprovals'
   | 'signedContracts'
@@ -59,6 +60,7 @@ export const getLocationState = (proposal: ProposalPick, user: UserPick) => {
   return {
     isDizCheck: proposal.openDizChecks?.includes(user.miiLocation),
     dizApproved: proposal.dizApprovedLocations?.includes(user.miiLocation),
+    openDizConditionChecks: proposal.openDizConditionChecks?.includes(user.miiLocation),
     uacApproved: proposal.uacApprovedLocations?.includes(user.miiLocation),
     isConditionalApproval: !!conditionalApproval,
     conditionalApprovalAccepted: conditionalApproval?.isAccepted ?? false,
@@ -76,6 +78,7 @@ export const getMostAdvancedState = (proposal: ProposalPick, user: UserPick): Lo
   const {
     isDizCheck,
     dizApproved,
+    openDizConditionChecks,
     uacApproved,
     signedContract,
     signedContractAndContractingDone,
@@ -107,6 +110,8 @@ export const getMostAdvancedState = (proposal: ProposalPick, user: UserPick): Lo
     return LocationState.UacApproved;
   } else if (dizApproved) {
     return LocationState.DizApproved;
+  } else if (openDizConditionChecks) {
+    return LocationState.DizConditionCheck;
   } else if (isDizCheck) {
     return LocationState.IsDizCheck;
   } else {
@@ -123,6 +128,7 @@ export const checkAccessForDizMember = (proposal: ProposalDocument, user: UserPi
 
   if (
     !locationState.isDizCheck &&
+    !locationState.openDizConditionChecks &&
     !locationState.dizApproved &&
     !locationState.uacApproved &&
     !locationState.signedContract &&

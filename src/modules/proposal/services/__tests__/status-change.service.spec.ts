@@ -67,6 +67,7 @@ const proposalContent = {
   requestedButExcludedLocations: [],
   openDizChecks: [MiiLocation.Charité, MiiLocation.KC],
   dizApprovedLocations: [MiiLocation.KUM, MiiLocation.MHH],
+  openDizConditionChecks: [MiiLocation.CTK],
   signedContracts: [MiiLocation.MRI, MiiLocation.UKA],
   uacApprovedLocations: [MiiLocation.UKAU, MiiLocation.UKB],
   uacApprovals: [{}] as UacApproval[],
