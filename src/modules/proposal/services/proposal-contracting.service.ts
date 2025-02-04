@@ -48,6 +48,7 @@ import {
 import { ProposalCrudService } from './proposal-crud.service';
 import { ProposalUploadService } from './proposal-upload.service';
 import { StatusChangeService } from './status-change.service';
+import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
 
 @Injectable()
 export class ProposalContractingService {
@@ -100,7 +101,7 @@ export class ProposalContractingService {
     await this.eventEngineService.handleProposalUacApproval(saveResult, vote.value, user.miiLocation);
   }
 
-  async dizConditionApproval(proposalId: string, vote: SetUacApprovalDto, user: IRequestUser): Promise<void> {
+  async dizConditionApproval(proposalId: string, vote: SetDizConditionApprovalDto, user: IRequestUser): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     validateDizConditionApproval(toBeUpdated, user);

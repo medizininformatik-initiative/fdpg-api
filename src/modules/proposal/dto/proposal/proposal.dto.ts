@@ -36,6 +36,7 @@ import { UacApprovalGetDto } from './uac-approval.dto';
 import { UserProjectDto } from './user-project.dto';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
+import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -238,6 +239,21 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
   signedContracts: MiiLocation[];
+
+  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember] })
+  @Type(() => AdditionalLocationInformationGetDto)
+  @Transform(({ value, options }) => {
+    const { role, location } = getRoleFromTransform(options);
+
+    return value.filter((additionalInformation: AdditionalLocationInformationGetDto) => {
+      if (role === Role.DizMember || role === Role.UacMember) {
+        return additionalInformation.location === location;
+      }
+
+      return true;
+    });
+  })
+  additionalLocationInformation: AdditionalLocationInformationGetDto[];
 
   // LOCATION Tasks <----
 

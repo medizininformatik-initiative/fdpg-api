@@ -11,6 +11,7 @@ import { ConditionalApproval } from '../schema/sub-schema/conditional-approval.s
 import { UacApproval } from '../schema/sub-schema/uac-approval.schema';
 import { addFdpgTaskAndReturnId, removeFdpgTask } from './add-fdpg-task.util';
 import { clearLocationsVotes } from './location-flow.util';
+import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
 
 export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
@@ -51,7 +52,7 @@ export const addUacApprovalWithCondition = (
       location,
       isAccepted: false,
       uploadId: upload?._id,
-      dataAmount: vote.dataAmount,
+      dataAmount: undefined,
       isContractSigned: false,
       conditionReasoning,
     };
@@ -78,7 +79,7 @@ export const addUacApprovalWithCondition = (
   }
 };
 
-export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, vote: SetUacApprovalDto) => {
+export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizConditionApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
 
   if (vote.value === true) {
@@ -124,7 +125,7 @@ export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, 
 export const addDizApprovalWithCondition = (
   proposal: Proposal,
   location: MiiLocation,
-  vote: SetUacApprovalDto,
+  vote: SetDizConditionApprovalDto,
   conditionReasoning: string,
 ) => {
   const fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.ConditionApproval);

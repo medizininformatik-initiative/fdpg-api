@@ -76,6 +76,7 @@ export class ProposalCrudService {
       dbProjection.uacApprovedLocations = 1;
       dbProjection.signedContracts = 1;
       dbProjection.requestedButExcludedLocations = 1;
+      dbProjection.additionalLocationInformation = 1;
     } else if (user.singleKnownRole === Role.UacMember) {
       dbProjection.owner = 1;
       dbProjection.locationConditionDraft = 1;
@@ -85,6 +86,7 @@ export class ProposalCrudService {
       dbProjection.uacApprovedLocations = 1;
       dbProjection.signedContracts = 1;
       dbProjection.requestedButExcludedLocations = 1;
+      dbProjection.additionalLocationInformation = 1;
     } else {
       dbProjection.owner = 1;
     }

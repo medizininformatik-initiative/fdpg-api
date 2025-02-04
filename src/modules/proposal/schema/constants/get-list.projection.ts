@@ -28,4 +28,5 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   openFdpgTasks: 1,
   contractAcceptedByResearcher: 1,
   contractRejectedByResearcher: 1,
+  additionalLocationInformation: 1,
 };
