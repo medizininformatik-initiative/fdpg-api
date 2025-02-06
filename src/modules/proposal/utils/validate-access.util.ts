@@ -29,10 +29,17 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
 
 const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser) => {
   const isOwner = proposal.owner.id === user.userId;
-  if (!isOwner) {
-    throwForbiddenError(`Proposal has a different owner than this researcher`);
+  if (!isOwner && !isParticipatingScientist(proposal, user)) {
+    throwForbiddenError(
+      `Proposal has a different owner than this researcher and is not in the list of participating researchers`,
+    );
   }
 };
+
+const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser) => {
+  return proposal.participants.filter((participant) => participant.researcher.email === user.email).length > 0;
+};
+
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
   if (proposal.status === ProposalStatus.Draft && willBeModified) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
