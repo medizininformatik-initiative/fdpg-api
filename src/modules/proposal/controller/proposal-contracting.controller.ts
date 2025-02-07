@@ -28,6 +28,7 @@ import { RevertLocationVoteDto } from '../dto/revert-location-vote.dto';
 import { SignContractDto, SignContractWithFileDto } from '../dto/sign-contract.dto';
 import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
 import { ProposalContractingService } from '../services/proposal-contracting.service';
+import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
 
 @ApiController('proposals', undefined, 'contracting')
 export class ProposalContractingController {
@@ -74,10 +75,10 @@ export class ProposalContractingController {
   @ApiNoContentResponse({ description: 'Vote successfully set. No content returns.' })
   @HttpCode(204)
   @ApiOperation({ summary: 'Sets the UAC vote after a DIZ condition review of a proposal' })
-  @ApiBody({ type: SetUacApprovalDto })
+  @ApiBody({ type: SetDizConditionApprovalDto })
   async dizConditionApproval(
     @Param() { id }: MongoIdParamDto,
-    @Body() vote: SetUacApprovalDto,
+    @Body() vote: SetDizConditionApprovalDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     return await this.proposalContractingService.dizConditionApproval(id, vote, user);

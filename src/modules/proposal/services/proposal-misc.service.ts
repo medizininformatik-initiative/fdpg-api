@@ -30,6 +30,9 @@ import { ProposalCrudService } from './proposal-crud.service';
 import { StatusChangeService } from './status-change.service';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
+import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
+import { AdditionalLocationInformation } from '../schema/sub-schema/additional-location-information.schema';
+import { validateUpdateAdditionalInformationAccess } from '../utils/validate-misc.util';
 
 @Injectable()
 export class ProposalMiscService {
@@ -223,6 +226,30 @@ export class ProposalMiscService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user);
     validateFdpgCheckStatus(toBeUpdated);
     toBeUpdated.fdpgCheckNotes = text;
+    await toBeUpdated.save();
+  }
+
+  async updateAdditionalInformationForLocation(
+    proposalId: string,
+    additionalInformationDto: SetAdditionalLocationInformationDto,
+    user: IRequestUser,
+  ): Promise<void> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user);
+
+    validateUpdateAdditionalInformationAccess(toBeUpdated);
+
+    toBeUpdated.additionalLocationInformation = (toBeUpdated.additionalLocationInformation ?? []).filter(
+      (additionalInformation) => additionalInformation.location !== user.miiLocation,
+    );
+
+    const additionalInformation: Omit<AdditionalLocationInformation, '_id' | 'updatedAt' | 'createdAt'> = {
+      location: user.miiLocation,
+      legalBasis: additionalInformationDto.legalBasis,
+      locationPublicationName: additionalInformationDto.locationPublicationName,
+    };
+
+    toBeUpdated.additionalLocationInformation.push(additionalInformation as AdditionalLocationInformation);
+
     await toBeUpdated.save();
   }
 }

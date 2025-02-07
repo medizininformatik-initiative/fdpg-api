@@ -16,6 +16,7 @@ import {
   addDizConditionReview,
 } from '../add-location-vote.util';
 import { clearLocationsVotes } from '../location-flow.util';
+import { SetDizConditionApprovalDto } from '../../dto/set-diz-condition-approval.dto';
 
 jest.mock('../location-flow.util', () => ({
   clearLocationsVotes: jest.fn(),
@@ -108,7 +109,6 @@ describe('addLocationVoteUtil', () => {
       const request = getRequest();
       const vote = new SetUacApprovalDto();
       vote.value = true;
-      vote.dataAmount = 100;
 
       const upload = {
         _id: 'uploadId',
@@ -119,7 +119,6 @@ describe('addLocationVoteUtil', () => {
       expect(proposal.openDizConditionChecks).toEqual([request.user.miiLocation]);
       expect(proposal.locationConditionDraft.length).toEqual(1);
       expect(proposal.locationConditionDraft[0].location).toEqual(request.user.miiLocation);
-      expect(proposal.locationConditionDraft[0].dataAmount).toEqual(vote.dataAmount);
       expect(proposal.locationConditionDraft[0].isContractSigned).toEqual(false);
     });
 
@@ -145,11 +144,11 @@ describe('addLocationVoteUtil', () => {
     });
   });
 
-  describe('addUacConditionalApproval', () => {
+  describe('addDizConditionalApproval', () => {
     it('should add the uac Approval', () => {
       const proposal = getProposalDocument();
       const request = getRequest();
-      const vote = new SetUacApprovalDto();
+      const vote = new SetDizConditionApprovalDto();
       vote.value = true;
       vote.dataAmount = 100;
 
@@ -186,7 +185,48 @@ describe('addLocationVoteUtil', () => {
     });
   });
 
-  describe('addUacConditionReview', () => {
+  describe('addDizConditionalApproval', () => {
+    it('should add the uac Approval', () => {
+      const proposal = getProposalDocument();
+      const request = getRequest();
+      const vote = new SetDizConditionApprovalDto();
+      vote.value = true;
+      vote.dataAmount = 100;
+
+      addDizConditionApproval(proposal, request.user, vote);
+
+      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(proposal.openDizConditionChecks).toEqual([]);
+      expect(proposal.openDizConditionChecks.length).toEqual(0);
+      expect(proposal.uacApprovals[0].location).toEqual(request.user.miiLocation);
+      expect(proposal.uacApprovals[0].dataAmount).toEqual(vote.dataAmount);
+      expect(proposal.uacApprovals[0].isContractSigned).toEqual(false);
+      expect(proposal.locationConditionDraft?.length ?? 0).toEqual(0);
+      expect(proposal.totalPromisedDataAmount).toEqual(vote.dataAmount);
+    });
+
+    it('should add the uac decline', () => {
+      const proposal = getProposalDocument();
+      proposal.numberOfRequestedLocations = 1;
+      const request = getRequest();
+      const vote = new SetUacApprovalDto();
+      vote.value = false;
+      vote.declineReason = 'declineReason';
+
+      addDizConditionApproval(proposal, request.user, vote);
+
+      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
+
+      expect(proposal.dizApprovedLocations).not.toEqual([request.user.miiLocation]);
+      expect(proposal.requestedButExcludedLocations).toEqual([request.user.miiLocation]);
+      expect(proposal.declineReasons.length).toEqual(1);
+      expect(proposal.declineReasons[0].location).toEqual(request.user.miiLocation);
+      expect(proposal.declineReasons[0].reason).toEqual(vote.declineReason);
+    });
+  });
+
+  describe('addDizConditionReview', () => {
     it('should add the condition review for accepting', () => {
       const proposal = getProposalDocument();
       const request = getRequest();
