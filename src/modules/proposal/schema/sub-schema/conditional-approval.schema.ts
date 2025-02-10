@@ -22,10 +22,13 @@ export class ConditionalApproval {
   dataAmount: number;
 
   @Prop()
-  uploadId: string;
+  uploadId?: string;
 
   @Prop()
-  fdpgTaskId: string;
+  conditionReasoning?: string;
+
+  @Prop()
+  fdpgTaskId?: string;
 
   _id: string;
 

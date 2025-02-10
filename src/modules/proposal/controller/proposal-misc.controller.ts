@@ -1,5 +1,16 @@
-import { Body, Get, HttpCode, Param, Put, Request, StreamableFile, UsePipes, ValidationPipe } from '@nestjs/common';
-import { ApiNoContentResponse, ApiNotFoundResponse, ApiOperation, ApiProduces } from '@nestjs/swagger';
+import {
+  Body,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+  Request,
+  StreamableFile,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
+import { ApiBody, ApiNoContentResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { MarkAsDoneDto } from 'src/modules/comment/dto/mark-as-done.dto';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
@@ -12,6 +23,7 @@ import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.d
 import { SetBooleanStatusDto, SetProposalStatusDto } from '../dto/set-status.dto';
 import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
+import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -114,5 +126,21 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     return await this.proposalMiscService.setFdpgCheckNotes(id, value, user);
+  }
+
+  @Auth(Role.DizMember)
+  @Post(':id/additionalLocationInformation')
+  @ProposalValidation()
+  @ApiNotFoundResponse({ description: 'Item could not be found' })
+  @ApiNoContentResponse({ description: 'Set additional information about location on proposal' })
+  @HttpCode(204)
+  @ApiBody({ type: SetAdditionalLocationInformationDto })
+  @ApiOperation({ summary: 'Sets additional information about a location on a proposal' })
+  async updateAdditionalLocationInformation(
+    @Param() { id }: MongoIdParamDto,
+    @Body() additionalLocationInformation: SetAdditionalLocationInformationDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<void> {
+    return this.proposalMiscService.updateAdditionalInformationForLocation(id, additionalLocationInformation, user);
   }
 }

@@ -34,8 +34,14 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
 
 const getFilterForRequested = (user: IRequestUser): FilterQuery<Proposal> => {
   return {
-    status: ProposalStatus.LocationCheck,
-    openDizChecks: user.miiLocation,
+    $and: [
+      {
+        status: {
+          $in: [ProposalStatus.LocationCheck],
+        },
+      },
+      { $or: [{ openDizChecks: user.miiLocation }, { openDizConditionChecks: user.miiLocation }] },
+    ],
   };
 };
 

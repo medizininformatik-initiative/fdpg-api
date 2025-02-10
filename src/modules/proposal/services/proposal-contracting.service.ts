@@ -21,13 +21,15 @@ import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addContractSign } from '../utils/add-contract-sign.util';
 import {
   addDizApproval,
-  addUacApproval,
   addUacApprovalWithCondition,
-  addUacConditionReview,
+  addDizConditionReview,
+  addDizConditionApproval,
+  addDizApprovalWithCondition,
 } from '../utils/add-location-vote.util';
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
+  addHistoryItemForDizConditionReviewApproval,
   addHistoryItemForRevertLocationVote,
   addHistoryItemForStatus,
   addHistoryItemForUacApproval,
@@ -37,10 +39,16 @@ import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { revertLocationVote } from '../utils/revert-location-vote.util';
 import { validateContractSign } from '../utils/validate-contract-sign.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
-import { validateDizApproval, validateRevertLocationVote, validateUacApproval } from '../utils/validate-vote.util';
+import {
+  validateDizApproval,
+  validateDizConditionApproval,
+  validateRevertLocationVote,
+  validateUacApproval,
+} from '../utils/validate-vote.util';
 import { ProposalCrudService } from './proposal-crud.service';
 import { ProposalUploadService } from './proposal-upload.service';
 import { StatusChangeService } from './status-change.service';
+import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
 
 @Injectable()
 export class ProposalContractingService {
@@ -72,22 +80,42 @@ export class ProposalContractingService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     validateUacApproval(toBeUpdated, user);
-    const hasCondition = !!file?.buffer && vote.value;
+    const hasCondition = vote.value && (!!file?.buffer || this.isValidConditionReason(vote.conditionReasoning));
 
-    if (hasCondition) {
-      const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractCondition);
-      await this.storageService.uploadFile(blobName, file, user);
-      const upload = new UploadDto(blobName, file, UseCaseUpload.ContractCondition, user);
-      addUpload(toBeUpdated, upload);
-      addUacApprovalWithCondition(toBeUpdated, user.miiLocation, upload, vote);
-    } else {
-      addUacApproval(toBeUpdated, user, vote);
-    }
+    const upload: UploadDto | undefined = await (async () => {
+      if (!!file?.buffer) {
+        const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractCondition);
+        await this.storageService.uploadFile(blobName, file, user);
+        const upload = new UploadDto(blobName, file, UseCaseUpload.ContractCondition, user);
+        addUpload(toBeUpdated, upload);
+        return upload;
+      } else {
+        return;
+      }
+    })();
 
+    addUacApprovalWithCondition(toBeUpdated, user, vote, upload, vote.conditionReasoning);
     addHistoryItemForUacApproval(toBeUpdated, user, vote.value, hasCondition);
 
     const saveResult = await toBeUpdated.save();
     await this.eventEngineService.handleProposalUacApproval(saveResult, vote.value, user.miiLocation);
+  }
+
+  async dizConditionApproval(proposalId: string, vote: SetDizConditionApprovalDto, user: IRequestUser): Promise<void> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    validateDizConditionApproval(toBeUpdated, user);
+    const hasCondition = vote.value && this.isValidConditionReason(vote.conditionReasoning);
+
+    if (hasCondition) {
+      addDizApprovalWithCondition(toBeUpdated, user.miiLocation, vote, vote.conditionReasoning);
+    } else {
+      addDizConditionApproval(toBeUpdated, user, vote);
+    }
+
+    addHistoryItemForDizConditionReviewApproval(toBeUpdated, user, vote.value, hasCondition);
+
+    await toBeUpdated.save();
   }
 
   async revertLocationVote(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
@@ -180,7 +208,7 @@ export class ProposalContractingService {
       throw new ForbiddenException('The condition is already reviewed');
     }
 
-    addUacConditionReview(toBeUpdated, condition, isAccepted, user);
+    addDizConditionReview(toBeUpdated, condition, isAccepted, user);
     addHistoryItemForUacCondition(toBeUpdated, user, isAccepted, condition.location);
 
     const saveResult = await toBeUpdated.save();
@@ -190,5 +218,9 @@ export class ProposalContractingService {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],
     });
+  }
+
+  isValidConditionReason(input?: string): boolean {
+    return typeof input === 'string' && input.trim() !== '';
   }
 }

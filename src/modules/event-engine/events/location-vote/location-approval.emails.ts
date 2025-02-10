@@ -19,6 +19,15 @@ export const getDizApprovalEmailForUacMembers = (
   };
 };
 
+export const getUacApprovalEmailForDizConditionCheck = (validContacts: string[], proposal: Proposal): IEmail => {
+  return {
+    to: validContacts,
+    categories: [EmailCategory.LocationVote],
+    subject: 'UAC-Votum ist eingegangen',
+    text: `Liebe Mitarbeitende in den Transferstellen,\n\nIhr UAC hat über den Projektantrag mit der ID "${proposal.projectAbbreviation}" entschieden. Bitte geben Sie die Antwort Ihres Standortes an das FDPG weiter.`,
+  };
+};
+
 export const getVotingCompleteEmailForFdpgMember = (
   validContacts: string[],
   proposal: Proposal,

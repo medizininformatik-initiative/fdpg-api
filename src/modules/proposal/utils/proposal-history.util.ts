@@ -110,6 +110,25 @@ export const addHistoryItemForUacApproval = (
   pushHistoryItem(proposalAfterChanges, user, type, user.miiLocation);
 };
 
+export const addHistoryItemForDizConditionReviewApproval = (
+  proposalAfterChanges: Proposal,
+  user: IRequestUser,
+  vote: boolean,
+  hasCondition: boolean,
+): void => {
+  let type: HistoryEventType;
+
+  if (!vote) {
+    type = HistoryEventType.DizDeclinedOnConditions;
+  } else if (hasCondition) {
+    type = HistoryEventType.DizAcceptedWithConditions;
+  } else {
+    type = HistoryEventType.DizAcceptedWithoutConditions;
+  }
+
+  pushHistoryItem(proposalAfterChanges, user, type, user.miiLocation);
+};
+
 export const addHistoryItemForUacCondition = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,

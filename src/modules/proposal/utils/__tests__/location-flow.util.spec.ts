@@ -29,6 +29,7 @@ const proposalContent = {
   openDizChecks: [MiiLocation.UKL],
   dizApprovedLocations: [MiiLocation.UKM],
   uacApprovedLocations: [MiiLocation.UKMR],
+  openDizConditionChecks: [MiiLocation.Charité],
   signedContracts: [MiiLocation.UKR],
   requestedButExcludedLocations: [MiiLocation.UKD],
   conditionalApprovals: [conditionalApproval],
@@ -70,6 +71,7 @@ describe('location-flow.util', () => {
       expect(proposal.openDizChecks.length).toEqual(0);
       expect(proposal.dizApprovedLocations.length).toEqual(1);
       expect(proposal.uacApprovedLocations.length).toEqual(1);
+      expect(proposal.openDizConditionChecks.length).toEqual(1);
       expect(proposal.signedContracts.length).toEqual(1);
       expect(proposal.requestedButExcludedLocations.length).toEqual(1);
     });

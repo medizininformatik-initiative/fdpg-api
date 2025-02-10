@@ -11,6 +11,7 @@ import { ConditionalApproval } from '../schema/sub-schema/conditional-approval.s
 import { UacApproval } from '../schema/sub-schema/uac-approval.schema';
 import { addFdpgTaskAndReturnId, removeFdpgTask } from './add-fdpg-task.util';
 import { clearLocationsVotes } from './location-flow.util';
+import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
 
 export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
@@ -32,7 +33,53 @@ export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: Set
   }
 };
 
-export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: SetUacApprovalDto) => {
+export const addUacApprovalWithCondition = (
+  proposal: Proposal,
+  user: IRequestUser,
+  vote: SetUacApprovalDto,
+  upload?: UploadDto,
+  conditionReasoning?: string,
+) => {
+  const location = user.miiLocation;
+
+  // Flow:
+  clearLocationsVotes(proposal, location);
+  if (vote.value === true) {
+    const conditionalApproval: Omit<
+      ConditionalApproval,
+      '_id' | 'createdAt' | 'reviewedAt' | 'reviewedByOwnerId' | 'signedAt' | 'signedByOwnerId'
+    > = {
+      location,
+      isAccepted: false,
+      uploadId: upload?._id,
+      dataAmount: undefined,
+      isContractSigned: false,
+      conditionReasoning,
+    };
+
+    if (proposal.locationConditionDraft) {
+      proposal.locationConditionDraft.push(conditionalApproval as ConditionalApproval);
+    } else {
+      proposal.locationConditionDraft = [conditionalApproval as ConditionalApproval];
+    }
+
+    proposal.openDizConditionChecks.push(location);
+  } else {
+    proposal.requestedButExcludedLocations.push(location);
+    proposal.declineReasons = [
+      ...proposal.declineReasons,
+      {
+        location: user.miiLocation,
+        reason: vote.declineReason,
+        type: DeclineType.UacApprove,
+        owner: getOwner(user),
+        createdAt: new Date(),
+      },
+    ];
+  }
+};
+
+export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizConditionApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
 
   if (vote.value === true) {
@@ -75,11 +122,11 @@ export const addUacApproval = (proposal: Proposal, user: IRequestUser, vote: Set
   }
 };
 
-export const addUacApprovalWithCondition = (
+export const addDizApprovalWithCondition = (
   proposal: Proposal,
   location: MiiLocation,
-  upload: UploadDto,
-  vote: SetUacApprovalDto,
+  vote: SetDizConditionApprovalDto,
+  conditionReasoning: string,
 ) => {
   const fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.ConditionApproval);
 
@@ -89,22 +136,28 @@ export const addUacApprovalWithCondition = (
   > = {
     location: location,
     isAccepted: false,
-    uploadId: upload._id,
     dataAmount: vote.dataAmount,
     isContractSigned: false,
+    conditionReasoning: conditionReasoning,
     fdpgTaskId,
   };
 
-  if (proposal.conditionalApprovals) {
-    proposal.conditionalApprovals.push(conditionalApproval as ConditionalApproval);
-  } else {
-    proposal.conditionalApprovals = [conditionalApproval as ConditionalApproval];
-  }
-
-  // Flow:
-
-  clearLocationsVotes(proposal, location);
   if (vote.value === true) {
+    if (proposal.locationConditionDraft) {
+      proposal.locationConditionDraft = proposal.locationConditionDraft.filter(
+        (condition) => condition.location !== location,
+      );
+    }
+
+    if (proposal.conditionalApprovals) {
+      proposal.conditionalApprovals.push(conditionalApproval as ConditionalApproval);
+    } else {
+      proposal.conditionalApprovals = [conditionalApproval as ConditionalApproval];
+    }
+
+    // Flow:
+
+    clearLocationsVotes(proposal, location);
     proposal.uacApprovedLocations.push(location);
   } else {
     // Just to be sure. Shouldn't be a conditional approval if false
@@ -119,7 +172,7 @@ export const addUacApprovalWithCondition = (
   }
 };
 
-export const addUacConditionReview = (
+export const addDizConditionReview = (
   proposal: Proposal,
   condition: ConditionalApproval,
   vote: boolean,

@@ -249,10 +249,13 @@ describe('ProposalCrudService', () => {
       const expectedProjection = {
         ['reports.content']: 1,
         owner: 1,
+        additionalLocationInformation: 1,
         conditionalApprovals: 1,
+        locationConditionDraft: 1,
         openDizChecks: 1,
         dizApprovedLocations: 1,
         uacApprovedLocations: 1,
+        openDizConditionChecks: 1,
         signedContracts: 1,
         requestedButExcludedLocations: 1,
       };
@@ -275,8 +278,11 @@ describe('ProposalCrudService', () => {
       const expectedProjection = {
         ['reports.content']: 1,
         owner: 1,
+        additionalLocationInformation: 1,
         conditionalApprovals: 1,
         dizApprovedLocations: 1,
+        locationConditionDraft: 1,
+        openDizConditionChecks: 1,
         uacApprovedLocations: 1,
         signedContracts: 1,
         requestedButExcludedLocations: 1,

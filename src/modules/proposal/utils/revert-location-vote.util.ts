@@ -30,6 +30,12 @@ export const revertLocationVote = async (
 
   proposal.totalPromisedDataAmount = proposal.totalPromisedDataAmount - locationDataAmount;
   proposal.uacApprovals = proposal.uacApprovals?.filter((approval) => approval.location !== location);
+  proposal.openDizConditionChecks = proposal.openDizConditionChecks?.filter(
+    (checkLocation) => checkLocation !== location,
+  );
+  proposal.locationConditionDraft = proposal.locationConditionDraft?.filter(
+    (condition) => condition.location !== location,
+  );
   proposal.conditionalApprovals = proposal.conditionalApprovals?.filter((condition) => condition.location !== location);
   proposal.declineReasons = proposal.declineReasons?.filter((reason) => reason.location !== location);
   clearLocationsVotes(proposal, location);

@@ -13,6 +13,8 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   dizApprovedLocations: 1,
   signedContracts: 1,
   uacApprovedLocations: 1,
+  openDizConditionChecks: 1,
+  locationConditionDraft: 1,
   conditionalApprovals: 1,
   numberOfRequestedLocations: 1,
   numberOfApprovedLocations: 1,
@@ -26,4 +28,5 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   openFdpgTasks: 1,
   contractAcceptedByResearcher: 1,
   contractRejectedByResearcher: 1,
+  additionalLocationInformation: 1,
 };

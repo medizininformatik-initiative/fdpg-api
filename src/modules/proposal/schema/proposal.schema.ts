@@ -21,6 +21,10 @@ import { Applicant, ApplicantSchema } from './sub-schema/applicant.schema';
 import { ProjectResponsible, ProjectResponsibleSchema } from './sub-schema/project-responsible.schema';
 import { ProjectUser, ProjectUserSchema } from './sub-schema/project-user.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import {
+  AdditionalLocationInformation,
+  AdditionalLocationInformationSchema,
+} from './sub-schema/additional-location-information.schema';
 
 export type ProposalDocument = Proposal & Document;
 
@@ -95,6 +99,9 @@ export class Proposal {
   @Prop({ type: [PublicationSchema], default: [] })
   publications: Publication[];
 
+  @Prop({ type: [AdditionalLocationInformationSchema], default: [] })
+  additionalLocationInformation: AdditionalLocationInformation[];
+
   @Prop({ type: [ReportSchema], default: [] })
   reports: Report[];
 
@@ -168,6 +175,9 @@ export class Proposal {
   dizApprovedLocations: MiiLocation[];
 
   @Prop([String])
+  openDizConditionChecks: MiiLocation[];
+
+  @Prop([String])
   uacApprovedLocations: MiiLocation[];
 
   @Prop([String])
@@ -178,6 +188,9 @@ export class Proposal {
   // LOCATION Tasks <----
 
   // Conditional and UAC approval are stored additionally to the "flow-arrays" and are persistent
+  @Prop([ConditionalApproval])
+  locationConditionDraft: ConditionalApproval[];
+
   @Prop([ConditionalApproval])
   conditionalApprovals: ConditionalApproval[];
 

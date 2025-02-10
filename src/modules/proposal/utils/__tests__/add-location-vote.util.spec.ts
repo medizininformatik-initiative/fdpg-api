@@ -11,11 +11,12 @@ import { ConditionalApproval } from '../../schema/sub-schema/conditional-approva
 import { addFdpgTaskAndReturnId, removeFdpgTask } from '../add-fdpg-task.util';
 import {
   addDizApproval,
-  addUacApproval,
+  addDizConditionApproval,
   addUacApprovalWithCondition,
-  addUacConditionReview,
+  addDizConditionReview,
 } from '../add-location-vote.util';
 import { clearLocationsVotes } from '../location-flow.util';
+import { SetDizConditionApprovalDto } from '../../dto/set-diz-condition-approval.dto';
 
 jest.mock('../location-flow.util', () => ({
   clearLocationsVotes: jest.fn(),
@@ -59,6 +60,7 @@ describe('addLocationVoteUtil', () => {
     dizApprovedLocations: [],
     requestedButExcludedLocations: [],
     uacApprovedLocations: [],
+    openDizConditionChecks: [],
     uacApprovals: [],
     declineReasons: [],
   };
@@ -107,19 +109,17 @@ describe('addLocationVoteUtil', () => {
       const request = getRequest();
       const vote = new SetUacApprovalDto();
       vote.value = true;
-      vote.dataAmount = 100;
 
       const upload = {
         _id: 'uploadId',
       } as any as UploadDto;
-      addUacApprovalWithCondition(proposal, request.user.miiLocation, upload, vote);
+      addUacApprovalWithCondition(proposal, request.user, vote, upload);
 
       expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
-      expect(proposal.uacApprovedLocations).toEqual([request.user.miiLocation]);
-      expect(proposal.conditionalApprovals.length).toEqual(1);
-      expect(proposal.conditionalApprovals[0].location).toEqual(request.user.miiLocation);
-      expect(proposal.conditionalApprovals[0].dataAmount).toEqual(vote.dataAmount);
-      expect(proposal.conditionalApprovals[0].isContractSigned).toEqual(false);
+      expect(proposal.openDizConditionChecks).toEqual([request.user.miiLocation]);
+      expect(proposal.locationConditionDraft.length).toEqual(1);
+      expect(proposal.locationConditionDraft[0].location).toEqual(request.user.miiLocation);
+      expect(proposal.locationConditionDraft[0].isContractSigned).toEqual(false);
     });
 
     it('should add the uac decline', () => {
@@ -134,32 +134,33 @@ describe('addLocationVoteUtil', () => {
       const upload = {
         _id: 'uploadId',
       } as any as UploadDto;
-      addUacApprovalWithCondition(proposal, request.user.miiLocation, upload, vote);
+      addUacApprovalWithCondition(proposal, request.user, vote, upload);
 
       expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
 
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
+      expect(proposal.openDizConditionChecks).not.toEqual([request.user.miiLocation]);
       expect(proposal.requestedButExcludedLocations).toEqual([request.user.miiLocation]);
     });
   });
 
-  describe('addUacConditionalApproval', () => {
+  describe('addDizConditionalApproval', () => {
     it('should add the uac Approval', () => {
       const proposal = getProposalDocument();
       const request = getRequest();
-      const vote = new SetUacApprovalDto();
+      const vote = new SetDizConditionApprovalDto();
       vote.value = true;
       vote.dataAmount = 100;
 
-      addUacApproval(proposal, request.user, vote);
+      addDizConditionApproval(proposal, request.user, vote);
 
       expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
-      expect(proposal.uacApprovedLocations).toEqual([request.user.miiLocation]);
-      expect(proposal.uacApprovals.length).toEqual(1);
+      expect(proposal.openDizConditionChecks).toEqual([]);
+      expect(proposal.openDizConditionChecks.length).toEqual(0);
       expect(proposal.uacApprovals[0].location).toEqual(request.user.miiLocation);
       expect(proposal.uacApprovals[0].dataAmount).toEqual(vote.dataAmount);
       expect(proposal.uacApprovals[0].isContractSigned).toEqual(false);
+      expect(proposal.locationConditionDraft?.length ?? 0).toEqual(0);
       expect(proposal.totalPromisedDataAmount).toEqual(vote.dataAmount);
     });
 
@@ -171,7 +172,7 @@ describe('addLocationVoteUtil', () => {
       vote.value = false;
       vote.declineReason = 'declineReason';
 
-      addUacApproval(proposal, request.user, vote);
+      addDizConditionApproval(proposal, request.user, vote);
 
       expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
       expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
@@ -184,7 +185,48 @@ describe('addLocationVoteUtil', () => {
     });
   });
 
-  describe('addUacConditionReview', () => {
+  describe('addDizConditionalApproval', () => {
+    it('should add the uac Approval', () => {
+      const proposal = getProposalDocument();
+      const request = getRequest();
+      const vote = new SetDizConditionApprovalDto();
+      vote.value = true;
+      vote.dataAmount = 100;
+
+      addDizConditionApproval(proposal, request.user, vote);
+
+      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(proposal.openDizConditionChecks).toEqual([]);
+      expect(proposal.openDizConditionChecks.length).toEqual(0);
+      expect(proposal.uacApprovals[0].location).toEqual(request.user.miiLocation);
+      expect(proposal.uacApprovals[0].dataAmount).toEqual(vote.dataAmount);
+      expect(proposal.uacApprovals[0].isContractSigned).toEqual(false);
+      expect(proposal.locationConditionDraft?.length ?? 0).toEqual(0);
+      expect(proposal.totalPromisedDataAmount).toEqual(vote.dataAmount);
+    });
+
+    it('should add the uac decline', () => {
+      const proposal = getProposalDocument();
+      proposal.numberOfRequestedLocations = 1;
+      const request = getRequest();
+      const vote = new SetUacApprovalDto();
+      vote.value = false;
+      vote.declineReason = 'declineReason';
+
+      addDizConditionApproval(proposal, request.user, vote);
+
+      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
+
+      expect(proposal.dizApprovedLocations).not.toEqual([request.user.miiLocation]);
+      expect(proposal.requestedButExcludedLocations).toEqual([request.user.miiLocation]);
+      expect(proposal.declineReasons.length).toEqual(1);
+      expect(proposal.declineReasons[0].location).toEqual(request.user.miiLocation);
+      expect(proposal.declineReasons[0].reason).toEqual(vote.declineReason);
+    });
+  });
+
+  describe('addDizConditionReview', () => {
     it('should add the condition review for accepting', () => {
       const proposal = getProposalDocument();
       const request = getRequest();
@@ -195,7 +237,7 @@ describe('addLocationVoteUtil', () => {
       condition.fdpgTaskId = 'taskId';
       condition.dataAmount = 100;
 
-      addUacConditionReview(proposal, condition, vote, request.user);
+      addDizConditionReview(proposal, condition, vote, request.user);
 
       expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
       expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
@@ -218,7 +260,7 @@ describe('addLocationVoteUtil', () => {
       condition.fdpgTaskId = 'taskId';
       condition.dataAmount = 100;
 
-      addUacConditionReview(proposal, condition, vote, request.user);
+      addDizConditionReview(proposal, condition, vote, request.user);
 
       expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
       expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
