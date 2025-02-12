@@ -268,6 +268,9 @@ ProposalSchema.index({ ownerId: 1, status: 1, submittedAt: 1 });
 ProposalSchema.index({ ownerId: 1, status: 1, dueDateForStatus: 1 });
 ProposalSchema.index({ ownerId: 1, status: 1, projectAbbreviation: 1 });
 
+// Participating Scientists
+ProposalSchema.index({ 'participants.researcher.email': 1, status: 1 });
+
 // Indexes for get by status and sort by key
 ProposalSchema.index({ status: 1, _id: 1 });
 ProposalSchema.index({ status: 1, submittedAt: 1 });

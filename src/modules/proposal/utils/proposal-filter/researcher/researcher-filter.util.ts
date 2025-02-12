@@ -16,7 +16,18 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
 
   if (allowedQuery.includes(panelQuery)) {
     return {
-      ownerId: user.userId,
+      $or: [
+        {
+          ownerId: user.userId,
+        },
+        {
+          participants: {
+            $elemMatch: {
+              'researcher.email': user.email,
+            },
+          },
+        },
+      ],
       status: RESEARCHER_STATUS[panelQuery],
     };
   } else {

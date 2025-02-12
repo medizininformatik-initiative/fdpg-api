@@ -287,6 +287,9 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember, OutputGroup.PdfOutput] })
   fdpgCheckNotes?: string;
+
+  @Expose({ groups: [Role.Researcher] })
+  isParticipatingScientist: boolean;
 }
 
 export class ProposalGetListDto {

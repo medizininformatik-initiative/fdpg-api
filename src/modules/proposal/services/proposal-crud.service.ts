@@ -51,6 +51,7 @@ export class ProposalCrudService {
     }
 
     const plain = saveResult.toObject();
+    this.addParticipatingScientistIndicator(plain, user);
     return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
   }
 
@@ -89,6 +90,7 @@ export class ProposalCrudService {
       dbProjection.additionalLocationInformation = 1;
     } else {
       dbProjection.owner = 1;
+      dbProjection.participants = 1;
     }
     const proposal = await this.proposalModel.findById(proposalId, dbProjection);
 
@@ -103,6 +105,7 @@ export class ProposalCrudService {
   async find(proposalId: string, user: IRequestUser): Promise<ProposalGetDto> {
     const document = await this.findDocument(proposalId, user);
     const plain = document.toObject();
+    this.addParticipatingScientistIndicator(plain, user);
     const userGroups = convertUserToGroups(user);
 
     return plainToClass(ProposalGetDto, plain, {
@@ -145,6 +148,7 @@ export class ProposalCrudService {
     }
 
     const plain = saveResult.toObject();
+    this.addParticipatingScientistIndicator(plain, user);
     return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
   }
 
@@ -184,5 +188,10 @@ export class ProposalCrudService {
     }
     const exists = await this.proposalModel.exists(queryFilter);
     return !exists;
+  }
+
+  private addParticipatingScientistIndicator(plain: any, user: IRequestUser) {
+    plain.isParticipatingScientist =
+      (plain.participants || []).filter((participant) => participant.researcher.email === user.email).length > 0;
   }
 }
