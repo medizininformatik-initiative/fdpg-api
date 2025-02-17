@@ -31,3 +31,17 @@ export const getSigningCompleteEmailForFdpgMember = (
     text: `Liebes FDPG Team,\n\nalle angefragten Use & Access Comittees haben über den Vertrag zum Antrag "${proposal.projectAbbreviation}" entschieden. Bitte prüfen Sie den Antrag auf der Antragsseite des Forschungsdatenportals und leiten Sie die Datenlieferung ein.\n\n ${proposalUrl}`,
   };
 };
+
+export const getResearcherSignedEmailForFdpgMembers = (
+  validContacts: string[],
+  proposal: Proposal,
+  proposalUrl: string,
+  signUserName: string,
+): IEmail => {
+  return {
+    to: validContacts,
+    categories: [EmailCategory.ContractSign],
+    subject: 'Vertragsschluss',
+    text: `Liebes FDPG Team,\n\nDer Forschende "${signUserName}" hat den Vertrag mit dem Projektkürzel "${proposal.projectAbbreviation}" unterzeichnet.\n\n ${proposalUrl}`,
+  };
+};
