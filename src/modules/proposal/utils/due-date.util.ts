@@ -56,17 +56,22 @@ export const getDueDateForFinishedProject = (referenceTime: Date = new Date(), t
 export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
   switch (proposal.status) {
     case ProposalStatus.FdpgCheck:
-      proposal.dueDateForStatus = getDueDateForFdpgCheck();
+      if (proposal.deadlines.DUE_DAYS_FDPG_CHECK) proposal.dueDateForStatus = proposal.deadlines.DUE_DAYS_FDPG_CHECK;
+      else proposal.dueDateForStatus = getDueDateForFdpgCheck();
       break;
 
     case ProposalStatus.LocationCheck:
-      proposal.dueDateForStatus = getDueDateForLocationCheck();
+      if (proposal.deadlines.DUE_DAYS_LOCATION_CHECK)
+        proposal.dueDateForStatus = proposal.deadlines.DUE_DAYS_LOCATION_CHECK;
+      else proposal.dueDateForStatus = getDueDateForLocationCheck();
       break;
 
     case ProposalStatus.Contracting:
       // Should be set on Researcher sign
       if (setContracting) {
-        proposal.dueDateForStatus = getDueDateForLocationContracting();
+        if (proposal.deadlines.DUE_DAYS_LOCATION_CONTRACTING)
+          proposal.dueDateForStatus = proposal.deadlines.DUE_DAYS_LOCATION_CONTRACTING;
+        else proposal.dueDateForStatus = getDueDateForLocationContracting();
       } else {
         proposal.dueDateForStatus = undefined;
       }
@@ -74,6 +79,8 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
       break;
 
     case ProposalStatus.ExpectDataDelivery:
+      if (proposal.deadlines.DUE_DAYS_EXPECT_DATA_DELIVERY)
+        proposal.dueDateForStatus = proposal.deadlines.DUE_DAYS_EXPECT_DATA_DELIVERY;
       proposal.dueDateForStatus = getDueDateForExpectDataDelivery();
       break;
 
@@ -82,11 +89,15 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
       break;
 
     case ProposalStatus.DataCorrupt:
-      proposal.dueDateForStatus = getDueDateForDataCorrupt();
+      if (proposal.deadlines.DUE_DAYS_DATA_CORRUPT)
+        proposal.dueDateForStatus = proposal.deadlines.DUE_DAYS_DATA_CORRUPT;
+      else proposal.dueDateForStatus = getDueDateForDataCorrupt();
       break;
 
     case ProposalStatus.FinishedProject:
-      proposal.dueDateForStatus = getDueDateForFinishedProject();
+      if (proposal.deadlines.DUE_DAYS_FINISHED_PROJECT)
+        proposal.dueDateForStatus = proposal.deadlines.DUE_DAYS_FINISHED_PROJECT;
+      else proposal.dueDateForStatus = getDueDateForFinishedProject();
       break;
 
     case ProposalStatus.ReadyToArchive:
