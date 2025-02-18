@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { plainToClass } from 'class-transformer';
 import { AdminConfigService } from 'src/modules/admin/admin-config.service';
@@ -33,6 +33,8 @@ import { ProposalDocument } from '../schema/proposal.schema';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { AdditionalLocationInformation } from '../schema/sub-schema/additional-location-information.schema';
 import { validateUpdateAdditionalInformationAccess } from '../utils/validate-misc.util';
+import { DueDateEnum } from '../enums/due-date.enum';
+import { Role } from 'src/shared/enums/role.enum';
 
 @Injectable()
 export class ProposalMiscService {
@@ -251,5 +253,36 @@ export class ProposalMiscService {
     toBeUpdated.additionalLocationInformation.push(additionalInformation as AdditionalLocationInformation);
 
     await toBeUpdated.save();
+  }
+
+  async setDeadlines(
+    proposalId: string,
+    deadlines: Record<DueDateEnum, Date | null>,
+    user: IRequestUser,
+  ): Promise<void> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    if (!proposal) {
+      throw new NotFoundException('Proposal not found');
+    }
+
+    // Ensure only FdpgMember can modify deadlines
+    if (!user.roles.includes(Role.FdpgMember)) {
+      throw new ForbiddenException('You do not have permission to modify deadlines');
+    }
+
+    const updatedDeadlines: Record<DueDateEnum, Date | null> = {
+      ...proposal.deadlines,
+      ...deadlines,
+    };
+
+    Object.values(DueDateEnum).forEach((key) => {
+      if (!(key in updatedDeadlines)) {
+        updatedDeadlines[key] = null;
+      }
+    });
+
+    proposal.deadlines = updatedDeadlines;
+    await proposal.save();
   }
 }

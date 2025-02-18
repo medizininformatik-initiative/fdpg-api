@@ -25,6 +25,7 @@ import {
   AdditionalLocationInformation,
   AdditionalLocationInformationSchema,
 } from './sub-schema/additional-location-information.schema';
+import { DueDateEnum } from '../enums/due-date.enum';
 
 export type ProposalDocument = Proposal & Document;
 
@@ -253,6 +254,19 @@ export class Proposal {
 
   @Prop()
   fdpgCheckNotes?: string;
+
+  @Prop({
+    type: Object,
+    default: {
+      DUE_DAYS_FDPG_CHECK: null,
+      DUE_DAYS_DATA_CORRUPT: null,
+      DUE_DAYS_FINISHED_PROJECT: null,
+      DUE_DAYS_LOCATION_CHECK: null,
+      DUE_DAYS_EXPECT_DATA_DELIVERY: null,
+      DUE_DAYS_LOCATION_CONTRACTING: null,
+    },
+  })
+  deadlines: Record<DueDateEnum, Date | null>;
 }
 
 const ProposalSchema = SchemaFactory.createForClass(Proposal);
