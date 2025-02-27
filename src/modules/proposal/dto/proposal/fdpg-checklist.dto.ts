@@ -32,12 +32,8 @@ class ChecklistItem {
   options: ChecklistOption[];
 
   @Expose()
-  @IsBoolean()
-  isAnswered: boolean;
-
-  @Expose()
   @IsArray()
-  value: string;
+  answer: string;
 
   @Expose()
   @IsArray()
@@ -93,11 +89,6 @@ export class FdpgChecklistUpdateDto {
 
   @Expose()
   @IsOptional()
-  @IsBoolean()
-  isAnswered?: boolean;
-
-  @Expose()
-  @IsOptional()
   @IsString()
   fdpgInternalCheckNotes?: string;
 
@@ -111,7 +102,7 @@ export class FdpgChecklistUpdateDto {
   @Expose()
   @IsOptional()
   @IsArray()
-  value?: string | string[];
+  answer?: string | string[];
 
   @Expose()
   @IsOptional()
@@ -138,8 +129,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        value: '',
-        isAnswered: false,
+        answer: [],
         sublist: [],
       },
       {
@@ -147,8 +137,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        value: '',
-        isAnswered: false,
+        answer: [],
         sublist: [],
       },
       {
@@ -156,8 +145,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
         sublist: [],
       },
       {
@@ -165,8 +153,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
         sublist: [],
       },
       {
@@ -174,8 +161,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
         sublist: [],
       },
       {
@@ -187,8 +173,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
           { optionValue: 'distributedAnalysisDataSHIELD' },
           { optionValue: 'distributedAnalysisOther' },
         ],
-        isAnswered: false,
-        value: [],
+        answer: [],
         sublist: [],
       },
     ],
@@ -198,88 +183,77 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'NonGDNG-Project',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'HealthData-Project',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'Intl-Participants',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'Commercial-Participants',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'PartnerProject-Participants',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'LogicalPartner-DIC',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'Researcher-Support',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'DataIntegration',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'Biosamples-Requested',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
       {
         questionKey: 'External-Lab',
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        value: '',
+        answer: [],
       },
     ],
     ...dbChecklist,

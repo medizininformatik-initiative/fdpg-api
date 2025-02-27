@@ -20,8 +20,7 @@ export class FdpgChecklist {
             optionValue: { type: String, required: true },
           },
         ],
-        value: { type: [String], required: true },
-        isAnswered: { type: Boolean, default: false },
+        answer: { type: [String], required: true },
         sublist: [
           {
             _id: { type: Types.ObjectId, auto: true },
@@ -33,7 +32,7 @@ export class FdpgChecklist {
                 optionValue: { type: String, required: true },
               },
             ],
-            value: { type: [String], required: true },
+            answer: { type: [String], required: true },
           },
         ],
       },
@@ -45,8 +44,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
           sublist: [],
         },
         {
@@ -54,8 +53,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
           sublist: [],
         },
         {
@@ -63,8 +62,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -73,8 +72,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -83,8 +82,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -97,8 +96,8 @@ export class FdpgChecklist {
             { optionValue: 'distributedAnalysisDataSHIELD' },
             { optionValue: 'distributedAnalysisOther' },
           ],
-          isAnswered: false,
-          value: [],
+
+          answer: [],
 
           sublist: [],
         },
@@ -107,8 +106,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -117,8 +116,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -127,8 +126,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -137,8 +136,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -147,8 +146,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -157,8 +156,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -167,8 +166,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -177,8 +176,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [
             {
@@ -186,48 +185,48 @@ export class FdpgChecklist {
               comment: null,
               isMultiple: false,
               options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-              isAnswered: false,
-              value: '',
+
+              answer: [],
             },
             {
               questionKey: 'analysisTypeCorrect',
               comment: null,
               isMultiple: false,
               options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-              isAnswered: false,
-              value: '',
+
+              answer: [],
             },
             {
               questionKey: 'dataSelectionConsistency',
               comment: null,
               isMultiple: false,
               options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-              isAnswered: false,
-              value: '',
+
+              answer: [],
             },
             {
               questionKey: 'analysisPlanConsistency',
               comment: null,
               isMultiple: false,
               options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-              isAnswered: false,
-              value: '',
+
+              answer: [],
             },
             {
               questionKey: 'projectTitle',
               comment: null,
               isMultiple: false,
               options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-              isAnswered: false,
-              value: '',
+
+              answer: [],
             },
             {
               questionKey: 'miiStudyExplanation',
               comment: null,
               isMultiple: false,
               options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-              isAnswered: false,
-              value: '',
+
+              answer: [],
             },
           ],
         },
@@ -236,8 +235,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -246,8 +245,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -256,8 +255,8 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
 
           sublist: [],
         },
@@ -270,15 +269,14 @@ export class FdpgChecklist {
     comment: string | null;
     isMultiple: boolean;
     options: { optionValue: string }[];
-    value: string;
-    isAnswered: boolean;
+    answer: string;
     sublist: {
       _id: Types.ObjectId;
       questionKey: string;
       comment: string | null;
       isMultiple: boolean;
       options: { optionValue: string }[];
-      value: string;
+      answer: string;
     }[];
   }>;
 
@@ -298,7 +296,6 @@ export class FdpgChecklist {
             isSelected: { type: Boolean, default: false },
           },
         ],
-        isAnswered: { type: Boolean, default: false },
       },
     ],
     default: function () {
@@ -308,88 +305,88 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'NonGDNG-Project',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'HealthData-Project',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'Intl-Participants',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'Commercial-Participants',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'PartnerProject-Participants',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'LogicalPartner-DIC',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'Researcher-Support',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'DataIntegration',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'Biosamples-Requested',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
         {
           questionKey: 'External-Lab',
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-          isAnswered: false,
-          value: '',
+
+          answer: [],
         },
       ];
     },
@@ -400,8 +397,7 @@ export class FdpgChecklist {
     comment: string | null;
     isMultiple: boolean;
     options: { optionValue: string }[];
-    value: string;
-    isAnswered: boolean;
+    answer: string;
   }>;
 }
 
