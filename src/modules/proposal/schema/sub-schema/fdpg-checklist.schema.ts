@@ -35,6 +35,7 @@ export class FdpgChecklist {
             answer: { type: [String], required: true },
           },
         ],
+        isAnswered: { type: Boolean, default: false },
       },
     ],
     default: function () {
@@ -44,7 +45,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
           sublist: [],
         },
@@ -53,7 +54,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
           sublist: [],
         },
@@ -62,7 +63,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -72,7 +73,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -82,7 +83,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -96,7 +97,7 @@ export class FdpgChecklist {
             { optionValue: 'distributedAnalysisDataSHIELD' },
             { optionValue: 'distributedAnalysisOther' },
           ],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -106,7 +107,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -116,7 +117,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -126,7 +127,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -136,7 +137,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -146,7 +147,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -156,7 +157,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -166,7 +167,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -176,7 +177,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [
@@ -235,7 +236,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -245,7 +246,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -255,7 +256,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
+          isAnswered: false,
           answer: [],
 
           sublist: [],
@@ -278,6 +279,7 @@ export class FdpgChecklist {
       options: { optionValue: string }[];
       answer: string;
     }[];
+    isAnswered: boolean;
   }>;
 
   @Prop({ type: String, default: null })
@@ -296,6 +298,8 @@ export class FdpgChecklist {
             isSelected: { type: Boolean, default: false },
           },
         ],
+        isAnswered: { type: Boolean, default: false },
+        answer: { type: [String], required: true },
       },
     ],
     default: function () {
@@ -305,7 +309,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -313,7 +317,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -321,7 +325,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -329,7 +333,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -337,7 +341,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -345,7 +349,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -353,7 +357,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -361,7 +365,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -369,7 +373,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -377,7 +381,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
         {
@@ -385,7 +389,7 @@ export class FdpgChecklist {
           comment: null,
           isMultiple: false,
           options: [{ optionValue: 'yes' }],
-
+          isAnswered: false,
           answer: [],
         },
       ];
@@ -397,7 +401,7 @@ export class FdpgChecklist {
     comment: string | null;
     isMultiple: boolean;
     options: { optionValue: string }[];
-    answer: string;
+    answer: [string];
   }>;
 }
 

@@ -37,9 +37,15 @@ class ChecklistItem {
 
   @Expose()
   @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => ChecklistItem)
   sublist: ChecklistItem[];
+
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  isAnswered: boolean;
 }
 
 @Exclude()
@@ -113,6 +119,11 @@ export class FdpgChecklistUpdateDto {
 
   @Expose()
   @IsOptional()
+  @IsBoolean()
+  isAnswered?: boolean;
+
+  @Expose()
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ChecklistItem)
@@ -129,6 +140,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
         answer: [],
         sublist: [],
       },
@@ -137,6 +149,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
         answer: [],
         sublist: [],
       },
@@ -145,7 +158,9 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
         answer: [],
+
         sublist: [],
       },
       {
@@ -153,7 +168,9 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
         answer: [],
+
         sublist: [],
       },
       {
@@ -161,7 +178,9 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
         answer: [],
+
         sublist: [],
       },
       {
@@ -173,7 +192,168 @@ export const initChecklist = (dbChecklist: any = {}) => {
           { optionValue: 'distributedAnalysisDataSHIELD' },
           { optionValue: 'distributedAnalysisOther' },
         ],
+        isAnswered: false,
         answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'testLocations',
+        comment: null,
+        isMultiple: false,
+        options: [],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'cohortcommentClear',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'technicalDataSelection',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'uacDataSelectionComprehensible',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'basicPopulationDefinition',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'scientificQuestionDifferentiation',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'ethicsVote',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'extraStudyProtocol',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [
+          {
+            questionKey: 'ethicsVoteAssignment',
+            comment: null,
+            isMultiple: false,
+            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+
+            answer: [],
+          },
+          {
+            questionKey: 'analysisTypeCorrect',
+            comment: null,
+            isMultiple: false,
+            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+
+            answer: [],
+          },
+          {
+            questionKey: 'dataSelectionConsistency',
+            comment: null,
+            isMultiple: false,
+            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+
+            answer: [],
+          },
+          {
+            questionKey: 'analysisPlanConsistency',
+            comment: null,
+            isMultiple: false,
+            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+
+            answer: [],
+          },
+          {
+            questionKey: 'projectTitle',
+            comment: null,
+            isMultiple: false,
+            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+
+            answer: [],
+          },
+          {
+            questionKey: 'miiStudyExplanation',
+            comment: null,
+            isMultiple: false,
+            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+
+            answer: [],
+          },
+        ],
+      },
+      {
+        questionKey: 'requestedLogicalDMST',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'sufficientCoarseningAggregation',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
+        sublist: [],
+      },
+      {
+        questionKey: 'dataPrivacyConceptAttached',
+        comment: null,
+        isMultiple: false,
+        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
+        isAnswered: false,
+        answer: [],
+
         sublist: [],
       },
     ],
@@ -183,6 +363,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -190,6 +371,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -197,6 +379,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -204,6 +387,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -211,6 +395,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -218,6 +403,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -225,6 +411,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -232,6 +419,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -239,6 +427,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -246,6 +435,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
       {
@@ -253,6 +443,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         comment: null,
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
+        isAnswered: false,
         answer: [],
       },
     ],
