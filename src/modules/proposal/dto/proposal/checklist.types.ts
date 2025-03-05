@@ -12,12 +12,12 @@ export interface IChecklistItem {
   options: IChecklistOption[];
   answer: string[];
   sublist?: IChecklistItem[];
-  isAnswered?: boolean;
+  isAnswered: boolean;
 }
 
 export interface IChecklist {
   isRegistrationLinkSent: boolean;
-  fdpgInternalCheckNotes?: string | null;
+  fdpgInternalCheckNotes: string | null;
   checkListVerification: IChecklistItem[];
   projectProperties: IChecklistItem[];
 }

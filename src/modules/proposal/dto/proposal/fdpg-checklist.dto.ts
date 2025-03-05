@@ -47,9 +47,8 @@ class ChecklistItem implements IChecklistItem {
   sublist?: ChecklistItem[];
 
   @Expose()
-  @IsOptional()
   @IsBoolean()
-  isAnswered?: boolean;
+  isAnswered: boolean;
 }
 
 @Exclude()
@@ -65,9 +64,8 @@ export class FdpgChecklistGetDto implements IChecklist {
   checkListVerification: ChecklistItem[];
 
   @Expose()
-  @IsOptional()
   @IsString()
-  fdpgInternalCheckNotes?: string;
+  fdpgInternalCheckNotes: string | null;
 
   @Expose()
   @IsArray()
@@ -134,6 +132,29 @@ export class FdpgChecklistUpdateDto implements Partial<IChecklist> {
   @ValidateNested({ each: true })
   @Type(() => ChecklistItem)
   projectProperties?: ChecklistItem[];
+}
+
+@Exclude()
+export class FdpgChecklistSetDto implements IChecklist {
+  @Expose()
+  @IsBoolean()
+  isRegistrationLinkSent: boolean;
+
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ChecklistItem)
+  checkListVerification: ChecklistItem[];
+
+  @Expose()
+  @IsString()
+  fdpgInternalCheckNotes: string | null;
+
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ChecklistItem)
+  projectProperties: ChecklistItem[];
 }
 
 const createChecklistItem = (questionKey: string, options: IChecklistOption[], isMultiple = false): ChecklistItem => ({

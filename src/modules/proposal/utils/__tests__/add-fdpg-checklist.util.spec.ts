@@ -1,9 +1,9 @@
-import { FdpgChecklistSetDto } from '../../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistUpdateDto } from '../../dto/proposal/fdpg-checklist.dto';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
-import { addFdpgChecklist } from '../add-fdpg-checklist.util';
+import { updateFdpgChecklist } from '../add-fdpg-checklist.util';
 
-describe('addFdpgChecklist', () => {
+describe('updateFdpgChecklist', () => {
   const proposalId = 'proposalId';
 
   const proposalContent = {
@@ -26,38 +26,37 @@ describe('addFdpgChecklist', () => {
 
   it('should merge the checklist updates to the existing checklist', () => {
     const proposal = getProposalDocument();
-    const fdpgChecklistSetDto = {
+    const fdpgChecklistUpdateDto = {
       isRegistrationLinkSent: false,
-      isUnique: true,
-      isAttachmentsChecked: false,
-    } as FdpgChecklistSetDto;
+      fdpgInternalCheckNotes: null,
+    } as FdpgChecklistUpdateDto;
 
-    addFdpgChecklist(proposal, fdpgChecklistSetDto);
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto);
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
       isUnique: true,
-      isAttachmentsChecked: false,
+      isAttachmentsChecked: true,
       isChecked: true,
+      fdpgInternalCheckNotes: null,
     });
   });
 
   it('should init a new checklist with the updates if there is none', () => {
     const proposal = getProposalDocument();
     proposal.fdpgChecklist = undefined;
-    const fdpgChecklistSetDto = {
+    const fdpgChecklistUpdateDto = {
       isRegistrationLinkSent: false,
-      isUnique: true,
-      isAttachmentsChecked: false,
-    } as FdpgChecklistSetDto;
+      fdpgInternalCheckNotes: null,
+    } as FdpgChecklistUpdateDto;
 
-    addFdpgChecklist(proposal, fdpgChecklistSetDto);
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto);
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
-      isUnique: true,
-      isAttachmentsChecked: false,
-      isChecked: false,
+      fdpgInternalCheckNotes: null,
+      checkListVerification: expect.any(Array),
+      projectProperties: expect.any(Array),
     });
   });
 });

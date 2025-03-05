@@ -9,13 +9,13 @@ interface ChecklistOption {
 }
 
 interface ChecklistItem {
-  _id: Types.ObjectId;
+  _id?: Types.ObjectId;
   questionKey: string;
-  comment: string | null;
+  comment?: string | null;
   isMultiple: boolean;
   options: ChecklistOption[];
   answer: string[];
-  sublist: ChecklistItem[];
+  sublist?: ChecklistItem[];
   isAnswered: boolean;
 }
 
@@ -384,14 +384,14 @@ const DEFAULT_PROJECT_PROPERTIES: ChecklistItem[] = [
 @Schema({ _id: false })
 export class FdpgChecklist {
   @Prop({ type: Boolean, default: false })
-  isRegistrationLinkSent: boolean;
+  isRegistrationLinkSent: boolean = false;
 
   @Prop({
     type: [
       {
-        _id: { type: Types.ObjectId, auto: true },
+        _id: { type: Types.ObjectId, auto: true, required: false },
         questionKey: { type: String, required: true },
-        comment: { type: String, default: null },
+        comment: { type: String, default: null, required: false },
         isMultiple: { type: Boolean, required: true },
         options: [
           {
@@ -401,9 +401,9 @@ export class FdpgChecklist {
         answer: { type: [String], required: true },
         sublist: [
           {
-            _id: { type: Types.ObjectId, auto: true },
+            _id: { type: Types.ObjectId, auto: true, required: false },
             questionKey: { type: String, required: true },
-            comment: { type: String, default: null },
+            comment: { type: String, default: null, required: false },
             isMultiple: { type: Boolean, required: true },
             options: [
               {
@@ -418,17 +418,17 @@ export class FdpgChecklist {
     ],
     default: DEFAULT_CHECKLIST_ITEMS,
   })
-  checkListVerification: ChecklistItem[];
+  checkListVerification: ChecklistItem[] = DEFAULT_CHECKLIST_ITEMS;
 
   @Prop({ type: String, default: null })
-  fdpgInternalCheckNotes: string;
+  fdpgInternalCheckNotes: string | null = null;
 
   @Prop({
     type: [
       {
-        _id: { type: Types.ObjectId, auto: true },
+        _id: { type: Types.ObjectId, auto: true, required: false },
         questionKey: { type: String, required: true },
-        comment: { type: String, default: null },
+        comment: { type: String, default: null, required: false },
         isMultiple: { type: Boolean, required: true },
         options: [
           {
@@ -439,9 +439,9 @@ export class FdpgChecklist {
         isAnswered: { type: Boolean, default: false },
         sublist: [
           {
-            _id: { type: Types.ObjectId, auto: true },
+            _id: { type: Types.ObjectId, auto: true, required: false },
             questionKey: { type: String, required: true },
-            comment: { type: String, default: null },
+            comment: { type: String, default: null, required: false },
             isMultiple: { type: Boolean, required: true },
             options: [
               {
@@ -456,7 +456,7 @@ export class FdpgChecklist {
     ],
     default: DEFAULT_PROJECT_PROPERTIES,
   })
-  projectProperties: ChecklistItem[];
+  projectProperties: ChecklistItem[] = DEFAULT_PROJECT_PROPERTIES;
 }
 
 export const FdpgChecklistSchema = SchemaFactory.createForClass(FdpgChecklist);

@@ -16,6 +16,7 @@ import {
 import { removeFdpgTasksForContracting, removeFdpgTasksForDataDelivery } from '../../utils/add-fdpg-task.util';
 import { declineUnansweredContracts } from '../../utils/location-flow.util';
 import { UacApproval } from '../../schema/sub-schema/uac-approval.schema';
+import { initChecklist } from '../../dto/proposal/fdpg-checklist.dto';
 
 jest.mock('../../utils/due-date.util', () => ({
   setDueDate: jest.fn(),
@@ -156,10 +157,7 @@ describe('StatusChangeService', () => {
         expect(proposalDocument.version.minor).toBe(0);
         expect(proposalDocument.submittedAt).toBeDefined();
         expect(proposalDocument.fdpgChecklist).toEqual({
-          isRegistrationLinkSent: false,
-          isUnique: false,
-          isAttachmentsChecked: false,
-          isChecked: false,
+          ...initChecklist(),
         });
       });
     });

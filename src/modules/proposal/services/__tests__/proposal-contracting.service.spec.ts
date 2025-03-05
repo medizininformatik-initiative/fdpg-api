@@ -13,13 +13,7 @@ import { SignContractDto } from '../../dto/sign-contract.dto';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { addContractSign } from '../../utils/add-contract-sign.util';
-import {
-  addDizApproval,
-  addUacApprovalWithCondition,
-  addDizConditionReview,
-  addDizApprovalWithCondition,
-  addDizConditionApproval,
-} from '../../utils/add-location-vote.util';
+import { addDizApproval, addUacApprovalWithCondition } from '../../utils/add-location-vote.util';
 import {
   addHistoryItemForContractSign,
   addHistoryItemForDizApproval,
@@ -41,7 +35,7 @@ jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
   return {
     ...original,
-    plainToClass: jest.fn().mockImplementation((cls, plain, options) => plain),
+    plainToClass: jest.fn().mockImplementation((cls, plain) => plain),
   };
 });
 
