@@ -1,16 +1,19 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Types } from 'mongoose';
+import { IChecklist, IChecklistItem, IChecklistOption, CHECKLIST_OPTIONS, CHECKLIST_KEYS } from './checklist.types';
 
-class ChecklistOption {
+class ChecklistOption implements IChecklistOption {
   @Expose()
   @IsString()
   optionValue: string;
 }
 
-class ChecklistItem {
+class ChecklistItem implements IChecklistItem {
   @Expose()
-  _id: Types.ObjectId;
+  @IsMongoId()
+  @IsOptional()
+  _id?: Types.ObjectId;
 
   @Expose()
   @IsString()
@@ -33,23 +36,24 @@ class ChecklistItem {
 
   @Expose()
   @IsArray()
-  answer: string;
+  @IsString({ each: true })
+  answer: string[];
 
   @Expose()
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => ChecklistItem)
-  sublist: ChecklistItem[];
+  sublist?: ChecklistItem[];
 
   @Expose()
   @IsOptional()
   @IsBoolean()
-  isAnswered: boolean;
+  isAnswered?: boolean;
 }
 
 @Exclude()
-export class FdpgChecklistGetDto {
+export class FdpgChecklistGetDto implements IChecklist {
   @Expose()
   @Transform((params) => (params.value === undefined ? false : params.value))
   isRegistrationLinkSent: boolean;
@@ -73,7 +77,7 @@ export class FdpgChecklistGetDto {
 }
 
 @Exclude()
-export class FdpgChecklistUpdateDto {
+export class FdpgChecklistUpdateDto implements Partial<IChecklist> {
   @Expose()
   @IsOptional()
   @IsBoolean()
@@ -81,6 +85,7 @@ export class FdpgChecklistUpdateDto {
 
   @Expose()
   @IsOptional()
+  @IsMongoId()
   _id?: Types.ObjectId;
 
   @Expose()
@@ -108,7 +113,8 @@ export class FdpgChecklistUpdateDto {
   @Expose()
   @IsOptional()
   @IsArray()
-  answer?: string | string[];
+  @IsString({ each: true })
+  answer?: string[];
 
   @Expose()
   @IsOptional()
@@ -130,342 +136,69 @@ export class FdpgChecklistUpdateDto {
   projectProperties?: ChecklistItem[];
 }
 
-export const initChecklist = (dbChecklist: any = {}) => {
+const createChecklistItem = (questionKey: string, options: IChecklistOption[], isMultiple = false): ChecklistItem => ({
+  questionKey,
+  comment: null,
+  isMultiple,
+  options,
+  isAnswered: false,
+  answer: [],
+  sublist: [],
+});
+
+export const initChecklist = (dbChecklist: Partial<IChecklist> = {}): IChecklist => {
+  const checkListVerification: ChecklistItem[] = [
+    createChecklistItem(CHECKLIST_KEYS.DIC_PRE_CHECK, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.TITLE_UNIQUE, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.REALISTIC_DURATION, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.ANALYSIS_PLAN_CLEAR, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.EXAMPLE_SCRIPTS_ATTACHED, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.DISTRIBUTED_ANALYSIS, CHECKLIST_OPTIONS.DISTRIBUTED_ANALYSIS, true),
+    createChecklistItem(CHECKLIST_KEYS.TEST_LOCATIONS, CHECKLIST_OPTIONS.EMPTY),
+    createChecklistItem(CHECKLIST_KEYS.COHORT_COMMENT_CLEAR, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.TECHNICAL_DATA_SELECTION, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.UAC_DATA_SELECTION, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.BASIC_POPULATION_DEFINITION, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.SCIENTIFIC_QUESTION, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.ETHICS_VOTE, CHECKLIST_OPTIONS.YES_NO),
+    {
+      ...createChecklistItem(CHECKLIST_KEYS.EXTRA_STUDY_PROTOCOL, CHECKLIST_OPTIONS.YES_NO),
+      sublist: [
+        createChecklistItem('ethicsVoteAssignment', CHECKLIST_OPTIONS.YES_NO),
+        createChecklistItem('analysisTypeCorrect', CHECKLIST_OPTIONS.YES_NO),
+        createChecklistItem('dataSelectionConsistency', CHECKLIST_OPTIONS.YES_NO),
+        createChecklistItem('analysisPlanConsistency', CHECKLIST_OPTIONS.YES_NO),
+        createChecklistItem('projectTitle', CHECKLIST_OPTIONS.YES_NO),
+        createChecklistItem('miiStudyExplanation', CHECKLIST_OPTIONS.YES_NO),
+      ],
+    },
+    createChecklistItem(CHECKLIST_KEYS.REQUESTED_LOGICAL_DMST, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.SUFFICIENT_COARSENING, CHECKLIST_OPTIONS.YES_NO),
+    createChecklistItem(CHECKLIST_KEYS.DATA_PRIVACY_CONCEPT, CHECKLIST_OPTIONS.YES_NO),
+  ];
+
+  const projectProperties: ChecklistItem[] = [
+    createChecklistItem(CHECKLIST_KEYS.NON_MII_PROJECT, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.NON_GDNG_PROJECT, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.HEALTH_DATA_PROJECT, CHECKLIST_OPTIONS.YES_ONLY),
+    {
+      ...createChecklistItem(CHECKLIST_KEYS.INTL_PARTICIPANTS, CHECKLIST_OPTIONS.YES_ONLY),
+      sublist: [createChecklistItem('out-EU', CHECKLIST_OPTIONS.YES_ONLY)],
+    },
+    createChecklistItem(CHECKLIST_KEYS.COMMERCIAL_PARTICIPANTS, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.PARTNER_PROJECT_PARTICIPANTS, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.LOGICAL_PARTNER_DIC, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.RESEARCHER_SUPPORT, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.DATA_INTEGRATION, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.BIOSAMPLES_REQUESTED, CHECKLIST_OPTIONS.YES_ONLY),
+    createChecklistItem(CHECKLIST_KEYS.EXTERNAL_LAB, CHECKLIST_OPTIONS.YES_ONLY),
+  ];
+
   return {
     isRegistrationLinkSent: false,
     fdpgInternalCheckNotes: null,
-    checkListVerification: [
-      {
-        questionKey: 'DICpreCheck',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'titleUnique',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'realisticDuration',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'analysisPlanClear',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'exampleScriptsAttached',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'distributedAnalysis',
-        comment: null,
-        isMultiple: true,
-        options: [
-          { optionValue: 'distributedAnalysisDockerR' },
-          { optionValue: 'distributedAnalysisDataSHIELD' },
-          { optionValue: 'distributedAnalysisOther' },
-        ],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'testLocations',
-        comment: null,
-        isMultiple: false,
-        options: [],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'cohortcommentClear',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'technicalDataSelection',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'uacDataSelectionComprehensible',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'basicPopulationDefinition',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'scientificQuestionDifferentiation',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'ethicsVote',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'extraStudyProtocol',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [
-          {
-            questionKey: 'ethicsVoteAssignment',
-            comment: null,
-            isMultiple: false,
-            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
-            answer: [],
-          },
-          {
-            questionKey: 'analysisTypeCorrect',
-            comment: null,
-            isMultiple: false,
-            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
-            answer: [],
-          },
-          {
-            questionKey: 'dataSelectionConsistency',
-            comment: null,
-            isMultiple: false,
-            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
-            answer: [],
-          },
-          {
-            questionKey: 'analysisPlanConsistency',
-            comment: null,
-            isMultiple: false,
-            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
-            answer: [],
-          },
-          {
-            questionKey: 'projectTitle',
-            comment: null,
-            isMultiple: false,
-            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
-            answer: [],
-          },
-          {
-            questionKey: 'miiStudyExplanation',
-            comment: null,
-            isMultiple: false,
-            options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-
-            answer: [],
-          },
-        ],
-      },
-      {
-        questionKey: 'requestedLogicalDMST',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'sufficientCoarseningAggregation',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-      {
-        questionKey: 'dataPrivacyConceptAttached',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }, { optionValue: 'no' }],
-        isAnswered: false,
-        answer: [],
-
-        sublist: [],
-      },
-    ],
-    projectProperties: [
-      {
-        questionKey: 'NonMII-Project',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        sublist: [],
-        answer: [],
-      },
-      {
-        questionKey: 'NonGDNG-Project',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'HealthData-Project',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'Intl-Participants',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [
-          {
-            questionKey: 'out-EU',
-            options: [{ optionValue: 'yes' }],
-            isAnswered: false,
-            answer: [],
-            isMultiple: false,
-          },
-        ],
-      },
-      {
-        questionKey: 'Commercial-Participants',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'PartnerProject-Participants',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'LogicalPartner-DIC',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'Researcher-Support',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'DataIntegration',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'Biosamples-Requested',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-      {
-        questionKey: 'External-Lab',
-        comment: null,
-        isMultiple: false,
-        options: [{ optionValue: 'yes' }],
-        isAnswered: false,
-        answer: [],
-        sublist: [],
-      },
-    ],
+    checkListVerification,
+    projectProperties,
     ...dbChecklist,
   };
 };
