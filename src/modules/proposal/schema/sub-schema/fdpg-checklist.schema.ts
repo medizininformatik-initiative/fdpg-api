@@ -299,6 +299,20 @@ export class FdpgChecklist {
           },
         ],
         isAnswered: { type: Boolean, default: false },
+        sublist: [
+          {
+            _id: { type: Types.ObjectId, auto: true },
+            questionKey: { type: String, required: true },
+            comment: { type: String, default: null },
+            isMultiple: { type: Boolean, required: true },
+            options: [
+              {
+                optionValue: { type: String, required: true },
+              },
+            ],
+            answer: { type: [String], required: true },
+          },
+        ],
         answer: { type: [String], required: true },
       },
     ],
@@ -311,6 +325,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'NonGDNG-Project',
@@ -319,6 +334,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'HealthData-Project',
@@ -327,6 +343,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'Intl-Participants',
@@ -335,6 +352,15 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [
+            {
+              questionKey: 'out-EU',
+              options: [{ optionValue: 'yes' }],
+              isAnswered: false,
+              answer: [],
+              isMultiple: false,
+            },
+          ],
         },
         {
           questionKey: 'Commercial-Participants',
@@ -343,6 +369,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'PartnerProject-Participants',
@@ -351,6 +378,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'LogicalPartner-DIC',
@@ -359,6 +387,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'Researcher-Support',
@@ -367,6 +396,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'DataIntegration',
@@ -375,6 +405,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'Biosamples-Requested',
@@ -383,6 +414,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
         {
           questionKey: 'External-Lab',
@@ -391,6 +423,7 @@ export class FdpgChecklist {
           options: [{ optionValue: 'yes' }],
           isAnswered: false,
           answer: [],
+          sublist: [],
         },
       ];
     },
@@ -401,6 +434,14 @@ export class FdpgChecklist {
     comment: string | null;
     isMultiple: boolean;
     options: { optionValue: string }[];
+    sublist: {
+      _id: Types.ObjectId;
+      questionKey: string;
+      comment: string | null;
+      isMultiple: boolean;
+      options: { optionValue: string }[];
+      answer: string;
+    }[];
     answer: [string];
   }>;
 }

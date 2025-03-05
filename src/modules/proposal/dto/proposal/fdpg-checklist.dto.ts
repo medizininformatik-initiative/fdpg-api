@@ -364,6 +364,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         isMultiple: false,
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
+        sublist: [],
         answer: [],
       },
       {
@@ -373,6 +374,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'HealthData-Project',
@@ -381,6 +383,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'Intl-Participants',
@@ -389,6 +392,15 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [
+          {
+            questionKey: 'out-EU',
+            options: [{ optionValue: 'yes' }],
+            isAnswered: false,
+            answer: [],
+            isMultiple: false,
+          },
+        ],
       },
       {
         questionKey: 'Commercial-Participants',
@@ -397,6 +409,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'PartnerProject-Participants',
@@ -405,6 +418,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'LogicalPartner-DIC',
@@ -413,6 +427,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'Researcher-Support',
@@ -421,6 +436,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'DataIntegration',
@@ -429,6 +445,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'Biosamples-Requested',
@@ -437,6 +454,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
       {
         questionKey: 'External-Lab',
@@ -445,6 +463,7 @@ export const initChecklist = (dbChecklist: any = {}) => {
         options: [{ optionValue: 'yes' }],
         isAnswered: false,
         answer: [],
+        sublist: [],
       },
     ],
     ...dbChecklist,
