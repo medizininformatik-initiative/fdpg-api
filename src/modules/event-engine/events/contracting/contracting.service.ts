@@ -4,7 +4,11 @@ import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
-import { getResearcherSignedEmailForDizMembers, getSigningCompleteEmailForFdpgMember } from './contracting.emails';
+import {
+  getResearcherSignedEmailForDizMembers,
+  getSigningCompleteEmailForFdpgMember,
+  getResearcherSignedEmailForFdpgMembers,
+} from './contracting.emails';
 
 @Injectable()
 export class ContractingService {
@@ -13,7 +17,7 @@ export class ContractingService {
     private emailService: EmailService,
   ) {}
 
-  private async handleResearcherSign(proposal: Proposal, vote: boolean, proposalUrl: string) {
+  private async handleResearcherSign(proposal: Proposal, vote: boolean, proposalUrl: string, signUserName: string) {
     const emailTasks: Promise<void>[] = [];
     if (vote === true) {
       const dizTask = async () => {
@@ -24,7 +28,17 @@ export class ContractingService {
         const mail = getResearcherSignedEmailForDizMembers(validUacContacts, proposal, proposalUrl);
         return await this.emailService.send(mail);
       };
-      emailTasks.push(dizTask());
+
+      const fdpgTask = async () => {
+        const validFdpgContacts = await this.keycloakUtilService
+          .getFdpgMembers()
+          .then((members) => members.map((member) => member.email));
+        const mail = getResearcherSignedEmailForFdpgMembers(validFdpgContacts, proposal, proposalUrl, signUserName);
+
+        return await this.emailService.send(mail);
+      };
+
+      emailTasks.push(dizTask(), fdpgTask());
     }
 
     await Promise.allSettled(emailTasks);
@@ -50,7 +64,7 @@ export class ContractingService {
 
   async handleContractSign(proposal: Proposal, vote: boolean, user: IRequestUser, proposalUrl: string) {
     if (user.singleKnownRole === Role.Researcher) {
-      await this.handleResearcherSign(proposal, vote, proposalUrl);
+      await this.handleResearcherSign(proposal, vote, proposalUrl, user.fullName);
     } else if (user.isFromLocation) {
       await this.handleLocationSign(proposal, proposalUrl);
     }
