@@ -23,7 +23,7 @@ import { UseCaseUpload } from '../../enums/upload-type.enum';
 import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { FdpgChecklistSetDto } from '../../dto/proposal/fdpg-checklist.dto';
 import { validateFdpgCheckStatus } from '../../utils/validate-fdpg-check-status.util';
-import { addFdpgChecklist } from '../../utils/add-fdpg-checklist.util';
+import { updateFdpgChecklist } from '../../utils/add-fdpg-checklist.util';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { getError } from 'test/get-error';
 import { NotFoundException } from '@nestjs/common';
@@ -57,7 +57,7 @@ jest.mock('../../utils/validate-fdpg-check-status.util', () => ({
 }));
 
 jest.mock('../../utils/add-fdpg-checklist.util', () => ({
-  addFdpgChecklist: jest.fn(),
+  updateFdpgChecklist: jest.fn(),
 }));
 
 jest.mock('src/shared/utils/find-by-key-nested.util', () => ({
@@ -453,7 +453,7 @@ describe('ProposalMiscService', () => {
       await proposalMiscService.setFdpgChecklist(proposalId, checklist, request.user);
 
       expect(validateFdpgCheckStatus).toHaveBeenCalledWith(proposalDocument);
-      expect(addFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist);
+      expect(updateFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist);
       expect(proposalDocument.save).toBeCalled();
     });
   });
