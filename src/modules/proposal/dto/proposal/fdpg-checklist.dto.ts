@@ -1,7 +1,14 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Types } from 'mongoose';
-import { IChecklist, IChecklistItem, IChecklistOption, CHECKLIST_OPTIONS, CHECKLIST_KEYS } from './checklist.types';
+import {
+  IChecklist,
+  IChecklistItem,
+  IChecklistOption,
+  IInternalCheckNote,
+  CHECKLIST_OPTIONS,
+  CHECKLIST_KEYS,
+} from './checklist.types';
 
 class ChecklistOption implements IChecklistOption {
   @Expose()
@@ -51,6 +58,24 @@ class ChecklistItem implements IChecklistItem {
   isAnswered: boolean;
 }
 
+class InternalCheckNote implements IInternalCheckNote {
+  @Expose()
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  date?: Date;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  user?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
 @Exclude()
 export class FdpgChecklistGetDto implements IChecklist {
   @Expose()
@@ -64,8 +89,9 @@ export class FdpgChecklistGetDto implements IChecklist {
   checkListVerification: ChecklistItem[];
 
   @Expose()
-  @IsString()
-  fdpgInternalCheckNotes: string | null;
+  @ValidateNested()
+  @Type(() => InternalCheckNote)
+  fdpgInternalCheckNotes: InternalCheckNote | null;
 
   @Expose()
   @IsArray()
@@ -98,8 +124,9 @@ export class FdpgChecklistUpdateDto implements Partial<IChecklist> {
 
   @Expose()
   @IsOptional()
-  @IsString()
-  fdpgInternalCheckNotes?: string;
+  @ValidateNested()
+  @Type(() => InternalCheckNote)
+  fdpgInternalCheckNotes?: InternalCheckNote;
 
   @Expose()
   @IsOptional()
@@ -147,8 +174,9 @@ export class FdpgChecklistSetDto implements IChecklist {
   checkListVerification: ChecklistItem[];
 
   @Expose()
-  @IsString()
-  fdpgInternalCheckNotes: string | null;
+  @ValidateNested()
+  @Type(() => InternalCheckNote)
+  fdpgInternalCheckNotes: InternalCheckNote | null;
 
   @Expose()
   @IsArray()
@@ -221,5 +249,5 @@ export const initChecklist = (dbChecklist: Partial<IChecklist> = {}): IChecklist
     checkListVerification,
     projectProperties,
     ...dbChecklist,
-  };
+  } as IChecklist;
 };

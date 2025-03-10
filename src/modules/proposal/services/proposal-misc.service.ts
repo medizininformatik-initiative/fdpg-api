@@ -215,7 +215,7 @@ export class ProposalMiscService {
     if (!toBeUpdated.fdpgChecklist) {
       toBeUpdated.fdpgChecklist = initChecklist();
     }
-    updateFdpgChecklist(toBeUpdated, checklistUpdate);
+    updateFdpgChecklist(toBeUpdated, checklistUpdate, user.fullName);
     await toBeUpdated.save();
   }
 
