@@ -153,6 +153,8 @@ export const checkAccessForUacMember = (proposal: ProposalDocument, user: UserPi
   const locationState = getLocationState(proposal, user);
 
   if (
+    !locationState.isDizCheck &&
+    !locationState.openDizConditionChecks &&
     !locationState.dizApproved &&
     !locationState.uacApproved &&
     !locationState.signedContract &&
