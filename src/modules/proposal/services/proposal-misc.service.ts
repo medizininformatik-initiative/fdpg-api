@@ -40,7 +40,7 @@ import { validateUpdateAdditionalInformationAccess } from '../utils/validate-mis
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { SetDeadlinesDto } from '../dto/set-deadlines.dto';
-import { isDateOrderValid } from '../utils/due-date-verification.util';
+import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verification.util';
 import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 
@@ -298,9 +298,11 @@ export class ProposalMiscService {
       throw new BadRequestException('Date order is not logical');
     }
 
-    // check if data is allowed to be changed : example FDPG Check, can't be edited if it is location check
-
     const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
+
+    if (!isDateChangeValid(changeList, proposal.status)) {
+      throw new BadRequestException('Date for invalid state was changed');
+    }
 
     if (Object.keys(changeList).length > 0) {
       this.schedulerService.removeAndCreateEventsByChangeList(proposal, changeList);
@@ -321,7 +323,9 @@ export class ProposalMiscService {
     setDueDate(proposal, !!proposal.researcherSignedAt);
 
     await proposal.save();
-    await this.eventEngineService.handleDeadlineChange(proposal, changeList);
+    if (Object.keys(changeList).length > 0) {
+      await this.eventEngineService.handleDeadlineChange(proposal, changeList);
+    }
   }
 
   private getDeadlinesByDto(dto: SetDeadlinesDto): Record<DueDateEnum, Date | null> {
