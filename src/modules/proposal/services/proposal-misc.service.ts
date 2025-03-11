@@ -22,7 +22,11 @@ import { SupportedMimetype } from '../enums/supported-mime-type.enum';
 import { UseCaseUpload } from '../enums/upload-type.enum';
 import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
 import { flattenToLanguage } from '../utils/flatten-to-language.util';
-import { addHistoryItemForProposalLock, addHistoryItemForStatus } from '../utils/proposal-history.util';
+import {
+  addHistoryItemForChangedDeadline,
+  addHistoryItemForProposalLock,
+  addHistoryItemForStatus,
+} from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
@@ -304,7 +308,9 @@ export class ProposalMiscService {
       }
     });
 
-    // add changed deadlines to history
+    Object.keys(changeList).map((deadlineType) =>
+      addHistoryItemForChangedDeadline(deadlineType as DueDateEnum, proposal, user),
+    );
 
     proposal.deadlines = updatedDeadlines;
 
