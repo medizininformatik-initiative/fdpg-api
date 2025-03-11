@@ -6,3 +6,12 @@ export enum DueDateEnum {
   DUE_DAYS_EXPECT_DATA_DELIVERY = 'DUE_DAYS_EXPECT_DATA_DELIVERY',
   DUE_DAYS_LOCATION_CONTRACTING = 'DUE_DAYS_LOCATION_CONTRACTING',
 }
+
+export const defaultDueDateValues = {
+  [DueDateEnum.DUE_DAYS_FDPG_CHECK]: null,
+  [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: null,
+  [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: null,
+  [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: null,
+  [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: null,
+  [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: null,
+};

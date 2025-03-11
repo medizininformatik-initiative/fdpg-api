@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { plainToClass } from 'class-transformer';
 import { AdminConfigService } from 'src/modules/admin/admin-config.service';
@@ -33,8 +33,12 @@ import { ProposalDocument } from '../schema/proposal.schema';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { AdditionalLocationInformation } from '../schema/sub-schema/additional-location-information.schema';
 import { validateUpdateAdditionalInformationAccess } from '../utils/validate-misc.util';
-import { DueDateEnum } from '../enums/due-date.enum';
+import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { Role } from 'src/shared/enums/role.enum';
+import { SetDeadlinesDto } from '../dto/set-deadlines.dto';
+import { isDateOrderValid } from '../utils/due-date-verification.util';
+import { getDueDateChangeList } from '../utils/due-date.util';
+import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 
 @Injectable()
 export class ProposalMiscService {
@@ -48,6 +52,7 @@ export class ProposalMiscService {
     private schedulerRegistry: SchedulerRegistry,
     private feasibilityService: FeasibilityService,
     private adminConfigService: AdminConfigService,
+    private schedulerService: SchedulerService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -266,11 +271,7 @@ export class ProposalMiscService {
     await toBeUpdated.save();
   }
 
-  async setDeadlines(
-    proposalId: string,
-    deadlines: Record<DueDateEnum, Date | null>,
-    user: IRequestUser,
-  ): Promise<void> {
+  async setDeadlines(proposalId: string, dto: SetDeadlinesDto, user: IRequestUser): Promise<void> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
     if (!proposal) {
@@ -282,10 +283,20 @@ export class ProposalMiscService {
       throw new ForbiddenException('You do not have permission to modify deadlines');
     }
 
+    const deadlines = this.getDeadlinesByDto(dto);
+
     const updatedDeadlines: Record<DueDateEnum, Date | null> = {
       ...proposal.deadlines,
       ...deadlines,
     };
+
+    if (!isDateOrderValid(updatedDeadlines)) {
+      throw new BadRequestException('Date order is not logical');
+    }
+
+    const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
+    console.log({ changeList });
+    this.schedulerService.removeAndCreateEventsByChangeList(proposal, changeList);
 
     Object.values(DueDateEnum).forEach((key) => {
       if (!(key in updatedDeadlines)) {
@@ -293,7 +304,22 @@ export class ProposalMiscService {
       }
     });
 
+    // add changed deadlines to history
+
     proposal.deadlines = updatedDeadlines;
+
     await proposal.save();
+
+    // sent email about changed deadlines
+  }
+
+  private getDeadlinesByDto(dto: SetDeadlinesDto): Record<DueDateEnum, Date | null> {
+    const deadlines: Record<DueDateEnum, Date | null> = {} as Record<DueDateEnum, Date | null>;
+
+    Object.keys(defaultDueDateValues).forEach(
+      (key) => (deadlines[key] = dto.deadlines[key] ? new Date(dto.deadlines[key]) : defaultDueDateValues[key]),
+    );
+
+    return deadlines;
   }
 }

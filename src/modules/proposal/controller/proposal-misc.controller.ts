@@ -25,7 +25,6 @@ import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { SetDeadlinesDto } from '../dto/set-deadlines.dto';
-import { DueDateEnum } from '../enums/due-date.enum';
 import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 
 @ApiController('proposals', undefined, 'misc')
@@ -162,27 +161,6 @@ export class ProposalMiscController {
       throw new BadRequestException('Invalid deadlines format');
     }
 
-    const deadlines: Record<DueDateEnum, Date | null> = {
-      [DueDateEnum.DUE_DAYS_FDPG_CHECK]: dto.deadlines.DUE_DAYS_FDPG_CHECK
-        ? new Date(dto.deadlines.DUE_DAYS_FDPG_CHECK)
-        : null,
-      [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: dto.deadlines.DUE_DAYS_DATA_CORRUPT
-        ? new Date(dto.deadlines.DUE_DAYS_DATA_CORRUPT)
-        : null,
-      [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: dto.deadlines.DUE_DAYS_FINISHED_PROJECT
-        ? new Date(dto.deadlines.DUE_DAYS_FINISHED_PROJECT)
-        : null,
-      [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: dto.deadlines.DUE_DAYS_LOCATION_CHECK
-        ? new Date(dto.deadlines.DUE_DAYS_LOCATION_CHECK)
-        : null,
-      [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: dto.deadlines.DUE_DAYS_EXPECT_DATA_DELIVERY
-        ? new Date(dto.deadlines.DUE_DAYS_EXPECT_DATA_DELIVERY)
-        : null,
-      [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: dto.deadlines.DUE_DAYS_LOCATION_CONTRACTING
-        ? new Date(dto.deadlines.DUE_DAYS_LOCATION_CONTRACTING)
-        : null,
-    };
-
-    await this.proposalMiscService.setDeadlines(id, deadlines, user);
+    await this.proposalMiscService.setDeadlines(id, dto, user);
   }
 }

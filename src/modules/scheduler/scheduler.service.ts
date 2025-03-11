@@ -8,6 +8,7 @@ import { ScheduledEvent } from '../proposal/schema/sub-schema/scheduled-event.sc
 import { ScheduleType } from './enums/schedule-type.enum';
 import { Proposal } from '../proposal/schema/proposal.schema';
 import { ScheduleProcessorService } from './schedule-processor.service';
+import { DueDateEnum } from '../proposal/enums/due-date.enum';
 
 @Injectable()
 export class SchedulerService {
@@ -48,4 +49,6 @@ export class SchedulerService {
 
     proposal.scheduledEvents = proposal.scheduledEvents.filter((proposalEvent) => !types.includes(proposalEvent.type));
   }
+
+  async removeAndCreateEventsByChangeList(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>) {}
 }
