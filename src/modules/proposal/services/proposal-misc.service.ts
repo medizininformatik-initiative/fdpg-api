@@ -298,6 +298,8 @@ export class ProposalMiscService {
       throw new BadRequestException('Date order is not logical');
     }
 
+    // check if data is allowed to be changed : example FDPG Check, can't be edited if it is location check
+
     const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
 
     if (Object.keys(changeList).length > 0) {
@@ -319,8 +321,7 @@ export class ProposalMiscService {
     setDueDate(proposal, !!proposal.researcherSignedAt);
 
     await proposal.save();
-
-    // sent email about changed deadlines
+    await this.eventEngineService.handleDeadlineChange(proposal, changeList);
   }
 
   private getDeadlinesByDto(dto: SetDeadlinesDto): Record<DueDateEnum, Date | null> {

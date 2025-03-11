@@ -38,7 +38,6 @@ import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
-import { DueDateEnum } from '../../enums/due-date.enum';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
