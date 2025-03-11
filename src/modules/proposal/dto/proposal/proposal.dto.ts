@@ -349,7 +349,7 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   @Expose({ groups: [Role.FdpgMember] })
   @Type(() => SetDeadlinesDto)
-  @Transform(({ value, obj }) => {
+  @Transform(({ obj }) => {
     if (!obj.deadlines || typeof obj.deadlines !== 'object') {
       return {
         DUE_DAYS_FDPG_CHECK: null,

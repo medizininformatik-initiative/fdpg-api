@@ -142,6 +142,8 @@ export class ProposalCrudService {
 
     await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
+
+    toBeUpdated.markModified('deadlines');
     const saveResult = await toBeUpdated.save();
 
     if (isStatusChange) {

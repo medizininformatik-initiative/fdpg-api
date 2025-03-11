@@ -257,9 +257,7 @@ export class Proposal {
 
   @Prop({
     type: Object,
-    default: {
-      ...defaultDueDateValues,
-    },
+    default: () => ({ ...defaultDueDateValues }),
   })
   deadlines: Record<DueDateEnum, Date | null>;
 }
