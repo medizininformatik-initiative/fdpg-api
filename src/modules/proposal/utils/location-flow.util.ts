@@ -28,12 +28,14 @@ export const excludeAllRequestedLocations = (proposal: Proposal) => {
       ...proposal.dizApprovedLocations,
       ...proposal.uacApprovedLocations,
       ...proposal.signedContracts,
+      ...proposal.openDizConditionChecks,
     ]),
   ];
   proposal.openDizChecks = [];
   proposal.dizApprovedLocations = [];
   proposal.uacApprovedLocations = [];
   proposal.signedContracts = [];
+  proposal.openDizConditionChecks = [];
 };
 
 export const declineUnselectedLocations = (

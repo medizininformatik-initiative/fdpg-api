@@ -300,6 +300,11 @@ export class ProposalMiscService {
 
     const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
     console.log({ changeList });
+
+    if (Object.keys(changeList).length === 0) {
+      return;
+    }
+
     this.schedulerService.removeAndCreateEventsByChangeList(proposal, changeList);
 
     Object.values(DueDateEnum).forEach((key) => {

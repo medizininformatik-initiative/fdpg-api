@@ -16,6 +16,11 @@ export const alterDaysOnDate = (date: Date, days: number) => {
   return days ? new Date(date.setDate(date.getDate() + days)) : date;
 };
 
+export const alterOnDeadline = (deadlineDate: Date, days: number, time: Time = [12, 0, 0]) => {
+  const date = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate(), ...time);
+  return alterDaysOnDate(date, days);
+};
+
 export const getDueDateForFdpgCheck = (referenceTime: Date = new Date(), time: Time = [12, 0, 0]) => {
   const todayAtTime = new Date(referenceTime.getFullYear(), referenceTime.getMonth(), referenceTime.getDate(), ...time);
   return alterDaysOnDate(todayAtTime, DUE_DAYS_FDPG_CHECK);
