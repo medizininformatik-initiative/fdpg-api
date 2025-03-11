@@ -41,7 +41,7 @@ import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { SetDeadlinesDto } from '../dto/set-deadlines.dto';
 import { isDateOrderValid } from '../utils/due-date-verification.util';
-import { getDueDateChangeList } from '../utils/due-date.util';
+import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 
 @Injectable()
@@ -299,13 +299,10 @@ export class ProposalMiscService {
     }
 
     const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
-    console.log({ changeList });
 
-    if (Object.keys(changeList).length === 0) {
-      return;
+    if (Object.keys(changeList).length > 0) {
+      this.schedulerService.removeAndCreateEventsByChangeList(proposal, changeList);
     }
-
-    this.schedulerService.removeAndCreateEventsByChangeList(proposal, changeList);
 
     Object.values(DueDateEnum).forEach((key) => {
       if (!(key in updatedDeadlines)) {
@@ -318,6 +315,8 @@ export class ProposalMiscService {
     );
 
     proposal.deadlines = updatedDeadlines;
+
+    setDueDate(proposal, !!proposal.researcherSignedAt);
 
     await proposal.save();
 
