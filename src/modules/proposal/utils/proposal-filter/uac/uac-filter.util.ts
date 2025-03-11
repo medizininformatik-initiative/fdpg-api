@@ -47,7 +47,13 @@ const getFilterForPending = (user: IRequestUser): FilterQuery<Proposal> => {
           $in: [ProposalStatus.LocationCheck, ProposalStatus.Contracting],
         },
       },
-      { $or: [{ dizApprovedLocations: user.miiLocation }, { uacApprovedLocations: user.miiLocation }] },
+      {
+        $or: [
+          { openDizChecks: user.miiLocation },
+          { openDizConditionChecks: user.miiLocation },
+          { uacApprovedLocations: user.miiLocation },
+        ],
+      },
     ],
   };
 };

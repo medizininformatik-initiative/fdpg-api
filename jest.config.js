@@ -7,6 +7,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: './',
   modulePaths: ['<rootDir>'],
+  setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   collectCoverage: true,
   coverageReporters: ['text', 'cobertura', 'html', 'lcov'],
   coverageDirectory: 'reports/coverage',

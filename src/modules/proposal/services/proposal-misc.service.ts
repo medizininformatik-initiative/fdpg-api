@@ -12,7 +12,7 @@ import { EventEngineService } from '../../event-engine/event-engine.service';
 import { FeasibilityService } from '../../feasibility/feasibility.service';
 import { PdfEngineService } from '../../pdf-engine/pdf-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
-import { FdpgChecklistSetDto } from '../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { UploadDto } from '../dto/upload.dto';
@@ -20,7 +20,7 @@ import { ProposalValidation } from '../enums/porposal-validation.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { SupportedMimetype } from '../enums/supported-mime-type.enum';
 import { UseCaseUpload } from '../enums/upload-type.enum';
-import { addFdpgChecklist } from '../utils/add-fdpg-checklist.util';
+import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
 import { flattenToLanguage } from '../utils/flatten-to-language.util';
 import { addHistoryItemForProposalLock, addHistoryItemForStatus } from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
@@ -203,10 +203,21 @@ export class ProposalMiscService {
     return dataPrivacyTextForUsage;
   }
 
-  async setFdpgChecklist(proposalId: string, checklist: FdpgChecklistSetDto, user: IRequestUser): Promise<void> {
+  async setFdpgChecklist(
+    proposalId: string,
+    checklistUpdate: FdpgChecklistUpdateDto,
+    user: IRequestUser,
+  ): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    if (!toBeUpdated) throw new NotFoundException('Proposal not found');
+
     validateFdpgCheckStatus(toBeUpdated);
-    addFdpgChecklist(toBeUpdated, checklist);
+
+    // Ensure the checklist exists before updating
+    if (!toBeUpdated.fdpgChecklist) {
+      toBeUpdated.fdpgChecklist = initChecklist();
+    }
+    updateFdpgChecklist(toBeUpdated, checklistUpdate);
     await toBeUpdated.save();
   }
 

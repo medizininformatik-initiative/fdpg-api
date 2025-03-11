@@ -19,7 +19,6 @@ import { MongoIdParamDto, MongoTwoIdsParamDto } from 'src/shared/dto/mongo-id-pa
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalValidation } from '../decorators/validation.decorator';
-import { FdpgChecklistSetDto } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { SetBooleanStatusDto, SetProposalStatusDto } from '../dto/set-status.dto';
 import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
@@ -27,6 +26,7 @@ import { ProposalMiscService } from '../services/proposal-misc.service';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { SetDeadlinesDto } from '../dto/set-deadlines.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
+import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -96,7 +96,7 @@ export class ProposalMiscController {
   @ApiOperation({ summary: 'Merges the fdpg-checklist of a proposal' })
   async setFdpgChecklist(
     @Param() { id }: MongoIdParamDto,
-    @Body() checklist: FdpgChecklistSetDto,
+    @Body() checklist: FdpgChecklistUpdateDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     return await this.proposalMiscService.setFdpgChecklist(id, checklist, user);
