@@ -22,19 +22,23 @@ export const updateFdpgChecklist = (
   }
 
   if (checklistUpdate.fdpgInternalCheckNotes !== undefined) {
-    const newNote = {
-      ...checklistUpdate.fdpgInternalCheckNotes,
-      date: new Date(),
-      user: requestUser,
-    };
-
-    if (proposal.fdpgChecklist.fdpgInternalCheckNotes) {
-      proposal.fdpgChecklist.fdpgInternalCheckNotes = {
-        ...proposal.fdpgChecklist.fdpgInternalCheckNotes,
-        ...newNote,
-      };
+    if (checklistUpdate.fdpgInternalCheckNotes === null) {
+      proposal.fdpgChecklist.fdpgInternalCheckNotes = null;
     } else {
-      proposal.fdpgChecklist.fdpgInternalCheckNotes = newNote;
+      const newNote = {
+        ...checklistUpdate.fdpgInternalCheckNotes,
+        date: new Date(),
+        user: requestUser,
+      };
+
+      if (proposal.fdpgChecklist.fdpgInternalCheckNotes) {
+        proposal.fdpgChecklist.fdpgInternalCheckNotes = {
+          ...proposal.fdpgChecklist.fdpgInternalCheckNotes,
+          ...newNote,
+        };
+      } else {
+        proposal.fdpgChecklist.fdpgInternalCheckNotes = newNote;
+      }
     }
   }
 

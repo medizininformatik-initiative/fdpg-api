@@ -11,9 +11,9 @@ export interface IInternalCheckNote {
 }
 
 export interface IChecklistItem {
-  _id?: Types.ObjectId;
+  _id: Types.ObjectId;
   questionKey: string;
-  comment?: string | null;
+  comment: string | null;
   isMultiple: boolean;
   options: IChecklistOption[];
   answer: string[];

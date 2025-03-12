@@ -5,6 +5,17 @@ import { updateFdpgChecklist } from '../add-fdpg-checklist.util';
 
 describe('updateFdpgChecklist', () => {
   const proposalId = 'proposalId';
+  const mockUser = 'test-user';
+  const mockDate = new Date('2025-03-12T14:20:38.502Z');
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(mockDate);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   const proposalContent = {
     _id: proposalId,
@@ -31,7 +42,7 @@ describe('updateFdpgChecklist', () => {
       fdpgInternalCheckNotes: null,
     } as FdpgChecklistUpdateDto;
 
-    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto);
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto, mockUser);
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
@@ -50,13 +61,36 @@ describe('updateFdpgChecklist', () => {
       fdpgInternalCheckNotes: null,
     } as FdpgChecklistUpdateDto;
 
-    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto);
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto, mockUser);
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
       fdpgInternalCheckNotes: null,
       checkListVerification: expect.any(Array),
       projectProperties: expect.any(Array),
+    });
+  });
+
+  it('should update internal check notes with user and date', () => {
+    const proposal = getProposalDocument();
+    const note = { note: 'test note' };
+    const fdpgChecklistUpdateDto = {
+      isRegistrationLinkSent: false,
+      fdpgInternalCheckNotes: note,
+    } as FdpgChecklistUpdateDto;
+
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto, mockUser);
+
+    expect(proposal.fdpgChecklist).toEqual({
+      isRegistrationLinkSent: false,
+      isUnique: true,
+      isAttachmentsChecked: true,
+      isChecked: true,
+      fdpgInternalCheckNotes: {
+        ...note,
+        date: mockDate,
+        user: mockUser,
+      },
     });
   });
 });
