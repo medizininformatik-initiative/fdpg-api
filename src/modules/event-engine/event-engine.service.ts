@@ -22,6 +22,8 @@ import { PublicationsService } from './events/publications/publications.service'
 import { Answer } from '../comment/schema/answer.schema';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
 import { CommentType } from '../comment/enums/comment-type.enum';
+import { DeadlineEventService } from './events/deadlines/deadline-event.service';
+import { DueDateEnum } from '../proposal/enums/due-date.enum';
 
 type MongoDocument = Document<any, any, any> & { _id: any };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
@@ -42,6 +44,7 @@ export class EventEngineService {
     private reportsService: ReportsService,
     private publicationsService: PublicationsService,
     private configService: ConfigService,
+    private deadlineEventService: DeadlineEventService,
   ) {
     this.portalHost = this.configService.get('PORTAL_HOST');
   }
@@ -170,5 +173,10 @@ export class EventEngineService {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.publicationsService.handlePublicationDelete(proposal, publication, proposalUrl);
     }
+  }
+
+  async handleDeadlineChange(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>) {
+    const proposalUrl = this.getProposalUrl(proposal);
+    await this.deadlineEventService.sendForDeadlineChange(proposal, changeList, proposalUrl);
   }
 }

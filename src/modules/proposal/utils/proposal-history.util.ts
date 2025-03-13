@@ -5,6 +5,7 @@ import { HistoryEventType } from '../enums/history-event.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { Proposal } from '../schema/proposal.schema';
 import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
+import { DueDateEnum } from '../enums/due-date.enum';
 
 const pushHistoryItem = (
   proposalAfterChanges: Proposal,
@@ -29,6 +30,7 @@ const pushHistoryItem = (
 
   proposalAfterChanges.history = [...proposalAfterChanges.history, event];
 };
+
 export const addHistoryItemForStatus = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
@@ -82,6 +84,7 @@ export const addHistoryItemForStatus = (
     pushHistoryItem(proposalAfterChanges, user, type);
   }
 };
+
 export const addHistoryItemForDizApproval = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
@@ -191,4 +194,32 @@ export const addHistoryItemForProposalLock = (
 ): void => {
   const type = isLocked ? HistoryEventType.ProposalLockTrue : HistoryEventType.ProposalLockFalse;
   pushHistoryItem(proposalAfterChanges, user, type);
+};
+
+export const addHistoryItemForChangedDeadline = (deadlineType: DueDateEnum, proposal: Proposal, user: IRequestUser) => {
+  const type = (() => {
+    switch (deadlineType) {
+      case DueDateEnum.DUE_DAYS_FDPG_CHECK:
+        return HistoryEventType.FdpgDeadlineChange;
+      case DueDateEnum.DUE_DAYS_LOCATION_CHECK:
+        return HistoryEventType.LocationCheckDeadlineChange;
+      case DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING:
+        return HistoryEventType.LocationContractingDeadlineChange;
+      case DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY:
+        return HistoryEventType.ExpectDataDeliveryDeadlineChange;
+      case DueDateEnum.DUE_DAYS_DATA_CORRUPT:
+        return HistoryEventType.DataCorruptDeadlineChange;
+      case DueDateEnum.DUE_DAYS_FINISHED_PROJECT:
+        return HistoryEventType.FinishedProjectDeadlineChange;
+      default:
+        return null;
+    }
+  })();
+
+  if (!type) {
+    console.error(`Could not determine DueDateEnum for history change on proposal ${proposal._id}`);
+    return;
+  }
+
+  pushHistoryItem(proposal, user, type);
 };

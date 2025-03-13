@@ -52,6 +52,7 @@ export class StatusChangeService {
       case ProposalStatus.LocationCheck:
         proposalAfterChanges.signedContracts = [];
         proposalAfterChanges.dizApprovedLocations = [];
+        proposalAfterChanges.openDizConditionChecks = [];
         proposalAfterChanges.uacApprovedLocations = [];
         proposalAfterChanges.requestedButExcludedLocations = [];
 
@@ -91,6 +92,7 @@ export class StatusChangeService {
             ...proposalAfterChanges.openDizChecks,
             ...proposalAfterChanges.dizApprovedLocations,
             ...proposalAfterChanges.signedContracts,
+            ...proposalAfterChanges.openDizConditionChecks,
           ]),
         ];
 
@@ -117,11 +119,13 @@ export class StatusChangeService {
             ...proposalAfterChanges.openDizChecks,
             ...proposalAfterChanges.dizApprovedLocations,
             ...proposalAfterChanges.uacApprovedLocations,
+            ...proposalAfterChanges.openDizConditionChecks,
           ]),
         ];
         proposalAfterChanges.openDizChecks = [];
         proposalAfterChanges.dizApprovedLocations = [];
         proposalAfterChanges.uacApprovedLocations = [];
+        proposalAfterChanges.openDizConditionChecks = [];
 
         // We leave untouched: proposalAfterChanges.signedContracts
 
