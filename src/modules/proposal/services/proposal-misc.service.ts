@@ -275,7 +275,7 @@ export class ProposalMiscService {
     await toBeUpdated.save();
   }
 
-  async setDeadlines(proposalId: string, dto: SetDeadlinesDto, user: IRequestUser): Promise<void> {
+  async setDeadlines(proposalId: string, dto: Record<DueDateEnum, Date | null>, user: IRequestUser): Promise<void> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
     if (!proposal) {
@@ -328,11 +328,11 @@ export class ProposalMiscService {
     }
   }
 
-  private getDeadlinesByDto(dto: SetDeadlinesDto): Record<DueDateEnum, Date | null> {
+  private getDeadlinesByDto(dto: Record<DueDateEnum, Date | null>): Record<DueDateEnum, Date | null> {
     const deadlines: Record<DueDateEnum, Date | null> = {} as Record<DueDateEnum, Date | null>;
 
     Object.keys(defaultDueDateValues).forEach(
-      (key) => (deadlines[key] = dto.deadlines[key] ? new Date(dto.deadlines[key]) : defaultDueDateValues[key]),
+      (key) => (deadlines[key] = dto[key] ? new Date(dto[key]) : defaultDueDateValues[key]),
     );
 
     return deadlines;

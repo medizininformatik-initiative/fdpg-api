@@ -24,8 +24,8 @@ import { SetBooleanStatusDto, SetProposalStatusDto } from '../dto/set-status.dto
 import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
-import { SetDeadlinesDto } from '../dto/set-deadlines.dto';
 import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
+import { DueDateEnum } from '../enums/due-date.enum';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -154,10 +154,10 @@ export class ProposalMiscController {
   @ApiOperation({ summary: 'Updates the deadlines field value.' })
   async setDeadlines(
     @Param() { id }: MongoIdParamDto,
-    @Body() dto: SetDeadlinesDto,
+    @Body() dto: Record<DueDateEnum, Date | null>,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    if (!dto || !dto.deadlines || typeof dto.deadlines !== 'object') {
+    if (!dto || typeof dto !== 'object') {
       throw new BadRequestException('Invalid deadlines format');
     }
 
