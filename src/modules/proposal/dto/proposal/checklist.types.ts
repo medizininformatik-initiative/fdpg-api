@@ -4,10 +4,16 @@ export interface IChecklistOption {
   optionValue: string;
 }
 
+export interface IInternalCheckNote {
+  date?: Date;
+  user?: string;
+  note?: string;
+}
+
 export interface IChecklistItem {
-  _id?: Types.ObjectId;
+  _id: Types.ObjectId;
   questionKey: string;
-  comment?: string | null;
+  comment: string | null;
   isMultiple: boolean;
   options: IChecklistOption[];
   answer: string[];
@@ -17,7 +23,7 @@ export interface IChecklistItem {
 
 export interface IChecklist {
   isRegistrationLinkSent: boolean;
-  fdpgInternalCheckNotes: string | null;
+  fdpgInternalCheckNotes: IInternalCheckNote | null;
   checkListVerification: IChecklistItem[];
   projectProperties: IChecklistItem[];
 }
