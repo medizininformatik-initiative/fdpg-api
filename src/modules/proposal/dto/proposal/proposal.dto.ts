@@ -38,6 +38,7 @@ import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
+import { defaultDueDateValues } from '../../enums/due-date.enum';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -350,14 +351,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Type(() => SetDeadlinesDto)
   @Transform(({ obj }) => {
     if (!obj.deadlines || typeof obj.deadlines !== 'object') {
-      return {
-        DUE_DAYS_FDPG_CHECK: null,
-        DUE_DAYS_DATA_CORRUPT: null,
-        DUE_DAYS_FINISHED_PROJECT: null,
-        DUE_DAYS_LOCATION_CHECK: null,
-        DUE_DAYS_EXPECT_DATA_DELIVERY: null,
-        DUE_DAYS_LOCATION_CONTRACTING: null,
-      };
+      return { ...defaultDueDateValues };
     }
 
     return obj.deadlines; // Ensure object is returned as-is
