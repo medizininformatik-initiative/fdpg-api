@@ -24,7 +24,7 @@ import { SetBooleanStatusDto, SetProposalStatusDto } from '../dto/set-status.dto
 import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
-import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistUpdateDto, FdpgChecklistGetDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
 
 @ApiController('proposals', undefined, 'misc')
@@ -90,14 +90,12 @@ export class ProposalMiscController {
   @Put(':id/fdpg-checklist')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Item could not be found' })
-  @ApiNoContentResponse({ description: 'Checklist successfully changed. No content returns.' })
-  @HttpCode(204)
   @ApiOperation({ summary: 'Merges the fdpg-checklist of a proposal' })
   async setFdpgChecklist(
     @Param() { id }: MongoIdParamDto,
     @Body() checklist: FdpgChecklistUpdateDto,
     @Request() { user }: FdpgRequest,
-  ): Promise<void> {
+  ): Promise<FdpgChecklistGetDto> {
     return await this.proposalMiscService.setFdpgChecklist(id, checklist, user);
   }
 

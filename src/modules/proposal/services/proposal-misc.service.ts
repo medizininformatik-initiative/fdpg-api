@@ -12,7 +12,7 @@ import { EventEngineService } from '../../event-engine/event-engine.service';
 import { FeasibilityService } from '../../feasibility/feasibility.service';
 import { PdfEngineService } from '../../pdf-engine/pdf-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
-import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistUpdateDto, initChecklist, FdpgChecklistGetDto } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { UploadDto } from '../dto/upload.dto';
@@ -215,18 +215,20 @@ export class ProposalMiscService {
     proposalId: string,
     checklistUpdate: FdpgChecklistUpdateDto,
     user: IRequestUser,
-  ): Promise<void> {
+  ): Promise<FdpgChecklistGetDto> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     if (!toBeUpdated) throw new NotFoundException('Proposal not found');
 
     validateFdpgCheckStatus(toBeUpdated);
 
-    // Ensure the checklist exists before updating
     if (!toBeUpdated.fdpgChecklist) {
       toBeUpdated.fdpgChecklist = initChecklist();
     }
-    updateFdpgChecklist(toBeUpdated, checklistUpdate);
+
+    updateFdpgChecklist(toBeUpdated, checklistUpdate, user.fullName);
     await toBeUpdated.save();
+
+    return toBeUpdated.fdpgChecklist as FdpgChecklistGetDto;
   }
 
   async markSectionAsDone(proposalId: string, sectionId: string, isDone: boolean, user: IRequestUser): Promise<void> {
