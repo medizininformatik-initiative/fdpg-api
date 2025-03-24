@@ -83,9 +83,10 @@ describe('location-flow.util', () => {
       excludeAllRequestedLocations(proposal);
       expect(proposal.openDizChecks.length).toEqual(0);
       expect(proposal.dizApprovedLocations.length).toEqual(0);
+      expect(proposal.openDizConditionChecks.length).toEqual(0);
       expect(proposal.uacApprovedLocations.length).toEqual(0);
       expect(proposal.signedContracts.length).toEqual(0);
-      expect(proposal.requestedButExcludedLocations.length).toEqual(5);
+      expect(proposal.requestedButExcludedLocations.length).toEqual(6);
     });
   });
 

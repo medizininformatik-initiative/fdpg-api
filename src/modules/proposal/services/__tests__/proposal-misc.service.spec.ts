@@ -29,6 +29,7 @@ import { getError } from 'test/get-error';
 import { NotFoundException } from '@nestjs/common';
 import { AdminConfigService } from 'src/modules/admin/admin-config.service';
 import { ProposalTypeOfUse } from '../../enums/proposal-type-of-use.enum';
+import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -76,6 +77,7 @@ describe('ProposalMiscService', () => {
   let schedulerRegistry: jest.Mocked<SchedulerRegistry>;
   let feasibilityService: jest.Mocked<FeasibilityService>;
   let adminConfigService: jest.Mocked<AdminConfigService>;
+  let schedulerService: jest.Mocked<SchedulerService>;
 
   const request = {
     user: {
@@ -197,6 +199,12 @@ describe('ProposalMiscService', () => {
           provide: AdminConfigService,
           useValue: {
             getDataPrivacyConfig: jest.fn().mockResolvedValue(privacyTextMock),
+          },
+        },
+        {
+          provide: SchedulerService,
+          useValue: {
+            removeAndCreateEventsByChangeList: jest.fn(),
           },
         },
       ],

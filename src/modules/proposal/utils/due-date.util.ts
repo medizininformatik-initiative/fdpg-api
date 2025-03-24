@@ -65,7 +65,7 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
       case ProposalStatus.FdpgCheck: {
         proposal.deadlines = {
           ...proposal.deadlines,
-          [DueDateEnum.DUE_DAYS_FDPG_CHECK]: proposal.deadlines.DUE_DAYS_FDPG_CHECK ?? getDueDateForFdpgCheck(),
+          [DueDateEnum.DUE_DAYS_FDPG_CHECK]: proposal.deadlines?.DUE_DAYS_FDPG_CHECK ?? getDueDateForFdpgCheck(),
         };
 
         return proposal.deadlines.DUE_DAYS_FDPG_CHECK;
@@ -75,7 +75,7 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
         proposal.deadlines = {
           ...proposal.deadlines,
           [DueDateEnum.DUE_DAYS_LOCATION_CHECK]:
-            proposal.deadlines.DUE_DAYS_LOCATION_CHECK ?? getDueDateForLocationCheck(),
+            proposal.deadlines?.DUE_DAYS_LOCATION_CHECK ?? getDueDateForLocationCheck(),
         };
 
         return proposal.deadlines.DUE_DAYS_LOCATION_CHECK;
@@ -85,7 +85,7 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
         // Should be set on Researcher sign
         const dateUntil = (() => {
           if (setContracting) {
-            return proposal.deadlines.DUE_DAYS_LOCATION_CONTRACTING ?? getDueDateForLocationContracting();
+            return proposal.deadlines?.DUE_DAYS_LOCATION_CONTRACTING ?? getDueDateForLocationContracting();
           } else {
             return undefined;
           }
@@ -96,14 +96,14 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
           [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: dateUntil,
         };
 
-        return proposal.deadlines.DUE_DAYS_LOCATION_CONTRACTING;
+        return proposal.deadlines?.DUE_DAYS_LOCATION_CONTRACTING;
       }
 
       case ProposalStatus.ExpectDataDelivery: {
         proposal.deadlines = {
           ...proposal.deadlines,
           [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]:
-            proposal.deadlines.DUE_DAYS_EXPECT_DATA_DELIVERY ?? getDueDateForExpectDataDelivery(),
+            proposal.deadlines?.DUE_DAYS_EXPECT_DATA_DELIVERY ?? getDueDateForExpectDataDelivery(),
         };
         return proposal.deadlines.DUE_DAYS_EXPECT_DATA_DELIVERY;
       }
@@ -114,7 +114,7 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
       case ProposalStatus.DataCorrupt: {
         proposal.deadlines = {
           ...proposal.deadlines,
-          [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: proposal.deadlines.DUE_DAYS_DATA_CORRUPT ?? getDueDateForDataCorrupt(),
+          [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: proposal.deadlines?.DUE_DAYS_DATA_CORRUPT ?? getDueDateForDataCorrupt(),
         };
         return proposal.deadlines.DUE_DAYS_DATA_CORRUPT;
       }
@@ -123,7 +123,7 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
         proposal.deadlines = {
           ...proposal.deadlines,
           [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]:
-            proposal.deadlines.DUE_DAYS_FINISHED_PROJECT ?? getDueDateForFinishedProject(),
+            proposal.deadlines?.DUE_DAYS_FINISHED_PROJECT ?? getDueDateForFinishedProject(),
         };
         return proposal.deadlines.DUE_DAYS_FINISHED_PROJECT;
       }
@@ -132,9 +132,14 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
       case ProposalStatus.Archived:
       case ProposalStatus.Draft:
       case ProposalStatus.Rejected:
-      case ProposalStatus.Rework:
+      case ProposalStatus.Rework: {
+        if (!proposal.deadlines) {
+          proposal.deadlines = { ...defaultDueDateValues };
+        }
         Object.keys(defaultDueDateValues).forEach((key) => (proposal.deadlines[key] = null));
         return undefined;
+      }
+
       default:
         console.error(`Could not determine ProposalStatus for status '${proposal.status}' on '${proposal._id}'`);
         return proposal.dueDateForStatus;

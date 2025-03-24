@@ -39,7 +39,6 @@ import { AdditionalLocationInformation } from '../schema/sub-schema/additional-l
 import { validateUpdateAdditionalInformationAccess } from '../utils/validate-misc.util';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { Role } from 'src/shared/enums/role.enum';
-import { SetDeadlinesDto } from '../dto/set-deadlines.dto';
 import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verification.util';
 import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';

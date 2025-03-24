@@ -14,6 +14,7 @@ import { ReportsService } from './events/reports/reports.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 
 describe('EventEngineService', () => {
   let eventEngineService: EventEngineService;
@@ -103,6 +104,12 @@ describe('EventEngineService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn().mockImplementation((key: string) => key),
+          },
+        },
+        {
+          provide: DeadlineEventService,
+          useValue: {
+            sendForDeadlineChange: jest.fn(),
           },
         },
       ],
