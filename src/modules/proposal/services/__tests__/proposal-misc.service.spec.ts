@@ -574,7 +574,7 @@ describe('ProposalMiscService', () => {
       const newDeadlines = {
         [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date(2027, 5, 2),
         [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: new Date(2027, 6, 2),
-        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: new Date(2027, 7, 2),
+        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: null,
         [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: null,
         [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: null,
         [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: new Date(2027, 8, 2),
@@ -583,15 +583,16 @@ describe('ProposalMiscService', () => {
       const updates = {
         [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date(2027, 5, 2),
         [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: new Date(2027, 6, 2),
-        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: new Date(2027, 7, 2),
+        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: null,
         [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: new Date(2027, 8, 2),
       };
 
       await proposalMiscService.setDeadlines(proposalId, newDeadlines, fdpgMemberRequest.user);
 
       expect(isDateOrderValid).toHaveBeenCalledWith(newDeadlines);
-      expect(isDateChangeValid).toHaveBeenCalledWith(newDeadlines, proposalContent.status);
+      expect(isDateChangeValid).toHaveBeenCalledWith(updates, proposalContent.status);
       expect(addHistoryItemForChangedDeadline).toHaveBeenCalledTimes(Object.keys(updates).length);
+      expect(schedulerService.removeAndCreateEventsByChangeList).toHaveBeenCalledWith(proposalDocument, updates);
       expect(eventEngineService.handleDeadlineChange).toHaveBeenCalledWith(proposalDocument, updates);
 
       expect(proposalDocument.save).toHaveBeenCalled();

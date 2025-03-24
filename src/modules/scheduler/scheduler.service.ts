@@ -55,7 +55,6 @@ export class SchedulerService {
       Object.keys(changeList).flatMap((key) => this.dueDateToEventMapping(key as DueDateEnum)),
     );
 
-    console.log({ changedEvents });
     await this.cancelEventsByTypesForProposal(proposal, [...changedEvents]);
     await this.createEvents({ proposal, types: [...changedEvents] });
   }

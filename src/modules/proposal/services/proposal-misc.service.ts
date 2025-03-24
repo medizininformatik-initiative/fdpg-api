@@ -293,25 +293,20 @@ export class ProposalMiscService {
       ...deadlines,
     };
 
-    if (!isDateOrderValid(updatedDeadlines)) {
-      throw new BadRequestException('Date order is not logical');
-    }
-
     const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
 
-    if (!isDateChangeValid(updatedDeadlines, proposal.status)) {
+    const orderValid = isDateOrderValid(updatedDeadlines);
+    const dateChangeValid = isDateChangeValid(changeList, proposal.status);
+    if (!orderValid) {
+      throw new BadRequestException('Date order is not logical');
+    }
+    if (!dateChangeValid) {
       throw new BadRequestException('Date for invalid state was changed');
     }
 
     if (Object.keys(changeList).length > 0) {
       this.schedulerService.removeAndCreateEventsByChangeList(proposal, changeList);
     }
-
-    Object.values(DueDateEnum).forEach((key) => {
-      if (!(key in updatedDeadlines)) {
-        updatedDeadlines[key] = null;
-      }
-    });
 
     Object.keys(changeList).map((deadlineType) =>
       addHistoryItemForChangedDeadline(deadlineType as DueDateEnum, proposal, user),
