@@ -1,7 +1,7 @@
 import { DueDateEnum } from '../enums/due-date.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 
-const beforeDeadlineDateConstrains: Record<DueDateEnum, DueDateEnum | null> = {
+export const beforeDeadlineDateConstrains: Record<DueDateEnum, DueDateEnum | null> = {
   [DueDateEnum.DUE_DAYS_FDPG_CHECK]: null,
   [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: DueDateEnum.DUE_DAYS_FDPG_CHECK,
   [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: DueDateEnum.DUE_DAYS_LOCATION_CHECK,

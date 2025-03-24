@@ -299,7 +299,7 @@ export class ProposalMiscService {
 
     const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
 
-    if (!isDateChangeValid(changeList, proposal.status)) {
+    if (!isDateChangeValid(updatedDeadlines, proposal.status)) {
       throw new BadRequestException('Date for invalid state was changed');
     }
 

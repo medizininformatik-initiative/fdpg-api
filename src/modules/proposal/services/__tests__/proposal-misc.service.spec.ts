@@ -15,7 +15,11 @@ import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { ParticipantType } from '../../enums/participant-type.enum';
 import { IGetKeycloakUser } from 'src/modules/user/types/keycloak-user.interface';
-import { addHistoryItemForProposalLock, addHistoryItemForStatus } from '../../utils/proposal-history.util';
+import {
+  addHistoryItemForChangedDeadline,
+  addHistoryItemForProposalLock,
+  addHistoryItemForStatus,
+} from '../../utils/proposal-history.util';
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { setImmediate } from 'timers';
 import { addUpload, getBlobName } from '../../utils/proposal.utils';
@@ -30,6 +34,8 @@ import { NotFoundException } from '@nestjs/common';
 import { AdminConfigService } from 'src/modules/admin/admin-config.service';
 import { ProposalTypeOfUse } from '../../enums/proposal-type-of-use.enum';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
+import { DueDateEnum } from '../../enums/due-date.enum';
+import { isDateChangeValid, isDateOrderValid } from '../../utils/due-date-verification.util';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -46,6 +52,7 @@ jest.mock('../../utils/validate-status-change.util', () => ({
 jest.mock('../../utils/proposal-history.util', () => ({
   addHistoryItemForStatus: jest.fn(),
   addHistoryItemForProposalLock: jest.fn(),
+  addHistoryItemForChangedDeadline: jest.fn(),
 }));
 
 jest.mock('../../utils/proposal.utils', () => ({
@@ -63,6 +70,11 @@ jest.mock('../../utils/add-fdpg-checklist.util', () => ({
 
 jest.mock('src/shared/utils/find-by-key-nested.util', () => ({
   findByKeyNested: jest.fn().mockReturnValue({ path: ['path', 'to', 'key'] }),
+}));
+
+jest.mock('../../utils/due-date-verification.util', () => ({
+  isDateOrderValid: jest.fn().mockReturnValue(true),
+  isDateChangeValid: jest.fn().mockReturnValue(true),
 }));
 
 describe('ProposalMiscService', () => {
@@ -96,6 +108,23 @@ describe('ProposalMiscService', () => {
     },
   } as FdpgRequest;
 
+  const fdpgMemberRequest = {
+    user: {
+      userId: 'userId',
+      firstName: 'firstName',
+      lastName: 'lastName',
+      fullName: 'fullName',
+      email: 'info@appsfactory.de',
+      username: 'username',
+      email_verified: true,
+      roles: [Role.FdpgMember],
+      singleKnownRole: Role.FdpgMember,
+      miiLocation: MiiLocation.UKL,
+      isFromLocation: false,
+      isKnownLocation: true,
+    },
+  } as FdpgRequest;
+
   const proposalId = 'proposalId';
   const projectAbbreviation = 'projectAbbreviation';
   const researcher = {
@@ -103,6 +132,16 @@ describe('ProposalMiscService', () => {
     email: 'info@appsfactory.de',
   };
   const participant = { researcher, participantCategory: ParticipantType.ProjectLeader };
+
+  const deadlines = {
+    [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date(2027, 5, 1),
+    [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: new Date(2027, 6, 1),
+    [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: new Date(2027, 7, 1),
+    [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: null,
+    [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: null,
+    [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: new Date(2027, 8, 1),
+  };
+
   const proposalContent = {
     _id: proposalId,
     projectAbbreviation,
@@ -113,7 +152,9 @@ describe('ProposalMiscService', () => {
         usage: [ProposalTypeOfUse.Biosample],
       },
     },
+    deadlines: { ...deadlines },
   };
+
   const getProposalDocument = () => {
     const proposalDocument = {
       ...proposalContent,
@@ -157,6 +198,7 @@ describe('ProposalMiscService', () => {
           useValue: {
             handleProposalStatusChange: jest.fn(),
             handleProposalLockChange: jest.fn(),
+            handleDeadlineChange: jest.fn(),
           },
         },
         {
@@ -220,6 +262,7 @@ describe('ProposalMiscService', () => {
     pdfEngineService = module.get<PdfEngineService>(PdfEngineService) as jest.Mocked<PdfEngineService>;
     schedulerRegistry = module.get<SchedulerRegistry>(SchedulerRegistry) as jest.Mocked<SchedulerRegistry>;
     feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
+    schedulerService = module.get<SchedulerService>(SchedulerService) as jest.Mocked<SchedulerService>;
   });
 
   it('should be defined', () => {
@@ -519,6 +562,38 @@ describe('ProposalMiscService', () => {
       await proposalMiscService.setFdpgCheckNotes(proposalId, text, request.user);
 
       expect(validateFdpgCheckStatus).toHaveBeenCalledWith(proposalDocument);
+      expect(proposalDocument.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('set deadlines', () => {
+    it(`should update the deadlines`, async () => {
+      const proposalDocument = getProposalDocument();
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument);
+
+      const newDeadlines = {
+        [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date(2027, 5, 2),
+        [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: new Date(2027, 6, 2),
+        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: new Date(2027, 7, 2),
+        [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: null,
+        [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: null,
+        [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: new Date(2027, 8, 2),
+      };
+
+      const updates = {
+        [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date(2027, 5, 2),
+        [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: new Date(2027, 6, 2),
+        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: new Date(2027, 7, 2),
+        [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: new Date(2027, 8, 2),
+      };
+
+      await proposalMiscService.setDeadlines(proposalId, newDeadlines, fdpgMemberRequest.user);
+
+      expect(isDateOrderValid).toHaveBeenCalledWith(newDeadlines);
+      expect(isDateChangeValid).toHaveBeenCalledWith(newDeadlines, proposalContent.status);
+      expect(addHistoryItemForChangedDeadline).toHaveBeenCalledTimes(Object.keys(updates).length);
+      expect(eventEngineService.handleDeadlineChange).toHaveBeenCalledWith(proposalDocument, updates);
+
       expect(proposalDocument.save).toHaveBeenCalled();
     });
   });
