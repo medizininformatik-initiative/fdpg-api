@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { plainToClass } from 'class-transformer';
 import { AdminConfigService } from 'src/modules/admin/admin-config.service';
@@ -22,7 +22,11 @@ import { SupportedMimetype } from '../enums/supported-mime-type.enum';
 import { UseCaseUpload } from '../enums/upload-type.enum';
 import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
 import { flattenToLanguage } from '../utils/flatten-to-language.util';
-import { addHistoryItemForProposalLock, addHistoryItemForStatus } from '../utils/proposal-history.util';
+import {
+  addHistoryItemForChangedDeadline,
+  addHistoryItemForProposalLock,
+  addHistoryItemForStatus,
+} from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
@@ -33,6 +37,11 @@ import { ProposalDocument } from '../schema/proposal.schema';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { AdditionalLocationInformation } from '../schema/sub-schema/additional-location-information.schema';
 import { validateUpdateAdditionalInformationAccess } from '../utils/validate-misc.util';
+import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
+import { Role } from 'src/shared/enums/role.enum';
+import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verification.util';
+import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
+import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 
 @Injectable()
 export class ProposalMiscService {
@@ -46,6 +55,7 @@ export class ProposalMiscService {
     private schedulerRegistry: SchedulerRegistry,
     private feasibilityService: FeasibilityService,
     private adminConfigService: AdminConfigService,
+    private schedulerService: SchedulerService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -264,5 +274,63 @@ export class ProposalMiscService {
     toBeUpdated.additionalLocationInformation.push(additionalInformation as AdditionalLocationInformation);
 
     await toBeUpdated.save();
+  }
+
+  async setDeadlines(proposalId: string, dto: Record<DueDateEnum, Date | null>, user: IRequestUser): Promise<void> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    if (!proposal) {
+      throw new NotFoundException('Proposal not found');
+    }
+
+    // Ensure only FdpgMember can modify deadlines
+    if (!user.roles.includes(Role.FdpgMember)) {
+      throw new ForbiddenException('You do not have permission to modify deadlines');
+    }
+
+    const deadlines = this.getDeadlinesByDto(dto);
+
+    const updatedDeadlines: Record<DueDateEnum, Date | null> = {
+      ...proposal.deadlines,
+      ...deadlines,
+    };
+
+    const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
+
+    const orderValid = isDateOrderValid(updatedDeadlines);
+    const dateChangeValid = isDateChangeValid(changeList, proposal.status);
+    if (!orderValid) {
+      throw new BadRequestException('Date order is not logical');
+    }
+    if (!dateChangeValid) {
+      throw new BadRequestException('Date for invalid state was changed');
+    }
+
+    if (Object.keys(changeList).length > 0) {
+      this.schedulerService.removeAndCreateEventsByChangeList(proposal, changeList);
+    }
+
+    Object.keys(changeList).map((deadlineType) =>
+      addHistoryItemForChangedDeadline(deadlineType as DueDateEnum, proposal, user),
+    );
+
+    proposal.deadlines = updatedDeadlines;
+
+    setDueDate(proposal, !!proposal.researcherSignedAt);
+
+    await proposal.save();
+    if (Object.keys(changeList).length > 0) {
+      await this.eventEngineService.handleDeadlineChange(proposal, changeList);
+    }
+  }
+
+  private getDeadlinesByDto(dto: Record<DueDateEnum, Date | null>): Record<DueDateEnum, Date | null> {
+    const deadlines: Record<DueDateEnum, Date | null> = {} as Record<DueDateEnum, Date | null>;
+
+    Object.keys(defaultDueDateValues).forEach(
+      (key) => (deadlines[key] = dto[key] ? new Date(dto[key]) : defaultDueDateValues[key]),
+    );
+
+    return deadlines;
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Get,
   HttpCode,
@@ -24,6 +25,7 @@ import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { FdpgChecklistUpdateDto, FdpgChecklistGetDto } from '../dto/proposal/fdpg-checklist.dto';
+import { DueDateEnum } from '../enums/due-date.enum';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -140,5 +142,23 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     return this.proposalMiscService.updateAdditionalInformationForLocation(id, additionalLocationInformation, user);
+  }
+
+  @Auth(Role.FdpgMember)
+  @Put(':id/deadlines')
+  @ApiNotFoundResponse({ description: 'Item could not be found' })
+  @ApiNoContentResponse({ description: 'Deadlines successfully updated.' })
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Updates the deadlines field value.' })
+  async setDeadlines(
+    @Param() { id }: MongoIdParamDto,
+    @Body() dto: Record<DueDateEnum, Date | null>,
+    @Request() { user }: FdpgRequest,
+  ): Promise<void> {
+    if (!dto || typeof dto !== 'object') {
+      throw new BadRequestException('Invalid deadlines format');
+    }
+
+    await this.proposalMiscService.setDeadlines(id, dto, user);
   }
 }

@@ -43,4 +43,12 @@ export enum HistoryEventType {
   ContractLocationApproved = 'CONTRACT_LOCATION_APPROVED',
   ContractLocationRejected = 'CONTRACT_LOCATION_REJECTED',
   ContractSystemRejected = 'CONTRACT_SYSTEM_REJECTED',
+
+  /** Deadline Changes */
+  FdpgDeadlineChange = 'FDPG_DEADLINE_CHANGE',
+  LocationCheckDeadlineChange = 'LOCATION_CHECK_DEADLINE_CHANGE',
+  LocationContractingDeadlineChange = 'LOCATION_CONTRACTING_DEADLINE_CHANGE',
+  ExpectDataDeliveryDeadlineChange = 'EXPECT_DATA_DELIVERY_DEADLINE_CHANGE',
+  DataCorruptDeadlineChange = 'DATA_CORRUPTED_DEADLINE_CHANGE',
+  FinishedProjectDeadlineChange = 'FINISHED_PROJECT_DEADLINE_CHANGE',
 }

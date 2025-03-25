@@ -220,6 +220,7 @@ describe('StatusChangeService', () => {
           MiiLocation.MHH,
           MiiLocation.MRI,
           MiiLocation.UKA,
+          MiiLocation.CTK,
         ]);
 
         expect(proposalDocument.numberOfApprovedLocations).toBe(proposalDocument.uacApprovedLocations.length);
@@ -268,6 +269,7 @@ describe('StatusChangeService', () => {
           MiiLocation.MHH,
           MiiLocation.UKAU,
           MiiLocation.UKB,
+          MiiLocation.CTK,
         ]);
 
         expect(proposalDocument.numberOfSignedLocations).toBe(proposalDocument.signedContracts.length);

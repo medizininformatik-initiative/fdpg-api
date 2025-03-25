@@ -1,3 +1,4 @@
+import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { Proposal } from '../schema/proposal.schema';
 
@@ -13,6 +14,11 @@ type Time = [hours: number, minutes: number, seconds: number];
 
 export const alterDaysOnDate = (date: Date, days: number) => {
   return days ? new Date(date.setDate(date.getDate() + days)) : date;
+};
+
+export const alterOnDeadline = (deadlineDate: Date, days: number, time: Time = [12, 0, 0]) => {
+  const date = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate(), ...time);
+  return alterDaysOnDate(date, days);
 };
 
 export const getDueDateForFdpgCheck = (referenceTime: Date = new Date(), time: Time = [12, 0, 0]) => {
@@ -54,49 +60,114 @@ export const getDueDateForFinishedProject = (referenceTime: Date = new Date(), t
 };
 
 export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
-  switch (proposal.status) {
-    case ProposalStatus.FdpgCheck:
-      proposal.dueDateForStatus = getDueDateForFdpgCheck();
-      break;
+  proposal.dueDateForStatus = (() => {
+    switch (proposal.status) {
+      case ProposalStatus.FdpgCheck: {
+        proposal.deadlines = {
+          ...proposal.deadlines,
+          [DueDateEnum.DUE_DAYS_FDPG_CHECK]: proposal.deadlines?.DUE_DAYS_FDPG_CHECK ?? getDueDateForFdpgCheck(),
+        };
 
-    case ProposalStatus.LocationCheck:
-      proposal.dueDateForStatus = getDueDateForLocationCheck();
-      break;
-
-    case ProposalStatus.Contracting:
-      // Should be set on Researcher sign
-      if (setContracting) {
-        proposal.dueDateForStatus = getDueDateForLocationContracting();
-      } else {
-        proposal.dueDateForStatus = undefined;
+        return proposal.deadlines.DUE_DAYS_FDPG_CHECK;
       }
 
-      break;
+      case ProposalStatus.LocationCheck: {
+        proposal.deadlines = {
+          ...proposal.deadlines,
+          [DueDateEnum.DUE_DAYS_LOCATION_CHECK]:
+            proposal.deadlines?.DUE_DAYS_LOCATION_CHECK ?? getDueDateForLocationCheck(),
+        };
 
-    case ProposalStatus.ExpectDataDelivery:
-      proposal.dueDateForStatus = getDueDateForExpectDataDelivery();
-      break;
+        return proposal.deadlines.DUE_DAYS_LOCATION_CHECK;
+      }
 
-    case ProposalStatus.DataResearch:
-      proposal.dueDateForStatus = getDueDateForDataResearch(proposal);
-      break;
+      case ProposalStatus.Contracting: {
+        // Should be set on Researcher sign
+        const dateUntil = (() => {
+          if (setContracting) {
+            return proposal.deadlines?.DUE_DAYS_LOCATION_CONTRACTING ?? getDueDateForLocationContracting();
+          } else {
+            return undefined;
+          }
+        })();
 
-    case ProposalStatus.DataCorrupt:
-      proposal.dueDateForStatus = getDueDateForDataCorrupt();
-      break;
+        proposal.deadlines = {
+          ...proposal.deadlines,
+          [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: dateUntil,
+        };
 
-    case ProposalStatus.FinishedProject:
-      proposal.dueDateForStatus = getDueDateForFinishedProject();
-      break;
+        return proposal.deadlines?.DUE_DAYS_LOCATION_CONTRACTING;
+      }
 
-    case ProposalStatus.ReadyToArchive:
-    case ProposalStatus.Archived:
-    case ProposalStatus.Draft:
-    case ProposalStatus.Rejected:
-    case ProposalStatus.Rework:
-      proposal.dueDateForStatus = undefined;
-      break;
-    default:
-      break;
-  }
+      case ProposalStatus.ExpectDataDelivery: {
+        proposal.deadlines = {
+          ...proposal.deadlines,
+          [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]:
+            proposal.deadlines?.DUE_DAYS_EXPECT_DATA_DELIVERY ?? getDueDateForExpectDataDelivery(),
+        };
+        return proposal.deadlines.DUE_DAYS_EXPECT_DATA_DELIVERY;
+      }
+
+      case ProposalStatus.DataResearch:
+        return getDueDateForDataResearch(proposal);
+
+      case ProposalStatus.DataCorrupt: {
+        proposal.deadlines = {
+          ...proposal.deadlines,
+          [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: proposal.deadlines?.DUE_DAYS_DATA_CORRUPT ?? getDueDateForDataCorrupt(),
+        };
+        return proposal.deadlines.DUE_DAYS_DATA_CORRUPT;
+      }
+
+      case ProposalStatus.FinishedProject: {
+        proposal.deadlines = {
+          ...proposal.deadlines,
+          [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]:
+            proposal.deadlines?.DUE_DAYS_FINISHED_PROJECT ?? getDueDateForFinishedProject(),
+        };
+        return proposal.deadlines.DUE_DAYS_FINISHED_PROJECT;
+      }
+
+      case ProposalStatus.ReadyToArchive:
+      case ProposalStatus.Archived:
+      case ProposalStatus.Draft:
+      case ProposalStatus.Rejected:
+      case ProposalStatus.Rework: {
+        if (!proposal.deadlines) {
+          proposal.deadlines = { ...defaultDueDateValues };
+        }
+        Object.keys(defaultDueDateValues).forEach((key) => (proposal.deadlines[key] = null));
+        return undefined;
+      }
+
+      default:
+        console.error(`Could not determine ProposalStatus for status '${proposal.status}' on '${proposal._id}'`);
+        return proposal.dueDateForStatus;
+    }
+  })();
+};
+
+const areDatesEqual = (date1: Date | null, date2: Date | null): boolean => {
+  if (date1 === null && date2 === null) return true;
+  if (date1 === null || date2 === null) return false;
+  return date1.getTime() === date2.getTime();
+};
+
+export const getDueDateChangeList = (
+  oldDeadlines: Record<DueDateEnum, Date | null>,
+  newDeadlines: Record<DueDateEnum, Date | null>,
+): Record<DueDateEnum, Date | null> => {
+  const changes: Record<DueDateEnum, Date | null> = {} as Record<DueDateEnum, Date | null>;
+
+  Object.keys(newDeadlines).forEach((key) => {
+    const enumKey = key as DueDateEnum;
+    const oldValue = oldDeadlines[enumKey];
+    const newValue = newDeadlines[enumKey];
+
+    if (!areDatesEqual(oldValue, newValue)) {
+      changes[enumKey] = newValue;
+    }
+  });
+
+  return changes;
 };

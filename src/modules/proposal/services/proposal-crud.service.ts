@@ -91,6 +91,7 @@ export class ProposalCrudService {
     } else {
       dbProjection.owner = 1;
       dbProjection.participants = 1;
+      dbProjection.deadlines = 1;
     }
     const proposal = await this.proposalModel.findById(proposalId, dbProjection);
 
@@ -141,6 +142,7 @@ export class ProposalCrudService {
 
     await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
+
     const saveResult = await toBeUpdated.save();
 
     if (isStatusChange) {

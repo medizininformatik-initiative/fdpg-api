@@ -37,6 +37,8 @@ import { UserProjectDto } from './user-project.dto';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
+import { SetDeadlinesDto } from '../set-deadlines.dto';
+import { defaultDueDateValues } from '../../enums/due-date.enum';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -344,6 +346,17 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   @Expose({ groups: [Role.Researcher] })
   isParticipatingScientist: boolean;
+
+  @Expose({ groups: [Role.FdpgMember] })
+  @Type(() => SetDeadlinesDto)
+  @Transform(({ obj }) => {
+    if (!obj.deadlines || typeof obj.deadlines !== 'object') {
+      return { ...defaultDueDateValues };
+    }
+
+    return obj.deadlines; // Ensure object is returned as-is
+  })
+  deadlines: SetDeadlinesDto;
 }
 
 export class ProposalGetListDto {

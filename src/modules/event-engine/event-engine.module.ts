@@ -14,6 +14,7 @@ import { StatusReminderService } from './events/status-reminder/status-reminder.
 import { ReportsService } from './events/reports/reports.service';
 import { PublicationsService } from './events/publications/publications.service';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
+import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 
 @Module({
   providers: [
@@ -27,6 +28,7 @@ import { CommentAnswerEventService } from './events/comments/comment-answer-even
     ProposalLockService,
     ReportsService,
     PublicationsService,
+    DeadlineEventService,
   ],
   imports: [
     MongooseModule.forFeature([

@@ -8,6 +8,7 @@ import { ScheduledEvent } from '../proposal/schema/sub-schema/scheduled-event.sc
 import { ScheduleType } from './enums/schedule-type.enum';
 import { Proposal } from '../proposal/schema/proposal.schema';
 import { ScheduleProcessorService } from './schedule-processor.service';
+import { DueDateEnum } from '../proposal/enums/due-date.enum';
 
 @Injectable()
 export class SchedulerService {
@@ -48,4 +49,32 @@ export class SchedulerService {
 
     proposal.scheduledEvents = proposal.scheduledEvents.filter((proposalEvent) => !types.includes(proposalEvent.type));
   }
+
+  async removeAndCreateEventsByChangeList(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>) {
+    const changedEvents = new Set(
+      Object.keys(changeList).flatMap((key) => this.dueDateToEventMapping(key as DueDateEnum)),
+    );
+
+    await this.cancelEventsByTypesForProposal(proposal, [...changedEvents]);
+    await this.createEvents({ proposal, types: [...changedEvents] });
+  }
+
+  private dueDateToEventMapping = (deadlineType: DueDateEnum): ScheduleType[] => {
+    switch (deadlineType) {
+      case DueDateEnum.DUE_DAYS_FDPG_CHECK:
+        return [ScheduleType.ReminderFdpgCheck];
+      case DueDateEnum.DUE_DAYS_LOCATION_CHECK:
+        return [
+          ScheduleType.ReminderLocationCheck1,
+          ScheduleType.ReminderLocationCheck2,
+          ScheduleType.ReminderLocationCheck3,
+        ];
+      case DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING:
+      case DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY:
+      case DueDateEnum.DUE_DAYS_DATA_CORRUPT:
+      case DueDateEnum.DUE_DAYS_FINISHED_PROJECT:
+      default:
+        return [];
+    }
+  };
 }
