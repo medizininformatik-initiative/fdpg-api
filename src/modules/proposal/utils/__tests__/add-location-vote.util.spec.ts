@@ -59,6 +59,8 @@ describe('addLocationVoteUtil', () => {
     requestedData: {},
     dizApprovedLocations: [],
     requestedButExcludedLocations: [],
+    locationConditionDraft: [],
+    conditionalApprovals: [],
     uacApprovedLocations: [],
     openDizConditionChecks: [],
     uacApprovals: [],

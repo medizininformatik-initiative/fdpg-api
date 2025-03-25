@@ -14,6 +14,7 @@ export const clearLocationsVotes = (proposal: Proposal, location: MiiLocation) =
     (filterLocation) => filterLocation !== location,
   );
   proposal.uacApprovedLocations = proposal.uacApprovedLocations.filter((filterLocation) => filterLocation !== location);
+  proposal.uacApprovals = proposal.uacApprovals.filter((approval) => approval.location !== location);
   proposal.signedContracts = proposal.signedContracts.filter((filterLocation) => filterLocation !== location);
   proposal.requestedButExcludedLocations = proposal.requestedButExcludedLocations.filter(
     (filterLocation) => filterLocation !== location,

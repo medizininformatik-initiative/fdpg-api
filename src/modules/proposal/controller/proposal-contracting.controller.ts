@@ -81,6 +81,7 @@ export class ProposalContractingController {
     @Body() vote: SetDizConditionApprovalDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
+    console.log({ vote });
     return await this.proposalContractingService.dizConditionApproval(id, vote, user);
   }
 

@@ -22,7 +22,13 @@ export const validateDizConditionApproval = (proposal: Proposal, user: IRequestU
     throw new ForbiddenException('The current status does not allow to set the diz approval');
   }
 
-  if (!proposal.openDizConditionChecks.includes(user.miiLocation)) {
+  const canUpdateCondition =
+    proposal.conditionalApprovals
+      .filter((approval) => approval.location === user.miiLocation)
+      .filter((approval) => !(approval.isAccepted && approval.reviewedAt)).length > 0 ||
+    proposal.uacApprovals.filter((approval) => approval.location === user.miiLocation).length > 0;
+
+  if (!proposal.openDizConditionChecks.includes(user.miiLocation) && !canUpdateCondition) {
     throw new ForbiddenException('The location is not allowed to provide a vote. It might have already voted');
   }
 };
