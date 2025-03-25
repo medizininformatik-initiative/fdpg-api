@@ -196,10 +196,10 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Expose()
   numberOfSignedLocations: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
   totalPromisedDataAmount?: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
   totalContractedDataAmount?: number;
 
   @Expose()
@@ -249,7 +249,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Expose({ groups: [Role.FdpgMember] })
   uacApprovedLocations: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       obj.uacApprovedLocations?.filter((location) => !obj.requestedButExcludedLocations.includes(location)).length ?? 0,
@@ -259,7 +259,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Expose({ groups: [Role.FdpgMember] })
   requestedButExcludedLocations: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(({ obj }) => obj.requestedButExcludedLocations?.length ?? 0)
   requestedButExcludedLocationsCount: number;
 
@@ -312,11 +312,22 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   locationConditionDraft: ConditionalApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DizMember] })
   @Type(() => ConditionalApprovalGetDto)
+  @Transform(({ value, options }) => {
+    const { role, location } = getRoleFromTransform(options);
+
+    return value.filter((approval: ConditionalApprovalGetDto) => {
+      if (role === Role.DizMember) {
+        return approval.location === location;
+      }
+
+      return true;
+    });
+  })
   conditionalApprovals: ConditionalApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       (obj as ProposalGetDto).conditionalApprovals?.filter(
@@ -325,11 +336,22 @@ export class ProposalGetDto extends ProposalBaseDto {
   )
   conditionalApprovalsCount: ConditionalApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DizMember] })
   @Type(() => UacApprovalGetDto)
+  @Transform(({ value, options }) => {
+    const { role, location } = getRoleFromTransform(options);
+
+    return value.filter((approval: UacApprovalGetDto) => {
+      if (role === Role.DizMember) {
+        return approval.location === location;
+      }
+
+      return true;
+    });
+  })
   uacApprovals: UacApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       obj.uacApprovals?.filter((approval) => !obj.requestedButExcludedLocations.includes(approval.location)).length ??
