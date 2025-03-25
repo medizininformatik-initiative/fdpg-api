@@ -4,11 +4,7 @@ import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
-import {
-  getResearcherSignedEmailForDizMembers,
-  getSigningCompleteEmailForFdpgMember,
-  getResearcherSignedEmailForFdpgMembers,
-} from './contracting.emails';
+import { getSigningCompleteEmailForFdpgMember, getResearcherSignedEmailForFdpgMembers } from './contracting.emails';
 
 @Injectable()
 export class ContractingService {
@@ -20,14 +16,16 @@ export class ContractingService {
   private async handleResearcherSign(proposal: Proposal, vote: boolean, proposalUrl: string, signUserName: string) {
     const emailTasks: Promise<void>[] = [];
     if (vote === true) {
-      const dizTask = async () => {
-        const locations = [...proposal.uacApprovedLocations];
-        const validUacContacts = await this.keycloakUtilService
-          .getDizMembers()
-          .then((members) => this.keycloakUtilService.getLocationContacts(locations, members));
-        const mail = getResearcherSignedEmailForDizMembers(validUacContacts, proposal, proposalUrl);
-        return await this.emailService.send(mail);
-      };
+      // diz deactivated for now
+
+      // const dizTask = async () => {
+      //   const locations = [...proposal.uacApprovedLocations];
+      //   const validUacContacts = await this.keycloakUtilService
+      //     .getDizMembers()
+      //     .then((members) => this.keycloakUtilService.getLocationContacts(locations, members));
+      //   const mail = getResearcherSignedEmailForDizMembers(validUacContacts, proposal, proposalUrl);
+      //   return await this.emailService.send(mail);
+      // };
 
       const fdpgTask = async () => {
         const validFdpgContacts = await this.keycloakUtilService
@@ -38,7 +36,8 @@ export class ContractingService {
         return await this.emailService.send(mail);
       };
 
-      emailTasks.push(dizTask(), fdpgTask());
+      // emailTasks.push(dizTask(), fdpgTask());
+      emailTasks.push(fdpgTask());
     }
 
     await Promise.allSettled(emailTasks);
