@@ -24,6 +24,7 @@ import { CommentAnswerEventService } from './events/comments/comment-answer-even
 import { CommentType } from '../comment/enums/comment-type.enum';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { DueDateEnum } from '../proposal/enums/due-date.enum';
+import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 
 type MongoDocument = Document<any, any, any> & { _id: any };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
@@ -45,6 +46,7 @@ export class EventEngineService {
     private publicationsService: PublicationsService,
     private configService: ConfigService,
     private deadlineEventService: DeadlineEventService,
+    private participantEmailSummaryService: ParticipantEmailSummaryService,
   ) {
     this.portalHost = this.configService.get('PORTAL_HOST');
   }
@@ -178,5 +180,21 @@ export class EventEngineService {
   async handleDeadlineChange(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>) {
     const proposalUrl = this.getProposalUrl(proposal);
     await this.deadlineEventService.sendForDeadlineChange(proposal, changeList, proposalUrl);
+  }
+
+  async handleParticipatingResearcherSummarySchedule(event: Schedule) {
+    const proposal = await this.getProposalMetaDataById(event.referenceDocumentId);
+    if (proposal) {
+      const proposalUrl = this.getProposalUrl(proposal);
+      const fromDate = new Date(event.dueAfter);
+      fromDate.setDate(fromDate.getDate() - 1);
+      fromDate.setHours(0, 0, 0, 0);
+      await this.participantEmailSummaryService.handleParticipatingScientistSummary(proposal, proposalUrl, fromDate);
+
+      proposal.scheduledEvents = proposal.scheduledEvents.filter(
+        (eventsOnProposal) => eventsOnProposal.scheduleId !== event._id.toString(),
+      );
+      await proposal.save();
+    }
   }
 }

@@ -7,15 +7,10 @@ import { getProposalContractingEmailForOwner } from './proposal-contracting.emai
 import {
   getProposalLocationCheckEmailForDizMembers,
   getProposalLocationCheckEmailForOwner,
-  getProposalLocationCheckEmailForParticipants,
 } from './proposal-location-check.emails';
-import { getProposalRejectEmailForOwner, getProposalRejectEmailForParticipants } from './proposal-rejected.emails';
+import { getProposalRejectEmailForOwner } from './proposal-rejected.emails';
 import { getProposalReworkEmailForOwner } from './proposal-rework.emails';
-import {
-  getProposalSubmitEmailForFdpg,
-  getProposalSubmitEmailForOwner,
-  getProposalSubmitEmailForParticipants,
-} from './proposal-submitted.emails';
+import { getProposalSubmitEmailForFdpg, getProposalSubmitEmailForOwner } from './proposal-submitted.emails';
 
 @Injectable()
 export class StatusChangeService {
@@ -28,13 +23,7 @@ export class StatusChangeService {
     const ownerTask = async () => {
       const validOwnerContacts = await this.keycloakUtilService.getValidContactsByUserIds([proposal.owner.id]);
       const mail = getProposalSubmitEmailForOwner(validOwnerContacts, proposal, proposalUrl);
-      return await this.emailService.send(mail);
-    };
 
-    const participantTask = async () => {
-      const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
-      const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
-      const mail = getProposalSubmitEmailForParticipants(validParticipantsContacts, proposal, proposalUrl);
       return await this.emailService.send(mail);
     };
 
@@ -46,7 +35,7 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const emailTasks = [ownerTask(), participantTask(), fdpgTask()];
+    const emailTasks = [ownerTask(), fdpgTask()];
 
     await Promise.allSettled(emailTasks);
   }
@@ -58,14 +47,7 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const participantTask = async () => {
-      const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
-      const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
-      const mail = getProposalRejectEmailForParticipants(validParticipantsContacts, proposal, proposalUrl);
-      return await this.emailService.send(mail);
-    };
-
-    const emailTasks = [ownerTask(), participantTask()];
+    const emailTasks = [ownerTask()];
 
     await Promise.allSettled(emailTasks);
   }
@@ -89,13 +71,6 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const participantTask = async () => {
-      const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
-      const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
-      const mail = getProposalLocationCheckEmailForParticipants(validParticipantsContacts, proposal, proposalUrl);
-      return await this.emailService.send(mail);
-    };
-
     const dizTask = async () => {
       const locations = [...proposal.openDizChecks];
       const validDizContacts = await this.keycloakUtilService
@@ -105,7 +80,7 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const emailTasks = [ownerTask(), participantTask(), dizTask()];
+    const emailTasks = [ownerTask(), dizTask()];
 
     await Promise.allSettled(emailTasks);
   }

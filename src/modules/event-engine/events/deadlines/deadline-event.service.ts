@@ -3,7 +3,6 @@ import { EmailService } from 'src/modules/email/email.service';
 import { DueDateEnum } from 'src/modules/proposal/enums/due-date.enum';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
-import { IRequestUser } from 'src/shared/types/request-user.interface';
 import {
   fdpgDeadlineEmailHeader,
   defaultDeadlineEmailBody,

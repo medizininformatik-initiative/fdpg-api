@@ -85,7 +85,6 @@ describe('StatusChangeService', () => {
   let statusChangeService: StatusChangeService;
 
   let schedulerService: jest.Mocked<SchedulerService>;
-
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -134,7 +133,10 @@ describe('StatusChangeService', () => {
         expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, [
           ScheduleType.ReminderFdpgCheck,
         ]);
-        expect(schedulerService.createEvents).toHaveBeenCalledWith({ proposal: proposalDocument, types: [] });
+        expect(schedulerService.createEvents).toHaveBeenCalledWith({
+          proposal: proposalDocument,
+          types: [],
+        });
       });
     });
 
@@ -150,7 +152,7 @@ describe('StatusChangeService', () => {
         expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, []);
         expect(schedulerService.createEvents).toHaveBeenCalledWith({
           proposal: proposalDocument,
-          types: [ScheduleType.ReminderFdpgCheck],
+          types: [ScheduleType.ReminderFdpgCheck, ScheduleType.ParticipatingResearcherSummary],
         });
 
         expect(proposalDocument.version.mayor).toBe(2);
@@ -184,6 +186,7 @@ describe('StatusChangeService', () => {
               ScheduleType.ReminderLocationCheck1,
               ScheduleType.ReminderLocationCheck2,
               ScheduleType.ReminderLocationCheck3,
+              ScheduleType.ParticipatingResearcherSummary,
             ],
           });
 
@@ -230,7 +233,10 @@ describe('StatusChangeService', () => {
           ScheduleType.ReminderLocationCheck2,
           ScheduleType.ReminderLocationCheck3,
         ]);
-        expect(schedulerService.createEvents).toHaveBeenCalledWith({ proposal: proposalDocument, types: [] });
+        expect(schedulerService.createEvents).toHaveBeenCalledWith({
+          proposal: proposalDocument,
+          types: [ScheduleType.ParticipatingResearcherSummary],
+        });
 
         expect(declineUnansweredConditions).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user);
         expect(declineUnselectedLocations).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user, [
@@ -252,7 +258,7 @@ describe('StatusChangeService', () => {
         expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, []);
         expect(schedulerService.createEvents).toHaveBeenCalledWith({
           proposal: proposalDocument,
-          types: [],
+          types: [ScheduleType.ParticipatingResearcherSummary],
         });
 
         expect(declineUnansweredContracts).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user);
@@ -288,7 +294,7 @@ describe('StatusChangeService', () => {
         expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, []);
         expect(schedulerService.createEvents).toHaveBeenCalledWith({
           proposal: proposalDocument,
-          types: [ScheduleType.ReminderResearcherPublications],
+          types: [ScheduleType.ReminderResearcherPublications, ScheduleType.ParticipatingResearcherSummary],
         });
       });
     });
@@ -326,7 +332,7 @@ describe('StatusChangeService', () => {
         ]);
         expect(schedulerService.createEvents).toHaveBeenCalledWith({
           proposal: proposalDocument,
-          types: [],
+          types: [ScheduleType.ParticipatingResearcherSummary],
         });
       });
     });
@@ -363,7 +369,7 @@ describe('StatusChangeService', () => {
         expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, []);
         expect(schedulerService.createEvents).toHaveBeenCalledWith({
           proposal: proposalDocument,
-          types: [],
+          types: [ScheduleType.ParticipatingResearcherSummary],
         });
 
         expect(excludeAllRequestedLocations).toBeCalledWith(proposalDocument);

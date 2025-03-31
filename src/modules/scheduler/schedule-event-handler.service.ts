@@ -15,9 +15,12 @@ export class ScheduleEventHandlerService {
       ScheduleType.ReminderLocationCheck3,
       ScheduleType.ReminderResearcherPublications,
     ];
+    const proposalResearcherSummaryEvent = ScheduleType.ParticipatingResearcherSummary;
 
     if (proposalStatusEvents.includes(event.type)) {
       await this.eventEngineService.handleProposalStatusSchedule(event);
+    } else if (event.type === proposalResearcherSummaryEvent) {
+      await this.eventEngineService.handleParticipatingResearcherSummarySchedule(event);
     }
   }
 }
