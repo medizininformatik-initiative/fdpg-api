@@ -11,14 +11,12 @@ import {
 import { getProposalRejectEmailForOwner } from './proposal-rejected.emails';
 import { getProposalReworkEmailForOwner } from './proposal-rework.emails';
 import { getProposalSubmitEmailForFdpg, getProposalSubmitEmailForOwner } from './proposal-submitted.emails';
-import { EmailSummaryCreateService } from '../summary/email-summary-create.service';
 
 @Injectable()
 export class StatusChangeService {
   constructor(
     private keycloakUtilService: KeycloakUtilService,
     private emailService: EmailService,
-    private emailSummaryCreateService: EmailSummaryCreateService,
   ) {}
 
   private async handleProposalSubmit(proposal: Proposal, proposalUrl: string) {
@@ -29,10 +27,6 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const participantTask = async () => {
-      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
-    };
-
     const fdpgTask = async () => {
       const validFdpgContacts = await this.keycloakUtilService
         .getFdpgMembers()
@@ -41,7 +35,7 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const emailTasks = [ownerTask(), participantTask(), fdpgTask()];
+    const emailTasks = [ownerTask(), fdpgTask()];
 
     await Promise.allSettled(emailTasks);
   }
@@ -53,11 +47,7 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const participantTask = async () => {
-      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
-    };
-
-    const emailTasks = [ownerTask(), participantTask()];
+    const emailTasks = [ownerTask()];
 
     await Promise.allSettled(emailTasks);
   }
@@ -81,10 +71,6 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const participantTask = async () => {
-      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
-    };
-
     const dizTask = async () => {
       const locations = [...proposal.openDizChecks];
       const validDizContacts = await this.keycloakUtilService
@@ -94,7 +80,7 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const emailTasks = [ownerTask(), participantTask(), dizTask()];
+    const emailTasks = [ownerTask(), dizTask()];
 
     await Promise.allSettled(emailTasks);
   }
@@ -106,11 +92,7 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const participantTask = async () => {
-      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
-    };
-
-    const emailTasks = [ownerTask(), participantTask()];
+    const emailTasks = [ownerTask()];
 
     await Promise.allSettled(emailTasks);
   }

@@ -72,6 +72,18 @@ export const getEventsFromSet = (eventSet: IProposalScheduleEventSet) => {
           }
 
           case ScheduleType.ParticipatingResearcherSummary: {
+            const participatingSummaryEvents = eventSet.proposal.scheduledEvents.filter(
+              (event) => event.type === ScheduleType.ParticipatingResearcherSummary,
+            );
+
+            if (participatingSummaryEvents.length > 0) {
+              return null;
+            }
+
+            if (eventSet.proposal.participants.length === 0) {
+              return null;
+            }
+
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + 1);
             dueDate.setHours(1, 0, 0, 0);
@@ -80,6 +92,10 @@ export const getEventsFromSet = (eventSet: IProposalScheduleEventSet) => {
           }
         }
       })();
+
+      if (!event.dueAfter) {
+        return null;
+      }
 
       if (event.dueAfter.getTime() < now.getTime()) {
         console.warn(`Execution time is before now for proposalId '${eventSet.proposal._id}' and type '${type}'`);

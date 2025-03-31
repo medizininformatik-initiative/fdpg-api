@@ -15,6 +15,7 @@ import { StatusChangeService } from './events/status-change/status-change.servic
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
+import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 
 describe('EventEngineService', () => {
   let eventEngineService: EventEngineService;
@@ -110,6 +111,12 @@ describe('EventEngineService', () => {
           provide: DeadlineEventService,
           useValue: {
             sendForDeadlineChange: jest.fn(),
+          },
+        },
+        {
+          provide: ParticipantEmailSummaryService,
+          useValue: {
+            handleParticipatingScientistSummary: jest.fn(),
           },
         },
       ],

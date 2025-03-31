@@ -7,8 +7,7 @@ import { getProposalRejectEmailForParticipantsBody } from '../status-change/prop
 import { getProposalLocationCheckEmailForParticipantsBody } from '../status-change/proposal-location-check.emails';
 import { getProposalContractingEmailForOwnerBody } from '../status-change/proposal-contracting.emails';
 import { getProposalSubmitEmailForParticipantsBody } from '../status-change/proposal-submitted.emails';
-import { EmailCategory } from 'src/modules/email/types/email-category.enum';
-import { IEmail } from 'src/modules/email/types/email.interface';
+import { buildParticipatingEmailSummary } from './participating-email-summary.email';
 
 @Injectable()
 export class ParticipantEmailSummaryService {
@@ -55,33 +54,13 @@ export class ParticipantEmailSummaryService {
       const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
       const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
 
-      const mail = this.buildMail(validParticipantsContacts, mailBodyChanges, proposal, proposalUrl);
+      const mail = buildParticipatingEmailSummary(validParticipantsContacts, mailBodyChanges, proposal, proposalUrl);
       return await this.emailService.send(mail);
     };
 
     emailTasks.push(participantTask());
 
     await Promise.allSettled(emailTasks);
-  }
-
-  private buildMail(
-    validContacts: string[],
-    changes: string[],
-    proposal: ProposalWithoutContent,
-    proposalUrl: string,
-  ): IEmail {
-    return {
-      to: validContacts,
-      categories: [EmailCategory.ParticipatingScientistSummary],
-      subject: 'Zusammenfassung der Änderungen des Projektes',
-      text: [
-        `Es erfolgten Änderungen am Projekt "${proposal.projectAbbreviation}" mit Ihrer Beteiligung:`,
-        `\n\n`,
-        ...changes.map((change) => `\t- ${change}\n`),
-        `\n\n`,
-        proposalUrl,
-      ].reduce((acc, cur) => acc + cur, ''),
-    };
   }
 
   private mapHistoryEventTypeToMailBody(

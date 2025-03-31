@@ -46,7 +46,7 @@ export class StatusChangeService {
 
         proposalAfterChanges.submittedAt = new Date();
 
-        scheduleTypesToAdd.push(ScheduleType.ReminderFdpgCheck);
+        scheduleTypesToAdd.push(ScheduleType.ReminderFdpgCheck, ScheduleType.ParticipatingResearcherSummary);
         break;
 
       case ProposalStatus.LocationCheck:
@@ -78,6 +78,7 @@ export class StatusChangeService {
           ScheduleType.ReminderLocationCheck1,
           ScheduleType.ReminderLocationCheck2,
           ScheduleType.ReminderLocationCheck3,
+          ScheduleType.ParticipatingResearcherSummary,
         );
         break;
 
@@ -108,6 +109,7 @@ export class StatusChangeService {
           ScheduleType.ReminderLocationCheck2,
           ScheduleType.ReminderLocationCheck3,
         );
+        scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
         break;
 
       case ProposalStatus.ExpectDataDelivery:
@@ -132,10 +134,14 @@ export class StatusChangeService {
         proposalAfterChanges.numberOfSignedLocations = proposalAfterChanges.signedContracts.length;
 
         removeFdpgTasksForDataDelivery(proposalAfterChanges);
+        scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
         break;
 
       case ProposalStatus.DataResearch:
-        scheduleTypesToAdd.push(ScheduleType.ReminderResearcherPublications);
+        scheduleTypesToAdd.push(
+          ScheduleType.ReminderResearcherPublications,
+          ScheduleType.ParticipatingResearcherSummary,
+        );
         break;
 
       case ProposalStatus.DataCorrupt:
@@ -144,6 +150,7 @@ export class StatusChangeService {
 
       case ProposalStatus.FinishedProject:
         scheduleTypesToRemove.push(ScheduleType.ReminderResearcherPublications);
+        scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
         break;
 
       case ProposalStatus.ReadyToArchive:
@@ -154,6 +161,7 @@ export class StatusChangeService {
       case ProposalStatus.Rejected:
         excludeAllRequestedLocations(proposalAfterChanges);
         await this.schedulerService.cancelEventsForProposal(proposalAfterChanges);
+        scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
         break;
     }
 
