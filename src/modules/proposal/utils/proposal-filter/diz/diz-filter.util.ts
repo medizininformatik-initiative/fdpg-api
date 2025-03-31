@@ -78,6 +78,8 @@ const getFilterForFinished = (user: IRequestUser): FilterQuery<Proposal> => {
     $or: [
       { requestedButExcludedLocations: user.miiLocation },
       { status: ProposalStatus.ReadyToArchive, signedContracts: user.miiLocation },
+      { status: ProposalStatus.Rejected, uacApprovedLocations: user.miiLocation },
+      { status: ProposalStatus.Rejected, signedContracts: user.miiLocation },
     ],
   };
 };
@@ -88,7 +90,13 @@ const getFilterForArchived = (user: IRequestUser): FilterQuery<Proposal> => {
       {
         status: ProposalStatus.Archived,
       },
-      { $or: [{ requestedButExcludedLocations: user.miiLocation }, { signedContracts: user.miiLocation }] },
+      {
+        $or: [
+          { requestedButExcludedLocations: user.miiLocation },
+          { uacApprovedLocations: user.miiLocation },
+          { signedContracts: user.miiLocation },
+        ],
+      },
     ],
   };
 };
