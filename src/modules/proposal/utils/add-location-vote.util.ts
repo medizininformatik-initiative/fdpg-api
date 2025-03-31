@@ -12,6 +12,7 @@ import { UacApproval } from '../schema/sub-schema/uac-approval.schema';
 import { addFdpgTaskAndReturnId, removeFdpgTask } from './add-fdpg-task.util';
 import { clearLocationsVotes } from './location-flow.util';
 import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
+import { filter } from 'rxjs';
 
 export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
@@ -82,6 +83,13 @@ export const addUacApprovalWithCondition = (
 export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizConditionApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
 
+  proposal.locationConditionDraft = proposal.locationConditionDraft.filter(
+    (condition) => condition.location !== user.miiLocation,
+  );
+  proposal.conditionalApprovals = proposal.conditionalApprovals.filter(
+    (condition) => condition.location !== user.miiLocation,
+  );
+
   if (vote.value === true) {
     const uacApproval: Omit<UacApproval, '_id' | 'createdAt' | 'signedAt' | 'signedByOwnerId'> = {
       location: user.miiLocation,
@@ -93,7 +101,7 @@ export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, 
     proposal.uacApprovedLocations.push(user.miiLocation);
     // Persistent:
     proposal.uacApprovals.push(uacApproval as UacApproval);
-    proposal.totalPromisedDataAmount = (proposal.totalPromisedDataAmount ?? 0) + (vote.dataAmount ?? 0);
+    proposal.totalPromisedDataAmount = calculateDataAmount(proposal);
 
     const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
 
@@ -130,6 +138,8 @@ export const addDizApprovalWithCondition = (
 ) => {
   const fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.ConditionApproval);
 
+  clearLocationsVotes(proposal, location);
+
   const conditionalApproval: Omit<
     ConditionalApproval,
     '_id' | 'createdAt' | 'reviewedAt' | 'reviewedByOwnerId' | 'signedAt' | 'signedByOwnerId'
@@ -149,6 +159,10 @@ export const addDizApprovalWithCondition = (
       );
     }
 
+    proposal.conditionalApprovals = proposal.conditionalApprovals.filter(
+      (condition) => condition.location !== location,
+    );
+
     if (proposal.conditionalApprovals) {
       proposal.conditionalApprovals.push(conditionalApproval as ConditionalApproval);
     } else {
@@ -156,8 +170,6 @@ export const addDizApprovalWithCondition = (
     }
 
     // Flow:
-
-    clearLocationsVotes(proposal, location);
     proposal.uacApprovedLocations.push(location);
   } else {
     // Just to be sure. Shouldn't be a conditional approval if false
@@ -186,9 +198,17 @@ export const addDizConditionReview = (
 
   clearLocationsVotes(proposal, condition.location);
   if (vote === true) {
-    proposal.totalPromisedDataAmount = (proposal.totalPromisedDataAmount ?? 0) + (condition.dataAmount ?? 0);
     // Flow
+
+    proposal.conditionalApprovals = [
+      ...proposal.conditionalApprovals.filter(
+        (conditionalApproval) => conditionalApproval.location != condition.location,
+      ),
+      condition,
+    ];
     proposal.uacApprovedLocations.push(condition.location);
+
+    proposal.totalPromisedDataAmount = calculateDataAmount(proposal);
 
     const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
     if (isDataAmountReached) {
@@ -198,4 +218,16 @@ export const addDizConditionReview = (
     // Flow
     proposal.requestedButExcludedLocations.push(condition.location);
   }
+};
+
+const calculateDataAmount = (proposal: Proposal) => {
+  const uacApprovalAmount = proposal.uacApprovals
+    .map((approval) => approval.dataAmount)
+    .reduce((acc, cur) => acc + cur, 0);
+  const conditionalApprovalAmount = proposal.conditionalApprovals
+    .filter((conditionalApproval) => conditionalApproval.isAccepted && conditionalApproval.reviewedAt)
+    .map((conditionalApproval) => conditionalApproval.dataAmount)
+    .reduce((acc, cur) => acc + cur, 0);
+
+  return uacApprovalAmount + conditionalApprovalAmount;
 };
