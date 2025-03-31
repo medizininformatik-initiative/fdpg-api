@@ -8,6 +8,8 @@ export type ProjectDetailsDocument = ProjectDetails & Document;
 export class ProjectDetails {
   @Prop()
   simpleProjectDescription: string;
+  @Prop()
+  executiveSummaryUac: string;
   @Prop([String])
   department: Department[];
   @Prop()
@@ -24,6 +26,10 @@ export class ProjectDetails {
     default: false,
   })
   isDone: boolean;
+  @Prop()
+  literature: string;
+  @Prop()
+  biometric: string;
 }
 
 export const ProjectDetailsSchema = SchemaFactory.createForClass(ProjectDetails);

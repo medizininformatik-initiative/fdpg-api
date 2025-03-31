@@ -13,6 +13,12 @@ export class ProjectDetailsDto extends WithIdForObjectDto {
   simpleProjectDescription: string;
 
   @Expose()
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @MaxLength(10000)
+  executiveSummaryUac: string;
+
+  @Expose()
   @IsArray()
   @IsEnum(Department, { each: true })
   department: Department[];
@@ -34,4 +40,16 @@ export class ProjectDetailsDto extends WithIdForObjectDto {
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
   materialAndMethods: string;
+
+  @Expose()
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @MaxLength(10000)
+  literature: string;
+
+  @Expose()
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @MaxLength(10000)
+  biometric: string;
 }
