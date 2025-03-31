@@ -6,7 +6,8 @@ type ProposalScheduleTypes =
   | ScheduleType.ReminderLocationCheck1
   | ScheduleType.ReminderLocationCheck2
   | ScheduleType.ReminderLocationCheck3
-  | ScheduleType.ReminderResearcherPublications;
+  | ScheduleType.ReminderResearcherPublications
+  | ScheduleType.ParticipatingResearcherSummary;
 
 export interface IProposalScheduleEventSet {
   types: ProposalScheduleTypes[];

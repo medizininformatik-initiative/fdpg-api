@@ -48,6 +48,7 @@ export class ProposalCrudService {
     const saveResult = await createdProposal.save();
     if (saveResult.status !== ProposalStatus.Draft) {
       await this.eventEngineService.handleProposalStatusChange(saveResult);
+      await saveResult.save();
     }
 
     const plain = saveResult.toObject();
@@ -147,6 +148,7 @@ export class ProposalCrudService {
 
     if (isStatusChange) {
       await this.eventEngineService.handleProposalStatusChange(saveResult);
+      saveResult.save();
     }
 
     const plain = saveResult.toObject();

@@ -15,6 +15,8 @@ import { ReportsService } from './events/reports/reports.service';
 import { PublicationsService } from './events/publications/publications.service';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
+import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
+import { EmailSummaryCreateService } from './events/summary/email-summary-create.service';
 
 @Module({
   providers: [
@@ -29,6 +31,8 @@ import { DeadlineEventService } from './events/deadlines/deadline-event.service'
     ReportsService,
     PublicationsService,
     DeadlineEventService,
+    ParticipantEmailSummaryService,
+    EmailSummaryCreateService,
   ],
   imports: [
     MongooseModule.forFeature([

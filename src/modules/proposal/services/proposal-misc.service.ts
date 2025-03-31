@@ -107,6 +107,7 @@ export class ProposalMiscService {
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
     const saveResult = await toBeUpdated.save();
     await this.eventEngineService.handleProposalStatusChange(saveResult);
+    await saveResult.save();
 
     if (toBeUpdated.status === ProposalStatus.LocationCheck) {
       this.fetchFeasibilityAndGeneratePdf(toBeUpdated._id, user);

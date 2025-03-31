@@ -7,35 +7,30 @@ import { getProposalContractingEmailForOwner } from './proposal-contracting.emai
 import {
   getProposalLocationCheckEmailForDizMembers,
   getProposalLocationCheckEmailForOwner,
-  getProposalLocationCheckEmailForParticipants,
 } from './proposal-location-check.emails';
-import { getProposalRejectEmailForOwner, getProposalRejectEmailForParticipants } from './proposal-rejected.emails';
+import { getProposalRejectEmailForOwner } from './proposal-rejected.emails';
 import { getProposalReworkEmailForOwner } from './proposal-rework.emails';
-import {
-  getProposalSubmitEmailForFdpg,
-  getProposalSubmitEmailForOwner,
-  getProposalSubmitEmailForParticipants,
-} from './proposal-submitted.emails';
+import { getProposalSubmitEmailForFdpg, getProposalSubmitEmailForOwner } from './proposal-submitted.emails';
+import { EmailSummaryCreateService } from '../summary/email-summary-create.service';
 
 @Injectable()
 export class StatusChangeService {
   constructor(
     private keycloakUtilService: KeycloakUtilService,
     private emailService: EmailService,
+    private emailSummaryCreateService: EmailSummaryCreateService,
   ) {}
 
   private async handleProposalSubmit(proposal: Proposal, proposalUrl: string) {
     const ownerTask = async () => {
       const validOwnerContacts = await this.keycloakUtilService.getValidContactsByUserIds([proposal.owner.id]);
       const mail = getProposalSubmitEmailForOwner(validOwnerContacts, proposal, proposalUrl);
+
       return await this.emailService.send(mail);
     };
 
     const participantTask = async () => {
-      const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
-      const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
-      const mail = getProposalSubmitEmailForParticipants(validParticipantsContacts, proposal, proposalUrl);
-      return await this.emailService.send(mail);
+      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
     };
 
     const fdpgTask = async () => {
@@ -59,10 +54,7 @@ export class StatusChangeService {
     };
 
     const participantTask = async () => {
-      const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
-      const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
-      const mail = getProposalRejectEmailForParticipants(validParticipantsContacts, proposal, proposalUrl);
-      return await this.emailService.send(mail);
+      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
     };
 
     const emailTasks = [ownerTask(), participantTask()];
@@ -90,10 +82,7 @@ export class StatusChangeService {
     };
 
     const participantTask = async () => {
-      const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
-      const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
-      const mail = getProposalLocationCheckEmailForParticipants(validParticipantsContacts, proposal, proposalUrl);
-      return await this.emailService.send(mail);
+      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
     };
 
     const dizTask = async () => {
@@ -117,7 +106,11 @@ export class StatusChangeService {
       return await this.emailService.send(mail);
     };
 
-    const emailTasks = [ownerTask()];
+    const participantTask = async () => {
+      return await this.emailSummaryCreateService.createParticipatingScientistSummaryEvent(proposal);
+    };
+
+    const emailTasks = [ownerTask(), participantTask()];
 
     await Promise.allSettled(emailTasks);
   }

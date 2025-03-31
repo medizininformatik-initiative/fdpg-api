@@ -32,53 +32,57 @@ export const getEventsFromSet = (eventSet: IProposalScheduleEventSet) => {
       event.type = type;
       event._id = new Types.ObjectId().toString();
 
-      switch (type) {
-        case ScheduleType.ReminderFdpgCheck: {
-          const deadline = deadlines.DUE_DAYS_FDPG_CHECK;
-          const dueDate = getDueDateForFdpgCheck(now, [4, 0, 0]);
-          event.dueAfter = deadline
-            ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_FDPG_CHECK, [4, 0, 0])
-            : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_FDPG_CHECK);
+      event.dueAfter = (() => {
+        switch (type) {
+          case ScheduleType.ReminderFdpgCheck: {
+            const deadline = deadlines.DUE_DAYS_FDPG_CHECK;
+            const dueDate = getDueDateForFdpgCheck(now, [4, 0, 0]);
+            return deadline
+              ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_FDPG_CHECK, [4, 0, 0])
+              : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_FDPG_CHECK);
+          }
 
-          break;
-        }
+          case ScheduleType.ReminderLocationCheck1: {
+            const deadline = deadlines.DUE_DAYS_LOCATION_CHECK;
+            const dueDate = getDueDateForLocationCheck(now, [4, 0, 0]);
+            return deadline
+              ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_1, [4, 0, 0])
+              : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_1);
+          }
 
-        case ScheduleType.ReminderLocationCheck1: {
-          const deadline = deadlines.DUE_DAYS_LOCATION_CHECK;
-          const dueDate = getDueDateForLocationCheck(now, [4, 0, 0]);
-          event.dueAfter = deadline
-            ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_1, [4, 0, 0])
-            : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_1);
-          break;
-        }
+          case ScheduleType.ReminderLocationCheck2: {
+            const deadline = deadlines.DUE_DAYS_LOCATION_CHECK;
+            const dueDate = getDueDateForLocationCheck(now, [4, 0, 0]);
+            return deadline
+              ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_2, [4, 0, 0])
+              : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_2);
+          }
 
-        case ScheduleType.ReminderLocationCheck2: {
-          const deadline = deadlines.DUE_DAYS_LOCATION_CHECK;
-          const dueDate = getDueDateForLocationCheck(now, [4, 0, 0]);
-          event.dueAfter = deadline
-            ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_2, [4, 0, 0])
-            : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_2);
-          break;
-        }
+          case ScheduleType.ReminderLocationCheck3: {
+            const deadline = deadlines.DUE_DAYS_LOCATION_CHECK;
+            const dueDate = getDueDateForLocationCheck(now, [4, 0, 0]);
+            return deadline
+              ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_3, [4, 0, 0])
+              : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_3);
+          }
 
-        case ScheduleType.ReminderLocationCheck3: {
-          const deadline = deadlines.DUE_DAYS_LOCATION_CHECK;
-          const dueDate = getDueDateForLocationCheck(now, [4, 0, 0]);
-          event.dueAfter = deadline
-            ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_3, [4, 0, 0])
-            : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_3);
-          break;
-        }
+          case ScheduleType.ReminderResearcherPublications: {
+            const dueDate = getDueDateForDataResearch(eventSet.proposal, [4, 0, 0]);
+            return alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_RESEARCHER_PUBLICATIONS);
+          }
 
-        case ScheduleType.ReminderResearcherPublications: {
-          const dueDate = getDueDateForDataResearch(eventSet.proposal, [4, 0, 0]);
-          event.dueAfter = alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_RESEARCHER_PUBLICATIONS);
-          break;
+          case ScheduleType.ParticipatingResearcherSummary: {
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 1);
+            dueDate.setHours(1, 0, 0, 0);
+
+            return new Date(dueDate);
+          }
         }
-      }
+      })();
 
       if (event.dueAfter.getTime() < now.getTime()) {
-        console.warn(`Execution time is before now for proposalId ${eventSet.proposal._id} and type ${type}`);
+        console.warn(`Execution time is before now for proposalId '${eventSet.proposal._id}' and type '${type}'`);
         return null;
       }
 
