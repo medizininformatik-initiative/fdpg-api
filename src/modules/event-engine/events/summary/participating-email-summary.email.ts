@@ -15,6 +15,7 @@ export const buildParticipatingEmailSummary = (
   params: {
     projectAbbreviation: proposal.projectAbbreviation,
     projectLink: proposalUrl,
+    projectResearchers: [proposal.ownerName],
     conditionProposalRejected: changes.includes(HistoryEventType.ProposalRejected),
     conditionProposalFdpgCheck: changes.includes(HistoryEventType.ProposalFdpgCheck),
     conditionProposalLocationCheck: changes.includes(HistoryEventType.ProposalLocationCheck),
