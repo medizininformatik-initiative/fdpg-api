@@ -10,5 +10,5 @@ export type IEmail = IEmailBase & { subject: string } & ({ text: string } | { ht
 export type ITemplateEmail = IEmailBase & {
   subject?: string;
   templateId: number;
-  params: Record<string, string | boolean>;
+  params: Record<string, string | boolean | string[]>;
 };
