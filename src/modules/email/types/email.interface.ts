@@ -7,4 +7,8 @@ export interface IEmailBase {
 
 export type IEmail = IEmailBase & { subject: string } & ({ text: string } | { html: string });
 
-export type ITemplateEmail = IEmailBase & { subject?: string; templateId: number; params: Record<string, string> };
+export type ITemplateEmail = IEmailBase & {
+  subject?: string;
+  templateId: number;
+  params: Record<string, string | boolean>;
+};
