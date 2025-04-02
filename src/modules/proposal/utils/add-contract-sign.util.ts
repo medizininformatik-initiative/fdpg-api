@@ -53,6 +53,7 @@ const addContractSignForLocation = (
     proposal.signedContracts.push(location);
     uacApproval.isContractSigned = true;
     proposal.totalContractedDataAmount = (proposal.totalContractedDataAmount ?? 0) + (uacApproval.dataAmount ?? 0);
+    proposal.uacApprovals = [...proposal.uacApprovals, uacApproval];
   } else {
     proposal.requestedButExcludedLocations.push(location);
     proposal.declineReasons = [

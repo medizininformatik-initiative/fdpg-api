@@ -3,10 +3,6 @@ import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { ProposalWithoutContent } from '../../types/proposal-without-content.type';
 import { HistoryEventType } from 'src/modules/proposal/enums/history-event.enum';
-import { getProposalRejectEmailForParticipantsBody } from '../status-change/proposal-rejected.emails';
-import { getProposalLocationCheckEmailForParticipantsBody } from '../status-change/proposal-location-check.emails';
-import { getProposalContractingEmailForOwnerBody } from '../status-change/proposal-contracting.emails';
-import { getProposalSubmitEmailForParticipantsBody } from '../status-change/proposal-submitted.emails';
 import { buildParticipatingEmailSummary } from './participating-email-summary.email';
 
 @Injectable()
@@ -40,14 +36,12 @@ export class ParticipantEmailSummaryService {
       return;
     }
 
-    const changes = relevantChanges
-      .map((change) => this.mapHistoryEventTypeToMailBody(change.type, proposal))
-      .filter((change) => change);
+    const changes = relevantChanges.map((change) => change.type);
 
     await this.sendMails(proposal, changes, proposalUrl);
   }
 
-  private async sendMails(proposal: ProposalWithoutContent, mailBodyChanges: string[], proposalUrl: string) {
+  private async sendMails(proposal: ProposalWithoutContent, mailBodyChanges: HistoryEventType[], proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
 
     const participantTask = async () => {
@@ -61,27 +55,5 @@ export class ParticipantEmailSummaryService {
     emailTasks.push(participantTask());
 
     await Promise.allSettled(emailTasks);
-  }
-
-  private mapHistoryEventTypeToMailBody(
-    historyEventType: HistoryEventType,
-    proposal: ProposalWithoutContent,
-  ): string | null {
-    switch (historyEventType) {
-      case HistoryEventType.ProposalRejected:
-        return getProposalRejectEmailForParticipantsBody(proposal);
-      case HistoryEventType.ProposalFdpgCheck:
-        return getProposalSubmitEmailForParticipantsBody(proposal);
-      case HistoryEventType.ProposalLocationCheck:
-        return getProposalLocationCheckEmailForParticipantsBody(proposal);
-      case HistoryEventType.ProposalContracting:
-        return getProposalContractingEmailForOwnerBody(proposal);
-      case HistoryEventType.ProposalDataDelivery:
-      case HistoryEventType.ProposalDataResearch:
-      case HistoryEventType.ProposalFinished:
-
-      default:
-        return null;
-    }
   }
 }
