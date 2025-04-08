@@ -1,21 +1,27 @@
 import { ProposalWithoutContent } from '../../types/proposal-without-content.type';
 import { EmailCategory } from 'src/modules/email/types/email-category.enum';
-import { IEmail } from 'src/modules/email/types/email.interface';
+import { ITemplateEmail } from 'src/modules/email/types/email.interface';
+import { HistoryEventType } from 'src/modules/proposal/enums/history-event.enum';
 
 export const buildParticipatingEmailSummary = (
   validContacts: string[],
-  changes: string[],
+  changes: HistoryEventType[],
   proposal: ProposalWithoutContent,
   proposalUrl: string,
-): IEmail => ({
+): ITemplateEmail => ({
   to: validContacts,
   categories: [EmailCategory.ParticipatingScientistSummary],
-  subject: 'Zusammenfassung der Änderungen des Projektes',
-  text: [
-    `Es erfolgten Änderungen am Projekt "${proposal.projectAbbreviation}" mit Ihrer Beteiligung:`,
-    `\n\n`,
-    ...changes.map((change) => `\t- ${change}\n`),
-    `\n\n`,
-    proposalUrl,
-  ].reduce((acc, cur) => acc + cur, ''),
+  templateId: 46,
+  params: {
+    projectAbbreviation: proposal.projectAbbreviation,
+    projectLink: proposalUrl,
+    projectResearchers: [proposal.ownerName],
+    conditionProposalRejected: changes.includes(HistoryEventType.ProposalRejected),
+    conditionProposalFdpgCheck: changes.includes(HistoryEventType.ProposalFdpgCheck),
+    conditionProposalLocationCheck: changes.includes(HistoryEventType.ProposalLocationCheck),
+    conditionProposalContracting: changes.includes(HistoryEventType.ProposalContracting),
+    conditionProposalDataDelivery: changes.includes(HistoryEventType.ProposalDataDelivery),
+    conditionProposalDataResearch: changes.includes(HistoryEventType.ProposalDataResearch),
+    conditionProposalFinished: changes.includes(HistoryEventType.ProposalFinished),
+  },
 });
