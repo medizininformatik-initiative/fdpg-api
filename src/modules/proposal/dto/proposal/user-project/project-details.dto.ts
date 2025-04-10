@@ -34,4 +34,10 @@ export class ProjectDetailsDto extends WithIdForObjectDto {
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
   materialAndMethods: string;
+
+  @Expose()
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @MaxLength(10000)
+  executiveSummaryUac: string;
 }

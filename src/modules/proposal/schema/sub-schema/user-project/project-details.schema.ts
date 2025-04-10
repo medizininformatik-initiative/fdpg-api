@@ -16,6 +16,8 @@ export class ProjectDetails {
   hypothesisAndQuestionProjectGoals: string;
   @Prop()
   materialAndMethods: string;
+  @Prop()
+  executiveSummaryUac: string;
 
   _id?: string;
 
