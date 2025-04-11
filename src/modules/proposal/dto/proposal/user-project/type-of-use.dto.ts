@@ -17,4 +17,14 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsNotEmptyString()
   @MaxLength(10_000)
   dataPrivacyExtra?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsNotEmptyString()
+  targetFormat?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsNotEmptyString()
+  targetFormatOther?: string;
 }

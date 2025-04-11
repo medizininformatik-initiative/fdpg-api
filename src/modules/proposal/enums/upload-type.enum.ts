@@ -2,6 +2,7 @@ export enum DirectUpload {
   GeneralAppendix = 'GENERAL_APPENDIX',
   EthicVote = 'ETHIC_VOTE',
   EthicVoteDeclarationOfNonResponsibility = 'ETHIC_VOTE_DECLARATION_OF_NON_RESPONSIBILITY',
+  AdditionalDocument = 'ADDITIONAL_DOCUMENT',
 }
 
 export enum UseCaseUpload {

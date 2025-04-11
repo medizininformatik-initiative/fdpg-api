@@ -12,6 +12,11 @@ export class TypeOfUse {
   @Prop()
   dataPrivacyExtra?: string;
 
+  @Prop()
+  targetFormat?: string;
+  @Prop()
+  targetFormatOther?: string;
+
   _id: string;
 
   @Prop({
