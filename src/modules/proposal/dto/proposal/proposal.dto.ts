@@ -396,15 +396,15 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value
-      .map((approval: UacApprovalGetDto) => approval.location)
-      .filter((miiLoc: MiiLocation) => {
-        if (role === Role.DizMember || role === Role.UacMember) {
-          return miiLoc === location;
-        }
+    console.log({ value, role, location });
 
-        return true;
-      });
+    return value.filter((approval: UacApprovalGetDto) => {
+      if (role === Role.DizMember || role === Role.UacMember) {
+        return approval.location === location;
+      }
+
+      return true;
+    });
   })
   uacApprovals: UacApprovalGetDto[];
 
