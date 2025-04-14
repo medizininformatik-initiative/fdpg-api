@@ -396,8 +396,6 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    console.log({ value, role, location });
-
     return value.filter((approval: UacApprovalGetDto) => {
       if (role === Role.DizMember || role === Role.UacMember) {
         return approval.location === location;
