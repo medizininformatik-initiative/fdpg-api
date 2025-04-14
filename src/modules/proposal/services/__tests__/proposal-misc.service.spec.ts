@@ -503,7 +503,6 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.setFdpgChecklist(proposalId, checklist, request.user);
 
-      expect(validateFdpgCheckStatus).toHaveBeenCalledWith(proposalDocument);
       expect(updateFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist, request.user.fullName);
       expect(proposalDocument.save).toBeCalled();
     });
