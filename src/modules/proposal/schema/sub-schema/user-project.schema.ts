@@ -16,6 +16,8 @@ import {
   InformationOnRequestedBioSamples,
   InformationOnRequestedBioSamplesSchema,
 } from './user-project/information-on-biosample.schema';
+import { DifeVariableSelectionData, VariableSelectionData } from './variable-selection-data.schema';
+import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 export type UserProjectDocument = UserProject & Document;
 
@@ -50,6 +52,12 @@ export class UserProject {
 
   @Prop({ type: InformationOnRequestedBioSamplesSchema })
   informationOnRequestedBioSamples: InformationOnRequestedBioSamples;
+
+  @Prop({
+    type: Object,
+    default: () => {},
+  })
+  variableSelection: Partial<Record<PlatformIdentifier, VariableSelectionData | DifeVariableSelectionData>>;
 }
 
 export const UserProjectSchema = SchemaFactory.createForClass(UserProject);

@@ -108,6 +108,7 @@ export class ProposalCrudService {
     const plain = document.toObject();
     this.addParticipatingScientistIndicator(plain, user);
     const userGroups = convertUserToGroups(user);
+
     const result = plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],
@@ -151,6 +152,7 @@ export class ProposalCrudService {
     }
 
     const plain = saveResult.toObject();
+
     this.addParticipatingScientistIndicator(plain, user);
     return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
   }
