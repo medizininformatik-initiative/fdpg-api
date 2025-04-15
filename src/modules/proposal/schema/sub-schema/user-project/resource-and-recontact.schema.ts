@@ -11,6 +11,18 @@ export class ResourceAndRecontact {
   @Prop()
   isRecontactingIntended: boolean;
 
+  @Prop()
+  suppSurveyReContacting: boolean;
+  @Prop()
+  suppSurveyReContactingText: string;
+  @Prop()
+  reContactIncidental: boolean;
+  @Prop()
+  reContactIncidentalText: string;
+  @Prop()
+  urgentIncidentalReContacting: boolean;
+  @Prop()
+  urgentIncidentalReContactingText: string;
   _id: string;
 
   @Prop({

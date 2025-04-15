@@ -10,6 +10,7 @@ const generalAccessTypes = [
   DirectUpload.EthicVote,
   DirectUpload.EthicVoteDeclarationOfNonResponsibility,
   DirectUpload.GeneralAppendix,
+  DirectUpload.AdditionalDocument,
 ] as UploadType[];
 
 export const validateUploadDeletion = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {

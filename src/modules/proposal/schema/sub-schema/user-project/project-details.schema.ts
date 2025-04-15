@@ -16,6 +16,13 @@ export class ProjectDetails {
   hypothesisAndQuestionProjectGoals: string;
   @Prop()
   materialAndMethods: string;
+  @Prop()
+  executiveSummaryUac: string;
+  @Prop()
+  literature: string;
+
+  @Prop()
+  biometric: string;
 
   _id?: string;
 
