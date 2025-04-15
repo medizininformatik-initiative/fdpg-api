@@ -219,8 +219,6 @@ export class ProposalMiscService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     if (!toBeUpdated) throw new NotFoundException('Proposal not found');
 
-    validateFdpgCheckStatus(toBeUpdated);
-
     if (!toBeUpdated.fdpgChecklist) {
       toBeUpdated.fdpgChecklist = initChecklist();
     }
