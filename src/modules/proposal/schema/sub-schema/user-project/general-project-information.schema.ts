@@ -20,6 +20,9 @@ export class GeneralProjectInformation {
   @Prop()
   fundingReferenceNumber: string;
 
+  @Prop()
+  desiredStartTimeType: string;
+
   _id: string;
 
   @Prop({

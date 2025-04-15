@@ -13,4 +13,31 @@ export class ResourceAndRecontact extends WithIdForObjectDto {
   @IsBoolean()
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   isRecontactingIntended: boolean;
+
+  @Expose()
+  @IsBoolean()
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  suppSurveyReContacting: boolean;
+
+  @Expose()
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  suppSurveyReContactingText: string;
+
+  @Expose()
+  @IsBoolean()
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  reContactIncidental: boolean;
+
+  @Expose()
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  reContactIncidentalText: string;
+
+  @Expose()
+  @IsBoolean()
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  urgentIncidentalReContacting: boolean;
+
+  @Expose()
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  urgentIncidentalReContactingText: string;
 }
