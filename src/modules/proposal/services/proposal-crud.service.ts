@@ -108,11 +108,12 @@ export class ProposalCrudService {
     const plain = document.toObject();
     this.addParticipatingScientistIndicator(plain, user);
     const userGroups = convertUserToGroups(user);
-
-    return plainToClass(ProposalGetDto, plain, {
+    const result = plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],
     });
+
+    return result;
   }
 
   async findAll(sortOrder: SortOrderDto, panelQuery: PanelQuery, user: IRequestUser): Promise<ProposalGetListDto[]> {
