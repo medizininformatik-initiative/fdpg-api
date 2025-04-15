@@ -29,7 +29,7 @@ export interface IChecklist {
 }
 
 export const CHECKLIST_OPTIONS = {
-  YES_NO: [{ optionValue: 'yes' }, { optionValue: 'no' }] as IChecklistOption[],
+  YES_NO_TNZ: [{ optionValue: 'yes' }, { optionValue: 'no' }, { optionValue: 'TNZ' }] as IChecklistOption[],
   YES_ONLY: [{ optionValue: 'yes' }] as IChecklistOption[],
   DISTRIBUTED_ANALYSIS: [
     { optionValue: 'distributedAnalysisDockerR' },
