@@ -78,7 +78,11 @@ const mergeDeep = (target, ...sources) => {
  * @param apiItem ProposalUpdateDto
  */
 export const mergeProposal = (dbItem: ProposalDocument, apiItem: ProposalUpdateDto): void => {
-  if (!isDeepStrictEqual(dbItem.userProject.variableSelection, apiItem.userProject.variableSelection)) {
+  if (
+    !!dbItem.userProject?.variableSelection &&
+    !!apiItem.userProject?.variableSelection &&
+    !isDeepStrictEqual(dbItem.userProject?.variableSelection, apiItem.userProject?.variableSelection)
+  ) {
     dbItem.markModified('userProject.variableSelection');
   }
 
