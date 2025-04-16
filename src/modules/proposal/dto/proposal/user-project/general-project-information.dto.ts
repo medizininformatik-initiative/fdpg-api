@@ -13,10 +13,10 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
 
   @Expose()
   @Type(() => Date)
+  @ValidateIf((o) => o.desiredStartTimeType === 'later')
   @IsDate()
   @IsAfterToday({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
-  @ValidateIf((o) => o.desiredStartTimeType !== 'later')
   desiredStartTime: Date;
 
   @Expose()
