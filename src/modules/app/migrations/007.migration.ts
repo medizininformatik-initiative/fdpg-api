@@ -7,35 +7,56 @@ export class Migration007 implements IDbMigration {
   constructor(private proposalModel: Model<Proposal>) {}
 
   async up() {
+    console.log('Running migration: Update proposal checklists to include TNZ option');
     try {
-      console.log('Running migration: Update proposal checklists to include TNZ option');
       const proposals = await this.proposalModel.find({}).exec();
       let updatedCount = 0;
+      let count = 0;
+
+      console.log(`Number of proposals to migrate '${proposals.length}'`);
+
+      const failedProposalsToMigrate = [];
 
       for (const proposal of proposals) {
-        if (!proposal.fdpgChecklist) continue;
+        try {
+          if (!proposal.fdpgChecklist) continue;
 
-        let updated = false;
+          let updated = false;
 
-        if (proposal.fdpgChecklist.checkListVerification) {
-          this.updateChecklistItems(proposal.fdpgChecklist.checkListVerification);
-          updated = true;
+          if (proposal.fdpgChecklist.checkListVerification) {
+            this.updateChecklistItems(proposal.fdpgChecklist.checkListVerification);
+            updated = true;
+          }
+
+          if (proposal.fdpgChecklist.projectProperties) {
+            this.updateChecklistItems(proposal.fdpgChecklist.projectProperties);
+            updated = true;
+          }
+
+          if (updated) {
+            await proposal.save();
+            updatedCount++;
+          }
+        } catch (error) {
+          console.error('Error during checklist migration:', error);
+          failedProposalsToMigrate.push(
+            `{ id: ${proposal._id}, projectAbbr: ${proposal.projectAbbreviation}, error: ${error} }`,
+          );
         }
 
-        if (proposal.fdpgChecklist.projectProperties) {
-          this.updateChecklistItems(proposal.fdpgChecklist.projectProperties);
-          updated = true;
-        }
+        count++;
 
-        if (updated) {
-          await proposal.save();
-          updatedCount++;
+        if (count % 10 === 0) {
+          console.log(`Migration progress ${count} / ${proposals.length} `);
         }
       }
 
       console.log(`Migration completed: ${updatedCount} proposal checklists updated to include TNZ option`);
+      console.log(
+        `Failed proposal ids to migrate: [${failedProposalsToMigrate.reduce((acc, curr) => acc + ', ' + curr, '')}]`,
+      );
     } catch (error) {
-      console.error('Error during checklist migration:', error);
+      console.error('Migration failed:', error);
       throw error;
     }
   }
