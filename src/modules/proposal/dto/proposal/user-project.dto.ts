@@ -1,5 +1,5 @@
-import { Expose, Type } from 'class-transformer';
-import { IsObject, ValidateNested } from 'class-validator';
+import { Expose, Transform, Type } from 'class-transformer';
+import { IsObject, IsOptional, ValidateNested, Validate } from 'class-validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { AddresseesDto } from './user-project/addressees.dto';
 import { EthicVoteDto } from './user-project/ethic-vote.dto';
@@ -11,6 +11,8 @@ import { ProjectDetailsDto } from './user-project/project-details.dto';
 import { PropertyRightsDto } from './user-project/property-rights.dto';
 import { ResourceAndRecontact } from './user-project/resource-and-recontact.dto';
 import { TypeOfUseDto } from './user-project/type-of-use.dto';
+import { VariableSelectionDto } from './variables/variable-selection-data.dto';
+import { IsValidVariableSelectionConstraint } from './variables/variable-selection.validation';
 
 export class UserProjectDto {
   @Expose()
@@ -72,4 +74,12 @@ export class UserProjectDto {
   @Type(() => InformationOnRequestedBioSamples)
   @IsObject({ groups: [ProposalValidation.IsBiosampleType] })
   informationOnRequestedBioSamples: InformationOnRequestedBioSamples;
+
+  @Expose()
+  @IsObject()
+  @IsOptional()
+  @Type(() => Object)
+  @Transform(({ obj, key }) => obj[key])
+  @Validate(IsValidVariableSelectionConstraint)
+  variableSelection: VariableSelectionDto;
 }

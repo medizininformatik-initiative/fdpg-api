@@ -1,6 +1,7 @@
 import { isObject } from 'class-validator';
 import { ProposalUpdateDto } from '../dto/proposal/proposal.dto';
 import { ProposalDocument } from '../schema/proposal.schema';
+import { isDeepStrictEqual } from 'util';
 
 const removeObsoleteArrayMember = (target: any[], source: any[]) => {
   const spliceOut = [];
@@ -49,6 +50,7 @@ const mergeDeep = (target, ...sources) => {
     for (const key in source) {
       if (isObject<any>(source[key]) && typeof source[key].getMonth !== 'function') {
         if (!target[key]) Object.assign(target, { [key]: {} });
+
         mergeDeep(target[key], source[key]);
       } else {
         const isSourceArray = Array.isArray(source[key]);
@@ -76,6 +78,14 @@ const mergeDeep = (target, ...sources) => {
  * @param apiItem ProposalUpdateDto
  */
 export const mergeProposal = (dbItem: ProposalDocument, apiItem: ProposalUpdateDto): void => {
+  if (
+    !!dbItem.userProject?.variableSelection &&
+    !!apiItem.userProject?.variableSelection &&
+    !isDeepStrictEqual(dbItem.userProject?.variableSelection, apiItem.userProject?.variableSelection)
+  ) {
+    dbItem.markModified('userProject.variableSelection');
+  }
+
   mergeDeep(dbItem, apiItem);
 
   if (dbItem.modifiedPaths().length) {
