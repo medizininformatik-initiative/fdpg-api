@@ -36,20 +36,17 @@ export class ProjectDetailsDto extends WithIdForObjectDto {
   materialAndMethods: string;
 
   @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional()
   @MaxLength(10000)
   executiveSummaryUac: string;
 
   @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional()
   @MaxLength(10000)
   literature: string;
 
   @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional()
   @MaxLength(10000)
   biometric: string;
 }
