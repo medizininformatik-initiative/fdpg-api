@@ -26,6 +26,7 @@ import {
   AdditionalLocationInformationSchema,
 } from './sub-schema/additional-location-information.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
+import { SelectedDataSource, SelectedDataSourceSchema } from './sub-schema/selected-data-source.schema';
 
 export type ProposalDocument = Proposal & Document;
 
@@ -42,6 +43,9 @@ export class Proposal {
     default: PlatformIdentifier.Mii,
   })
   platform: PlatformIdentifier;
+
+  @Prop({ type: [SelectedDataSourceSchema], default: [] })
+  selectedDataSources: SelectedDataSource[];
 
   @Prop([ParticipantSchema])
   participants: Participant[];

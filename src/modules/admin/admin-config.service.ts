@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from './dto/data-privacy/data-privacy-config.dto';
 import { TermsConfigGetDto } from './dto/terms/terms-config.dto';
 import { ConfigType } from './enums/config-type.enum';
 import { PlatformIdentifier } from './enums/platform-identifier.enum';
 import { DataPrivacyConfig, DataPrivacyConfigDocument } from './schema/data-privacy/data-privacy-config.schema';
 import { TermsConfig, TermsConfigDocument } from './schema/terms/terms-config.schema';
+import { DataSourceDto } from './dto/data-source.dto';
 
 @Injectable()
 export class AdminConfigService {
@@ -67,5 +68,26 @@ export class AdminConfigService {
       },
       { upsert: true },
     );
+  }
+
+  async getDataSources(): Promise<DataSourceDto[]> {
+    const dataSources = [
+      {
+        _id: new Types.ObjectId(),
+        tag: PlatformIdentifier.DIFE,
+        title: 'proposal.dife_title',
+        description: 'proposal.dife_description',
+        externalLink: 'proposal.dife_link',
+      },
+      {
+        _id: new Types.ObjectId(),
+        tag: PlatformIdentifier.Mii,
+        title: 'proposal.mii_title',
+        description: 'proposal.mii_description',
+        externalLink: 'proposal.mii_link',
+      },
+    ];
+
+    return dataSources;
   }
 }

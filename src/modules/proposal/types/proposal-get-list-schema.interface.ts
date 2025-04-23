@@ -4,7 +4,7 @@ import { ConditionalApproval } from '../schema/sub-schema/conditional-approval.s
 import { FdpgTask } from '../schema/sub-schema/fdpg-task.schema';
 import { RequestedData } from '../schema/sub-schema/requested-data.schema';
 import { UserProject } from '../schema/sub-schema/user-project.schema';
-
+import { SelectedDataSource } from '../schema/sub-schema/selected-data-source.schema';
 export interface IProposalGetListSchema {
   userProject: Partial<UserProject>;
   projectAbbreviation: string;
@@ -32,6 +32,7 @@ export interface IProposalGetListSchema {
   conditionalApprovals: ConditionalApproval[];
   contractAcceptedByResearcher: boolean;
   contractRejectedByResearcher: boolean;
+  selectedDataSources: SelectedDataSource[];
 
   openFdpgTasks: FdpgTask[];
 

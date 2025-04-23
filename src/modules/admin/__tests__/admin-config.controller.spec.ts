@@ -5,6 +5,7 @@ import { AdminConfigService } from '../admin-config.service';
 import { TermsConfigCreateDto, TermsConfigGetDto } from '../dto/terms/terms-config.dto';
 import { PlatformIdentifier } from '../enums/platform-identifier.enum';
 import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from '../dto/data-privacy/data-privacy-config.dto';
+import { DataSourceDto } from '../dto/data-source.dto';
 
 const moduleMocker = new ModuleMocker(global);
 
@@ -90,6 +91,33 @@ describe('AdminConfigController', () => {
       const call = adminConfigController.updateDataPrivacyConfig(params, input);
       await call;
       expect(adminConfigService.updateDataPrivacyConfig).toHaveBeenCalledWith(platform, input);
+    });
+  });
+
+  describe('getDataSources', () => {
+    it('should return available data sources', async () => {
+      const dataSources: DataSourceDto[] = [
+        {
+          _id: 'id1' as any,
+          tag: PlatformIdentifier.DIFE,
+          title: 'proposal.dife_title',
+          description: 'proposal.dife_description',
+          externalLink: 'proposal.dife_link',
+        },
+        {
+          _id: 'id2' as any,
+          tag: PlatformIdentifier.Mii,
+          title: 'proposal.mii_title',
+          description: 'proposal.mii_description',
+          externalLink: 'proposal.mii_link',
+        },
+      ];
+
+      jest.spyOn(adminConfigService, 'getDataSources').mockResolvedValue(dataSources);
+
+      const result = await adminConfigController.getDataSources();
+      expect(result).toBe(dataSources);
+      expect(adminConfigService.getDataSources).toHaveBeenCalled();
     });
   });
 });

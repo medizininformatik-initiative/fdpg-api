@@ -39,6 +39,7 @@ import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
+import { SelectedDataSourceDto } from './selected-data-source.dto';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -116,6 +117,12 @@ export class ProposalBaseDto {
   @IsEnum(PlatformIdentifier)
   @IsOptional()
   platform: PlatformIdentifier;
+
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SelectedDataSourceDto)
+  selectedDataSources: SelectedDataSourceDto[];
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -453,6 +460,7 @@ export class ProposalGetListDto {
     this.contractAcceptedByResearcher = dbProjection.contractAcceptedByResearcher;
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
+    this.selectedDataSources = dbProjection.selectedDataSources || [];
 
     if (user.singleKnownRole === Role.FdpgMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -501,6 +509,7 @@ export class ProposalGetListDto {
   locationState?: LocationState;
 
   _id: string;
+  selectedDataSources: SelectedDataSourceDto[];
 }
 
 @Exclude()
