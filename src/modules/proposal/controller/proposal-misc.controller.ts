@@ -24,8 +24,9 @@ import { SetBooleanStatusDto, SetProposalStatusDto } from '../dto/set-status.dto
 import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
-import { FdpgChecklistUpdateDto, FdpgChecklistGetDto } from '../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
+import { IChecklistItem } from '../dto/proposal/checklist.types';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -95,7 +96,7 @@ export class ProposalMiscController {
     @Param() { id }: MongoIdParamDto,
     @Body() checklist: FdpgChecklistUpdateDto,
     @Request() { user }: FdpgRequest,
-  ): Promise<FdpgChecklistGetDto> {
+  ): Promise<Partial<IChecklistItem> | null> {
     return await this.proposalMiscService.setFdpgChecklist(id, checklist, user);
   }
 

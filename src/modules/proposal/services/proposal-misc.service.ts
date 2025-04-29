@@ -12,7 +12,7 @@ import { EventEngineService } from '../../event-engine/event-engine.service';
 import { FeasibilityService } from '../../feasibility/feasibility.service';
 import { PdfEngineService } from '../../pdf-engine/pdf-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
-import { FdpgChecklistUpdateDto, initChecklist, FdpgChecklistGetDto } from '../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { UploadDto } from '../dto/upload.dto';
@@ -42,6 +42,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verification.util';
 import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
+import { IChecklistItem } from '../dto/proposal/checklist.types';
 
 @Injectable()
 export class ProposalMiscService {
@@ -215,7 +216,7 @@ export class ProposalMiscService {
     proposalId: string,
     checklistUpdate: FdpgChecklistUpdateDto,
     user: IRequestUser,
-  ): Promise<FdpgChecklistGetDto> {
+  ): Promise<Partial<IChecklistItem> | null> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     if (!toBeUpdated) throw new NotFoundException('Proposal not found');
 
@@ -226,7 +227,35 @@ export class ProposalMiscService {
     updateFdpgChecklist(toBeUpdated, checklistUpdate, user.fullName);
     await toBeUpdated.save();
 
-    return toBeUpdated.fdpgChecklist as FdpgChecklistGetDto;
+    // Return only the updated item
+    if (checklistUpdate._id) {
+      const targetFields = ['checkListVerification', 'projectProperties'] as const;
+
+      for (const field of targetFields) {
+        const items = toBeUpdated.fdpgChecklist[field];
+        if (!items) continue;
+
+        const updatedItem = items.find((item) => item._id.toString() === checklistUpdate._id?.toString());
+        if (updatedItem) return updatedItem;
+      }
+    }
+
+    // Handle special fields (checkbox or note update)
+    if (checklistUpdate.isRegistrationLinkSent !== undefined) {
+      return {
+        _id: 'isRegistrationLinkSent',
+        isRegistrationLinkSent: toBeUpdated.fdpgChecklist.isRegistrationLinkSent,
+      } as any;
+    }
+
+    if (checklistUpdate.fdpgInternalCheckNotes !== undefined) {
+      return {
+        _id: 'fdpgInternalCheckNotes',
+        fdpgInternalCheckNotes: toBeUpdated.fdpgChecklist.fdpgInternalCheckNotes,
+      } as any;
+    }
+
+    return null;
   }
 
   async markSectionAsDone(proposalId: string, sectionId: string, isDone: boolean, user: IRequestUser): Promise<void> {
