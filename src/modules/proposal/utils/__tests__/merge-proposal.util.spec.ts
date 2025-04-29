@@ -2,7 +2,6 @@ import { ProposalUpdateDto } from '../../dto/proposal/proposal.dto';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { mergeProposal } from '../merge-proposal.util';
-import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 const proposalId = 'proposalId';
 
@@ -144,37 +143,5 @@ describe('merge-proposal.util', () => {
     expect(dbItem.someNewObject).toEqual({ _id: 'someNewObjectId', content: 'someNewObjectContent' });
     expect(dbItem.participants.length).toEqual(2);
     expect(dbItem.applicant.isDone).toEqual(false);
-  });
-
-  it('should handle selectedDataSources specifically', () => {
-    const dbItem = getProposalDocument() as any;
-    const apiItem = getProposalDto();
-
-    // Add selectedDataSources to the apiItem
-    apiItem.selectedDataSources = [
-      {
-        _id: 'source1',
-        title: 'Source 1',
-        description: 'Description 1',
-        tag: PlatformIdentifier.Mii,
-        externalLink: 'link1',
-      },
-      {
-        _id: 'source2',
-        title: 'Source 2',
-        description: 'Description 2',
-        tag: PlatformIdentifier.DIFE,
-        externalLink: 'link2',
-      },
-    ];
-
-    // Mock the markModified method
-    dbItem.markModified = jest.fn();
-
-    mergeProposal(dbItem, apiItem);
-
-    // Check that selectedDataSources was properly handled
-    expect(dbItem.selectedDataSources).toEqual(apiItem.selectedDataSources);
-    expect(dbItem.markModified).toHaveBeenCalledWith('selectedDataSources');
   });
 });

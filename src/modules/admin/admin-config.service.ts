@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from './dto/data-privacy/data-privacy-config.dto';
 import { TermsConfigGetDto } from './dto/terms/terms-config.dto';
 import { ConfigType } from './enums/config-type.enum';
@@ -70,23 +70,19 @@ export class AdminConfigService {
     );
   }
 
-  async getDataSources(): Promise<DataSourceDto[]> {
-    const dataSources = [
-      {
-        _id: new Types.ObjectId(),
-        tag: PlatformIdentifier.DIFE,
+  async getDataSources(): Promise<DataSourceDto> {
+    const dataSources = {
+      [PlatformIdentifier.DIFE]: {
         title: 'proposal.dife_title',
         description: 'proposal.dife_description',
         externalLink: 'proposal.dife_link',
       },
-      {
-        _id: new Types.ObjectId(),
-        tag: PlatformIdentifier.Mii,
+      [PlatformIdentifier.Mii]: {
         title: 'proposal.mii_title',
         description: 'proposal.mii_description',
         externalLink: 'proposal.mii_link',
       },
-    ];
+    };
 
     return dataSources;
   }

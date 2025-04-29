@@ -96,22 +96,18 @@ describe('AdminConfigController', () => {
 
   describe('getDataSources', () => {
     it('should return available data sources', async () => {
-      const dataSources: DataSourceDto[] = [
-        {
-          _id: 'id1' as any,
-          tag: PlatformIdentifier.DIFE,
+      const dataSources: DataSourceDto = {
+        [PlatformIdentifier.DIFE]: {
           title: 'proposal.dife_title',
           description: 'proposal.dife_description',
           externalLink: 'proposal.dife_link',
         },
-        {
-          _id: 'id2' as any,
-          tag: PlatformIdentifier.Mii,
+        [PlatformIdentifier.Mii]: {
           title: 'proposal.mii_title',
           description: 'proposal.mii_description',
           externalLink: 'proposal.mii_link',
         },
-      ];
+      };
 
       jest.spyOn(adminConfigService, 'getDataSources').mockResolvedValue(dataSources);
 

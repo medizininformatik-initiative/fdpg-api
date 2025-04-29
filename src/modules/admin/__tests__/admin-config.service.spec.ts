@@ -194,21 +194,19 @@ describe('AdminConfigService', () => {
   });
 
   describe('getDataSources', () => {
-    it('should return an array of data sources', async () => {
+    it('should return available data sources', async () => {
       const result = await service.getDataSources();
 
-      expect(result).toHaveLength(2);
-      expect(result[0]).toHaveProperty('_id');
-      expect(result[0]).toHaveProperty('tag', PlatformIdentifier.DIFE);
-      expect(result[0]).toHaveProperty('title', 'proposal.dife_title');
-      expect(result[0]).toHaveProperty('description', 'proposal.dife_description');
-      expect(result[0]).toHaveProperty('externalLink', 'proposal.dife_link');
+      expect(result).toHaveProperty(PlatformIdentifier.DIFE);
+      expect(result).toHaveProperty(PlatformIdentifier.Mii);
 
-      expect(result[1]).toHaveProperty('_id');
-      expect(result[1]).toHaveProperty('tag', PlatformIdentifier.Mii);
-      expect(result[1]).toHaveProperty('title', 'proposal.mii_title');
-      expect(result[1]).toHaveProperty('description', 'proposal.mii_description');
-      expect(result[1]).toHaveProperty('externalLink', 'proposal.mii_link');
+      expect(result[PlatformIdentifier.DIFE]).toHaveProperty('title', 'proposal.dife_title');
+      expect(result[PlatformIdentifier.DIFE]).toHaveProperty('description', 'proposal.dife_description');
+      expect(result[PlatformIdentifier.DIFE]).toHaveProperty('externalLink', 'proposal.dife_link');
+
+      expect(result[PlatformIdentifier.Mii]).toHaveProperty('title', 'proposal.mii_title');
+      expect(result[PlatformIdentifier.Mii]).toHaveProperty('description', 'proposal.mii_description');
+      expect(result[PlatformIdentifier.Mii]).toHaveProperty('externalLink', 'proposal.mii_link');
     });
   });
 });

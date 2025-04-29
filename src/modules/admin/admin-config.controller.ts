@@ -59,7 +59,7 @@ export class AdminConfigController {
   @Auth(Role.Admin, Role.Researcher)
   @Get('data-sources')
   @ApiOperation({ summary: 'Gets available data sources for proposals' })
-  async getDataSources(): Promise<DataSourceDto[]> {
+  async getDataSources(): Promise<DataSourceDto> {
     return this.adminConfigService.getDataSources();
   }
 }

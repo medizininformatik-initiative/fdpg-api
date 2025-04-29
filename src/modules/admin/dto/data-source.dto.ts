@@ -1,18 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum } from 'class-validator';
+import { IsString } from 'class-validator';
 import { PlatformIdentifier } from '../enums/platform-identifier.enum';
-import { Types } from 'mongoose';
-import { Transform } from 'class-transformer';
 
-export class DataSourceDto {
-  @ApiProperty({ description: 'Unique identifier for the data source' })
-  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
-  _id: Types.ObjectId;
-
-  @ApiProperty({ description: 'Platform identifier', enum: PlatformIdentifier })
-  @IsEnum(PlatformIdentifier)
-  tag: PlatformIdentifier;
-
+export class DataSourceItemDto {
   @ApiProperty({ description: 'Title translation key for the data source' })
   @IsString()
   title: string;
@@ -25,3 +15,7 @@ export class DataSourceDto {
   @IsString()
   externalLink: string;
 }
+
+export type DataSourceDto = {
+  [key in PlatformIdentifier]: DataSourceItemDto;
+};
