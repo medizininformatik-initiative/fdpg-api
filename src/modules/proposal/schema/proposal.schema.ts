@@ -43,6 +43,9 @@ export class Proposal {
   })
   platform: PlatformIdentifier;
 
+  @Prop({ type: [String], enum: PlatformIdentifier, default: [] })
+  selectedDataSources: PlatformIdentifier[];
+
   @Prop([ParticipantSchema])
   participants: Participant[];
 

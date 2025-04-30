@@ -8,6 +8,7 @@ import { AdminValidation } from './decorators/validation.decorator';
 import { PlatformParamDto } from './dto/platform-param.dto';
 import { TermsConfigCreateDto, TermsConfigGetDto } from './dto/terms/terms-config.dto';
 import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from './dto/data-privacy/data-privacy-config.dto';
+import { DataSourceDto } from './dto/data-source.dto';
 
 @ApiController('config')
 export class AdminConfigController {
@@ -53,5 +54,12 @@ export class AdminConfigController {
     @Body() dataPrivacyConfig: DataPrivacyConfigCreateDto,
   ): Promise<void> {
     return this.adminConfigService.updateDataPrivacyConfig(platform, dataPrivacyConfig);
+  }
+
+  @Auth(Role.Admin, Role.Researcher)
+  @Get('data-sources')
+  @ApiOperation({ summary: 'Gets available data sources for proposals' })
+  async getDataSources(): Promise<DataSourceDto> {
+    return this.adminConfigService.getDataSources();
   }
 }

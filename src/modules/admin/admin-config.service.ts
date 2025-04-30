@@ -8,6 +8,7 @@ import { ConfigType } from './enums/config-type.enum';
 import { PlatformIdentifier } from './enums/platform-identifier.enum';
 import { DataPrivacyConfig, DataPrivacyConfigDocument } from './schema/data-privacy/data-privacy-config.schema';
 import { TermsConfig, TermsConfigDocument } from './schema/terms/terms-config.schema';
+import { DataSourceDto } from './dto/data-source.dto';
 
 @Injectable()
 export class AdminConfigService {
@@ -67,5 +68,22 @@ export class AdminConfigService {
       },
       { upsert: true },
     );
+  }
+
+  async getDataSources(): Promise<DataSourceDto> {
+    const dataSources = {
+      [PlatformIdentifier.DIFE]: {
+        title: 'proposal.dife_title',
+        description: 'proposal.dife_description',
+        externalLink: 'proposal.dife_link',
+      },
+      [PlatformIdentifier.Mii]: {
+        title: 'proposal.mii_title',
+        description: 'proposal.mii_description',
+        externalLink: 'proposal.mii_link',
+      },
+    };
+
+    return dataSources;
   }
 }

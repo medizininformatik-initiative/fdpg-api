@@ -30,4 +30,5 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   contractAcceptedByResearcher: 1,
   contractRejectedByResearcher: 1,
   additionalLocationInformation: 1,
+  selectedDataSources: 1,
 };

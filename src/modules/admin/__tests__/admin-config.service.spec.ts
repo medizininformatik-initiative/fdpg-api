@@ -105,15 +105,17 @@ describe('AdminConfigService', () => {
       await service.updateTermsConfig(PlatformIdentifier.Mii, termsConfig);
 
       const filter = { type: ConfigType.TermsDialog, platform: PlatformIdentifier.Mii };
-      const update = {
-        $set: {
-          ...termsConfig,
-          ...filter,
-        },
-      };
-      const options = { upsert: true };
       expect(termsConfigModel.updateOne).toBeCalledTimes(1);
-      expect(termsConfigModel.updateOne).toHaveBeenCalledWith(filter, expect.objectContaining(update), options);
+      expect(termsConfigModel.updateOne).toHaveBeenCalledWith(
+        filter,
+        expect.objectContaining({
+          $set: {
+            ...termsConfig,
+            ...filter,
+          },
+        }),
+        { upsert: true },
+      );
     });
   });
 
@@ -186,15 +188,25 @@ describe('AdminConfigService', () => {
       await service.updateDataPrivacyConfig(PlatformIdentifier.Mii, dataPrivacyConfig);
 
       const filter = { type: ConfigType.DataPrivacy, platform: PlatformIdentifier.Mii };
-      const update = {
-        $set: {
-          ...dataPrivacyConfig,
-          ...filter,
-        },
-      };
-      const options = { upsert: true };
       expect(dataPrivacyModel.updateOne).toBeCalledTimes(1);
-      expect(dataPrivacyModel.updateOne).toHaveBeenCalledWith(filter, expect.anything(), options);
+      expect(dataPrivacyModel.updateOne).toHaveBeenCalledWith(filter, expect.anything(), { upsert: true });
+    });
+  });
+
+  describe('getDataSources', () => {
+    it('should return available data sources', async () => {
+      const result = await service.getDataSources();
+
+      expect(result).toHaveProperty(PlatformIdentifier.DIFE);
+      expect(result).toHaveProperty(PlatformIdentifier.Mii);
+
+      expect(result[PlatformIdentifier.DIFE]).toHaveProperty('title', 'proposal.dife_title');
+      expect(result[PlatformIdentifier.DIFE]).toHaveProperty('description', 'proposal.dife_description');
+      expect(result[PlatformIdentifier.DIFE]).toHaveProperty('externalLink', 'proposal.dife_link');
+
+      expect(result[PlatformIdentifier.Mii]).toHaveProperty('title', 'proposal.mii_title');
+      expect(result[PlatformIdentifier.Mii]).toHaveProperty('description', 'proposal.mii_description');
+      expect(result[PlatformIdentifier.Mii]).toHaveProperty('externalLink', 'proposal.mii_link');
     });
   });
 });

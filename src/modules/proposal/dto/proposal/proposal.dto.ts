@@ -116,6 +116,11 @@ export class ProposalBaseDto {
   @IsEnum(PlatformIdentifier)
   @IsOptional()
   platform: PlatformIdentifier;
+
+  @Expose()
+  @IsArray()
+  @IsEnum(PlatformIdentifier, { each: true })
+  selectedDataSources: PlatformIdentifier[];
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -453,6 +458,7 @@ export class ProposalGetListDto {
     this.contractAcceptedByResearcher = dbProjection.contractAcceptedByResearcher;
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
+    this.selectedDataSources = dbProjection.selectedDataSources;
 
     if (user.singleKnownRole === Role.FdpgMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -501,6 +507,7 @@ export class ProposalGetListDto {
   locationState?: LocationState;
 
   _id: string;
+  selectedDataSources: PlatformIdentifier[];
 }
 
 @Exclude()
