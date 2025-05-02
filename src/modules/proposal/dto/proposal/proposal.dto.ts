@@ -1,5 +1,5 @@
 import { ClassTransformOptions, Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsArray, IsEnum, IsObject, IsOptional, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsObject, IsOptional, Matches, MaxLength, ValidateNested, IsString } from 'class-validator';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PROPOSAL_SHORTCUT_REGEX } from 'src/shared/constants/regex.constants';
 import { ExposeId } from 'src/shared/decorators/transform/expose-id.decorator';
@@ -121,6 +121,11 @@ export class ProposalBaseDto {
   @IsArray()
   @IsEnum(PlatformIdentifier, { each: true })
   selectedDataSources: PlatformIdentifier[];
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  dataSourceLocaleId: string;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}

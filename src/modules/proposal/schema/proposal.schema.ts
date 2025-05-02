@@ -148,6 +148,13 @@ export class Proposal {
   })
   statusChangeToLocationContractingAt: Date;
 
+  @Prop({
+    type: String,
+    unique: true,
+    sparse: true,
+  })
+  dataSourceLocaleId: string;
+
   _id: string;
 
   // Task, Events & TODOs to query for

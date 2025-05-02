@@ -1,5 +1,5 @@
 import { Expose, Type } from 'class-transformer';
-import { IsDate, IsNumber, IsOptional, MaxLength, ValidateIf } from 'class-validator';
+import { IsArray, IsDate, IsNumber, IsOptional, MaxLength, ValidateIf } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -40,4 +40,10 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   desiredStartTimeType: string;
+
+  @Expose()
+  @IsArray()
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsNotDraft] })
+  keywords: string[];
 }
