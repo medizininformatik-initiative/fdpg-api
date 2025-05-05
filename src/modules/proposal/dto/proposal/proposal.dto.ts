@@ -419,7 +419,18 @@ export class ProposalGetDto extends ProposalBaseDto {
   )
   uacApprovalsCount: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Transform(({ value, options }) => {
+    const { role, location } = getRoleFromTransform(options);
+
+    return value.filter((declineReason: DeclineReasonDto) => {
+      if (role === Role.DizMember || role === Role.UacMember) {
+        return declineReason.location === location;
+      }
+
+      return true;
+    });
+  })
   @Type(() => DeclineReasonDto)
   declineReasons: DeclineReasonDto[];
 
