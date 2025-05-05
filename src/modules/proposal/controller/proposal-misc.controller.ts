@@ -27,6 +27,7 @@ import { SetAdditionalLocationInformationDto } from '../dto/set-additional-locat
 import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
 import { IChecklistItem } from '../dto/proposal/checklist.types';
+import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -161,5 +162,12 @@ export class ProposalMiscController {
     }
 
     await this.proposalMiscService.setDeadlines(id, dto, user);
+  }
+
+  @Get('proposal-form/versions')
+  @ApiNotFoundResponse({ description: 'Item could not be found.' })
+  @ApiOperation({ summary: 'Returns a list of all proposal form versions' })
+  async getAllProposalFormVersions(): Promise<ProposalFormDto[]> {
+    return await this.proposalMiscService.getAllProposalFormVersions();
   }
 }

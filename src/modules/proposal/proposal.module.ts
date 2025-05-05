@@ -23,6 +23,7 @@ import { ProposalReportService } from './services/proposal-report.service';
 import { ProposalUploadService } from './services/proposal-upload.service';
 import { StatusChangeService } from './services/status-change.service';
 import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviation.validator';
+import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviat
     FeasibilityModule,
     SchedulerModule,
     AdminModule,
+    ProposalFormModule,
   ],
   controllers: [
     ProposalCrudController,
