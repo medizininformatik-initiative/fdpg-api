@@ -22,6 +22,7 @@ import { TermsConfig, TermsConfigSchema } from '../admin/schema/terms/terms-conf
 import { Proposal, ProposalSchema } from '../proposal/schema/proposal.schema';
 import { DataPrivacyConfig, DataPrivacyConfigSchema } from '../admin/schema/data-privacy/data-privacy-config.schema';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
+import { ProposalForm, ProposalFormSchema } from '../proposal-form/schema/proposal-form.schema';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { ProposalFormModule } from '../proposal-form/proposal-form.module';
         name: DataPrivacyConfig.name,
         schema: DataPrivacyConfigSchema,
       },
+      { name: ProposalForm.name, schema: ProposalFormSchema },
     ]),
 
     /** Modules */

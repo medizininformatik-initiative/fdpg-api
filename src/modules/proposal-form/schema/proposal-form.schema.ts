@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type ProposalFormDocument = ProposalForm & Document;
 
-@Schema({ _id: true, collection: 'proposalForm' })
+@Schema({ _id: true, collection: 'proposalForm', minimize: false })
 export class ProposalForm {
   _id: string;
 
