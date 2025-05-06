@@ -339,7 +339,7 @@ describe('ProposalMiscService', () => {
       );
     });
 
-    it('should set status for LocationCheck and get the feasibility query', async () => {
+    it('should set status for FdpgCheck and get the feasibility query', async () => {
       const feasibilityId = 'feasibilityId';
       const proposal = getProposalDocument();
       const proposalDocument = {
@@ -355,7 +355,7 @@ describe('ProposalMiscService', () => {
         },
       } as any as ProposalDocument;
 
-      const newStatus = ProposalStatus.LocationCheck;
+      const newStatus = ProposalStatus.FdpgCheck;
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument).mockResolvedValueOnce(proposalDocument);
 
@@ -376,7 +376,7 @@ describe('ProposalMiscService', () => {
       expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', expectedFile, request.user);
     });
 
-    it('should set status for LocationCheck and get the pdf', async () => {
+    it('should set status for FdpgCheck and get the pdf', async () => {
       const proposal = getProposalDocument();
       const proposalDocument = {
         ...proposal,
@@ -391,7 +391,7 @@ describe('ProposalMiscService', () => {
         },
       } as any as ProposalDocument;
 
-      const newStatus = ProposalStatus.LocationCheck;
+      const newStatus = ProposalStatus.FdpgCheck;
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument).mockResolvedValueOnce(proposalDocument);
 

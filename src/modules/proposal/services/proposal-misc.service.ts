@@ -1,39 +1,21 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
-import { plainToClass } from 'class-transformer';
-import { AdminConfigService } from 'src/modules/admin/admin-config.service';
-import { DataPrivacyTextSingleLanguage } from 'src/modules/admin/dto/data-privacy/data-privacy-texts.dto';
-import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
-import { SupportedLanguages } from 'src/shared/constants/global.constants';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
-import { StorageService } from '../../storage/storage.service';
 import { EventEngineService } from '../../event-engine/event-engine.service';
-import { FeasibilityService } from '../../feasibility/feasibility.service';
-import { PdfEngineService } from '../../pdf-engine/pdf-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
 import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
-import { ProposalGetDto } from '../dto/proposal/proposal.dto';
-import { UploadDto } from '../dto/upload.dto';
-import { ProposalValidation } from '../enums/porposal-validation.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
-import { SupportedMimetype } from '../enums/supported-mime-type.enum';
-import { UseCaseUpload } from '../enums/upload-type.enum';
 import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
-import { flattenToLanguage } from '../utils/flatten-to-language.util';
 import {
   addHistoryItemForChangedDeadline,
   addHistoryItemForProposalLock,
   addHistoryItemForStatus,
 } from '../utils/proposal-history.util';
-import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
 import { ProposalCrudService } from './proposal-crud.service';
 import { StatusChangeService } from './status-change.service';
-import { OutputGroup } from 'src/shared/enums/output-group.enum';
-import { ProposalDocument } from '../schema/proposal.schema';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { AdditionalLocationInformation } from '../schema/sub-schema/additional-location-information.schema';
 import { validateUpdateAdditionalInformationAccess } from '../utils/validate-misc.util';
@@ -43,20 +25,17 @@ import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verificat
 import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { IChecklistItem } from '../dto/proposal/checklist.types';
+import { ProposalPdfService } from './proposal-pdf.service';
 
 @Injectable()
 export class ProposalMiscService {
   constructor(
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
-    private storageService: StorageService,
     private statusChangeService: StatusChangeService,
     private keycloakService: KeycloakService,
-    private pdfEngineService: PdfEngineService,
-    private schedulerRegistry: SchedulerRegistry,
-    private feasibilityService: FeasibilityService,
-    private adminConfigService: AdminConfigService,
     private schedulerService: SchedulerService,
+    private proposalPdfService: ProposalPdfService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -110,7 +89,7 @@ export class ProposalMiscService {
     await this.eventEngineService.handleProposalStatusChange(saveResult);
 
     if (toBeUpdated.status === ProposalStatus.LocationCheck) {
-      this.fetchFeasibilityAndGeneratePdf(toBeUpdated._id, user);
+      this.proposalPdfService.createProposalPdf(saveResult, user);
     }
   }
 
@@ -129,87 +108,9 @@ export class ProposalMiscService {
     await this.eventEngineService.handleProposalLockChange(saveResult);
   }
 
-  private fetchFeasibilityAndGeneratePdf(proposalId: string, user: IRequestUser) {
-    const task = async () => {
-      const proposal = await this.proposalCrudService.findDocument(proposalId, user);
-      const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
-
-      if (proposal.userProject.feasibility.id !== undefined) {
-        const queryContent = await this.feasibilityService.getQueryContentById(proposal.userProject.feasibility.id);
-        const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
-        const feasibilityFile: Express.Multer.File = {
-          buffer: feasibilityBuffer,
-          originalname: 'Machbarkeits-Anfrage.json',
-          mimetype: SupportedMimetype.Json,
-          size: Buffer.byteLength(feasibilityBuffer),
-        } as Express.Multer.File;
-
-        const feasibilityBlobName = getBlobName(proposal._id, UseCaseUpload.FeasibilityQuery);
-        await this.storageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
-        const feasibilityUpload = new UploadDto(
-          feasibilityBlobName,
-          feasibilityFile,
-          UseCaseUpload.FeasibilityQuery,
-          user,
-        );
-        addUpload(proposal, feasibilityUpload);
-      }
-
-      const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
-      const pdfFile: Express.Multer.File = {
-        buffer: pdfBuffer,
-        originalname: `${proposal.projectAbbreviation}_proposal.pdf`,
-        mimetype: SupportedMimetype.Pdf,
-        size: Buffer.byteLength(pdfBuffer),
-      } as Express.Multer.File;
-      const pdfBlobName = getBlobName(proposal._id, UseCaseUpload.ProposalPDF);
-      await this.storageService.uploadFile(pdfBlobName, pdfFile, user);
-      const pdfUpload = new UploadDto(pdfBlobName, pdfFile, UseCaseUpload.ProposalPDF, user);
-      addUpload(proposal, pdfUpload);
-
-      await proposal.save();
-    };
-
-    // We schedule the task to release the thread
-    const milliseconds = 500;
-    const name = `ContractTimeout-${proposalId}`;
-    const timeout = setTimeout(async () => await task(), milliseconds);
-    this.schedulerRegistry.addTimeout(name, timeout);
-  }
-
   async getPdfProposalFile(proposalId: string, user: IRequestUser): Promise<Buffer> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
-    const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
-    const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
-    return pdfBuffer;
-  }
-
-  async createPdfBuffer(proposal: ProposalDocument, dataPrivacyTextForUsage: any[]): Promise<Buffer> {
-    const plain = proposal.toObject();
-    const getDto = plainToClass(ProposalGetDto, plain, {
-      strategy: 'excludeAll',
-      groups: [ProposalValidation.IsOutput, OutputGroup.PdfOutput],
-    });
-    const pdfBuffer = await this.pdfEngineService.createProposalPdf(getDto, dataPrivacyTextForUsage);
-    return pdfBuffer;
-  }
-
-  async createPrivacyTextForUsage(proposal: ProposalDocument): Promise<any[]> {
-    const pdfLanguage: SupportedLanguages = 'de';
-    let dataPrivacyTextForUsage = [];
-    if (proposal.userProject.typeOfUse.usage.length !== 0) {
-      const dataPrivacyText = await this.adminConfigService.getDataPrivacyConfig(
-        proposal.platform ?? PlatformIdentifier.Mii,
-      );
-
-      const dataPrivacyTextForLanguage = flattenToLanguage<DataPrivacyTextSingleLanguage>(
-        dataPrivacyText.messages,
-        pdfLanguage,
-      );
-
-      dataPrivacyTextForUsage = proposal.userProject.typeOfUse.usage.map((usage) => dataPrivacyTextForLanguage[usage]);
-    }
-    return dataPrivacyTextForUsage;
+    return await this.proposalPdfService.getPdfProposalFile(proposal);
   }
 
   async setFdpgChecklist(
