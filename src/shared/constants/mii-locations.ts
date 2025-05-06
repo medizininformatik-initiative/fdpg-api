@@ -8,6 +8,7 @@
  */
 
 export enum MiiLocation {
+  BHC = 'BHC',
   MRI = 'MRI',
   KUM = 'KUM',
   UKT = 'UKT',
@@ -47,6 +48,7 @@ export enum MiiLocation {
   CTK = 'CTK',
   UKOWL = 'UKOWL',
   UOL = 'UOL',
+  VIV = 'VIV',
   VirtualAll = 'VIRTUAL_ALL',
 }
 
@@ -59,6 +61,11 @@ interface IMiiLocationInfo {
   definition: string;
 }
 export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
+  [MiiLocation.BHC]: {
+    display: 'Bosch Health Campus',
+    definition: 'HiGHmed',
+  },
+
   [MiiLocation.MRI]: {
     // Actual new identifier: 'TUM'
     display: 'Klinikum der Technischen Universität München',
@@ -253,6 +260,11 @@ export const MII_LOCATIONS: Record<MiiLocation, IMiiLocationInfo> = {
 
   [MiiLocation.UOL]: {
     display: 'Carl von Ossietzky Universität Oldenburg',
+    definition: 'HiGHmed',
+  },
+
+  [MiiLocation.VIV]: {
+    display: 'Vivantes Netzwerk für Gesundheit GmbH',
     definition: 'HiGHmed',
   },
 
