@@ -259,7 +259,7 @@ describe('ProposalContractingService', () => {
 
       await proposalContractingService.revertLocationVote(proposalId, request.user.miiLocation, request.user);
 
-      expect(validateRevertLocationVote).toHaveBeenCalledWith(proposalDocument, location);
+      expect(validateRevertLocationVote).toHaveBeenCalledWith(proposalDocument, location, request.user);
       expect(revertLocationVote).toHaveBeenCalledWith(
         proposalDocument,
         request.user.miiLocation,
