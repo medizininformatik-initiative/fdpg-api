@@ -3,7 +3,6 @@ import axios, { AxiosInstance } from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { FeasibilityUserQueryDetailDto } from './dto/feasibility-user-query-detail.dto';
 import { FeasibilityClient } from './feasibility.client';
-import { IFeasibilityResultDetailedResponse } from './types/feasibility-result-detailed-response';
 import { IFeasibilityUserQueryDetail } from './types/feasibility-user-query-detail.interface';
 
 @Injectable()
@@ -11,18 +10,12 @@ export class FeasibilityService {
   constructor(private feasibilityClient: FeasibilityClient) {
     this.apiClient = this.feasibilityClient.client;
   }
-  private readonly basePath = 'api/v4/query';
+  private readonly basePath = 'api/v5/query/data';
   private apiClient: AxiosInstance;
 
   async getQueriesByUser(userId: string): Promise<FeasibilityUserQueryDetailDto[]> {
-    const params = {
-      filter: 'saved',
-    };
-
     try {
-      const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`, {
-        params,
-      });
+      const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`);
       return response.data.map((detail) => plainToInstance(FeasibilityUserQueryDetailDto, detail));
     } catch (error) {
       console.log(error);
@@ -47,7 +40,7 @@ export class FeasibilityService {
 
   async getQueryContentById(queryId: number): Promise<any> {
     try {
-      const response = await this.apiClient.get(`${this.basePath}/${queryId}/content`);
+      const response = await this.apiClient.get(`${this.basePath}/${queryId}/crtdl`);
 
       if (response.data !== '' && response.data !== undefined) {
         return response.data;
@@ -57,11 +50,5 @@ export class FeasibilityService {
     } catch (error) {
       return { error: 'Failed to fetch the feasibility', message: JSON.stringify(error) };
     }
-  }
-
-  async getQueryResultById(queryId: number): Promise<IFeasibilityResultDetailedResponse> {
-    // detailed in the path could be removed to get anonym sites
-    const response = await this.apiClient.get(`${this.basePath}/${queryId}/result/detailed`);
-    return response.data;
   }
 }
