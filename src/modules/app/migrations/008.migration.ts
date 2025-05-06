@@ -17,7 +17,7 @@ export class Migration008 implements IDbMigration {
     await this.createEmptyProposalFormVersion(1);
     const mostCurrentVersion = await this.proposalFormService.getCurrentVersion();
     await this.updateProposalsToVersion(mostCurrentVersion);
-    await this.createEmptyProposalFormVersion(2);
+    // await this.createEmptyProposalFormVersion(2);
 
     console.log('Finished migration 008.');
   }

@@ -28,6 +28,7 @@ import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
 import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
+import { Roles } from 'src/shared/decorators/role.decorator';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -164,6 +165,7 @@ export class ProposalMiscController {
     await this.proposalMiscService.setDeadlines(id, dto, user);
   }
 
+  @Auth(Role.Admin, Role.Researcher, Role.FdpgMember, Role.DizMember, Role.UacMember)
   @Get('proposal-form/versions')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Returns a list of all proposal form versions' })
