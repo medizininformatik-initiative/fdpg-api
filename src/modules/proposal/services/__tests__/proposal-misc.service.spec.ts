@@ -36,6 +36,7 @@ import { ProposalTypeOfUse } from '../../enums/proposal-type-of-use.enum';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { DueDateEnum } from '../../enums/due-date.enum';
 import { isDateChangeValid, isDateOrderValid } from '../../utils/due-date-verification.util';
+import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -90,6 +91,7 @@ describe('ProposalMiscService', () => {
   let feasibilityService: jest.Mocked<FeasibilityService>;
   let adminConfigService: jest.Mocked<AdminConfigService>;
   let schedulerService: jest.Mocked<SchedulerService>;
+  let proposalFormService: jest.Mocked<ProposalFormService>;
 
   const request = {
     user: {
@@ -247,6 +249,12 @@ describe('ProposalMiscService', () => {
           provide: SchedulerService,
           useValue: {
             removeAndCreateEventsByChangeList: jest.fn(),
+          },
+        },
+        {
+          provide: ProposalFormService,
+          useValue: {
+            findAll: jest.fn(),
           },
         },
       ],
