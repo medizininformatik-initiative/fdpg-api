@@ -92,7 +92,7 @@ export class ProposalMiscService {
     await this.eventEngineService.handleProposalStatusChange(saveResult);
 
     if (toBeUpdated.status === ProposalStatus.LocationCheck) {
-      this.proposalPdfService.createProposalPdf(saveResult, user);
+      await this.proposalPdfService.createProposalPdf(saveResult, user);
     }
   }
 
