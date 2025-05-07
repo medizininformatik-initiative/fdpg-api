@@ -36,6 +36,7 @@ import { ProposalTypeOfUse } from '../../enums/proposal-type-of-use.enum';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { DueDateEnum } from '../../enums/due-date.enum';
 import { isDateChangeValid, isDateOrderValid } from '../../utils/due-date-verification.util';
+import { ProposalPdfService } from '../proposal-pdf.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -90,6 +91,7 @@ describe('ProposalMiscService', () => {
   let feasibilityService: jest.Mocked<FeasibilityService>;
   let adminConfigService: jest.Mocked<AdminConfigService>;
   let schedulerService: jest.Mocked<SchedulerService>;
+  let proposalPdfService: jest.Mocked<ProposalPdfService>;
 
   const request = {
     user: {
@@ -249,6 +251,12 @@ describe('ProposalMiscService', () => {
             removeAndCreateEventsByChangeList: jest.fn(),
           },
         },
+        {
+          provide: ProposalPdfService,
+          useValue: {
+            createProposalPdf: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -263,6 +271,7 @@ describe('ProposalMiscService', () => {
     schedulerRegistry = module.get<SchedulerRegistry>(SchedulerRegistry) as jest.Mocked<SchedulerRegistry>;
     feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
     schedulerService = module.get<SchedulerService>(SchedulerService) as jest.Mocked<SchedulerService>;
+    proposalPdfService = module.get<ProposalPdfService>(ProposalPdfService) as jest.Mocked<ProposalPdfService>;
   });
 
   it('should be defined', () => {
@@ -339,7 +348,7 @@ describe('ProposalMiscService', () => {
       );
     });
 
-    it('should set status for FdpgCheck and get the feasibility query', async () => {
+    it('should set status for LocationCheck and create the proposal Pdf', async () => {
       const feasibilityId = 'feasibilityId';
       const proposal = getProposalDocument();
       const proposalDocument = {
@@ -355,7 +364,7 @@ describe('ProposalMiscService', () => {
         },
       } as any as ProposalDocument;
 
-      const newStatus = ProposalStatus.FdpgCheck;
+      const newStatus = ProposalStatus.LocationCheck;
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument).mockResolvedValueOnce(proposalDocument);
 
@@ -364,88 +373,38 @@ describe('ProposalMiscService', () => {
 
       const flushPromises = () => new Promise(setImmediate);
       await flushPromises();
-
-      expect(proposalCrudService.findDocument).toHaveBeenCalledTimes(2);
-      expect(feasibilityService.getQueryContentById).toHaveBeenCalledWith(feasibilityId);
-      expect(getBlobName).toHaveBeenCalledWith(proposalId, UseCaseUpload.FeasibilityQuery);
-
-      const expectedFile = expect.objectContaining({
-        originalname: 'Machbarkeits-Anfrage.json',
-        mimetype: SupportedMimetype.Json,
-      });
-      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', expectedFile, request.user);
-    });
-
-    it('should set status for FdpgCheck and get the pdf', async () => {
-      const proposal = getProposalDocument();
-      const proposalDocument = {
-        ...proposal,
-        userProject: {
-          ...proposal.userProject,
-          feasibility: {
-            id: undefined,
-          },
-        },
-        toObject: function () {
-          return JSON.parse(JSON.stringify(this));
-        },
-      } as any as ProposalDocument;
-
-      const newStatus = ProposalStatus.FdpgCheck;
-
-      proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument).mockResolvedValueOnce(proposalDocument);
-
-      await proposalMiscService.setStatus(proposalId, newStatus, request.user);
-      jest.advanceTimersByTime(600);
-
-      const flushPromises = () => new Promise(setImmediate);
-      await flushPromises();
-
-      expect(proposalCrudService.findDocument).toHaveBeenCalledTimes(2);
-
-      const expectedDataPrivacy = [{ headline: 'headlineDE', text: 'textDE' }];
-      expect(pdfEngineService.createProposalPdf).toHaveBeenCalledWith(
-        expect.objectContaining({ projectAbbreviation: proposalDocument.projectAbbreviation }),
-        expectedDataPrivacy,
-      );
-
-      const expectedFile = expect.objectContaining({
-        originalname: `${proposalDocument.projectAbbreviation}_proposal.pdf`,
-        mimetype: SupportedMimetype.Pdf,
-      });
-      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', expectedFile, request.user);
-      expect(addUpload).toHaveBeenCalledWith(proposalDocument, expect.anything());
-    });
-  });
-
-  describe('getPdfProposalFile', () => {
-    it('should call api to generate pdf and return buffer', async () => {
-      const proposal = getProposalDocument();
-      const proposalDocument = {
-        ...proposal,
-        userProject: {
-          ...proposal.userProject,
-          feasibility: {
-            id: undefined,
-          },
-        },
-        toObject: function () {
-          return JSON.parse(JSON.stringify(this));
-        },
-      } as any as ProposalDocument;
-
-      proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument);
-
-      await proposalMiscService.getPdfProposalFile(proposalId, request.user);
 
       expect(proposalCrudService.findDocument).toHaveBeenCalledTimes(1);
+      expect(proposalPdfService.createProposalPdf).toHaveBeenCalledTimes(1);
+    });
 
-      const expectedDataPrivacy = [{ headline: 'headlineDE', text: 'textDE' }];
-      expect(pdfEngineService.createProposalPdf).toHaveBeenCalledWith(
-        expect.objectContaining({ projectAbbreviation: proposalDocument.projectAbbreviation }),
-        expectedDataPrivacy,
-      );
-      expect(pdfEngineService.createProposalPdf).not.toBeUndefined();
+    it('should set status for LocationCheck and get the pdf', async () => {
+      const proposal = getProposalDocument();
+      const proposalDocument = {
+        ...proposal,
+        userProject: {
+          ...proposal.userProject,
+          feasibility: {
+            id: undefined,
+          },
+        },
+        toObject: function () {
+          return JSON.parse(JSON.stringify(this));
+        },
+      } as any as ProposalDocument;
+
+      const newStatus = ProposalStatus.LocationCheck;
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposalDocument).mockResolvedValueOnce(proposalDocument);
+
+      await proposalMiscService.setStatus(proposalId, newStatus, request.user);
+      jest.advanceTimersByTime(600);
+
+      const flushPromises = () => new Promise(setImmediate);
+      await flushPromises();
+
+      expect(proposalCrudService.findDocument).toHaveBeenCalledTimes(1);
+      expect(proposalPdfService.createProposalPdf).toHaveBeenCalledTimes(1);
     });
   });
 
