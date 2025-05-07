@@ -24,6 +24,7 @@ import { GetListProjection } from '../../schema/constants/get-list.projection';
 import { validateMatchingId } from 'src/shared/utils/validate-matching-ids.util';
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../../dto/check-unique-proposal.dto';
+import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 
 class ProposalModel {
   constructor(data) {
@@ -94,6 +95,7 @@ describe('ProposalCrudService', () => {
   let eventEngineService: jest.Mocked<EventEngineService>;
   let sharedService: jest.Mocked<SharedService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
+  let proposalFormService: jest.Mocked<ProposalFormService>;
 
   const request = {
     user: {
@@ -138,6 +140,12 @@ describe('ProposalCrudService', () => {
             handleEffects: jest.fn(),
           },
         },
+        {
+          provide: ProposalFormService,
+          useValue: {
+            getCurrentVersion: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -148,6 +156,7 @@ describe('ProposalCrudService', () => {
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
     sharedService = module.get<SharedService>(SharedService) as jest.Mocked<SharedService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
+    proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
   });
 
   it('should be defined', () => {

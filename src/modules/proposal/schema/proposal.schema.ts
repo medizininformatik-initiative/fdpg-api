@@ -79,6 +79,12 @@ export class Proposal {
   })
   isLocked: boolean;
 
+  @Prop({
+    type: Number,
+    default: 0,
+  })
+  formVersion: number;
+
   @Prop({ type: OwnerSchema })
   owner: Owner;
 

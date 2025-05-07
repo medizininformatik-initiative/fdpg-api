@@ -24,6 +24,7 @@ import { validateProposalAccess } from '../utils/validate-access.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../dto/check-unique-proposal.dto';
 import { Role } from 'src/shared/enums/role.enum';
+import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 
 @Injectable()
 export class ProposalCrudService {
@@ -33,6 +34,7 @@ export class ProposalCrudService {
     private eventEngineService: EventEngineService,
     private sharedService: SharedService,
     private statusChangeService: StatusChangeService,
+    private proposalFormService: ProposalFormService,
   ) {}
 
   async create(createProposalDto: ProposalCreateDto, user: IRequestUser): Promise<ProposalGetDto> {
@@ -41,6 +43,7 @@ export class ProposalCrudService {
     createdProposal.ownerId = user.userId;
     createdProposal.ownerName = user.fullName;
     createdProposal.owner = getOwner(user);
+    createdProposal.formVersion = await this.proposalFormService.getCurrentVersion();
 
     addHistoryItemForStatus(createdProposal, user);
     await this.statusChangeService.handleEffects(createdProposal, null, user);
