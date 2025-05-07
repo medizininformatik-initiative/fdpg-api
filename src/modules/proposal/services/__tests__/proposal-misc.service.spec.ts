@@ -1,13 +1,9 @@
-import { StorageService } from 'src/modules/storage/storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { ProposalCrudService } from '../proposal-crud.service';
 import { StatusChangeService } from '../status-change.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProposalMiscService } from '../proposal-misc.service';
 import { KeycloakService } from 'src/modules/user/keycloak.service';
-import { SchedulerRegistry } from '@nestjs/schedule';
-import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
-import { PdfEngineService } from 'src/modules/pdf-engine/pdf-engine.service';
 import { Role } from 'src/shared/enums/role.enum';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
@@ -22,16 +18,12 @@ import {
 } from '../../utils/proposal-history.util';
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { setImmediate } from 'timers';
-import { addUpload, getBlobName } from '../../utils/proposal.utils';
-import { UseCaseUpload } from '../../enums/upload-type.enum';
-import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { FdpgChecklistSetDto } from '../../dto/proposal/fdpg-checklist.dto';
 import { validateFdpgCheckStatus } from '../../utils/validate-fdpg-check-status.util';
 import { updateFdpgChecklist } from '../../utils/add-fdpg-checklist.util';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { getError } from 'test/get-error';
 import { NotFoundException } from '@nestjs/common';
-import { AdminConfigService } from 'src/modules/admin/admin-config.service';
 import { ProposalTypeOfUse } from '../../enums/proposal-type-of-use.enum';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { DueDateEnum } from '../../enums/due-date.enum';
@@ -57,11 +49,6 @@ jest.mock('../../utils/proposal-history.util', () => ({
   addHistoryItemForChangedDeadline: jest.fn(),
 }));
 
-jest.mock('../../utils/proposal.utils', () => ({
-  addUpload: jest.fn(),
-  getBlobName: jest.fn().mockReturnValue('blobName'),
-}));
-
 jest.mock('../../utils/validate-fdpg-check-status.util', () => ({
   validateFdpgCheckStatus: jest.fn(),
 }));
@@ -84,13 +71,8 @@ describe('ProposalMiscService', () => {
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
-  let storageService: jest.Mocked<StorageService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let keycloakService: jest.Mocked<KeycloakService>;
-  let pdfEngineService: jest.Mocked<PdfEngineService>;
-  let schedulerRegistry: jest.Mocked<SchedulerRegistry>;
-  let feasibilityService: jest.Mocked<FeasibilityService>;
-  let adminConfigService: jest.Mocked<AdminConfigService>;
   let schedulerService: jest.Mocked<SchedulerService>;
   let proposalPdfService: jest.Mocked<ProposalPdfService>;
   let proposalFormService: jest.Mocked<ProposalFormService>;
@@ -170,21 +152,6 @@ describe('ProposalMiscService', () => {
     return proposalDocument as any as ProposalDocument;
   };
 
-  const privacyTextMock = {
-    messages: {
-      [ProposalTypeOfUse.Biosample]: {
-        headline: {
-          de: 'headlineDE',
-          en: 'headlineEN',
-        },
-        text: {
-          de: 'textDE',
-          en: 'textEN',
-        },
-      },
-    },
-  };
-
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -206,12 +173,6 @@ describe('ProposalMiscService', () => {
           },
         },
         {
-          provide: StorageService,
-          useValue: {
-            uploadFile: jest.fn(),
-          },
-        },
-        {
           provide: StatusChangeService,
           useValue: {
             handleEffects: jest.fn(),
@@ -221,30 +182,6 @@ describe('ProposalMiscService', () => {
           provide: KeycloakService,
           useValue: {
             getUsers: jest.fn(),
-          },
-        },
-        {
-          provide: PdfEngineService,
-          useValue: {
-            createProposalPdf: jest.fn().mockResolvedValue('buffer' as any as Buffer),
-          },
-        },
-        {
-          provide: SchedulerRegistry,
-          useValue: {
-            addTimeout: jest.fn(),
-          },
-        },
-        {
-          provide: FeasibilityService,
-          useValue: {
-            getQueryContentById: jest.fn().mockResolvedValue({ content: 'content' }),
-          },
-        },
-        {
-          provide: AdminConfigService,
-          useValue: {
-            getDataPrivacyConfig: jest.fn().mockResolvedValue(privacyTextMock),
           },
         },
         {
@@ -272,12 +209,8 @@ describe('ProposalMiscService', () => {
     proposalMiscService = module.get<ProposalMiscService>(ProposalMiscService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
-    storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
     keycloakService = module.get<KeycloakService>(KeycloakService) as jest.Mocked<KeycloakService>;
-    pdfEngineService = module.get<PdfEngineService>(PdfEngineService) as jest.Mocked<PdfEngineService>;
-    schedulerRegistry = module.get<SchedulerRegistry>(SchedulerRegistry) as jest.Mocked<SchedulerRegistry>;
-    feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
     schedulerService = module.get<SchedulerService>(SchedulerService) as jest.Mocked<SchedulerService>;
     proposalPdfService = module.get<ProposalPdfService>(ProposalPdfService) as jest.Mocked<ProposalPdfService>;
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
