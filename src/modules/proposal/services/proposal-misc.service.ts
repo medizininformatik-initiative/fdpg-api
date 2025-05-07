@@ -25,6 +25,8 @@ import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verificat
 import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { IChecklistItem } from '../dto/proposal/checklist.types';
+import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
+import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
 
 @Injectable()
@@ -36,6 +38,7 @@ export class ProposalMiscService {
     private keycloakService: KeycloakService,
     private schedulerService: SchedulerService,
     private proposalPdfService: ProposalPdfService,
+    private proposalFormService: ProposalFormService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -260,5 +263,9 @@ export class ProposalMiscService {
     );
 
     return deadlines;
+  }
+
+  async getAllProposalFormVersions(): Promise<ProposalFormDto[]> {
+    return await this.proposalFormService.findAll();
   }
 }

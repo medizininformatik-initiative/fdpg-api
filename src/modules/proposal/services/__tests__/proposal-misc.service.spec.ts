@@ -36,6 +36,7 @@ import { ProposalTypeOfUse } from '../../enums/proposal-type-of-use.enum';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { DueDateEnum } from '../../enums/due-date.enum';
 import { isDateChangeValid, isDateOrderValid } from '../../utils/due-date-verification.util';
+import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalPdfService } from '../proposal-pdf.service';
 
 jest.mock('class-transformer', () => {
@@ -92,6 +93,7 @@ describe('ProposalMiscService', () => {
   let adminConfigService: jest.Mocked<AdminConfigService>;
   let schedulerService: jest.Mocked<SchedulerService>;
   let proposalPdfService: jest.Mocked<ProposalPdfService>;
+  let proposalFormService: jest.Mocked<ProposalFormService>;
 
   const request = {
     user: {
@@ -257,6 +259,12 @@ describe('ProposalMiscService', () => {
             createProposalPdf: jest.fn(),
           },
         },
+        {
+          provide: ProposalFormService,
+          useValue: {
+            findAll: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -272,6 +280,7 @@ describe('ProposalMiscService', () => {
     feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
     schedulerService = module.get<SchedulerService>(SchedulerService) as jest.Mocked<SchedulerService>;
     proposalPdfService = module.get<ProposalPdfService>(ProposalPdfService) as jest.Mocked<ProposalPdfService>;
+    proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
   });
 
   it('should be defined', () => {

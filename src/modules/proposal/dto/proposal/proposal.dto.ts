@@ -135,6 +135,9 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Expose()
   isLocked: boolean;
 
+  @Expose()
+  formVersion: number;
+
   @ExposeUpload()
   uploads: UploadGetDto[];
 

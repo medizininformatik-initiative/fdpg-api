@@ -10,6 +10,8 @@ import { Connection } from 'mongoose';
 import { getError } from 'test/get-error';
 import { KeycloakService } from 'src/modules/user/keycloak.service';
 import { DataPrivacyConfigDocument } from 'src/modules/admin/schema/data-privacy/data-privacy-config.schema';
+import { ProposalFormDocument } from 'src/modules/proposal-form/schema/proposal-form.schema';
+import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 
 jest.mock('../migrations');
 
@@ -19,6 +21,8 @@ describe('MigrationService', () => {
   let migrationModel: Model<MigrationDocument>;
   let termsConfigModel: Model<TermsConfigDocument>;
   let dataPrivacyConfigModel: Model<DataPrivacyConfigDocument>;
+  let proposalFormModel: Model<ProposalFormDocument>;
+  let proposalFormService: jest.Mocked<ProposalFormService>;
 
   let migration000: jest.Mocked<Migration000>;
 
@@ -60,6 +64,16 @@ describe('MigrationService', () => {
           provide: KeycloakService,
           useValue: {},
         },
+        {
+          provide: getModelToken('ProposalForm'),
+          useValue: {},
+        },
+        {
+          provide: ProposalFormService,
+          useValue: {
+            getCurrentVersion: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -68,6 +82,8 @@ describe('MigrationService', () => {
     migrationModel = module.get<Model<MigrationDocument>>(getModelToken('Migration'));
     termsConfigModel = module.get<Model<TermsConfigDocument>>(getModelToken('TermsConfig'));
     dataPrivacyConfigModel = module.get<Model<DataPrivacyConfigDocument>>(getModelToken('DataPrivacyConfig'));
+    proposalFormModel = module.get<Model<ProposalFormDocument>>(getModelToken('ProposalForm'));
+    proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
 
     connection = module.get<Connection>(getConnectionToken('Database'));
 
