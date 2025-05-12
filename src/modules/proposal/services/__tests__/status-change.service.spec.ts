@@ -17,6 +17,7 @@ import { removeFdpgTasksForContracting, removeFdpgTasksForDataDelivery } from '.
 import { declineUnansweredContracts } from '../../utils/location-flow.util';
 import { UacApproval } from '../../schema/sub-schema/uac-approval.schema';
 import { initChecklist } from '../../dto/proposal/fdpg-checklist.dto';
+import { ProposalPdfService } from '../proposal-pdf.service';
 
 jest.mock('../../utils/due-date.util', () => ({
   setDueDate: jest.fn(),
@@ -83,6 +84,7 @@ const getProposalDocument = () => {
 
 describe('StatusChangeService', () => {
   let statusChangeService: StatusChangeService;
+  let proposalPdfService: ProposalPdfService;
 
   let schedulerService: jest.Mocked<SchedulerService>;
   beforeEach(async () => {
@@ -98,12 +100,19 @@ describe('StatusChangeService', () => {
             cancelEventsForProposal: jest.fn(),
           },
         },
+        {
+          provide: ProposalPdfService,
+          useValue: {
+            fetchAndGenerateFeasibilityPdf: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
 
     statusChangeService = module.get<StatusChangeService>(StatusChangeService);
     schedulerService = module.get<SchedulerService>(SchedulerService) as jest.Mocked<SchedulerService>;
+    proposalPdfService = module.get<ProposalPdfService>(ProposalPdfService) as jest.Mocked<ProposalPdfService>;
   });
 
   it('should be defined', () => {
@@ -161,6 +170,7 @@ describe('StatusChangeService', () => {
         expect(proposalDocument.fdpgChecklist).toEqual({
           ...initChecklist(),
         });
+        expect(proposalPdfService.fetchAndGenerateFeasibilityPdf).toHaveBeenCalledTimes(1);
       });
     });
 

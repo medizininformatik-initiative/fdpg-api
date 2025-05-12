@@ -14,10 +14,14 @@ import {
   declineUnansweredContracts,
   excludeAllRequestedLocations,
 } from '../utils/location-flow.util';
+import { ProposalPdfService } from './proposal-pdf.service';
 
 @Injectable()
 export class StatusChangeService {
-  constructor(private schedulerService: SchedulerService) {}
+  constructor(
+    private schedulerService: SchedulerService,
+    private proposalPdfService: ProposalPdfService,
+  ) {}
 
   async handleEffects(
     proposalAfterChanges: Proposal,
@@ -47,6 +51,8 @@ export class StatusChangeService {
         proposalAfterChanges.submittedAt = new Date();
 
         scheduleTypesToAdd.push(ScheduleType.ReminderFdpgCheck, ScheduleType.ParticipatingResearcherSummary);
+
+        await this.proposalPdfService.fetchAndGenerateFeasibilityPdf(proposalAfterChanges, user);
         break;
 
       case ProposalStatus.LocationCheck:
