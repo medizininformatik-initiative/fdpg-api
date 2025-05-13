@@ -9,7 +9,9 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
   @IsArray()
   @IsEnum(ProposalTypeOfUse, { each: true })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
+  })
   usage: ProposalTypeOfUse[];
 
   @Expose()

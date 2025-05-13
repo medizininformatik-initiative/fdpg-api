@@ -7,19 +7,19 @@ import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.vali
 export class EthicVoteDto extends WithIdForObjectDto {
   @Expose()
   @IsBoolean()
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   isExisting: boolean;
 
   @Expose()
   @MaxLength(10000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @ValidateIf((ethicVote: EthicVoteDto) => ethicVote.isExisting)
   ethicsCommittee: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @ValidateIf((ethicVote: EthicVoteDto) => ethicVote.isExisting)
   ethicsVoteNumber: string;
 
@@ -27,6 +27,6 @@ export class EthicVoteDto extends WithIdForObjectDto {
   @Type(() => Date)
   @IsDate()
   @ValidateIf((ethicVote: EthicVoteDto) => ethicVote.isExisting)
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   voteFromDate: Date;
 }
