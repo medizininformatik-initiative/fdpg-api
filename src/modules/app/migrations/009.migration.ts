@@ -30,4 +30,16 @@ export class Migration009 implements IDbMigration {
       throw error;
     }
   }
+
+  async down() {
+    console.log('Running migration 009 down: Reverting DIFE data privacy configuration');
+
+    try {
+      await this.dataPrivacyConfigModel.deleteOne({ platform: PlatformIdentifier.DIFE });
+      console.log('Successfully reverted DIFE data privacy configuration');
+    } catch (error) {
+      console.error('Error reverting DIFE data privacy configuration:', error);
+      throw error;
+    }
+  }
 }
