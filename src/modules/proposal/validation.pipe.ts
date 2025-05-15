@@ -8,6 +8,7 @@ import { ProposalValidation } from './enums/porposal-validation.enum';
 import { ProposalStatus } from './enums/proposal-status.enum';
 import { ProposalTypeOfUse } from './enums/proposal-type-of-use.enum';
 import { FileDto } from 'src/shared/dto/file.dto';
+import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
 
 // Attention: Pipe will return the transformed object and not the input value!
 // This might cause stripping out properties and therefore unexpected behavior!
@@ -65,17 +66,21 @@ export class ProposalValidationPipe implements PipeTransform<any> {
     }
 
     // Everything below should be specific to proposals
-
-    if (object.status !== ProposalStatus.Draft) {
-      groups.push(ProposalValidation.IsNotDraft);
-    } else {
+    if (object.status === ProposalStatus.Draft) {
       groups.push(ProposalValidation.IsDraft);
       // If draft, we add no extra validations
       return groups;
     }
 
-    if (object.userProject?.typeOfUse?.usage.includes(ProposalTypeOfUse.Biosample)) {
+    groups.push(ProposalValidation.IsNotDraft);
+
+    if (object.userProject?.typeOfUse?.usage?.includes(ProposalTypeOfUse.Biosample)) {
       groups.push(ProposalValidation.IsBiosampleType);
+    }
+
+    // If DIFE is selected, add DIFE validation group
+    if (object.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
+      groups.push(ProposalValidation.IsDIFEDataSource);
     }
 
     return groups;

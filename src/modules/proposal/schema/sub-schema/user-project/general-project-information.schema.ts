@@ -23,6 +23,12 @@ export class GeneralProjectInformation {
   @Prop()
   desiredStartTimeType: string;
 
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  keywords: string[];
+
   _id: string;
 
   @Prop({

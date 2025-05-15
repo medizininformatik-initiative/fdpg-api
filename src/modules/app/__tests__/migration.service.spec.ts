@@ -1,30 +1,38 @@
 import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
-import { TermsConfigDocument } from 'src/modules/admin/schema/terms/terms-config.schema';
 import { AppDbIdentifier } from '../enums/app-db-identifier.enum';
 import { MigrationService } from '../migration.service';
-import { Migration000 } from '../migrations';
 import { Migration, MigrationDocument } from '../schema/migration.schema';
 import { Connection } from 'mongoose';
-import { getError } from 'test/get-error';
 import { KeycloakService } from 'src/modules/user/keycloak.service';
-import { DataPrivacyConfigDocument } from 'src/modules/admin/schema/data-privacy/data-privacy-config.schema';
-import { ProposalFormDocument } from 'src/modules/proposal-form/schema/proposal-form.schema';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 
-jest.mock('../migrations');
+const mockMigration000 = {
+  up: jest.fn(),
+  down: jest.fn(),
+};
+
+jest.mock('../migrations', () => ({
+  Migration000: jest.fn().mockImplementation(() => mockMigration000),
+  Migration007: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
+  Migration008: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
+  Migration009: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
+}));
 
 describe('MigrationService', () => {
   let service: MigrationService;
   let connection: Connection;
   let migrationModel: Model<MigrationDocument>;
-  let termsConfigModel: Model<TermsConfigDocument>;
-  let dataPrivacyConfigModel: Model<DataPrivacyConfigDocument>;
-  let proposalFormModel: Model<ProposalFormDocument>;
-  let proposalFormService: jest.Mocked<ProposalFormService>;
-
-  let migration000: jest.Mocked<Migration000>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -80,18 +88,8 @@ describe('MigrationService', () => {
 
     service = module.get<MigrationService>(MigrationService);
     migrationModel = module.get<Model<MigrationDocument>>(getModelToken('Migration'));
-    termsConfigModel = module.get<Model<TermsConfigDocument>>(getModelToken('TermsConfig'));
-    dataPrivacyConfigModel = module.get<Model<DataPrivacyConfigDocument>>(getModelToken('DataPrivacyConfig'));
-    proposalFormModel = module.get<Model<ProposalFormDocument>>(getModelToken('ProposalForm'));
-    proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
-
     connection = module.get<Connection>(getConnectionToken('Database'));
 
-    migration000 = new Migration000(
-      migrationModel,
-      termsConfigModel,
-      dataPrivacyConfigModel,
-    ) as jest.Mocked<Migration000>;
     jest.clearAllMocks();
   });
 
@@ -114,7 +112,7 @@ describe('MigrationService', () => {
       await service.onModuleInit();
 
       expect(migrationModel.findOne).toHaveBeenCalledWith({ id: AppDbIdentifier.Migration });
-      expect(migration000.up).toHaveBeenCalledTimes(1);
+      expect(mockMigration000.up).toHaveBeenCalledTimes(1);
     });
 
     it('should upgrade the db', async () => {
@@ -132,7 +130,7 @@ describe('MigrationService', () => {
       await service.onModuleInit();
 
       expect(migrationModel.findOne).toHaveBeenCalledWith({ id: AppDbIdentifier.Migration });
-      expect(migration000.up).not.toHaveBeenCalled();
+      expect(mockMigration000.up).not.toHaveBeenCalled();
     });
 
     test.each([true, false])('should downgrade the db if desired', async (preventDowngrade: boolean) => {
@@ -151,9 +149,10 @@ describe('MigrationService', () => {
       await service.onModuleInit();
 
       expect(migrationModel.findOne).toHaveBeenCalledWith({ id: AppDbIdentifier.Migration });
-      expect(migration000.up).not.toHaveBeenCalled();
+      expect(mockMigration000.up).not.toHaveBeenCalled();
     });
   });
+
   describe('DB Sessions', () => {
     it('should start and end a session', async () => {
       (service as any).desiredDbVersion = 0;
@@ -204,14 +203,12 @@ describe('MigrationService', () => {
         abortTransaction,
       } as any);
 
-      const call = service.onModuleInit();
-      const error = await getError(async () => await call);
+      await expect(service.onModuleInit()).rejects.toBe('Error');
 
-      expect(error).toBeDefined();
       expect(connection.startSession).toBeCalledTimes(1);
       expect(startTransaction).toBeCalledTimes(1);
-      expect(endSession).toBeCalledTimes(1);
       expect(abortTransaction).toBeCalledTimes(1);
+      expect(endSession).toBeCalledTimes(1);
     });
   });
 });

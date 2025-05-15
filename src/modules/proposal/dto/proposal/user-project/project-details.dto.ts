@@ -7,32 +7,33 @@ import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.vali
 
 export class ProjectDetailsDto extends WithIdForObjectDto {
   @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   simpleProjectDescription: string;
 
   @Expose()
   @IsArray()
   @IsEnum(Department, { each: true })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   department: Department[];
 
   @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   scientificBackground: string;
 
   @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   hypothesisAndQuestionProjectGoals: string;
 
   @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   materialAndMethods: string;
 
   @Expose()

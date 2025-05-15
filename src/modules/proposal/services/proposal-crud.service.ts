@@ -25,6 +25,8 @@ import { validateStatusChange } from '../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../dto/check-unique-proposal.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
+import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
+import { generateDataSourceLocaleId } from '../utils/generate-data-source-locale-id.util';
 
 @Injectable()
 export class ProposalCrudService {
@@ -44,6 +46,11 @@ export class ProposalCrudService {
     createdProposal.ownerName = user.fullName;
     createdProposal.owner = getOwner(user);
     createdProposal.formVersion = await this.proposalFormService.getCurrentVersion();
+
+    // Generate DIFE ID if DIFE is selected as a data source
+    if (createdProposal.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
+      createdProposal.dataSourceLocaleId = await generateDataSourceLocaleId(this.proposalModel);
+    }
 
     addHistoryItemForStatus(createdProposal, user);
     await this.statusChangeService.handleEffects(createdProposal, null, user);

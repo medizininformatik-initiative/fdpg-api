@@ -1,6 +1,7 @@
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ProposalTypeOfUse } from '../../../enums/proposal-type-of-use.enum';
+import { DIFEProposalTypeOfUse } from '../../../enums/proposal-type-of-use.enum';
 
 export type TypeOfUseDocument = TypeOfUse & Document;
 
@@ -8,6 +9,9 @@ export type TypeOfUseDocument = TypeOfUse & Document;
 export class TypeOfUse {
   @Prop([String])
   usage: ProposalTypeOfUse[];
+
+  @Prop([String])
+  difeUsage: DIFEProposalTypeOfUse[];
 
   @Prop()
   dataPrivacyExtra?: string;
