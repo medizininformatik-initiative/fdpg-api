@@ -9,3 +9,9 @@ export enum DIFEProposalTypeOfUse {
   EXTERNAL_SR = 'EXTERNAL_SR',
   INTERNAL_SR = 'INTERNAL_SR',
 }
+
+export enum PseudonymizationInfoOptions {
+  enableRecordLinkage = 'enableRecordLinkage',
+  siteGroupingEnabled = 'siteGroupingEnabled',
+  namedSiteVariable = 'namedSiteVariable',
+}
