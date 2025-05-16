@@ -24,6 +24,12 @@ export class TypeOfUse {
   @Prop([String])
   pseudonymizationInfo: PseudonymizationInfoOptions[];
 
+  @Prop({
+    type: Object,
+    of: String,
+  })
+  pseudonymizationInfoTexts: Record<PseudonymizationInfoOptions, string>;
+
   _id: string;
 
   @Prop({

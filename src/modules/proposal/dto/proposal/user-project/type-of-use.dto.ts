@@ -8,6 +8,7 @@ import {
 } from 'src/modules/proposal/enums/proposal-type-of-use.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
+import { Transform } from 'class-transformer';
 
 export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
@@ -43,6 +44,19 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
   @IsArray()
   @IsEnum(PseudonymizationInfoOptions, { each: true })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
+  })
   pseudonymizationInfo: PseudonymizationInfoOptions[];
+
+  @Expose()
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
+  })
+  @Transform(({ value }) => ({
+    [PseudonymizationInfoOptions.enableRecordLinkage]: value?.[PseudonymizationInfoOptions.enableRecordLinkage] ?? '',
+    [PseudonymizationInfoOptions.siteGroupingEnabled]: value?.[PseudonymizationInfoOptions.siteGroupingEnabled] ?? '',
+    [PseudonymizationInfoOptions.namedSiteVariable]: value?.[PseudonymizationInfoOptions.namedSiteVariable] ?? '',
+  }))
+  pseudonymizationInfoTexts: Record<PseudonymizationInfoOptions, string>;
 }
