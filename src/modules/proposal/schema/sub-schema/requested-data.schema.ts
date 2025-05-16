@@ -14,6 +14,9 @@ export class RequestedData {
   @Prop()
   desiredDataAmount: number;
 
+  @Prop()
+  desiredControlDataAmount: number;
+
   _id: string;
 
   @Prop({
