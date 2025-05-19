@@ -86,6 +86,17 @@ export const mergeProposal = (dbItem: ProposalDocument, apiItem: ProposalUpdateD
     dbItem.markModified('userProject.variableSelection');
   }
 
+  if (
+    !!dbItem.userProject?.typeOfUse?.pseudonymizationInfoTexts &&
+    !!apiItem.userProject?.typeOfUse?.pseudonymizationInfoTexts &&
+    !isDeepStrictEqual(
+      dbItem.userProject?.typeOfUse?.pseudonymizationInfoTexts,
+      apiItem.userProject?.typeOfUse?.pseudonymizationInfoTexts,
+    )
+  ) {
+    dbItem.markModified('userProject.typeOfUse.pseudonymizationInfoTexts');
+  }
+
   mergeDeep(dbItem, apiItem);
 
   if (dbItem.modifiedPaths().length) {
