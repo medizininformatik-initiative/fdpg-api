@@ -17,6 +17,7 @@ export interface IBaseKeycloakUser {
     MII_LOCATION?: MiiLocation[];
     terms_and_conditions?: string[];
     affiliation?: string[];
+    assignedDataSources?: any;
     salutation?: Salutation[];
     userVerificationHint?: string[];
     title?: string[];

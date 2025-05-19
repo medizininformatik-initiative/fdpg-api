@@ -12,6 +12,12 @@ export const convertUserToGroups = (user: IRequestUser): string[] => {
     groups.push(`${SharedValidationGroup.UserLocation}_${user.miiLocation}`);
   }
 
+  if (user.assignedDataSources) {
+    user.assignedDataSources.forEach((dataSource) =>
+      groups.push(`${SharedValidationGroup.UserDataSource}_${dataSource}`),
+    );
+  }
+
   return groups;
 };
 

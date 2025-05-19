@@ -39,6 +39,7 @@ import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups

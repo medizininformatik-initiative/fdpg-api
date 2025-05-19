@@ -6,6 +6,7 @@ import { ALL_LOCATIONS, INACTIVE_LOCATIONS } from 'src/shared/constants/mii-loca
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { JwksProvider } from './jwks.provider';
+import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -25,11 +26,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(req: Request, payload: any): Promise<IRequestUser> {
     // Validation is performed in jwt-auth.guard.ts
+
     const roles = payload.realm_access?.roles ?? [];
     const singleKnownRole = roles.find((role) => role === req.headers['x-selected-role']);
     const isFromLocation = singleKnownRole === Role.DizMember || singleKnownRole === Role.UacMember;
     const isKnownLocation = ALL_LOCATIONS.includes(payload.MII_LOCATION);
     const isInactiveLocation = INACTIVE_LOCATIONS.includes(payload.MII_LOCATION);
+
+    const assignedDataSources: PlatformIdentifier[] = (payload.assignedDataSources?.split(';') ?? [])
+      .map((raw) => raw.trim()) // strip whitespace
+      .filter(Boolean) // drop empty tokens
+      .map((token) => token.toUpperCase()) // normalize
+      .map((upper) => {
+        // find matching key…
+        const key = (Object.keys(PlatformIdentifier) as Array<keyof typeof PlatformIdentifier>).find(
+          (k) => k.toUpperCase() === upper,
+        );
+        return key ? PlatformIdentifier[key] : undefined; // …and map to the enum value
+      })
+      .filter((val): val is PlatformIdentifier => Boolean(val)); // drop non-matches
+
+    if (singleKnownRole === Role.FdpgMember && !assignedDataSources.includes(PlatformIdentifier.Mii)) {
+      assignedDataSources.push(PlatformIdentifier.Mii);
+    }
 
     return {
       userId: payload.sub,
@@ -45,6 +64,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       isFromLocation,
       isKnownLocation,
       isInactiveLocation,
+      assignedDataSources,
     };
   }
 }
