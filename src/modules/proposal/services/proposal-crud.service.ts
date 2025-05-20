@@ -102,6 +102,7 @@ export class ProposalCrudService {
       dbProjection.owner = 1;
       dbProjection.participants = 1;
       dbProjection.deadlines = 1;
+      dbProjection.selectedDataSources = 1;
     }
     const proposal = await this.proposalModel.findById(proposalId, dbProjection);
 
