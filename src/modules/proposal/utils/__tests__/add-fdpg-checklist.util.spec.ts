@@ -5,7 +5,6 @@ import { updateFdpgChecklist } from '../add-fdpg-checklist.util';
 
 describe('updateFdpgChecklist', () => {
   const proposalId = 'proposalId';
-  const mockUser = 'test-user';
   const mockDate = new Date('2025-03-12T14:20:38.502Z');
 
   beforeEach(() => {
@@ -42,7 +41,7 @@ describe('updateFdpgChecklist', () => {
       fdpgInternalCheckNotes: null,
     } as FdpgChecklistUpdateDto;
 
-    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto, mockUser);
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto);
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
@@ -61,7 +60,7 @@ describe('updateFdpgChecklist', () => {
       fdpgInternalCheckNotes: null,
     } as FdpgChecklistUpdateDto;
 
-    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto, mockUser);
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto);
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
@@ -71,26 +70,22 @@ describe('updateFdpgChecklist', () => {
     });
   });
 
-  it('should update internal check notes with user and date', () => {
+  it('should update internal check notes with trimmed string', () => {
     const proposal = getProposalDocument();
-    const note = { note: 'test note' };
+    const note = 'test note';
     const fdpgChecklistUpdateDto = {
       isRegistrationLinkSent: false,
       fdpgInternalCheckNotes: note,
     } as FdpgChecklistUpdateDto;
 
-    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto, mockUser);
+    updateFdpgChecklist(proposal, fdpgChecklistUpdateDto);
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
       isUnique: true,
       isAttachmentsChecked: true,
       isChecked: true,
-      fdpgInternalCheckNotes: {
-        ...note,
-        date: mockDate,
-        user: mockUser,
-      },
+      fdpgInternalCheckNotes: note,
     });
   });
 });

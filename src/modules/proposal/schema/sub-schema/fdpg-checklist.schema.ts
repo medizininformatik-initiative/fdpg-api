@@ -32,14 +32,10 @@ export class FdpgChecklist {
   checkListVerification: IChecklistItem[] = DEFAULT_CHECKLIST_ITEMS;
 
   @Prop({
-    type: {
-      date: { type: Date, required: false },
-      user: { type: String, required: false },
-      note: { type: String, required: false },
-    },
+    type: String,
     default: null,
   })
-  fdpgInternalCheckNotes: { date?: Date; user?: string; note?: string } | null = null;
+  fdpgInternalCheckNotes: string = null;
 
   @Prop({
     type: [{ ...checklistItemSchema, sublist: [checklistItemSchema] }],
