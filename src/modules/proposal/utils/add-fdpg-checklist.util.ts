@@ -18,7 +18,7 @@ export const updateFdpgChecklist = (proposal: Proposal, checklistUpdate: FdpgChe
   }
 
   if (checklistUpdate.fdpgInternalCheckNotes !== undefined) {
-    proposal.fdpgChecklist.fdpgInternalCheckNotes = checklistUpdate.fdpgInternalCheckNotes.trim();
+    proposal.fdpgChecklist.fdpgInternalCheckNotes = checklistUpdate.fdpgInternalCheckNotes?.trim() ?? null;
   }
 
   if (!checklistUpdate._id) {

@@ -39,3 +39,5 @@ export class Migration010 implements IDbMigration {
     // No down migration needed as we're converting to a simpler type
   }
 }
+
+export default Migration010;

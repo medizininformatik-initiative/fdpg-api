@@ -404,7 +404,7 @@ describe('ProposalMiscService', () => {
 
       await proposalMiscService.setFdpgChecklist(proposalId, checklist, request.user);
 
-      expect(updateFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist, request.user.fullName);
+      expect(updateFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist);
       expect(proposalDocument.save).toBeCalled();
     });
   });
