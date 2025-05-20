@@ -5,7 +5,7 @@ import { Role } from '../enums/role.enum';
 
 export function ExposeForDataSources(
   allowedDataSources: PlatformIdentifier[],
-  restrictedForRoles = [Role.FdpgMember, Role.DataSourceMember, Role.UacMember, Role.DizMember],
+  restrictedForRoles = [Role.FdpgMember, Role.DataSourceMember],
 ) {
   return Transform(
     ({ value, options }: TransformFnParams) => {

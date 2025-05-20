@@ -84,7 +84,7 @@ export class ProposalContractingController {
     return await this.proposalContractingService.dizConditionApproval(id, vote, user);
   }
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Post(':id/revertLocationVote')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -100,7 +100,7 @@ export class ProposalContractingController {
     return await this.proposalContractingService.revertLocationVote(id, location, user);
   }
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/init-contracting')
   @UsePipes(ValidationPipe)
   @UseInterceptors(FileInterceptor('file', createMulterOptions()))
@@ -139,7 +139,7 @@ export class ProposalContractingController {
   }
 
   @Put(':mainId/uacApproval/:subId/isAccepted')
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiOperation({ summary: 'Updates the isAccepted field of an approval condition' })

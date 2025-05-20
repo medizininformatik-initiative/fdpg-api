@@ -215,7 +215,7 @@ export class ProposalMiscService {
     }
 
     // Ensure only FdpgMember can modify deadlines
-    if (!user.roles.includes(Role.FdpgMember)) {
+    if (!user.roles.includes(Role.FdpgMember) || !user.roles.includes(Role.DataSourceMember)) {
       throw new ForbiddenException('You do not have permission to modify deadlines');
     }
 

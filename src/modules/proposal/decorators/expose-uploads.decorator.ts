@@ -33,7 +33,11 @@ export const ExposeUpload = () => (target: object, propertyKey: string) => {
 };
 
 const checkAccessForUser = (user: PartialUser, upload: UploadDto): boolean => {
-  if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.Researcher) {
+  if (
+    user.singleKnownRole === Role.FdpgMember ||
+    user.singleKnownRole === Role.DataSourceMember ||
+    user.singleKnownRole === Role.Researcher
+  ) {
     return true;
   }
 

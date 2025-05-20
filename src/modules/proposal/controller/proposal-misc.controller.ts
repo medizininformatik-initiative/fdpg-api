@@ -28,13 +28,12 @@ import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
 import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
-import { Roles } from 'src/shared/decorators/role.decorator';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
   constructor(private readonly proposalMiscService: ProposalMiscService) {}
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Get(':id/researcherInfo')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiOperation({ summary: 'Gets participating researcher info by proposal id' })
@@ -46,7 +45,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getResearcherInfo(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Put(':id/status')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -61,7 +60,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.setStatus(id, value, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Get(':id/proposalPdfFile')
   @ApiNotFoundResponse({ description: 'Proposal file could not be created' })
   @HttpCode(200)
@@ -74,7 +73,7 @@ export class ProposalMiscController {
     return new StreamableFile(buffer);
   }
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/isLocked')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -89,7 +88,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.setIsLockedStatus(id, value, user);
   }
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/fdpg-checklist')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -103,7 +102,7 @@ export class ProposalMiscController {
   }
 
   @Put(':mainId/:subId/isDone')
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @ApiNoContentResponse({ description: 'Item successfully marked as done. No content returns.' })
   @HttpCode(204)
   @ProposalValidation()
@@ -116,7 +115,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.markSectionAsDone(mainId, subId, value, user);
   }
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/fdpgCheckNotes')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiNoContentResponse({ description: 'General Text successfully updated.' })
@@ -147,7 +146,7 @@ export class ProposalMiscController {
     return this.proposalMiscService.updateAdditionalInformationForLocation(id, additionalLocationInformation, user);
   }
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/deadlines')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiNoContentResponse({ description: 'Deadlines successfully updated.' })
@@ -165,7 +164,7 @@ export class ProposalMiscController {
     await this.proposalMiscService.setDeadlines(id, dto, user);
   }
 
-  @Auth(Role.Admin, Role.Researcher, Role.FdpgMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Admin, Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Get('proposal-form/versions')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Returns a list of all proposal form versions' })

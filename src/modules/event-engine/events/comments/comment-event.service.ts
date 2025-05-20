@@ -180,14 +180,14 @@ export class CommentEventService {
         return await this.handleProposalTaskCreationForFdpg(proposal, comment, proposalUrl);
 
       case CommentType.ProposalMessageToLocation:
-        if (user.singleKnownRole === Role.FdpgMember) {
+        if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember) {
           return await this.handleProposalMessageToLocationCreation(proposal, comment, proposalUrl);
         } else {
           return await this.handleProposalMessageToFdpgCreation(proposal, comment, proposalUrl);
         }
 
       case CommentType.ProposalMessageToOwner:
-        if (user.singleKnownRole === Role.FdpgMember) {
+        if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember) {
           return await this.handleProposalMessageToOwnerCreation(proposal, comment, proposalUrl);
         } else {
           return await this.handleProposalMessageToFdpgCreation(proposal, comment, proposalUrl);
@@ -199,12 +199,13 @@ export class CommentEventService {
     if (
       comment.type === CommentType.ProposalTask &&
       user.singleKnownRole !== Role.FdpgMember &&
+      user.singleKnownRole !== Role.DataSourceMember &&
       !this.PREVENT_TASK_COMPLETED_BY_OWNER
     ) {
       await this.handleProposalTaskCompletedByOwner(proposal, comment, proposalUrl);
     } else if (
       comment.type === CommentType.ProposalTaskFdpg &&
-      user.singleKnownRole === Role.FdpgMember &&
+      (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) &&
       !this.PREVENT_TASK_COMPLETED_BY_FDPG
     ) {
       await this.handleProposalTaskCompletedByFdpg(proposal, comment, proposalUrl);

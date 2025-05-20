@@ -138,14 +138,14 @@ export class CommentAnswerEventService {
   ): Promise<void> {
     switch (comment.type) {
       case CommentType.ProposalMessageToLocation:
-        if (user.singleKnownRole === Role.FdpgMember) {
+        if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember) {
           return await this.handleProposalMessageToLocationCreation(proposal, comment, answer, proposalUrl);
         } else {
           return await this.handleProposalMessageToFdpgCreation(proposal, comment, answer, proposalUrl);
         }
 
       case CommentType.ProposalMessageToOwner:
-        if (user.singleKnownRole === Role.FdpgMember) {
+        if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember) {
           return await this.handleProposalMessageToOwnerCreation(proposal, comment, answer, proposalUrl);
         } else {
           return await this.handleProposalMessageToFdpgCreation(proposal, comment, answer, proposalUrl);

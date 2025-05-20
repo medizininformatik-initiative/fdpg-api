@@ -65,7 +65,7 @@ export class CommentGetDto extends CommentBaseDto {
   @Expose()
   owner: CommentOwnerDto;
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
   locations?: MiiLocation[];
 
   @Expose()

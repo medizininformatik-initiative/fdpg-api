@@ -49,7 +49,7 @@ export class AnswerGetDto extends AnswerBaseDto {
   @Expose()
   owner: CommentOwnerDto;
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
   locations?: MiiLocation[];
 
   @Expose()

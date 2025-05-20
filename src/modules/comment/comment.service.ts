@@ -32,12 +32,16 @@ export class CommentService {
     private eventEngineService: EventEngineService,
   ) {}
 
+  private hasFdpgLevelPermissions(role: Role): boolean {
+    return role === Role.FdpgMember || role === Role.DataSourceMember;
+  }
+
   async create(
     createCommentDto: CommentCreateDto,
     reference: CommentCreateReferenceDto,
     user: IRequestUser,
   ): Promise<CommentGetDto> {
-    const isFdpgMember = user.singleKnownRole === Role.FdpgMember;
+    const isFdpgMember = this.hasFdpgLevelPermissions(user.singleKnownRole);
     const isMessage =
       createCommentDto.type === CommentType.ProposalMessageToOwner ||
       createCommentDto.type === CommentType.ProposalMessageToLocation;
@@ -97,7 +101,7 @@ export class CommentService {
     answerModel.owner = getOwner(user);
 
     // Only FDPG Members should set locations
-    if (user.singleKnownRole !== Role.FdpgMember) {
+    if (!this.hasFdpgLevelPermissions(user.singleKnownRole)) {
       answerModel.locations = user.miiLocation ? [user.miiLocation] : [];
     }
 
@@ -106,7 +110,7 @@ export class CommentService {
       proposal = await this.proposalCrudService.findDocument(mainComment.referenceDocumentId, user);
       answerModel.versionOfItem = proposal.version;
 
-      if (mainComment.owner.role === Role.FdpgMember) {
+      if (this.hasFdpgLevelPermissions(mainComment.owner.role)) {
         answerModel.fdpgTaskId = addFdpgTaskAndReturnId(proposal, FdpgTaskType.Comment);
         await proposal.save();
       }
@@ -115,7 +119,7 @@ export class CommentService {
     mainComment.answers.push(answerModel);
 
     // FDPG Members could change visibility of initial question by answering
-    if (user.singleKnownRole === Role.FdpgMember) {
+    if (this.hasFdpgLevelPermissions(user.singleKnownRole)) {
       mainComment.locations = getAnswersLocations(mainComment);
     }
 
@@ -197,7 +201,7 @@ export class CommentService {
     const mainComment = await this.findDocument(commentId);
 
     if (
-      !(mainComment.owner.role === Role.FdpgMember && user.singleKnownRole === Role.FdpgMember) &&
+      !(this.hasFdpgLevelPermissions(mainComment.owner.role) && this.hasFdpgLevelPermissions(user.singleKnownRole)) &&
       mainComment.owner.id !== user.userId
     ) {
       throw new ForbiddenException();
@@ -205,7 +209,7 @@ export class CommentService {
 
     mainComment.content = updateCommentDto.content;
 
-    if (user.singleKnownRole === Role.FdpgMember) {
+    if (this.hasFdpgLevelPermissions(user.singleKnownRole)) {
       mainComment.locations = updateCommentDto.locations;
     }
 
@@ -226,7 +230,7 @@ export class CommentService {
     const { answer } = getAnswer(mainComment, answerId);
 
     if (
-      !(answer.owner.role === Role.FdpgMember && user.singleKnownRole === Role.FdpgMember) &&
+      !(this.hasFdpgLevelPermissions(answer.owner.role) && this.hasFdpgLevelPermissions(user.singleKnownRole)) &&
       answer.owner.id !== user.userId
     ) {
       throw new ForbiddenException();
@@ -234,7 +238,7 @@ export class CommentService {
 
     answer.content = updateAnswerDto.content;
 
-    if (user.singleKnownRole === Role.FdpgMember) {
+    if (this.hasFdpgLevelPermissions(user.singleKnownRole)) {
       answer.locations = updateAnswerDto.locations;
       mainComment.locations = getAnswersLocations(mainComment);
     }
@@ -249,7 +253,7 @@ export class CommentService {
   async deleteComment(commentId: string, user: IRequestUser): Promise<void> {
     const mainComment = await this.findDocument(commentId);
 
-    if (mainComment.owner.id === user.userId || user.singleKnownRole === Role.FdpgMember) {
+    if (mainComment.owner.id === user.userId || this.hasFdpgLevelPermissions(user.singleKnownRole)) {
       if (mainComment.referenceType === ReferenceType.Proposal) {
         const proposal = await this.proposalCrudService.findDocument(mainComment.referenceDocumentId, user);
         const fdpgTaskIds = [
@@ -294,9 +298,9 @@ export class CommentService {
   async deleteAnswer(commentId: string, answerId: string, user: IRequestUser): Promise<CommentGetDto> {
     const mainComment = await this.findDocument(commentId);
     const { answer, answerIndex } = getAnswer(mainComment, answerId);
-    const isFdpgAnswer = answer.owner.role === Role.FdpgMember;
+    const isFdpgAnswer = this.hasFdpgLevelPermissions(answer.owner.role);
 
-    if (answer.owner.id !== user.userId && user.singleKnownRole !== Role.FdpgMember) {
+    if (answer.owner.id !== user.userId && !this.hasFdpgLevelPermissions(user.singleKnownRole)) {
       throw new ForbiddenException();
     }
 

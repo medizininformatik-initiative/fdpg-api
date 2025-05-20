@@ -54,7 +54,7 @@ export class ProposalReportController {
     return this.proposalReportService.createReport(id, reportCreateDto, files, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Get(':id/reports')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -63,7 +63,7 @@ export class ProposalReportController {
     return this.proposalReportService.getAllReports(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Get(':mainId/reports/:subId/content')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })

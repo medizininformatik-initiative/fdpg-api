@@ -63,7 +63,7 @@ export const validateRevertLocationVote = (proposal: Proposal, location: MiiLoca
     throw new ValidationException([errorInfo]);
   }
 
-  if (user.singleKnownRole !== Role.FdpgMember) {
+  if (user.singleKnownRole !== Role.FdpgMember && user.singleKnownRole !== Role.DataSourceMember) {
     throw new ForbiddenException('Only FDPG Members are allowed to revert a vote');
   }
 

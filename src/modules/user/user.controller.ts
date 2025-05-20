@@ -12,7 +12,7 @@ import { ResendInvitationDto } from './dto/resend-invitation.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { KeycloakService } from './keycloak.service';
 
-@Auth(Role.FdpgMember, Role.Admin)
+@Auth(Role.FdpgMember, Role.DataSourceMember, Role.Admin)
 @ApiController('users')
 @UserValidation()
 export class UserController {
@@ -25,7 +25,7 @@ export class UserController {
     return await this.keycloakService.createUser(user);
   }
 
-  @Auth(Role.FdpgMember, Role.Admin, Role.Researcher, Role.DizMember, Role.UacMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember, Role.Admin, Role.Researcher, Role.DizMember, Role.UacMember)
   @Put(':id')
   @ApiOperation({ summary: 'Updates the user profile' })
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -48,7 +48,7 @@ export class UserController {
     return await this.keycloakService.resendInvitation(resendInvitationDto);
   }
 
-  @Auth(Role.FdpgMember, Role.Admin, Role.Researcher, Role.DizMember, Role.UacMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember, Role.Admin, Role.Researcher, Role.DizMember, Role.UacMember)
   @Put(':id/password-reset')
   @ApiOperation({ summary: 'Sends a password change notification via email to the user' })
   @ApiNotFoundResponse({ description: 'Item could not be found' })

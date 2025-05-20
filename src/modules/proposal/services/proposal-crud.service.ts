@@ -115,6 +115,7 @@ export class ProposalCrudService {
 
   async find(proposalId: string, user: IRequestUser): Promise<ProposalGetDto> {
     const document = await this.findDocument(proposalId, user);
+
     const plain = document.toObject();
     this.addParticipatingScientistIndicator(plain, user);
     const userGroups = convertUserToGroups(user);

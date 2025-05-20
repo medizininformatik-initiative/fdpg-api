@@ -11,7 +11,7 @@ export const validateIsDoneAccess = (commentType: CommentType, userRole: Role): 
     commentType === CommentType.ProposalMessageToLocation || commentType === CommentType.ProposalMessageToOwner;
 
   /** Comments */
-  if (isCommentType && userRole !== Role.FdpgMember) {
+  if (isCommentType && userRole !== Role.FdpgMember && userRole !== Role.DataSourceMember) {
     throw new ForbiddenException();
   }
 
@@ -20,7 +20,11 @@ export const validateIsDoneAccess = (commentType: CommentType, userRole: Role): 
     throw new ForbiddenException();
   }
 
-  if (commentType === CommentType.ProposalTaskFdpg && userRole !== Role.FdpgMember) {
+  if (
+    commentType === CommentType.ProposalTaskFdpg &&
+    userRole !== Role.FdpgMember &&
+    userRole !== Role.DataSourceMember
+  ) {
     throw new ForbiddenException();
   }
 };

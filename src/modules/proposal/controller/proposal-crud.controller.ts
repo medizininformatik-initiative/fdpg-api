@@ -39,7 +39,7 @@ export class ProposalCrudController {
     return await this.proposalCrudService.create(createProposalDto, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Get(':id')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiOperation({ summary: 'Gets a Proposal by its id' })
@@ -48,7 +48,7 @@ export class ProposalCrudController {
     return await this.proposalCrudService.find(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Get()
   @ApiOperation({ summary: 'Gets all Proposals that are currently accessible for the user' })
   @UsePipes(ValidationPipe)
@@ -73,7 +73,7 @@ export class ProposalCrudController {
     return this.proposalCrudService.update(id, updateProposalDto, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Delete(':id')
   @ApiNoContentResponse({ description: 'Item successfully deleted. No content returns.' })
   @HttpCode(204)
@@ -92,7 +92,7 @@ export class ProposalCrudController {
     return await this.proposalCrudService.duplicate(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Post('is-unique')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Checks if the provided projectAbbreviation is unique' })
