@@ -2,11 +2,7 @@ import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { Proposal } from '../schema/proposal.schema';
 import { initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 
-export const updateFdpgChecklist = (
-  proposal: Proposal,
-  checklistUpdate: FdpgChecklistUpdateDto,
-  requestUser: string,
-) => {
+export const updateFdpgChecklist = (proposal: Proposal, checklistUpdate: FdpgChecklistUpdateDto) => {
   if (!proposal || !checklistUpdate) {
     return;
   }
@@ -22,24 +18,7 @@ export const updateFdpgChecklist = (
   }
 
   if (checklistUpdate.fdpgInternalCheckNotes !== undefined) {
-    if (checklistUpdate.fdpgInternalCheckNotes === null) {
-      proposal.fdpgChecklist.fdpgInternalCheckNotes = null;
-    } else {
-      const newNote = {
-        ...checklistUpdate.fdpgInternalCheckNotes,
-        date: new Date(),
-        user: requestUser,
-      };
-
-      if (proposal.fdpgChecklist.fdpgInternalCheckNotes) {
-        proposal.fdpgChecklist.fdpgInternalCheckNotes = {
-          ...proposal.fdpgChecklist.fdpgInternalCheckNotes,
-          ...newNote,
-        };
-      } else {
-        proposal.fdpgChecklist.fdpgInternalCheckNotes = newNote;
-      }
-    }
+    proposal.fdpgChecklist.fdpgInternalCheckNotes = checklistUpdate.fdpgInternalCheckNotes.trim();
   }
 
   if (!checklistUpdate._id) {

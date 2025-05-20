@@ -3,7 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { TermsConfig, TermsConfigDocument } from '../admin/schema/terms/terms-config.schema';
 import { AppDbIdentifier } from './enums/app-db-identifier.enum';
-import { Migration000, Migration007, Migration008, Migration009 } from './migrations';
+import { Migration000, Migration007, Migration008, Migration009, Migration010 } from './migrations';
 import { Migration, MigrationDocument } from './schema/migration.schema';
 import { IDbMigration } from './types/db-migration.interface';
 import { DataPrivacyConfig, DataPrivacyConfigDocument } from '../admin/schema/data-privacy/data-privacy-config.schema';
@@ -28,7 +28,7 @@ export class MigrationService implements OnModuleInit {
     private proposalFormService: ProposalFormService,
   ) {}
 
-  private readonly desiredDbVersion = 9;
+  private readonly desiredDbVersion = 10;
 
   // Migration downgrades are not supported while downgrading the software version. So it's disabled by default.
   private readonly preventDowngrade = true;
@@ -49,6 +49,7 @@ export class MigrationService implements OnModuleInit {
     7: new Migration007(this.proposalModel),
     8: new Migration008(this.proposalModel, this.proposalFormModel, this.proposalFormService),
     9: new Migration009(this.dataPrivacyConfigModel),
+    10: new Migration010(this.proposalModel),
   };
 
   private async runMigration(currentVersion?: number) {

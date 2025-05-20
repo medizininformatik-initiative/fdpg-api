@@ -128,7 +128,7 @@ export class ProposalMiscService {
       toBeUpdated.fdpgChecklist = initChecklist();
     }
 
-    updateFdpgChecklist(toBeUpdated, checklistUpdate, user.fullName);
+    updateFdpgChecklist(toBeUpdated, checklistUpdate);
     await toBeUpdated.save();
 
     // Return only the updated item
