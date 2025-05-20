@@ -103,7 +103,7 @@ describe('CommentEventService', () => {
           provide: KeycloakUtilService,
           useValue: {
             getValidContactsByUserIds: jest.fn().mockResolvedValue(validOwnerContacts),
-            getFdpgMembers: jest.fn().mockResolvedValue(fdpgMembers),
+            getFdpgMemberLevelContacts: jest.fn().mockResolvedValue(fdpgMembers),
             getDizMembers: jest.fn().mockResolvedValue(dizMembers),
             getUacMembers: jest.fn().mockResolvedValue(uacMembers),
             getLocationContacts: jest.fn().mockResolvedValue(locationContacts),
@@ -183,7 +183,8 @@ describe('CommentEventService', () => {
         if (prevent) {
           expect(emailService.send).not.toHaveBeenCalled();
         } else {
-          expect(keycloakUtilService.getFdpgMembers).toHaveBeenCalledTimes(1);
+          expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledWith(proposal);
+          expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledTimes(1);
           const fdpgMemberEmails = fdpgMembers.map((member) => member.email);
           expect(getProposalTaskCreationEmailForFdpg).toHaveBeenCalledWith(
             fdpgMemberEmails,
@@ -246,7 +247,8 @@ describe('CommentEventService', () => {
             expect(emailService.send).not.toHaveBeenCalled();
           } else {
             const fdpgEmails = fdpgMembers.map((member) => member.email);
-            expect(keycloakUtilService.getFdpgMembers).toBeCalledTimes(1);
+            expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledWith(proposal);
+            expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledTimes(1);
             expect(getProposalMessageCreationEmailForFdpg).toHaveBeenCalledWith(
               fdpgEmails,
               proposal,
@@ -303,7 +305,8 @@ describe('CommentEventService', () => {
             expect(emailService.send).not.toHaveBeenCalled();
           } else {
             const fdpgEmails = fdpgMembers.map((member) => member.email);
-            expect(keycloakUtilService.getFdpgMembers).toBeCalledTimes(1);
+            expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledWith(proposal);
+            expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledTimes(1);
             expect(getProposalMessageCreationEmailForFdpg).toHaveBeenCalledWith(
               fdpgEmails,
               proposal,
@@ -333,7 +336,8 @@ describe('CommentEventService', () => {
           expect(emailService.send).not.toHaveBeenCalled();
         } else {
           const fdpgEmails = fdpgMembers.map((member) => member.email);
-          expect(keycloakUtilService.getFdpgMembers).toBeCalledTimes(1);
+          expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledWith(proposal);
+          expect(keycloakUtilService.getFdpgMemberLevelContacts).toHaveBeenCalledTimes(1);
           expect(getProposalTaskCompletionEmailForFdpg).toHaveBeenCalledWith(
             fdpgEmails,
             proposal,

@@ -69,7 +69,7 @@ export class CommentEventService {
   private async handleProposalTaskCreationForFdpg(proposal: Proposal, comment: Comment, proposalUrl: string) {
     if (!this.PREVENT_TASK_CREATION_FOR_FDPG) {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
 
       const email = getProposalTaskCreationEmailForFdpg(validFdpgContacts, proposal, comment, proposalUrl);
@@ -80,7 +80,7 @@ export class CommentEventService {
   private async handleProposalTaskCompletedByOwner(proposal: Proposal, comment: Comment, proposalUrl: string) {
     if (!this.PREVENT_TASK_COMPLETED_BY_OWNER) {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
 
       const email = getProposalTaskCompletionEmailForFdpg(validFdpgContacts, proposal, comment, proposalUrl);
@@ -123,7 +123,7 @@ export class CommentEventService {
   private async handleProposalMessageToFdpgCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
     if (!this.PREVENT_MESSAGE_TO_FDPG_CREATION) {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
 
       const email = getProposalMessageCreationEmailForFdpg(validFdpgContacts, proposal, comment, proposalUrl);

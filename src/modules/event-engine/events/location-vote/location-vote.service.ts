@@ -37,7 +37,7 @@ export class LocationVoteService {
     if (this.isVotingComplete(proposal)) {
       const fdpgTask = async () => {
         const validFdpgContacts = await this.keycloakUtilService
-          .getFdpgMembers()
+          .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
         const mail = getVotingCompleteEmailForFdpgMember(validFdpgContacts, proposal, proposalUrl);
         return await this.emailService.send(mail);
@@ -66,7 +66,7 @@ export class LocationVoteService {
     if (this.isVotingComplete(proposal)) {
       const fdpgTask = async () => {
         const validFdpgContacts = await this.keycloakUtilService
-          .getFdpgMembers()
+          .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
         const mail = getVotingCompleteEmailForFdpgMember(validFdpgContacts, proposal, proposalUrl);
         return await this.emailService.send(mail);

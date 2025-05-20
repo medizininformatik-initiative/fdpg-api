@@ -32,7 +32,7 @@ export class DeadlineEventService {
         return null;
       }
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
       const mail = this.buildMail(validFdpgContacts, fdpgMailMessage);
 

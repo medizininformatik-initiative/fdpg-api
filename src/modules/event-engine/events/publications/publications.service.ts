@@ -22,7 +22,7 @@ export class PublicationsService {
 
     const fdpgTask = async () => {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
       const mail = getPublicationCreateEmailForFdpgMember(validFdpgContacts, proposal, publication, proposalUrl);
       return await this.emailService.send(mail);
@@ -38,7 +38,7 @@ export class PublicationsService {
 
     const fdpgTask = async () => {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
       const mail = getPublicationUpdateEmailForFdpgMember(validFdpgContacts, proposal, publication, proposalUrl);
       return await this.emailService.send(mail);
@@ -54,7 +54,7 @@ export class PublicationsService {
 
     const fdpgTask = async () => {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
       const mail = getPublicationDeleteEmailForFdpgMember(validFdpgContacts, proposal, publication, proposalUrl);
       return await this.emailService.send(mail);

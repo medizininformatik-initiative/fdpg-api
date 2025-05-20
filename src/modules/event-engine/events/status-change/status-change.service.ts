@@ -29,7 +29,7 @@ export class StatusChangeService {
 
     const fdpgTask = async () => {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
       const mail = getProposalSubmitEmailForFdpg(validFdpgContacts, proposal, proposalUrl);
       return await this.emailService.send(mail);

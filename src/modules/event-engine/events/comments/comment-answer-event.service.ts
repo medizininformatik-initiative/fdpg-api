@@ -63,7 +63,7 @@ export class CommentAnswerEventService {
   ) {
     if (!this.PREVENT_MESSAGE_TO_FDPG_ANSWER) {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
 
       const email = getProposalMessageAnswerCreationEmailForFdpg(
