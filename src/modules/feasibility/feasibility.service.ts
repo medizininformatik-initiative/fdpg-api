@@ -10,12 +10,18 @@ export class FeasibilityService {
   constructor(private feasibilityClient: FeasibilityClient) {
     this.apiClient = this.feasibilityClient.client;
   }
-  private readonly basePath = 'api/v5/query/data';
+  private readonly basePath = 'api/v4/query';
   private apiClient: AxiosInstance;
 
   async getQueriesByUser(userId: string): Promise<FeasibilityUserQueryDetailDto[]> {
+    const params = {
+      filter: 'saved',
+    };
+
     try {
-      const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`);
+      const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`, {
+        params,
+      });
       return response.data.map((detail) => plainToInstance(FeasibilityUserQueryDetailDto, detail));
     } catch (error) {
       console.log(error);
@@ -40,7 +46,7 @@ export class FeasibilityService {
 
   async getQueryContentById(queryId: number): Promise<any> {
     try {
-      const response = await this.apiClient.get(`${this.basePath}/${queryId}/crtdl`);
+      const response = await this.apiClient.get(`${this.basePath}/${queryId}/content`);
 
       if (response.data !== '' && response.data !== undefined) {
         return response.data;
