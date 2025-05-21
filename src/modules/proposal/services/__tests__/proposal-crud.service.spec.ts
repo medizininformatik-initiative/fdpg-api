@@ -233,7 +233,13 @@ describe('ProposalCrudService', () => {
 
     it('should find a proposal with projection', async () => {
       const proposalId = 'proposalId';
-      const expectedProjection = { ['reports.content']: 1, owner: 1, participants: 1, deadlines: 1 };
+      const expectedProjection = {
+        ['reports.content']: 1,
+        owner: 1,
+        participants: 1,
+        deadlines: 1,
+        selectedDataSources: 1,
+      };
       const desiredProjection = { ['reports.content']: 1 };
       const willBeModified = true;
 

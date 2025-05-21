@@ -39,6 +39,7 @@ import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -153,11 +154,11 @@ export class ProposalGetDto extends ProposalBaseDto {
   @ExposeHistory()
   history: HistoryEventGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
   @Transform((params) => initChecklist(params.obj[params.key]))
   fdpgChecklist: FdpgChecklistGetDto;
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
   @Transform((params) => getIsDoneOverview(params.obj))
   isDoneOverview?: IsDoneOverviewGetDto;
 
@@ -194,7 +195,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Type(() => VersionDto)
   version: VersionDto;
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
   @Type(() => FdpgTaskGetDto)
   openFdpgTasks: FdpgTaskGetDto[];
 
@@ -209,10 +210,10 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Expose()
   numberOfSignedLocations: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember] })
   totalPromisedDataAmount?: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember] })
   totalContractedDataAmount?: number;
 
   @Expose()
@@ -239,7 +240,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   // LOCATION Tasks --->
   // The following arrays should be used as a flow.
   // One location should only be in one state at the same time
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
@@ -253,7 +254,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   openDizChecks: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
@@ -267,7 +268,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   dizApprovedLocations: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
@@ -281,7 +282,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   openDizConditionChecks: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
@@ -295,14 +296,14 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   uacApprovedLocations: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       obj.uacApprovedLocations?.filter((location) => !obj.requestedButExcludedLocations.includes(location)).length ?? 0,
   )
   uacApprovedLocationsCount: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
@@ -316,11 +317,11 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   requestedButExcludedLocations: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(({ obj }) => obj.requestedButExcludedLocations?.length ?? 0)
   requestedButExcludedLocationsCount: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.UacMember, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.UacMember, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
@@ -334,7 +335,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   signedContracts: MiiLocation[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher] })
   @Transform(
     ({ obj }) =>
       getSignedTransform(obj).filter(
@@ -343,11 +344,11 @@ export class ProposalGetDto extends ProposalBaseDto {
   )
   signedContractsCount: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher] })
   @Transform(({ obj }) => getSignedTransform(obj).filter((approval) => !approval.signedAt).length)
   signedContractsPendingCount: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Type(() => AdditionalLocationInformationGetDto)
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
@@ -365,7 +366,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   // LOCATION Tasks <----
 
   // Conditional and UAC approval are stored additionally to the "flow-arrays" and are persistent
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember] })
   @Type(() => ConditionalApprovalGetDto)
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
@@ -380,7 +381,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   locationConditionDraft: ConditionalApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Type(() => ConditionalApprovalGetDto)
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
@@ -395,7 +396,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   conditionalApprovals: ConditionalApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       (obj as ProposalGetDto).conditionalApprovals?.filter(
@@ -404,7 +405,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   )
   conditionalApprovalsCount: ConditionalApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Type(() => UacApprovalGetDto)
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
@@ -419,7 +420,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   uacApprovals: UacApprovalGetDto[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       obj.uacApprovals?.filter((approval) => !obj.requestedButExcludedLocations.includes(approval.location)).length ??
@@ -427,7 +428,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   )
   uacApprovalsCount: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.Researcher, Role.DizMember, Role.UacMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
@@ -442,13 +443,13 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Type(() => DeclineReasonDto)
   declineReasons: DeclineReasonDto[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.DizMember, Role.UacMember, OutputGroup.PdfOutput] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, OutputGroup.PdfOutput] })
   fdpgCheckNotes?: string;
 
   @Expose({ groups: [Role.Researcher] })
   isParticipatingScientist: boolean;
 
-  @Expose({ groups: [Role.FdpgMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
   @Type(() => SetDeadlinesDto)
   @Transform(({ obj }) => {
     if (!obj.deadlines || typeof obj.deadlines !== 'object') {
@@ -479,7 +480,7 @@ export class ProposalGetListDto {
     this._id = dbProjection._id;
     this.selectedDataSources = dbProjection.selectedDataSources;
 
-    if (user.singleKnownRole === Role.FdpgMember) {
+    if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
       this.dizApprovedCount = dbProjection.dizApprovedLocations.length;
       this.uacApprovedCount = dbProjection.uacApprovedLocations.length;

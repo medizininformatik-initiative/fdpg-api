@@ -19,6 +19,11 @@ export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): F
       return getFilterForDiz(panelQuery, user);
     case Role.UacMember:
       return getFilterForUac(panelQuery, user);
+    case Role.DataSourceMember:
+      return {
+        ...getFilterForFdpg(panelQuery),
+        selectedDataSources: { $in: user.assignedDataSources },
+      };
 
     default:
       throw new ForbiddenException();

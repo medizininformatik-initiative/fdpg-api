@@ -29,7 +29,7 @@ export class ContractingService {
 
       const fdpgTask = async () => {
         const validFdpgContacts = await this.keycloakUtilService
-          .getFdpgMembers()
+          .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
         const mail = getResearcherSignedEmailForFdpgMembers(validFdpgContacts, proposal, proposalUrl, signUserName);
 
@@ -49,7 +49,7 @@ export class ContractingService {
     if (proposal.isContractingComplete) {
       const fdpgTask = async () => {
         const validFdpgContacts = await this.keycloakUtilService
-          .getFdpgMembers()
+          .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
         const mail = getSigningCompleteEmailForFdpgMember(validFdpgContacts, proposal, proposalUrl);
         return await this.emailService.send(mail);

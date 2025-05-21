@@ -19,7 +19,7 @@ export class ConditionalApprovalGetDto {
   @Expose()
   dataAmount: number;
 
-  @Expose({ groups: [Role.FdpgMember, Role.DizMember] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember] })
   uploadId?: string;
 
   @Expose()

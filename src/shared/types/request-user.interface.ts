@@ -1,3 +1,4 @@
+import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { MiiLocation } from '../constants/mii-locations';
 import { Role } from '../enums/role.enum';
 
@@ -24,6 +25,8 @@ export interface IRequestUser {
 
   /** If the location is currently set to inactive*/
   isInactiveLocation: boolean;
+
+  assignedDataSources: PlatformIdentifier[];
 }
 
 export type FdpgRequest = Request & {

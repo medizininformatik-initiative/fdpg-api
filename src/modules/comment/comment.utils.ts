@@ -22,7 +22,7 @@ export const validateAnswer = (comment: CommentDocument, user: IRequestUser): vo
     property = 'ROLE';
   }
 
-  if (user.isFromLocation && comment.owner.role !== Role.FdpgMember) {
+  if (user.isFromLocation && comment.owner.role !== Role.FdpgMember && comment.owner.role !== Role.DataSourceMember) {
     shouldThrow = true;
     property = 'LOCATION';
   }

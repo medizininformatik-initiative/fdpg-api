@@ -7,7 +7,7 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 export const validateProposalDeletion = (proposal: ProposalDocument, user: IRequestUser) => {
   if (user.singleKnownRole === Role.Researcher) {
     checkForResearcher(proposal, user);
-  } else if (user.singleKnownRole === Role.FdpgMember) {
+  } else if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember) {
     checkForFdpgMember(proposal);
   } else {
     throwForbiddenError();

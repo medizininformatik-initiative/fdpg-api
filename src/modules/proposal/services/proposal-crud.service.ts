@@ -102,6 +102,7 @@ export class ProposalCrudService {
       dbProjection.owner = 1;
       dbProjection.participants = 1;
       dbProjection.deadlines = 1;
+      dbProjection.selectedDataSources = 1;
     }
     const proposal = await this.proposalModel.findById(proposalId, dbProjection);
 
@@ -115,6 +116,7 @@ export class ProposalCrudService {
 
   async find(proposalId: string, user: IRequestUser): Promise<ProposalGetDto> {
     const document = await this.findDocument(proposalId, user);
+
     const plain = document.toObject();
     this.addParticipatingScientistIndicator(plain, user);
     const userGroups = convertUserToGroups(user);

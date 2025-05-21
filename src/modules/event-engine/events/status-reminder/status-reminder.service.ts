@@ -26,7 +26,7 @@ export class StatusReminderService {
   private async handleFdpgCheckReminder(proposal: ProposalWithoutContent, proposalUrl: string) {
     const fdpgTask = async () => {
       const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMembers()
+        .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
       const mail = getProposalFdpgCheckReminderEmailForFdpg(validFdpgContacts, proposal, proposalUrl);
       return await this.emailService.send(mail);

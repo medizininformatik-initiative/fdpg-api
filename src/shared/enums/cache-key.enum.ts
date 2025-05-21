@@ -3,4 +3,5 @@ export enum CacheKey {
   AllFdpgMember = 'CACHE_KEY_ALL_FDPG_MEMBER',
   AllDizMember = 'CACHE_KEY_ALL_DIZ_MEMBER',
   AllUacMember = 'CACHE_KEY_ALL_UAC_MEMBER',
+  AllDataSourceMembers = 'CACHE_KEY_ALL_DATA_SOURCE_MEMBER',
 }

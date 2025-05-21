@@ -24,7 +24,7 @@ import { CommentCreateReferenceDto, CommentReferenceDto } from './dto/comment-qu
 import { CommentCreateDto, CommentGetDto, CommentUpdateDto } from './dto/comment.dto';
 import { MarkAsDoneDto } from './dto/mark-as-done.dto';
 
-@Auth(Role.Researcher, Role.FdpgMember, Role.DizMember, Role.UacMember)
+@Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
 @ApiController('comments')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
@@ -116,7 +116,7 @@ export class CommentController {
     return await this.commentService.deleteAnswer(mainId, subId, user);
   }
 
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Put(':mainId/answers/:subId/isDone')
   @ApiNoContentResponse({ description: 'Item successfully marked as done. No content returns.' })
   @HttpCode(204)

@@ -6,6 +6,9 @@ import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { KeycloakService } from './keycloak.service';
 import { ICachedKeycloakUser, IGetKeycloakUser } from './types/keycloak-user.interface';
+import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
+import { Proposal } from '../proposal/schema/proposal.schema';
+import { ProposalWithoutContent } from '../event-engine/types/proposal-without-content.type';
 
 @Injectable()
 export class KeycloakUtilService {
@@ -67,6 +70,53 @@ export class KeycloakUtilService {
 
     await this.cacheManager.set(CacheKey.AllFdpgMember, fdpgMember, this.ROLE_CACHE_TIME);
     return fdpgMember;
+  }
+
+  /** Returns all users with role DataSourceMember and specific data source */
+  async getDataSourceMembers(dataSource: PlatformIdentifier): Promise<ICachedKeycloakUser[]> {
+    let dataSourceMembers: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(
+      CacheKey.AllDataSourceMembers,
+    );
+
+    if (dataSourceMembers && dataSourceMembers.length > 0) {
+      return dataSourceMembers;
+    }
+
+    const dataSourceMembersFullModel = await this.keycloakService.getUsersByRole(Role.DataSourceMember);
+    dataSourceMembers = dataSourceMembersFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
+
+    await this.cacheManager.set(CacheKey.AllDataSourceMembers, dataSourceMembers, this.ROLE_CACHE_TIME);
+
+    const result = dataSourceMembers.filter((dataSourceMember) => {
+      const assignedDataSources: PlatformIdentifier[] = (
+        dataSourceMember.attributes?.assignedDataSources?.[0]?.split(';') ?? []
+      )
+        .map((raw) => raw.trim())
+        .filter(Boolean)
+        .map((token) => token.toUpperCase())
+        .map((upper) => {
+          const key = (Object.keys(PlatformIdentifier) as Array<keyof typeof PlatformIdentifier>).find(
+            (k) => k.toUpperCase() === upper,
+          );
+          return key ? PlatformIdentifier[key] : undefined;
+        })
+        .filter((val): val is PlatformIdentifier => Boolean(val));
+
+      return assignedDataSources.some((assignedDataSource) => assignedDataSource === dataSource);
+    });
+
+    return result;
+  }
+
+  async getFdpgMemberLevelContacts(proposal: Proposal | ProposalWithoutContent): Promise<ICachedKeycloakUser[]> {
+    const validFdpgContacts = await this.getFdpgMembers();
+
+    const dataSourceKeycloakContacts = await Promise.all(
+      (proposal.selectedDataSources ?? []).map(async (dataSource) => await this.getDataSourceMembers(dataSource)),
+    );
+
+    const dataSourceContacts = dataSourceKeycloakContacts.flatMap((dataSourceMembers) => dataSourceMembers);
+    return Array.from(new Set([...validFdpgContacts, ...dataSourceContacts]));
   }
 
   /** Returns all users with role DizMember */

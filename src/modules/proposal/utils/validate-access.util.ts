@@ -4,6 +4,7 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { LocationState } from '../enums/location-state.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
+import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 export const validateProposalAccess = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
   if (willBeModified && proposal.isLocked) {
@@ -16,6 +17,10 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
 
   if (user.singleKnownRole === Role.FdpgMember) {
     checkAccessForFdpgMember(proposal, willBeModified);
+  }
+
+  if (user.singleKnownRole === Role.DataSourceMember) {
+    checkAccessForDataSourceMember(proposal, user, willBeModified);
   }
 
   if (user.singleKnownRole === Role.DizMember) {
@@ -43,6 +48,19 @@ const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
   if (proposal.status === ProposalStatus.Draft && willBeModified) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
+  }
+};
+
+const checkAccessForDataSourceMember = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
+  if (proposal.status === ProposalStatus.Draft && willBeModified) {
+    throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
+  }
+
+  const selected = proposal.selectedDataSources ?? [PlatformIdentifier.Mii];
+  const hasOverlap = user.assignedDataSources.some((ds) => selected.includes(ds));
+
+  if (!hasOverlap) {
+    throwForbiddenError(`User does not have a data source matching the proposals selected data sources`);
   }
 };
 
