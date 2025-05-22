@@ -53,10 +53,13 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsOptional({
     groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
   })
-  @Transform(({ value }) => ({
-    [PseudonymizationInfoOptions.enableRecordLinkage]: value?.[PseudonymizationInfoOptions.enableRecordLinkage] ?? '',
-    [PseudonymizationInfoOptions.siteGroupingEnabled]: value?.[PseudonymizationInfoOptions.siteGroupingEnabled] ?? '',
-    [PseudonymizationInfoOptions.namedSiteVariable]: value?.[PseudonymizationInfoOptions.namedSiteVariable] ?? '',
+  @Transform(({ obj: { pseudonymizationInfoTexts } }) => ({
+    [PseudonymizationInfoOptions.enableRecordLinkage]:
+      pseudonymizationInfoTexts?.[PseudonymizationInfoOptions.enableRecordLinkage] ?? '',
+    [PseudonymizationInfoOptions.siteGroupingEnabled]:
+      pseudonymizationInfoTexts?.[PseudonymizationInfoOptions.siteGroupingEnabled] ?? '',
+    [PseudonymizationInfoOptions.namedSiteVariable]:
+      pseudonymizationInfoTexts?.[PseudonymizationInfoOptions.namedSiteVariable] ?? '',
   }))
   pseudonymizationInfoTexts: Record<PseudonymizationInfoOptions, string>;
 }
