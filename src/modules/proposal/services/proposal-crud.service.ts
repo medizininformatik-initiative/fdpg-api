@@ -154,6 +154,13 @@ export class ProposalCrudService {
 
     mergeProposal(toBeUpdated, updateProposalDto);
 
+    // Handle DIFE dataSourceLocaleId
+    if (toBeUpdated.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
+      toBeUpdated.dataSourceLocaleId = await generateDataSourceLocaleId(this.proposalModel);
+    } else if (toBeUpdated.dataSourceLocaleId?.startsWith('DIFE_')) {
+      toBeUpdated.dataSourceLocaleId = undefined;
+    }
+
     await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
 
