@@ -4,6 +4,7 @@ import { parseGroupToUser, PartialUser } from 'src/shared/utils/user-group.utils
 
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { DirectUpload, UploadType, UseCaseUpload } from '../enums/upload-type.enum';
+import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 const generalAccessTypes = [
   DirectUpload.EthicVote,
@@ -33,6 +34,24 @@ export const ExposeUpload = () => (target: object, propertyKey: string) => {
 };
 
 const checkAccessForUser = (user: PartialUser, upload: UploadDto): boolean => {
+  if (
+    (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember) &&
+    upload.type === UseCaseUpload.ProposalPDF
+  ) {
+    if (
+      !Object.keys(PlatformIdentifier).some(
+        (source) => upload.blobName.endsWith(source) || upload.fileName.endsWith(source),
+      )
+    ) {
+      // legacy compatibility
+      return true;
+    } else {
+      return user.assignedDataSources.some(
+        (source) => upload.blobName.endsWith(source) || upload.fileName.endsWith(source),
+      );
+    }
+  }
+
   if (
     user.singleKnownRole === Role.FdpgMember ||
     user.singleKnownRole === Role.DataSourceMember ||

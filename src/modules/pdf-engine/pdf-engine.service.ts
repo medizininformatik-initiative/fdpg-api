@@ -3,6 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 import { ProposalGetDto } from '../proposal/dto/proposal/proposal.dto';
 import { PdfEngineClient } from './pdf-engine.client';
 import { DataPrivacyTextsContentKeys } from '../admin/dto/data-privacy/data-privacy-texts.dto';
+import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
 @Injectable()
 export class PdfEngineService {
   constructor(private pdfEngineClient: PdfEngineClient) {
@@ -11,11 +12,16 @@ export class PdfEngineService {
   private readonly basePath = 'api';
   private apiClient: AxiosInstance;
 
-  async createProposalPdf(proposal: ProposalGetDto, dataPrivacyTexts: DataPrivacyTextsContentKeys[]): Promise<Buffer> {
+  async createProposalPdf(
+    proposal: ProposalGetDto,
+    dataPrivacyTexts: DataPrivacyTextsContentKeys[],
+    dataSources: PlatformIdentifier[],
+  ): Promise<Buffer> {
     try {
       const response = await this.apiClient.post<{ data: Uint8Array }>(`${this.basePath}/proposal/buffer`, {
         data: proposal,
         dataPrivacyTexts,
+        dataSources,
       });
 
       const buffer = Buffer.from(response.data.data);

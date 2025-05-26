@@ -13,6 +13,8 @@ import { ResourceAndRecontact } from './user-project/resource-and-recontact.dto'
 import { TypeOfUseDto } from './user-project/type-of-use.dto';
 import { VariableSelectionDto } from './variables/variable-selection-data.dto';
 import { IsValidVariableSelectionConstraint } from './variables/variable-selection.validation';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
+import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 export class UserProjectDto {
   @Expose()
@@ -25,6 +27,7 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => FeasibilityDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   feasibility: FeasibilityDto;
 
   @Expose()
@@ -37,18 +40,21 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => EthicVoteDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   ethicVote: EthicVoteDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
   @Type(() => ResourceAndRecontact)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   resourceAndRecontact: ResourceAndRecontact;
 
   @Expose()
   @ValidateNested()
   @IsObject()
   @Type(() => PropertyRightsDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   propertyRights: PropertyRightsDto;
 
   @Expose()
