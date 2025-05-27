@@ -39,7 +39,7 @@ import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
-import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
+import { CohortDto } from './cohort.dto';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -127,6 +127,12 @@ export class ProposalBaseDto {
   @IsString()
   @IsOptional()
   dataSourceLocaleId: string;
+
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CohortDto)
+  cohorts: CohortDto[];
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
