@@ -113,7 +113,7 @@ export class ProposalMiscService {
 
   async getPdfProposalFile(proposalId: string, user: IRequestUser): Promise<Buffer> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
-    return await this.proposalPdfService.getPdfProposalFile(proposal);
+    return await this.proposalPdfService.getPdfProposalFile(proposal, user);
   }
 
   async setFdpgChecklist(

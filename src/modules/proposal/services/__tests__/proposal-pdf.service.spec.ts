@@ -15,6 +15,7 @@ import { getBlobName } from '../../utils/proposal.utils';
 import { UseCaseUpload } from '../../enums/upload-type.enum';
 import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { ParticipantType } from '../../enums/participant-type.enum';
+import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -58,6 +59,7 @@ describe('ProposalPdfService', () => {
       miiLocation: MiiLocation.UKL,
       isFromLocation: false,
       isKnownLocation: true,
+      assignedDataSources: [PlatformIdentifier.Mii],
     },
   } as FdpgRequest;
 
@@ -73,6 +75,7 @@ describe('ProposalPdfService', () => {
     _id: proposalId,
     projectAbbreviation,
     status: ProposalStatus.FdpgCheck,
+    selectedDataSources: [PlatformIdentifier.Mii],
     participants: [participant],
     userProject: {
       typeOfUse: {
@@ -174,7 +177,7 @@ describe('ProposalPdfService', () => {
         },
       } as any as ProposalDocument;
 
-      await proposalPdfService.getPdfProposalFile(proposalDocument);
+      await proposalPdfService.getPdfProposalFile(proposalDocument, request.user);
       jest.advanceTimersByTime(600);
 
       const expectedDataPrivacy = [{ headline: 'headlineDE', text: 'textDE' }];
@@ -182,6 +185,7 @@ describe('ProposalPdfService', () => {
       expect(pdfEngineService.createProposalPdf).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: proposalDocument.projectAbbreviation }),
         expectedDataPrivacy,
+        proposalDocument.selectedDataSources,
       );
       expect(pdfEngineService.createProposalPdf).not.toBeUndefined();
     });

@@ -53,43 +53,51 @@ export class ProposalPdfService {
   }
 
   async createProposalPdf(proposal: ProposalDocument, user: IRequestUser) {
-    const task = async () => {
-      const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
-      const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
-      const pdfFile: Express.Multer.File = {
-        buffer: pdfBuffer,
-        originalname: `${proposal.projectAbbreviation}_proposal.pdf`,
-        mimetype: SupportedMimetype.Pdf,
-        size: Buffer.byteLength(pdfBuffer),
-      } as Express.Multer.File;
-      const pdfBlobName = getBlobName(proposal._id, UseCaseUpload.ProposalPDF);
-      await this.storageService.uploadFile(pdfBlobName, pdfFile, user);
-      const pdfUpload = new UploadDto(pdfBlobName, pdfFile, UseCaseUpload.ProposalPDF, user);
-      addUpload(proposal, pdfUpload);
+    await Promise.all(
+      (proposal.selectedDataSources ?? [PlatformIdentifier.Mii]).map(async (dataSource) => {
+        const task = async () => {
+          const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
+          const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage, [dataSource]);
+          const pdfFile: Express.Multer.File = {
+            buffer: pdfBuffer,
+            originalname: `${proposal.projectAbbreviation}_proposal_${dataSource}.pdf`,
+            mimetype: SupportedMimetype.Pdf,
+            size: Buffer.byteLength(pdfBuffer),
+          } as Express.Multer.File;
+          const pdfBlobName = getBlobName(proposal._id, UseCaseUpload.ProposalPDF);
+          await this.storageService.uploadFile(pdfBlobName, pdfFile, user);
+          const pdfUpload = new UploadDto(pdfBlobName, pdfFile, UseCaseUpload.ProposalPDF, user);
+          addUpload(proposal, pdfUpload);
 
-      await proposal.save();
-    };
+          await proposal.save();
+        };
 
-    // We schedule the task to release the thread
-    const milliseconds = 500;
-    const name = `ContractTimeout-${proposal._id}`;
-    const timeout = setTimeout(async () => await task(), milliseconds);
-    this.schedulerRegistry.addTimeout(name, timeout);
+        // We schedule the task to release the thread
+        const milliseconds = 500;
+        const name = `ContractTimeout-${proposal._id}_${dataSource}`;
+        const timeout = setTimeout(async () => await task(), milliseconds);
+        this.schedulerRegistry.addTimeout(name, timeout);
+      }),
+    );
   }
 
-  async getPdfProposalFile(proposal: ProposalDocument): Promise<Buffer> {
+  async getPdfProposalFile(proposal: ProposalDocument, user: IRequestUser): Promise<Buffer> {
     const dataPrivacyTextForUsage = await this.createPrivacyTextForUsage(proposal);
-    const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage);
+    const pdfBuffer = await this.createPdfBuffer(proposal, dataPrivacyTextForUsage, user.assignedDataSources);
     return pdfBuffer;
   }
 
-  async createPdfBuffer(proposal: ProposalDocument, dataPrivacyTextForUsage: any[]): Promise<Buffer> {
+  async createPdfBuffer(
+    proposal: ProposalDocument,
+    dataPrivacyTextForUsage: any[],
+    dataSources: PlatformIdentifier[],
+  ): Promise<Buffer> {
     const plain = proposal.toObject();
     const getDto = plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput, OutputGroup.PdfOutput],
     });
-    const pdfBuffer = await this.pdfEngineService.createProposalPdf(getDto, dataPrivacyTextForUsage);
+    const pdfBuffer = await this.pdfEngineService.createProposalPdf(getDto, dataPrivacyTextForUsage, dataSources);
     return pdfBuffer;
   }
 
