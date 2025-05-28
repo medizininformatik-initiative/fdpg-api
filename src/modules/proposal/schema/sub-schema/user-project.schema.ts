@@ -18,6 +18,7 @@ import {
 } from './user-project/information-on-biosample.schema';
 import { DifeVariableSelectionData, VariableSelectionData } from './variable-selection-data.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { SelectionOfCases, SelectionOfCasesSchema } from './selection-of-cases.schema';
 
 export type UserProjectDocument = UserProject & Document;
 
@@ -58,6 +59,9 @@ export class UserProject {
     default: () => {},
   })
   variableSelection: Partial<Record<PlatformIdentifier, VariableSelectionData | DifeVariableSelectionData>>;
+
+  @Prop({ type: SelectionOfCasesSchema })
+  selectionOfCases: SelectionOfCases;
 }
 
 export const UserProjectSchema = SchemaFactory.createForClass(UserProject);
