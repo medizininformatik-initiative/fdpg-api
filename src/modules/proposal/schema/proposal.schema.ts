@@ -26,6 +26,7 @@ import {
   AdditionalLocationInformationSchema,
 } from './sub-schema/additional-location-information.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
+import { Cohort, CohortSchema } from './sub-schema/cohort.schema';
 
 export type ProposalDocument = Proposal & Document;
 
@@ -276,6 +277,9 @@ export class Proposal {
     default: () => ({ ...defaultDueDateValues }),
   })
   deadlines: Record<DueDateEnum, Date | null>;
+
+  @Prop({ type: [CohortSchema], default: [] })
+  cohorts: Cohort[];
 }
 
 const ProposalSchema = SchemaFactory.createForClass(Proposal);
