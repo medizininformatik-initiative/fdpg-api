@@ -9,7 +9,7 @@ export class CohortDto extends WithIdForArrayDto {
   @IsString()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
-  id: string;
+  feasibilityQueryId: string;
 
   @Expose()
   @IsString()
@@ -28,7 +28,7 @@ export class CohortDto extends WithIdForArrayDto {
   @Expose()
   @IsString()
   @IsOptional()
-  file?: string;
+  uploadId?: string;
 
   @Expose()
   @IsOptional()
