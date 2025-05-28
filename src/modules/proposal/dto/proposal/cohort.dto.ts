@@ -20,8 +20,7 @@ export class CohortDto extends WithIdForArrayDto {
 
   @Expose()
   @IsString()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional()
   @MaxLength(10000)
   comment: string;
 
