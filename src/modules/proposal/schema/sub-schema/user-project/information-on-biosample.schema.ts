@@ -6,6 +6,12 @@ export type InformationOnRequestedBioSamplesDocument = InformationOnRequestedBio
 
 @Schema({ _id: true })
 export class InformationOnRequestedBioSamples {
+  @Prop()
+  noSampleRequired: boolean;
+
+  @Prop()
+  laboratoryResources: string;
+
   @Prop([BiosampleSchema])
   biosamples: Biosample[];
 
