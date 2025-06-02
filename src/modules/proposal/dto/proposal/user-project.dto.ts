@@ -15,6 +15,7 @@ import { VariableSelectionDto } from './variables/variable-selection-data.dto';
 import { IsValidVariableSelectionConstraint } from './variables/variable-selection.validation';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { SelectionOfCasesDto } from './user-project/selection-of-cases.dto';
 
 export class UserProjectDto {
   @Expose()
@@ -88,4 +89,11 @@ export class UserProjectDto {
   @Transform(({ obj, key }) => obj[key])
   @Validate(IsValidVariableSelectionConstraint)
   variableSelection: VariableSelectionDto;
+
+  @Expose()
+  @IsObject()
+  @IsOptional()
+  @Type(() => SelectionOfCasesDto)
+  @ValidateNested()
+  selectionOfCases: SelectionOfCasesDto;
 }

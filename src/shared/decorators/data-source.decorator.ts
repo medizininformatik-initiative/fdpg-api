@@ -19,16 +19,15 @@ export function ExposeForDataSources(
       const groups = options.groups ?? [];
 
       const hasRestrictiveAccess = groups.some((group) => {
-        const raw = group.replace(SharedValidationGroup.UserRole, '');
+        const raw = group.replace(SharedValidationGroup.UserRole + '_', '');
         return restrictedForRolesSet.has(raw);
       });
 
       if (!hasRestrictiveAccess) {
         return value;
       }
-
       const hasAccess = groups.some((group) => {
-        const raw = group.replace(SharedValidationGroup.UserDataSource, '');
+        const raw = group.replace(SharedValidationGroup.UserDataSource + '_', '');
         return allowedDataSourcesSet.has(raw);
       });
 
