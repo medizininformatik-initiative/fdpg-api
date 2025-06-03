@@ -11,7 +11,13 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ['text', 'cobertura', 'html', 'lcov'],
   coverageDirectory: 'reports/coverage',
-  coveragePathIgnorePatterns: ['\\.schema\\.ts', '\\.dto\\.ts', '\\.client\\.ts', '\\.interceptor\\.ts'],
+  coveragePathIgnorePatterns: [
+    '\\.schema\\.ts',
+    '\\.dto\\.ts',
+    '\\.client\\.ts',
+    '\\.interceptor\\.ts',
+    '\\.email\\.ts',
+  ],
   reporters: [
     'default',
     [

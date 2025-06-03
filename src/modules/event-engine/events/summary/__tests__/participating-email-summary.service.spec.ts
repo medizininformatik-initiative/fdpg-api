@@ -1,26 +1,35 @@
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
-import { DeadlineEventService } from '../deadline-event.service';
 import { EmailService } from 'src/modules/email/email.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { DueDateEnum } from 'src/modules/proposal/enums/due-date.enum';
+import { ParticipantEmailSummaryService } from '../participant-email-summary.service';
+import { HistoryEventType } from 'src/modules/proposal/enums/history-event.enum';
+import { HistoryEvent } from 'src/modules/proposal/schema/sub-schema/history-event.schema';
+import { Researcher } from 'src/modules/proposal/schema/sub-schema/participants/researcher.schema';
+import { Participant } from 'src/modules/proposal/schema/sub-schema/participant.schema';
 
-describe('DeadlineEventService', () => {
-  let deadlineEventService: DeadlineEventService;
+describe('ParticipantEmailSummaryService', () => {
+  let participantEmailSummaryService: ParticipantEmailSummaryService;
   let keycloakUtilService: KeycloakUtilService;
   let emailService: EmailService;
 
   const proposal = {
     _id: 'proposalId',
+    projectAbbreviation: 'abb',
     owner: {
       id: 'ownerId',
     },
-    dizApprovedLocations: [MiiLocation.UKL],
+    uacApprovedLocations: [MiiLocation.UKL],
+    openDizChecks: [MiiLocation.CTK],
+    dizApprovedLocations: [MiiLocation.BHC],
+    requestedButExcludedLocations: [],
   } as any as Proposal;
 
   const proposalUrl = 'proposalUrl';
+
+  const mockLocation = MiiLocation.UKL;
 
   const validOwnerContacts = [{ email: 'unit@test.de', id: 'ownerId' }];
   const dizMembers = [
@@ -44,7 +53,7 @@ describe('DeadlineEventService', () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        DeadlineEventService,
+        ParticipantEmailSummaryService,
         {
           provide: KeycloakUtilService,
           useValue: {
@@ -53,6 +62,7 @@ describe('DeadlineEventService', () => {
             getDizMembers: jest.fn().mockResolvedValue(dizMembers),
             getUacMembers: jest.fn().mockResolvedValue(uacMembers),
             getLocationContacts: jest.fn().mockResolvedValue(locationContacts),
+            getValidContacts: jest.fn().mockResolvedValue(validOwnerContacts),
           },
         },
         {
@@ -65,48 +75,28 @@ describe('DeadlineEventService', () => {
       imports: [],
     }).compile();
 
-    deadlineEventService = module.get<DeadlineEventService>(DeadlineEventService);
+    participantEmailSummaryService = module.get<ParticipantEmailSummaryService>(ParticipantEmailSummaryService);
     keycloakUtilService = module.get<KeycloakUtilService>(KeycloakUtilService) as jest.Mocked<KeycloakUtilService>;
     emailService = module.get<EmailService>(EmailService) as jest.Mocked<EmailService>;
   });
 
-  it('it should notify on deadline changes', async () => {
-    await deadlineEventService.sendForDeadlineChange(
-      proposal,
-      {
-        [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: new Date('July 17, 1997 08:00:00'),
-      } as any as Record<DueDateEnum, Date>,
-      proposalUrl,
-    );
+  describe('it should send mails', () => {
+    it('should take history changes into account', async () => {
+      const proposaloverr = {
+        ...proposal,
+        participants: [{ researcher: { email: 'email' } } as any as Participant],
+        history: [
+          { type: HistoryEventType.ProposalRejected, createdAt: new Date('13 May, 1997 09:00:00') } as HistoryEvent,
+        ],
+      };
 
-    expect(emailService.send).toHaveBeenCalled();
-  });
+      await participantEmailSummaryService.handleParticipatingScientistSummary(
+        proposaloverr,
+        proposalUrl,
+        new Date('13 May, 1997 08:00:00'),
+      );
 
-  it('it should notify on deadline changes', async () => {
-    await deadlineEventService.sendForDeadlineChange(
-      proposal,
-      {
-        [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: null,
-        [DueDateEnum.DUE_DAYS_FDPG_CHECK]: null,
-        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: null,
-        [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: null,
-        [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: null,
-        [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: null,
-      } as any as Record<DueDateEnum, Date>,
-      proposalUrl,
-    );
-
-    expect(emailService.send).toHaveBeenCalled();
-  });
-
-  it('it should not notify on deadline changes', async () => {
-    await deadlineEventService.sendForDeadlineChange(proposal, {} as any as Record<DueDateEnum, Date>, proposalUrl);
-
-    expect(emailService.send).toHaveBeenCalledTimes(0);
+      expect(emailService.send).toHaveBeenCalled();
+    });
   });
 });

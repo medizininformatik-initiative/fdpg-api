@@ -88,19 +88,19 @@ export class StatusReminderService {
   async handleStatusReminder(proposal: ProposalWithoutContent, proposalUrl: string, event: Schedule) {
     switch (event.type) {
       case ScheduleType.ReminderFdpgCheck:
-        this.handleFdpgCheckReminder(proposal, proposalUrl);
+        await this.handleFdpgCheckReminder(proposal, proposalUrl);
         break;
       case ScheduleType.ReminderLocationCheck1:
-        this.handleLocationCheckReminder(proposal, proposalUrl, 1);
+        await this.handleLocationCheckReminder(proposal, proposalUrl, 1);
         break;
       case ScheduleType.ReminderLocationCheck2:
-        this.handleLocationCheckReminder(proposal, proposalUrl, 2);
+        await this.handleLocationCheckReminder(proposal, proposalUrl, 2);
         break;
       case ScheduleType.ReminderLocationCheck3:
-        this.handleLocationCheckReminder(proposal, proposalUrl, 3);
+        await this.handleLocationCheckReminder(proposal, proposalUrl, 3);
         break;
       case ScheduleType.ReminderResearcherPublications:
-        this.handleResearcherPublicationsReminder(proposal, proposalUrl);
+        await this.handleResearcherPublicationsReminder(proposal, proposalUrl);
         break;
     }
   }

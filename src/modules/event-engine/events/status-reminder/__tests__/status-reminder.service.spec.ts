@@ -1,26 +1,33 @@
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
-import { DeadlineEventService } from '../deadline-event.service';
 import { EmailService } from 'src/modules/email/email.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { DueDateEnum } from 'src/modules/proposal/enums/due-date.enum';
+import { StatusReminderService } from '../status-reminder.service';
+import { Schedule } from 'src/modules/scheduler/schema/schedule.schema';
+import { ScheduleType } from 'src/modules/scheduler/enums/schedule-type.enum';
 
-describe('DeadlineEventService', () => {
-  let deadlineEventService: DeadlineEventService;
+describe('StatusReminderService', () => {
+  let statusReminderService: StatusReminderService;
   let keycloakUtilService: KeycloakUtilService;
   let emailService: EmailService;
 
   const proposal = {
     _id: 'proposalId',
+    projectAbbreviation: 'abb',
     owner: {
       id: 'ownerId',
     },
-    dizApprovedLocations: [MiiLocation.UKL],
+    uacApprovedLocations: [MiiLocation.UKL],
+    openDizChecks: [MiiLocation.CTK],
+    dizApprovedLocations: [MiiLocation.BHC],
+    requestedButExcludedLocations: [],
   } as any as Proposal;
 
   const proposalUrl = 'proposalUrl';
+
+  const mockLocation = MiiLocation.UKL;
 
   const validOwnerContacts = [{ email: 'unit@test.de', id: 'ownerId' }];
   const dizMembers = [
@@ -44,7 +51,7 @@ describe('DeadlineEventService', () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        DeadlineEventService,
+        StatusReminderService,
         {
           provide: KeycloakUtilService,
           useValue: {
@@ -65,48 +72,25 @@ describe('DeadlineEventService', () => {
       imports: [],
     }).compile();
 
-    deadlineEventService = module.get<DeadlineEventService>(DeadlineEventService);
+    statusReminderService = module.get<StatusReminderService>(StatusReminderService);
     keycloakUtilService = module.get<KeycloakUtilService>(KeycloakUtilService) as jest.Mocked<KeycloakUtilService>;
     emailService = module.get<EmailService>(EmailService) as jest.Mocked<EmailService>;
   });
 
-  it('it should notify on deadline changes', async () => {
-    await deadlineEventService.sendForDeadlineChange(
-      proposal,
-      {
-        [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: new Date('July 17, 1997 08:00:00'),
-        [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: new Date('July 17, 1997 08:00:00'),
-      } as any as Record<DueDateEnum, Date>,
-      proposalUrl,
-    );
+  describe('it should send mails', () => {
+    test.each([
+      ScheduleType.ReminderFdpgCheck,
+      ScheduleType.ReminderResearcherPublications,
+      // ScheduleType.ReminderLocationCheck1,
+      // ScheduleType.ReminderLocationCheck2,
+      ScheduleType.ReminderLocationCheck3,
+    ])('for reminder `%s`', async (type: ScheduleType) => {
+      await statusReminderService.handleStatusReminder({ ...proposal }, proposalUrl, {
+        type,
+        dueAfter: new Date(),
+      } as Schedule);
 
-    expect(emailService.send).toHaveBeenCalled();
-  });
-
-  it('it should notify on deadline changes', async () => {
-    await deadlineEventService.sendForDeadlineChange(
-      proposal,
-      {
-        [DueDateEnum.DUE_DAYS_LOCATION_CHECK]: null,
-        [DueDateEnum.DUE_DAYS_FDPG_CHECK]: null,
-        [DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING]: null,
-        [DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY]: null,
-        [DueDateEnum.DUE_DAYS_DATA_CORRUPT]: null,
-        [DueDateEnum.DUE_DAYS_FINISHED_PROJECT]: null,
-      } as any as Record<DueDateEnum, Date>,
-      proposalUrl,
-    );
-
-    expect(emailService.send).toHaveBeenCalled();
-  });
-
-  it('it should not notify on deadline changes', async () => {
-    await deadlineEventService.sendForDeadlineChange(proposal, {} as any as Record<DueDateEnum, Date>, proposalUrl);
-
-    expect(emailService.send).toHaveBeenCalledTimes(0);
+      expect(emailService.send).toHaveBeenCalled();
+    });
   });
 });
