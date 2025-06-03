@@ -87,6 +87,7 @@ describe('ParticipantEmailSummaryService', () => {
         participants: [{ researcher: { email: 'email' } } as any as Participant],
         history: [
           { type: HistoryEventType.ProposalRejected, createdAt: new Date('13 May, 1997 09:00:00') } as HistoryEvent,
+          { type: HistoryEventType.ProposalFdpgCheck, createdAt: new Date('13 May, 1997 09:30:00') } as HistoryEvent,
         ],
       };
 
