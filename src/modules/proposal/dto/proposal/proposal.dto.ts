@@ -1,5 +1,15 @@
 import { ClassTransformOptions, Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsArray, IsEnum, IsObject, IsOptional, Matches, MaxLength, ValidateNested, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  Matches,
+  MaxLength,
+  ValidateNested,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PROPOSAL_SHORTCUT_REGEX } from 'src/shared/constants/regex.constants';
 import { ExposeId } from 'src/shared/decorators/transform/expose-id.decorator';
@@ -107,6 +117,7 @@ export class ProposalBaseDto {
   @ValidateNested()
   @IsObject()
   @Type(() => RequestedDataDto)
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   requestedData: RequestedDataDto;
 
   @Expose()
