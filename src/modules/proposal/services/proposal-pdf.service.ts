@@ -18,6 +18,7 @@ import { DataPrivacyTextSingleLanguage } from 'src/modules/admin/dto/data-privac
 import { PdfEngineService } from 'src/modules/pdf-engine/pdf-engine.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
+import { Cohort } from '../schema/sub-schema/cohort.schema';
 
 @Injectable()
 export class ProposalPdfService {
@@ -30,25 +31,41 @@ export class ProposalPdfService {
   ) {}
 
   async fetchAndGenerateFeasibilityPdf(proposal: Proposal, user: IRequestUser) {
-    if (proposal.userProject.feasibility.id !== undefined) {
-      const queryContent = await this.feasibilityService.getQueryContentById(proposal.userProject.feasibility.id);
-      const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
-      const feasibilityFile: Express.Multer.File = {
-        buffer: feasibilityBuffer,
-        originalname: 'Machbarkeits-Anfrage.json',
-        mimetype: SupportedMimetype.Json,
-        size: Buffer.byteLength(feasibilityBuffer),
-      } as Express.Multer.File;
+    if (proposal.userProject.feasibility.id !== undefined || proposal.cohorts.length > 0) {
+      const cohorts = proposal.cohorts.map((cohort) => cohort).filter((cohort) => cohort);
 
-      const feasibilityBlobName = getBlobName(proposal._id, UseCaseUpload.FeasibilityQuery);
-      await this.storageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
-      const feasibilityUpload = new UploadDto(
-        feasibilityBlobName,
-        feasibilityFile,
-        UseCaseUpload.FeasibilityQuery,
-        user,
+      if (
+        proposal.userProject.feasibility.id !== undefined &&
+        !cohorts.some((cohort) => cohort.feasibilityQueryId === proposal.userProject.feasibility.id)
+      ) {
+        cohorts.push({
+          feasibilityQueryId: proposal.userProject.feasibility.id,
+          label: 'Machbarkeits-Anfrage',
+        } as Cohort);
+      }
+
+      await Promise.allSettled(
+        cohorts.map(async (cohort) => {
+          const queryContent = await this.feasibilityService.getQueryContentById(cohort.feasibilityQueryId, 'JSON');
+          const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
+          const feasibilityFile: Express.Multer.File = {
+            buffer: feasibilityBuffer,
+            originalname: `${cohort.label}.json`,
+            mimetype: SupportedMimetype.Json,
+            size: Buffer.byteLength(feasibilityBuffer),
+          } as Express.Multer.File;
+
+          const feasibilityBlobName = getBlobName(proposal._id, UseCaseUpload.FeasibilityQuery);
+          await this.storageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
+          const feasibilityUpload = new UploadDto(
+            feasibilityBlobName,
+            feasibilityFile,
+            UseCaseUpload.FeasibilityQuery,
+            user,
+          );
+          addUpload(proposal, feasibilityUpload);
+        }),
       );
-      addUpload(proposal, feasibilityUpload);
     }
   }
 
