@@ -15,6 +15,7 @@ import { VariableSelectionDto } from './variables/variable-selection-data.dto';
 import { IsValidVariableSelectionConstraint } from './variables/variable-selection.validation';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { SelectionOfCasesDto } from './user-project/selection-of-cases.dto';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 export class UserProjectDto {
   @Expose()
@@ -27,6 +28,7 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => FeasibilityDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   feasibility: FeasibilityDto;
 
@@ -41,6 +43,7 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => EthicVoteDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   ethicVote: EthicVoteDto;
 
@@ -48,6 +51,7 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => ResourceAndRecontact)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   resourceAndRecontact: ResourceAndRecontact;
 
@@ -55,6 +59,7 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => PropertyRightsDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   propertyRights: PropertyRightsDto;
 
