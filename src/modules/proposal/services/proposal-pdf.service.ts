@@ -40,7 +40,7 @@ export class ProposalPdfService {
       ) {
         cohorts.push({
           feasibilityQueryId: proposal.userProject.feasibility.id,
-          label: 'Machbarkeits-Anfrage.json',
+          label: 'Machbarkeits-Anfrage',
         } as Cohort);
       }
 

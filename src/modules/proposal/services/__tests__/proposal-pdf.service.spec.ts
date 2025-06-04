@@ -77,6 +77,7 @@ describe('ProposalPdfService', () => {
     status: ProposalStatus.FdpgCheck,
     selectedDataSources: [PlatformIdentifier.Mii],
     participants: [participant],
+    cohorts: [],
     userProject: {
       typeOfUse: {
         usage: [ProposalTypeOfUse.Biosample],
