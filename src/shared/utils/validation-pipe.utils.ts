@@ -5,7 +5,7 @@ import { ValidationException } from 'src/exceptions/validation/validation.except
 import { ValidationErrorInfo } from '../dto/validation/validation-error-info.dto';
 import { FileDto } from '../dto/file.dto';
 
-const transForm = (
+export const transForm = (
   objectToTransform: Record<string, any>,
   cls: ClassConstructor<unknown>,
   options?: ClassTransformOptions,
