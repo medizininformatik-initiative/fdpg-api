@@ -10,18 +10,12 @@ export class FeasibilityService {
   constructor(private feasibilityClient: FeasibilityClient) {
     this.apiClient = this.feasibilityClient.client;
   }
-  private readonly basePath = 'api/v4/query';
+  private readonly basePath = 'api/v5/query/data';
   private apiClient: AxiosInstance;
 
   async getQueriesByUser(userId: string): Promise<FeasibilityUserQueryDetailDto[]> {
-    const params = {
-      filter: 'saved',
-    };
-
     try {
-      const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`, {
-        params,
-      });
+      const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`);
       return response.data.map((detail) => plainToInstance(FeasibilityUserQueryDetailDto, detail));
     } catch (error) {
       console.log(error);
@@ -44,9 +38,26 @@ export class FeasibilityService {
     return response.data;
   }
 
-  async getQueryContentById(queryId: number): Promise<any> {
+  async getQueryContentById(queryId: number, fileType: 'JSON' | 'ZIP' = 'JSON'): Promise<any> {
     try {
-      const response = await this.apiClient.get(`${this.basePath}/${queryId}/content`);
+      const headerFileType = (() => {
+        switch (fileType) {
+          case 'JSON':
+            return 'application/json';
+          case 'ZIP':
+            return 'application/zip';
+        }
+      })();
+
+      const response = await this.apiClient.get(`${this.basePath}/${queryId}/crtdl`, {
+        headers: {
+          Accept: headerFileType,
+        },
+        params: {
+          'skip-validation': false,
+        },
+        responseType: fileType === 'ZIP' ? 'arraybuffer' : 'json',
+      });
 
       if (response.data !== '' && response.data !== undefined) {
         return response.data;

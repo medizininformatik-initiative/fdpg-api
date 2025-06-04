@@ -1,5 +1,6 @@
 export enum SupportedMimetype {
   Json = 'application/json',
+  Zip = 'application/zip',
   MsExcel = 'application/msexcel',
   MsPowerpoint = 'application/mspowerpoint',
   MsWord = 'application/msword',

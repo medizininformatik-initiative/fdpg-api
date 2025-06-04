@@ -6,13 +6,13 @@ export type CohortDocument = Cohort & Document;
 @Schema({ _id: true })
 export class Cohort {
   @Prop()
-  feasibilityQueryId: string;
+  feasibilityQueryId: number;
 
   @Prop()
   label: string;
 
   @Prop()
-  comment: string;
+  comment?: string;
 
   @Prop()
   uploadId?: string;
