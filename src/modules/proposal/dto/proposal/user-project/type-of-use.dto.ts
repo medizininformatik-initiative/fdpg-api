@@ -10,6 +10,7 @@ import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { Transform } from 'class-transformer';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
@@ -18,6 +19,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsOptional({
     groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
   })
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o, context) => {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
@@ -56,6 +58,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsArray()
   @IsEnum(DIFEProposalTypeOfUse, { each: true })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @ExposeForDataSources([PlatformIdentifier.DIFE])
   @ValidateIf((o, context) => {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.DIFE);
@@ -78,6 +81,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsOptional({
     groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
   })
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @Transform(({ obj: { pseudonymizationInfoTexts } }) => ({
     [PseudonymizationInfoOptions.enableRecordLinkage]:
       pseudonymizationInfoTexts?.[PseudonymizationInfoOptions.enableRecordLinkage] ?? '',
