@@ -1,5 +1,5 @@
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsObject, IsOptional, ValidateNested, Validate } from 'class-validator';
+import { IsObject, IsOptional, ValidateNested, Validate, ValidateIf } from 'class-validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { AddresseesDto } from './user-project/addressees.dto';
 import { EthicVoteDto } from './user-project/ethic-vote.dto';
@@ -13,9 +13,9 @@ import { ResourceAndRecontact } from './user-project/resource-and-recontact.dto'
 import { TypeOfUseDto } from './user-project/type-of-use.dto';
 import { VariableSelectionDto } from './variables/variable-selection-data.dto';
 import { IsValidVariableSelectionConstraint } from './variables/variable-selection.validation';
-import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { SelectionOfCasesDto } from './user-project/selection-of-cases.dto';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 export class UserProjectDto {
   @Expose()
@@ -29,12 +29,14 @@ export class UserProjectDto {
   @IsObject()
   @Type(() => FeasibilityDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   feasibility: FeasibilityDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
   @Type(() => ProjectDetailsDto)
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   projectDetails: ProjectDetailsDto;
 
   @Expose()
@@ -42,6 +44,7 @@ export class UserProjectDto {
   @IsObject()
   @Type(() => EthicVoteDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   ethicVote: EthicVoteDto;
 
   @Expose()
@@ -49,6 +52,7 @@ export class UserProjectDto {
   @IsObject()
   @Type(() => ResourceAndRecontact)
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   resourceAndRecontact: ResourceAndRecontact;
 
   @Expose()
@@ -56,6 +60,7 @@ export class UserProjectDto {
   @IsObject()
   @Type(() => PropertyRightsDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   propertyRights: PropertyRightsDto;
 
   @Expose()
@@ -68,6 +73,7 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => AddresseesDto)
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   addressees: AddresseesDto;
 
   @Expose()
@@ -80,6 +86,7 @@ export class UserProjectDto {
   @ValidateNested()
   @Type(() => InformationOnRequestedBioSamples)
   @IsObject({ groups: [ProposalValidation.IsBiosampleType] })
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   informationOnRequestedBioSamples: InformationOnRequestedBioSamples;
 
   @Expose()
@@ -95,5 +102,6 @@ export class UserProjectDto {
   @IsOptional()
   @Type(() => SelectionOfCasesDto)
   @ValidateNested()
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.DIFE))
   selectionOfCases: SelectionOfCasesDto;
 }

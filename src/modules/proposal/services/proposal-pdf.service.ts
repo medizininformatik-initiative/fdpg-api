@@ -31,11 +31,14 @@ export class ProposalPdfService {
   ) {}
 
   async fetchAndGenerateFeasibilityPdf(proposal: Proposal, user: IRequestUser) {
-    if (proposal.userProject.feasibility.id !== undefined || proposal.cohorts.length > 0) {
-      const cohorts = proposal.cohorts.map((cohort) => cohort).filter((cohort) => cohort);
+    const hasFeasibilityId = proposal?.userProject?.feasibility?.id !== undefined;
+    const hasCohorts = proposal?.cohorts?.length > 0;
+
+    if (hasFeasibilityId || hasCohorts) {
+      const cohorts = proposal?.cohorts?.map((cohort) => cohort).filter((cohort) => cohort) ?? [];
 
       if (
-        proposal.userProject.feasibility.id !== undefined &&
+        hasFeasibilityId &&
         !cohorts.some((cohort) => cohort.feasibilityQueryId === proposal.userProject.feasibility.id)
       ) {
         cohorts.push({

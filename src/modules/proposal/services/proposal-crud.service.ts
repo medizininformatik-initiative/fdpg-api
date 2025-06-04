@@ -155,7 +155,9 @@ export class ProposalCrudService {
 
     // Handle DIFE dataSourceLocaleId
     if (toBeUpdated.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
-      toBeUpdated.dataSourceLocaleId = await generateDataSourceLocaleId(this.proposalModel);
+      if (!toBeUpdated.dataSourceLocaleId) {
+        toBeUpdated.dataSourceLocaleId = await generateDataSourceLocaleId(this.proposalModel);
+      }
     } else if (toBeUpdated.dataSourceLocaleId?.startsWith('DIFE_')) {
       toBeUpdated.dataSourceLocaleId = undefined;
     }
