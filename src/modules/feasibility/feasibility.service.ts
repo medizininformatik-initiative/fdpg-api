@@ -41,6 +41,7 @@ export class FeasibilityService {
   async getQueryContentById(queryId: number): Promise<any> {
     try {
       const response = await this.apiClient.get(`${this.basePath}/${queryId}/crtdl`);
+      console.log({ response });
 
       if (response.data !== '' && response.data !== undefined) {
         return response.data;
