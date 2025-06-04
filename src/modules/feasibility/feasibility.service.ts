@@ -38,10 +38,26 @@ export class FeasibilityService {
     return response.data;
   }
 
-  async getQueryContentById(queryId: number): Promise<any> {
+  async getQueryContentById(queryId: number, fileType: 'JSON' | 'ZIP' = 'JSON'): Promise<any> {
     try {
-      const response = await this.apiClient.get(`${this.basePath}/${queryId}/crtdl`);
-      console.log({ response });
+      const headerFileType = (() => {
+        switch (fileType) {
+          case 'JSON':
+            return 'application/json';
+          case 'ZIP':
+            return 'application/zip';
+        }
+      })();
+
+      const response = await this.apiClient.get(`${this.basePath}/${queryId}/crtdl`, {
+        headers: {
+          Accept: headerFileType,
+        },
+        params: {
+          'skip-validation': false,
+        },
+        responseType: fileType === 'ZIP' ? 'arraybuffer' : 'json',
+      });
 
       if (response.data !== '' && response.data !== undefined) {
         return response.data;
