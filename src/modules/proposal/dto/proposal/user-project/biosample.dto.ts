@@ -1,10 +1,11 @@
 import { Expose } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, MaxLength, IsArray } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsArray } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { BiosampleType } from 'src/modules/proposal/enums/biosample-type.enum';
 import { BiosampleCode } from 'src/modules/proposal/enums/biosample-code.enum';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 export class BiosampleDto extends WithIdForArrayDto {
   @Expose()
@@ -20,13 +21,19 @@ export class BiosampleDto extends WithIdForArrayDto {
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   count: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
+  parameter: string;
+
+  @Expose()
+  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @MaxLengthHtml(10000)
   requirements: string;
 
   @Expose()
@@ -43,19 +50,19 @@ export class BiosampleDto extends WithIdForArrayDto {
   @Expose()
   @IsNotEmptyString()
   @IsOptional()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   [BiosampleCode.SNOMED]?: string;
 
   @Expose()
   @IsNotEmptyString()
   @IsOptional()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   [BiosampleCode.SPREC]?: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
-  @MaxLength(3000)
+  @MaxLengthHtml(3000)
   method: string;
 
   @Expose()
@@ -66,6 +73,6 @@ export class BiosampleDto extends WithIdForArrayDto {
   @Expose()
   @IsNotEmptyString()
   @IsOptional()
-  @MaxLength(1000)
+  @MaxLengthHtml(1000)
   externalLabTransferDetails: string;
 }
