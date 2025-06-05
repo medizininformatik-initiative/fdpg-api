@@ -1,8 +1,9 @@
 import { Expose, Type } from 'class-transformer';
-import { ArrayNotEmpty, ValidateNested, IsBoolean, IsString, IsOptional, MaxLength } from 'class-validator';
+import { ArrayNotEmpty, ValidateNested, IsBoolean, IsString, IsOptional } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { BiosampleDto } from './biosample.dto';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 export class InformationOnRequestedBioSamples extends WithIdForObjectDto {
   @IsBoolean()
@@ -13,7 +14,7 @@ export class InformationOnRequestedBioSamples extends WithIdForObjectDto {
   @IsString()
   @IsOptional()
   @Expose()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   laboratoryResources: string;
 
   @ValidateNested()
