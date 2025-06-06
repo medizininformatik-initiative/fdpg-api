@@ -17,9 +17,6 @@ export class Biosample {
   count: string;
 
   @Prop()
-  parameter: string;
-
-  @Prop()
   requirements: string;
 
   @Prop()

@@ -127,12 +127,6 @@ export class ProposalBaseDto {
   @IsString()
   @IsOptional()
   dataSourceLocaleId: string;
-
-  @Expose()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CohortDto)
-  cohorts: CohortDto[];
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -493,7 +487,7 @@ export class ProposalGetListDto {
       this.signedContractsCount = dbProjection.signedContracts.length;
       this.requestedButExcludedCount = dbProjection.requestedButExcludedLocations.length;
 
-      this.desiredDataAmount = dbProjection.requestedData.desiredDataAmount;
+      this.desiredDataAmount = dbProjection.requestedData?.desiredDataAmount;
       this.totalPromisedDataAmount = dbProjection.totalPromisedDataAmount;
       this.totalContractedDataAmount = dbProjection.totalContractedDataAmount;
 

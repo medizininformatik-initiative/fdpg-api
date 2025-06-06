@@ -19,6 +19,7 @@ import {
 import { DifeVariableSelectionData, VariableSelectionData } from './variable-selection-data.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { SelectionOfCases, SelectionOfCasesSchema } from './selection-of-cases.schema';
+import { Cohort, CohortSchema } from './cohort.schema';
 
 export type UserProjectDocument = UserProject & Document;
 
@@ -62,6 +63,9 @@ export class UserProject {
 
   @Prop({ type: SelectionOfCasesSchema })
   selectionOfCases: SelectionOfCases;
+
+  @Prop({ type: [CohortSchema], default: [] })
+  cohorts: Cohort[];
 }
 
 export const UserProjectSchema = SchemaFactory.createForClass(UserProject);
