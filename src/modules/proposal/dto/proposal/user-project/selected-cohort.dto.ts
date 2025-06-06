@@ -4,7 +4,7 @@ import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validati
 import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 
-export class CohortDto extends WithIdForArrayDto {
+export class SelectedCohortDto extends WithIdForArrayDto {
   @Expose()
   @IsNumber()
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
@@ -27,8 +27,4 @@ export class CohortDto extends WithIdForArrayDto {
   @IsString()
   @IsOptional()
   uploadId?: string;
-
-  @Expose()
-  @IsOptional()
-  _id?: string;
 }
