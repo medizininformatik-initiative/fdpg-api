@@ -30,6 +30,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsOptional()
   @IsNotEmptyString()
   @MaxLength(10_000)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o, context) => {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
@@ -39,6 +40,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
   @IsOptional()
   @IsNotEmptyString()
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o, context) => {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
@@ -48,6 +50,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
   @IsOptional()
   @IsNotEmptyString()
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o, context) => {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
@@ -71,6 +74,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsOptional({
     groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
   })
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o, context) => {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
@@ -94,5 +98,6 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   pseudonymizationInfoTexts: Record<PseudonymizationInfoOptions, string>;
 }

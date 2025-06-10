@@ -37,7 +37,6 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => ProjectDetailsDto)
-  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   projectDetails: ProjectDetailsDto;
 
   @Expose()
@@ -74,6 +73,7 @@ export class UserProjectDto {
   @ValidateNested()
   @IsObject()
   @Type(() => AddresseesDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   addressees: AddresseesDto;
 
@@ -88,6 +88,7 @@ export class UserProjectDto {
   @Type(() => InformationOnRequestedBioSamples)
   @IsObject({ groups: [ProposalValidation.IsBiosampleType] })
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   informationOnRequestedBioSamples: InformationOnRequestedBioSamples;
 
   @Expose()
@@ -103,7 +104,6 @@ export class UserProjectDto {
   @IsOptional()
   @Type(() => SelectionOfCasesDto)
   @ValidateNested()
-  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.DIFE))
   selectionOfCases: SelectionOfCasesDto;
 
   @Expose()

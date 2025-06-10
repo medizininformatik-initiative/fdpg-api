@@ -49,7 +49,7 @@ import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
-import { CohortDto } from './user-project/cohort.dto';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -117,6 +117,7 @@ export class ProposalBaseDto {
   @ValidateNested()
   @IsObject()
   @Type(() => RequestedDataDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   requestedData: RequestedDataDto;
 
