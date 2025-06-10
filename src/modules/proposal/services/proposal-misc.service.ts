@@ -28,8 +28,6 @@ import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
-import { CohortDto } from '../dto/proposal/user-project/cohort.dto';
-import { UploadDocument } from '../schema/sub-schema/upload.schema';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { ProposalValidation } from '../enums/porposal-validation.enum';
 import { plainToClass } from 'class-transformer';
