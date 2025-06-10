@@ -28,6 +28,21 @@ import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
+import { CohortDto } from '../dto/proposal/user-project/cohort.dto';
+import { UploadDocument } from '../schema/sub-schema/upload.schema';
+import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { ProposalValidation } from '../enums/porposal-validation.enum';
+import { plainToClass } from 'class-transformer';
+import { UseCaseUpload } from '../enums/upload-type.enum';
+import { addUpload, getBlobName } from '../utils/proposal.utils';
+import { UploadDto } from '../dto/upload.dto';
+import { StorageService } from 'src/modules/storage/storage.service';
+import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
+import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
+import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
+import { validateModifyingCohortAccess } from '../utils/validate-access.util';
 
 @Injectable()
 export class ProposalMiscService {
@@ -39,6 +54,7 @@ export class ProposalMiscService {
     private schedulerService: SchedulerService,
     private proposalPdfService: ProposalPdfService,
     private proposalFormService: ProposalFormService,
+    private storageService: StorageService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -267,5 +283,73 @@ export class ProposalMiscService {
 
   async getAllProposalFormVersions(): Promise<ProposalFormDto[]> {
     return await this.proposalFormService.findAll();
+  }
+
+  async addManualUploadCohort(
+    proposalId: string,
+    cohort: SelectedCohortDto,
+    file: Express.Multer.File,
+    user: IRequestUser,
+  ): Promise<ProposalGetDto> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    validateModifyingCohortAccess(toBeUpdated, user);
+
+    if (toBeUpdated.userProject.cohorts.selectedCohorts.some((persisted) => persisted.label === cohort.label)) {
+      const errorInfo = new ValidationErrorInfo({
+        constraint: 'uniqueCohortName',
+        message: 'Cohort name is not unique',
+        property: 'selectedCohorts',
+        code: BadRequestError.CohortUniquenessName,
+      });
+      throw new ValidationException([errorInfo]);
+    }
+
+    const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.FeasibilityQuery);
+
+    try {
+      await this.storageService.uploadFile(blobName, file, user);
+      const upload = new UploadDto(blobName, file, UseCaseUpload.FeasibilityQuery, user);
+
+      addUpload(toBeUpdated, upload);
+
+      const selectedCohort: SelectedCohort = {
+        label: cohort.label,
+        uploadId: upload._id,
+        comment: cohort.comment,
+        isManualUpload: true,
+        feasibilityQueryId: cohort.feasibilityQueryId,
+      };
+
+      toBeUpdated.userProject.cohorts.selectedCohorts.push(selectedCohort);
+
+      const saved = await toBeUpdated.save();
+      const plain = saved.toObject();
+      return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
+    } catch (exception) {
+      throw exception;
+    }
+  }
+
+  async deleteCohort(proposalId: string, cohortId: string, user: IRequestUser): Promise<ProposalGetDto> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    validateModifyingCohortAccess(toBeUpdated, user);
+
+    const [cohort] = toBeUpdated.userProject.cohorts?.selectedCohorts?.filter((cohort) => cohort._id === cohortId);
+
+    if (!cohort) {
+      throw new NotFoundException('Cohort could not be found');
+    }
+
+    const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.FeasibilityQuery, cohort.uploadId);
+
+    await this.storageService.deleteBlob(blobName);
+    toBeUpdated.userProject.cohorts.selectedCohorts = toBeUpdated.userProject.cohorts.selectedCohorts.filter(
+      (c) => c._id !== cohortId,
+    );
+
+    const saved = await toBeUpdated.save();
+
+    const plain = saved.toObject();
+    return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
   }
 }

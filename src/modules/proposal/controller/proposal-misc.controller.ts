@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -8,6 +9,7 @@ import {
   Put,
   Request,
   StreamableFile,
+  UploadedFile,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -28,6 +30,8 @@ import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
 import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
+import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -170,5 +174,31 @@ export class ProposalMiscController {
   @ApiOperation({ summary: 'Returns a list of all proposal form versions' })
   async getAllProposalFormVersions(): Promise<ProposalFormDto[]> {
     return await this.proposalMiscService.getAllProposalFormVersions();
+  }
+
+  @Auth(Role.Researcher, Role.FdpgMember)
+  @Post(':id/cohort')
+  @ApiNotFoundResponse({ description: 'Item could not be found.' })
+  @ApiOperation({ summary: 'Creates a manual upload cohort on a proposal' })
+  @ProposalValidation(true)
+  async uploadManualCohort(
+    @Param() { id }: MongoIdParamDto,
+    @Body() newCohort: SelectedCohortDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() { user }: FdpgRequest,
+  ): Promise<ProposalGetDto> {
+    return await this.proposalMiscService.addManualUploadCohort(id, newCohort, file, user);
+  }
+
+  @Auth(Role.Researcher, Role.FdpgMember)
+  @Delete(':proposalId/cohort/:cohortId')
+  @ApiNotFoundResponse({ description: 'Item could not be found.' })
+  @ApiOperation({ summary: 'Deletes the upload and cohort on a proposal' })
+  @ProposalValidation(true)
+  async deleteCohort(
+    @Param() { mainId, subId }: MongoTwoIdsParamDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<ProposalGetDto | void> {
+    return await this.proposalMiscService.deleteCohort(mainId, subId, user);
   }
 }

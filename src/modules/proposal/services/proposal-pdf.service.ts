@@ -58,7 +58,7 @@ export class ProposalPdfService {
         cohorts.push(newCohort);
       }
 
-      await Promise.allSettled(
+      const updatedStatus = await Promise.allSettled(
         cohorts.map(async (cohort) => {
           const queryContent = await this.feasibilityService.getQueryContentById(cohort.feasibilityQueryId, 'JSON');
           const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
@@ -77,9 +77,24 @@ export class ProposalPdfService {
             UseCaseUpload.FeasibilityQuery,
             user,
           );
+
           addUpload(proposal, feasibilityUpload);
+          cohort.uploadId = feasibilityUpload._id;
+
+          return cohort;
         }),
       );
+
+      const successes = updatedStatus.filter((req) => req.status === 'fulfilled').map((req) => req.value);
+      const failed = updatedStatus.filter((req) => req.status === 'rejected').map((req) => req.reason);
+
+      if (failed.length > 0) {
+        console.error(
+          `Some cohorts could not be saved for proposalId '${proposal._id}': ${failed.reduce((prev, curr) => prev + '\n\n' + curr, '')}`,
+        );
+      }
+
+      proposal.userProject.cohorts.selectedCohorts = successes;
     }
   }
 
