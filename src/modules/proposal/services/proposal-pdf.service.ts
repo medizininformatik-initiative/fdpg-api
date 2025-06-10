@@ -18,6 +18,7 @@ import { DataPrivacyTextSingleLanguage } from 'src/modules/admin/dto/data-privac
 import { PdfEngineService } from 'src/modules/pdf-engine/pdf-engine.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
+import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
 
 interface CohortData {
   feasibilityQueryId: number;
@@ -51,15 +52,21 @@ export class ProposalPdfService {
         hasLegacyFeasibilityId &&
         !cohorts.some((cohort) => cohort.feasibilityQueryId === proposal.userProject.feasibility.id)
       ) {
-        const newCohort: CohortData = {
+        const newCohort: SelectedCohort = {
           feasibilityQueryId: proposal.userProject.feasibility.id,
           label: 'Machbarkeits-Anfrage',
+          isManualUpload: false,
+          comment: undefined,
         };
-        cohorts.push(newCohort);
+        proposal.userProject.cohorts?.selectedCohorts?.push(newCohort);
       }
 
       const updatedStatus = await Promise.allSettled(
-        cohorts.map(async (cohort) => {
+        proposal.userProject.cohorts?.selectedCohorts?.map(async (cohort) => {
+          if (cohort.isManualUpload) {
+            return cohort;
+          }
+
           const queryContent = await this.feasibilityService.getQueryContentById(cohort.feasibilityQueryId, 'JSON');
           const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
           const feasibilityFile: Express.Multer.File = {
@@ -85,7 +92,6 @@ export class ProposalPdfService {
         }),
       );
 
-      const successes = updatedStatus.filter((req) => req.status === 'fulfilled').map((req) => req.value);
       const failed = updatedStatus.filter((req) => req.status === 'rejected').map((req) => req.reason);
 
       if (failed.length > 0) {
@@ -93,8 +99,6 @@ export class ProposalPdfService {
           `Some cohorts could not be saved for proposalId '${proposal._id}': ${failed.reduce((prev, curr) => prev + '\n\n' + curr, '')}`,
         );
       }
-
-      proposal.userProject.cohorts.selectedCohorts = successes;
     }
   }
 
