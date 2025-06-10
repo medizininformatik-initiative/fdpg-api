@@ -143,8 +143,6 @@ export class ProposalCrudService {
   async update(proposalId: string, updateProposalDto: ProposalUpdateDto, user: IRequestUser): Promise<ProposalGetDto> {
     validateMatchingId(proposalId, updateProposalDto._id);
 
-    console.log({ a: updateProposalDto.userProject.variableSelection });
-
     const toBeUpdated = await this.findDocument(proposalId, user, undefined, true);
     const oldStatus = toBeUpdated.status;
     const isStatusChange = updateProposalDto.status !== oldStatus;
@@ -154,8 +152,6 @@ export class ProposalCrudService {
     }
 
     mergeProposal(toBeUpdated, updateProposalDto);
-
-    console.log({ b: toBeUpdated.userProject.variableSelection });
 
     // Handle DIFE dataSourceLocaleId
     if (toBeUpdated.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
