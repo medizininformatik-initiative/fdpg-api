@@ -37,9 +37,9 @@ export class ProposalPdfService {
   ) {}
 
   async fetchAndGenerateFeasibilityPdf(proposal: Proposal, user: IRequestUser) {
-    const hasFeasibilityId = proposal.userProject.feasibility?.id !== undefined;
+    const hasLegacyFeasibilityId = proposal.userProject.feasibility?.id !== undefined;
     const selectedCohorts = proposal.userProject.cohorts?.selectedCohorts || [];
-    if (proposal.userProject.feasibility.id !== undefined || selectedCohorts.length > 0) {
+    if (hasLegacyFeasibilityId || selectedCohorts.length > 0) {
       const cohorts: CohortData[] = selectedCohorts.map((cohort: any) => ({
         feasibilityQueryId: cohort.feasibilityQueryId,
         label: cohort.label,
@@ -48,7 +48,7 @@ export class ProposalPdfService {
       }));
 
       if (
-        hasFeasibilityId &&
+        hasLegacyFeasibilityId &&
         !cohorts.some((cohort) => cohort.feasibilityQueryId === proposal.userProject.feasibility.id)
       ) {
         const newCohort: CohortData = {

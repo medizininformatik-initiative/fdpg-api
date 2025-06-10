@@ -14,10 +14,18 @@ export class DifeSelectionOfCases {
 
 export const DifeSelectionOfCasesSchema = SchemaFactory.createForClass(DifeSelectionOfCases);
 
-@Schema({ _id: false })
+@Schema()
 export class SelectionOfCases {
   @Prop({ type: DifeSelectionOfCasesSchema })
   difeSelectionOfCases?: DifeSelectionOfCases;
+
+  _id?: string;
+
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isDone: boolean;
 }
 
 export const SelectionOfCasesSchema = SchemaFactory.createForClass(SelectionOfCases);
