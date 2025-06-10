@@ -306,9 +306,8 @@ export class ProposalMiscService {
       throw new ValidationException([errorInfo]);
     }
 
-    const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.FeasibilityQuery);
-
     try {
+      const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.FeasibilityQuery);
       await this.storageService.uploadFile(blobName, file, user);
       const upload = new UploadDto(blobName, file, UseCaseUpload.FeasibilityQuery, user);
 
