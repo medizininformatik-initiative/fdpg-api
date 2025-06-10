@@ -43,6 +43,7 @@ import { ValidationException } from 'src/exceptions/validation/validation.except
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { validateModifyingCohortAccess } from '../utils/validate-access.util';
+import { ProposalUploadService } from './proposal-upload.service';
 
 @Injectable()
 export class ProposalMiscService {
@@ -55,6 +56,7 @@ export class ProposalMiscService {
     private proposalPdfService: ProposalPdfService,
     private proposalFormService: ProposalFormService,
     private storageService: StorageService,
+    private uploadService: ProposalUploadService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -320,6 +322,10 @@ export class ProposalMiscService {
         feasibilityQueryId: cohort.feasibilityQueryId,
       };
 
+      if (!toBeUpdated.userProject.cohorts.selectedCohorts) {
+        toBeUpdated.userProject.cohorts.selectedCohorts = [];
+      }
+
       toBeUpdated.userProject.cohorts.selectedCohorts.push(selectedCohort);
 
       const saved = await toBeUpdated.save();
@@ -334,18 +340,23 @@ export class ProposalMiscService {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     validateModifyingCohortAccess(toBeUpdated, user);
 
-    const [cohort] = toBeUpdated.userProject.cohorts?.selectedCohorts?.filter((cohort) => cohort._id === cohortId);
+    const cohortIndex = toBeUpdated.userProject.cohorts?.selectedCohorts?.findIndex(
+      (c) => c._id.toString() === cohortId,
+    );
 
-    if (!cohort) {
+    if (cohortIndex === -1) {
       throw new NotFoundException('Cohort could not be found');
     }
 
-    const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.FeasibilityQuery, cohort.uploadId);
+    const cohort = toBeUpdated.userProject.cohorts?.selectedCohorts?.[cohortIndex];
 
-    await this.storageService.deleteBlob(blobName);
-    toBeUpdated.userProject.cohorts.selectedCohorts = toBeUpdated.userProject.cohorts.selectedCohorts.filter(
-      (c) => c._id !== cohortId,
-    );
+    if (!cohort || cohort._id.toString() !== cohortId) {
+      throw new NotFoundException('Cohort could not be found');
+    }
+
+    await this.uploadService.deleteUpload(toBeUpdated, cohort._id, user);
+
+    toBeUpdated.userProject.cohorts?.selectedCohorts?.splice?.(cohortIndex, 1);
 
     const saved = await toBeUpdated.save();
 
