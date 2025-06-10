@@ -1,10 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { DifeTypeOfUse } from '../../enums/dife-type-of-use.enum';
-import { IsOptional, ValidateNested } from 'class-validator';
-import { Expose } from 'class-transformer';
-import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
-import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 export type DifeVariableSelectionDataDocument = DifeVariableSelectionData & Document;
 
