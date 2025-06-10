@@ -11,6 +11,9 @@ export class SelectionOfCasesDto {
   @Type(() => DifeSelectionOfCasesDto)
   @ValidateNested()
   @ExposeForDataSources([PlatformIdentifier.DIFE])
-  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.DIFE))
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.DIFE);
+  })
   difeSelectionOfCases: DifeSelectionOfCasesDto;
 }
