@@ -27,12 +27,6 @@ export class BiosampleDto extends WithIdForArrayDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(10000)
-  parameter: string;
-
-  @Expose()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
-  @MaxLength(10000)
   requirements: string;
 
   @Expose()

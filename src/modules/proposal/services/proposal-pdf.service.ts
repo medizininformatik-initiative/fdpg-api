@@ -31,8 +31,8 @@ export class ProposalPdfService {
   ) {}
 
   async fetchAndGenerateFeasibilityPdf(proposal: Proposal, user: IRequestUser) {
-    if (proposal.userProject.feasibility.id !== undefined || proposal.cohorts.length > 0) {
-      const cohorts = proposal.cohorts.map((cohort) => cohort).filter((cohort) => cohort);
+    if (proposal.userProject.feasibility.id !== undefined || proposal.userProject.cohorts.length > 0) {
+      const cohorts = proposal.userProject.cohorts.map((cohort) => cohort).filter((cohort) => cohort);
 
       if (
         proposal.userProject.feasibility.id !== undefined &&

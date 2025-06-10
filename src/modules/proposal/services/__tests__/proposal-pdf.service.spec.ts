@@ -32,8 +32,9 @@ jest.mock('../../utils/proposal-history.util', () => ({
 }));
 
 jest.mock('../../utils/proposal.utils', () => ({
-  addUpload: jest.fn(),
+  ...jest.requireActual('../../utils/proposal.utils'),
   getBlobName: jest.fn().mockReturnValue('blobName'),
+  addUpload: jest.fn(),
 }));
 
 describe('ProposalPdfService', () => {
@@ -77,11 +78,14 @@ describe('ProposalPdfService', () => {
     status: ProposalStatus.FdpgCheck,
     selectedDataSources: [PlatformIdentifier.Mii],
     participants: [participant],
-    cohorts: [],
     userProject: {
       typeOfUse: {
         usage: [ProposalTypeOfUse.Biosample],
       },
+      feasibility: {
+        id: undefined,
+      },
+      cohorts: [],
     },
   };
 
@@ -203,6 +207,7 @@ describe('ProposalPdfService', () => {
           feasibility: {
             id: feasibilityId,
           },
+          cohorts: [],
         },
         toObject: function () {
           return JSON.parse(JSON.stringify(this));

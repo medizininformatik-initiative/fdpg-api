@@ -1,5 +1,5 @@
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsObject, IsOptional, ValidateNested, Validate } from 'class-validator';
+import { IsArray, IsObject, IsOptional, ValidateNested, Validate } from 'class-validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { AddresseesDto } from './user-project/addressees.dto';
 import { EthicVoteDto } from './user-project/ethic-vote.dto';
@@ -16,6 +16,7 @@ import { IsValidVariableSelectionConstraint } from './variables/variable-selecti
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { SelectionOfCasesDto } from './user-project/selection-of-cases.dto';
+import { CohortDto } from './cohort.dto';
 
 export class UserProjectDto {
   @Expose()
@@ -96,4 +97,10 @@ export class UserProjectDto {
   @Type(() => SelectionOfCasesDto)
   @ValidateNested()
   selectionOfCases: SelectionOfCasesDto;
+
+  @Expose()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CohortDto)
+  cohorts: CohortDto[];
 }
