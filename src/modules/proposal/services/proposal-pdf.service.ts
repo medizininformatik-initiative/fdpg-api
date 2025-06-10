@@ -18,7 +18,13 @@ import { DataPrivacyTextSingleLanguage } from 'src/modules/admin/dto/data-privac
 import { PdfEngineService } from 'src/modules/pdf-engine/pdf-engine.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { Cohort } from '../schema/sub-schema/cohort.schema';
+
+interface CohortData {
+  feasibilityQueryId: number;
+  label: string;
+  comment?: string;
+  uploadId?: string;
+}
 
 @Injectable()
 export class ProposalPdfService {
@@ -31,17 +37,24 @@ export class ProposalPdfService {
   ) {}
 
   async fetchAndGenerateFeasibilityPdf(proposal: Proposal, user: IRequestUser) {
-    if (proposal.userProject.feasibility.id !== undefined || proposal.userProject.cohorts.length > 0) {
-      const cohorts = proposal.userProject.cohorts.map((cohort) => cohort).filter((cohort) => cohort);
+    const selectedCohorts = proposal.userProject.cohorts?.selectedCohorts || [];
+    if (proposal.userProject.feasibility.id !== undefined || selectedCohorts.length > 0) {
+      const cohorts: CohortData[] = selectedCohorts.map((cohort: any) => ({
+        feasibilityQueryId: cohort.feasibilityQueryId,
+        label: cohort.label,
+        comment: cohort.comment,
+        uploadId: cohort.uploadId,
+      }));
 
       if (
         proposal.userProject.feasibility.id !== undefined &&
         !cohorts.some((cohort) => cohort.feasibilityQueryId === proposal.userProject.feasibility.id)
       ) {
-        cohorts.push({
+        const newCohort: CohortData = {
           feasibilityQueryId: proposal.userProject.feasibility.id,
           label: 'Machbarkeits-Anfrage',
-        } as Cohort);
+        };
+        cohorts.push(newCohort);
       }
 
       await Promise.allSettled(
