@@ -11,7 +11,7 @@ import { ProjectDetailsDto } from './user-project/project-details.dto';
 import { PropertyRightsDto } from './user-project/property-rights.dto';
 import { ResourceAndRecontact } from './user-project/resource-and-recontact.dto';
 import { TypeOfUseDto } from './user-project/type-of-use.dto';
-import { VariableSelectionDto } from './variables/variable-selection-data.dto';
+import { VariableSelectionDataDto } from './variables/variable-selection-data.dto';
 import { IsValidVariableSelectionConstraint } from './variables/variable-selection.validation';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
@@ -86,10 +86,9 @@ export class UserProjectDto {
   @Expose()
   @IsObject()
   @IsOptional()
-  @Type(() => Object)
-  @Transform(({ obj, key }) => obj[key])
+  @Type(() => VariableSelectionDataDto)
   @Validate(IsValidVariableSelectionConstraint)
-  variableSelection: VariableSelectionDto;
+  variableSelection: VariableSelectionDataDto;
 
   @Expose()
   @IsObject()

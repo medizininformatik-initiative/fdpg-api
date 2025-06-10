@@ -16,7 +16,11 @@ import {
   InformationOnRequestedBioSamples,
   InformationOnRequestedBioSamplesSchema,
 } from './user-project/information-on-biosample.schema';
-import { DifeVariableSelectionData, VariableSelectionData } from './variable-selection-data.schema';
+import {
+  DifeVariableSelectionData,
+  VariableSelectionData,
+  VariableSelectionDataSchema,
+} from './variable-selection-data.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { SelectionOfCases, SelectionOfCasesSchema } from './selection-of-cases.schema';
 import { Cohort, CohortSchema } from './cohort.schema';
@@ -56,10 +60,10 @@ export class UserProject {
   informationOnRequestedBioSamples: InformationOnRequestedBioSamples;
 
   @Prop({
-    type: Object,
-    default: () => {},
+    type: VariableSelectionDataSchema,
+    default: {},
   })
-  variableSelection: Partial<Record<PlatformIdentifier, VariableSelectionData | DifeVariableSelectionData>>;
+  variableSelection: VariableSelectionData;
 
   @Prop({ type: SelectionOfCasesSchema })
   selectionOfCases: SelectionOfCases;
