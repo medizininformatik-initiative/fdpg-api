@@ -335,7 +335,7 @@ export class ProposalMiscService {
     }
   }
 
-  async deleteCohort(proposalId: string, cohortId: string, user: IRequestUser): Promise<ProposalGetDto> {
+  async deleteCohort(proposalId: string, cohortId: string, user: IRequestUser): Promise<SelectedCohortDto> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     validateModifyingCohortAccess(toBeUpdated, user);
 
@@ -353,13 +353,16 @@ export class ProposalMiscService {
       throw new NotFoundException('Cohort could not be found');
     }
 
-    await this.uploadService.deleteUpload(toBeUpdated, cohort._id, user);
+    await this.uploadService.deleteUpload(toBeUpdated, cohort.uploadId, user);
 
     toBeUpdated.userProject.cohorts?.selectedCohorts?.splice?.(cohortIndex, 1);
 
-    const saved = await toBeUpdated.save();
+    await toBeUpdated.save();
 
-    const plain = saved.toObject();
-    return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
+    const deletedPlain = JSON.parse(JSON.stringify(cohort));
+    return plainToClass(SelectedCohortDto, deletedPlain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   }
 }
