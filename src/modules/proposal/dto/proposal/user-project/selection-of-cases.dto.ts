@@ -9,7 +9,7 @@ import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 export class SelectionOfCasesDto extends WithIdForObjectDto {
   @Expose()
   @IsObject()
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsMiiDataSource] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @Type(() => DifeSelectionOfCasesDto)
   @ValidateNested()
   @ExposeForDataSources([PlatformIdentifier.DIFE])

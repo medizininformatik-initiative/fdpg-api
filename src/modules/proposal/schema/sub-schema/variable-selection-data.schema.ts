@@ -15,8 +15,13 @@ export class DifeVariableSelectionData {
 export const DifeVariableSelectionDataSchema = SchemaFactory.createForClass(DifeVariableSelectionData);
 
 export type VariableSelectionDataDocument = VariableSelectionData & Document;
+
+@Schema()
 export class VariableSelectionData {
-  @Prop({ type: DifeVariableSelectionDataSchema })
+  @Prop({
+    type: DifeVariableSelectionDataSchema,
+    default: {},
+  })
   DIFE?: DifeVariableSelectionData;
 
   _id?: string;

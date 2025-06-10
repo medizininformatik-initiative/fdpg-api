@@ -1,5 +1,5 @@
-import { Expose, Type } from 'class-transformer';
-import { IsObject, IsOptional, ValidateNested, Validate, ValidateIf } from 'class-validator';
+import { Expose, Type, Transform } from 'class-transformer';
+import { IsObject, IsOptional, ValidateNested, ValidateIf } from 'class-validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { AddresseesDto } from './user-project/addressees.dto';
 import { EthicVoteDto } from './user-project/ethic-vote.dto';
@@ -12,7 +12,6 @@ import { PropertyRightsDto } from './user-project/property-rights.dto';
 import { ResourceAndRecontact } from './user-project/resource-and-recontact.dto';
 import { TypeOfUseDto } from './user-project/type-of-use.dto';
 import { VariableSelectionDataDto } from './variables/variable-selection-data.dto';
-import { IsValidVariableSelectionConstraint } from './variables/variable-selection.validation';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { SelectionOfCasesDto } from './user-project/selection-of-cases.dto';
 import { CohortDto } from './user-project/cohort.dto';
@@ -95,7 +94,7 @@ export class UserProjectDto {
   @IsObject()
   @IsOptional()
   @Type(() => VariableSelectionDataDto)
-  @Validate(IsValidVariableSelectionConstraint)
+  @Transform(({ obj }) => obj?.variableSelection)
   variableSelection: VariableSelectionDataDto;
 
   @Expose()
@@ -109,5 +108,6 @@ export class UserProjectDto {
   @ValidateNested()
   @Type(() => CohortDto)
   @IsObject()
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   cohorts: CohortDto;
 }

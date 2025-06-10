@@ -48,6 +48,20 @@ const mergeDeep = (target, ...sources) => {
 
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
+      if (key === 'variableSelection' || key === 'DIFE') {
+        console.log({
+          key,
+          target,
+          source,
+          targetT: typeof target[key],
+          sourceT: typeof source[key],
+          targetB: isObject(target[key]),
+          sourceB: isObject(source[key]),
+          keyT: typeof key,
+          types: Object.keys(target).map((k) => ({ k, t: typeof k })),
+        });
+      }
+
       if (isObject<any>(source[key]) && typeof source[key].getMonth !== 'function') {
         if (!target[key]) Object.assign(target, { [key]: {} });
 
@@ -56,6 +70,11 @@ const mergeDeep = (target, ...sources) => {
         const isSourceArray = Array.isArray(source[key]);
         const isSourceArrayWithId = isSourceArray && source[key][0] && source[key][0]._id;
         const isTargetArray = Array.isArray(target[key]);
+
+        if (key === 'variableSelection' || key === 'DIFE') {
+          console.log({ isSourceArray, isSourceArrayWithId, isTargetArray });
+        }
+
         if (isTargetArray && isSourceArrayWithId) {
           removeObsoleteArrayMember(target[key], source[key]);
           updateAndAddArrayMembers(target[key], source[key]);
@@ -63,6 +82,10 @@ const mergeDeep = (target, ...sources) => {
           target[key] = [];
           updateAndAddArrayMembers(target[key], source[key]);
         } else {
+          if (key === 'variableSelection' || key === 'DIFE') {
+            console.log('assign');
+          }
+
           Object.assign(target, { [key]: source[key] });
         }
       }
@@ -78,14 +101,6 @@ const mergeDeep = (target, ...sources) => {
  * @param apiItem ProposalUpdateDto
  */
 export const mergeProposal = (dbItem: ProposalDocument, apiItem: ProposalUpdateDto): void => {
-  if (
-    !!dbItem.userProject?.variableSelection &&
-    !!apiItem.userProject?.variableSelection &&
-    !isDeepStrictEqual(dbItem.userProject?.variableSelection, apiItem.userProject?.variableSelection)
-  ) {
-    dbItem.markModified('userProject.variableSelection');
-  }
-
   if (
     !!dbItem.userProject?.typeOfUse?.pseudonymizationInfoTexts &&
     !!apiItem.userProject?.typeOfUse?.pseudonymizationInfoTexts &&
