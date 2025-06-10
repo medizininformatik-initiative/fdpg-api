@@ -1,5 +1,15 @@
 import { ClassTransformOptions, Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsArray, IsEnum, IsObject, IsOptional, Matches, MaxLength, ValidateNested, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  Matches,
+  MaxLength,
+  ValidateNested,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PROPOSAL_SHORTCUT_REGEX } from 'src/shared/constants/regex.constants';
 import { ExposeId } from 'src/shared/decorators/transform/expose-id.decorator';
@@ -39,7 +49,7 @@ import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
-import { CohortDto } from './user-project/cohort.dto';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -107,6 +117,8 @@ export class ProposalBaseDto {
   @ValidateNested()
   @IsObject()
   @Type(() => RequestedDataDto)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   requestedData: RequestedDataDto;
 
   @Expose()

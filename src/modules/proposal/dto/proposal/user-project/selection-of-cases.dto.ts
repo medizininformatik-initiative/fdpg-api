@@ -1,6 +1,6 @@
 import { DifeSelectionOfCasesDto } from './dife-selection-of-cases.dto';
 import { Expose, Type } from 'class-transformer';
-import { IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { IsObject, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
@@ -11,5 +11,9 @@ export class SelectionOfCasesDto {
   @Type(() => DifeSelectionOfCasesDto)
   @ValidateNested()
   @ExposeForDataSources([PlatformIdentifier.DIFE])
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.DIFE);
+  })
   difeSelectionOfCases: DifeSelectionOfCasesDto;
 }

@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, MaxLength } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, MaxLength, ValidateIf } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import {
   DIFEProposalTypeOfUse,
@@ -9,8 +9,8 @@ import {
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { Transform } from 'class-transformer';
-import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 
 export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
@@ -20,22 +20,41 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
   })
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
+  })
   usage: ProposalTypeOfUse[];
 
   @Expose()
   @IsOptional()
   @IsNotEmptyString()
   @MaxLength(10_000)
+  @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
+  })
   dataPrivacyExtra?: string;
 
   @Expose()
   @IsOptional()
   @IsNotEmptyString()
+  @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
+  })
   targetFormat?: string;
 
   @Expose()
   @IsOptional()
   @IsNotEmptyString()
+  @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
+  })
   targetFormatOther?: string;
 
   @Expose()
@@ -43,6 +62,10 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsEnum(DIFEProposalTypeOfUse, { each: true })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @ExposeForDataSources([PlatformIdentifier.DIFE])
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.DIFE);
+  })
   difeUsage: DIFEProposalTypeOfUse[];
 
   @Expose()
@@ -50,6 +73,11 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @IsEnum(PseudonymizationInfoOptions, { each: true })
   @IsOptional({
     groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
+  })
+  @ExposeForDataSources([PlatformIdentifier.Mii])
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
   pseudonymizationInfo: PseudonymizationInfoOptions[];
 
@@ -66,5 +94,10 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     [PseudonymizationInfoOptions.namedSiteVariable]:
       pseudonymizationInfoTexts?.[PseudonymizationInfoOptions.namedSiteVariable] ?? '',
   }))
+  @ValidateIf((o, context) => {
+    const proposal = context?.object;
+    return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
+  })
+  @ExposeForDataSources([PlatformIdentifier.Mii])
   pseudonymizationInfoTexts: Record<PseudonymizationInfoOptions, string>;
 }
