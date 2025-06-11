@@ -85,7 +85,9 @@ describe('ProposalPdfService', () => {
       feasibility: {
         id: undefined,
       },
-      cohorts: [],
+      cohorts: {
+        selectedCohorts: [],
+      },
     },
   };
 
