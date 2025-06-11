@@ -1,4 +1,4 @@
-import { Expose, Transform } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
@@ -31,4 +31,9 @@ export class SelectedCohortDto extends WithIdForArrayDto {
   @Expose()
   @IsBoolean()
   isManualUpload?: boolean;
+
+  @Expose()
+  @IsNumber()
+  @IsOptional()
+  numberOfPatients?: number;
 }

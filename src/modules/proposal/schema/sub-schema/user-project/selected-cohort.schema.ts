@@ -21,6 +21,9 @@ export class SelectedCohort {
 
   @Prop({ type: Boolean, default: false })
   isManualUpload: boolean;
+
+  @Prop({ type: Number, default: false })
+  numberOfPatients?: number;
 }
 
 export const SelectedCohortSchema = SchemaFactory.createForClass(SelectedCohort);

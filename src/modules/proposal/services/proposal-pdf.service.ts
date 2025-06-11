@@ -20,13 +20,6 @@ import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
 
-interface CohortData {
-  feasibilityQueryId: number;
-  label: string;
-  comment?: string;
-  uploadId?: string;
-}
-
 @Injectable()
 export class ProposalPdfService {
   constructor(
@@ -41,11 +34,12 @@ export class ProposalPdfService {
     const hasLegacyFeasibilityId = proposal.userProject.feasibility?.id !== undefined;
     const selectedCohorts = proposal.userProject.cohorts?.selectedCohorts || [];
     if (hasLegacyFeasibilityId || selectedCohorts.length > 0) {
-      const cohorts: CohortData[] = selectedCohorts.map((cohort: any) => ({
+      const cohorts: SelectedCohort[] = selectedCohorts.map((cohort: any) => ({
         feasibilityQueryId: cohort.feasibilityQueryId,
         label: cohort.label,
         comment: cohort.comment,
         uploadId: cohort.uploadId,
+        isManualUpload: cohort.isManualUpload,
       }));
 
       if (

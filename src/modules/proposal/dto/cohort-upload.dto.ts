@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 
 @Exclude()
@@ -32,6 +32,14 @@ export class SelectedCohortUploadDto {
     return JSON.parse(obj.newCohort).isManualUpload;
   })
   isManualUpload: boolean;
+
+  @Expose()
+  @IsNumber()
+  @Transform(({ obj }) => {
+    console.log(JSON.parse(obj.newCohort));
+    return JSON.parse(obj.newCohort).numberOfPatients;
+  })
+  numberOfPatients: number;
 }
 
 @Exclude()

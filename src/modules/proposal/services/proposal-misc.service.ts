@@ -317,6 +317,7 @@ export class ProposalMiscService {
         comment: cohort.comment,
         isManualUpload: true,
         feasibilityQueryId: undefined,
+        numberOfPatients: cohort.numberOfPatients,
       };
 
       if (!toBeUpdated.userProject.cohorts.selectedCohorts) {
