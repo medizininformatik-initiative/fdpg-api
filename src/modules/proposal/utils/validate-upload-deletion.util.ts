@@ -51,7 +51,7 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
     throwForbiddenError();
   }
 
-  const isEthicSectionDone = proposal.userProject.ethicVote.isDone;
+  const isEthicSectionDone = proposal.userProject?.ethicVote?.isDone;
   if (
     (upload.type === DirectUpload.EthicVote || upload.type === DirectUpload.EthicVoteDeclarationOfNonResponsibility) &&
     !isEditable &&
