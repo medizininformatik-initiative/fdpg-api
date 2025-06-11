@@ -33,7 +33,7 @@ import { ProposalValidation } from '../enums/porposal-validation.enum';
 import { plainToClass } from 'class-transformer';
 import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
-import { UploadDto } from '../dto/upload.dto';
+import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
 import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
@@ -290,7 +290,7 @@ export class ProposalMiscService {
     cohort: SelectedCohortDto,
     file: Express.Multer.File,
     user: IRequestUser,
-  ): Promise<ProposalGetDto> {
+  ): Promise<{ insertedCohort: SelectedCohortDto; uploadedFile: UploadGetDto }> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     validateModifyingCohortAccess(toBeUpdated, user);
 
@@ -326,8 +326,20 @@ export class ProposalMiscService {
       toBeUpdated.userProject.cohorts.selectedCohorts.push(selectedCohort);
 
       const saved = await toBeUpdated.save();
-      const plain = saved.toObject();
-      return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
+
+      const insertedCohort = saved.userProject.cohorts?.selectedCohorts?.at(-1);
+      const insertedUpload = saved.uploads?.at?.(-1);
+
+      const cohortDto = plainToClass(SelectedCohortDto, JSON.parse(JSON.stringify(insertedCohort)), {
+        strategy: 'excludeAll',
+        groups: [ProposalValidation.IsOutput],
+      });
+      const uploadDto = plainToClass(UploadGetDto, JSON.parse(JSON.stringify(insertedUpload)), {
+        strategy: 'excludeAll',
+        groups: [ProposalValidation.IsOutput],
+      });
+
+      return { insertedCohort: cohortDto, uploadedFile: uploadDto };
     } catch (exception) {
       throw exception;
     }

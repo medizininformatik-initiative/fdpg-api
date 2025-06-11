@@ -13,7 +13,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiBody, ApiNoContentResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiNoContentResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { MarkAsDoneDto } from 'src/modules/comment/dto/mark-as-done.dto';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
@@ -30,8 +30,9 @@ import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
 import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
-import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
+import { UploadGetDto } from '../dto/upload.dto';
+import { CohortUploadDto } from '../dto/cohort-upload.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -177,16 +178,19 @@ export class ProposalMiscController {
   }
 
   @Auth(Role.Researcher, Role.FdpgMember)
-  @Post(':id/cohort')
+  @Put(':id/cohort')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a manual upload cohort on a proposal' })
   @ProposalValidation(true)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CohortUploadDto })
   async uploadManualCohort(
     @Param() { id }: MongoIdParamDto,
     @Body() newCohort: SelectedCohortDto,
     @UploadedFile() file: Express.Multer.File,
     @Request() { user }: FdpgRequest,
-  ): Promise<ProposalGetDto> {
+  ): Promise<{ insertedCohort: SelectedCohortDto; uploadedFile: UploadGetDto }> {
+    console.log('==================received');
     return await this.proposalMiscService.addManualUploadCohort(id, newCohort, file, user);
   }
 

@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
@@ -15,6 +15,11 @@ export class SelectedCohortDto extends WithIdForArrayDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(1000)
+  @Transform((obj) => {
+    console.log({ obj });
+
+    return obj.value.label;
+  })
   label: string;
 
   @Expose()
