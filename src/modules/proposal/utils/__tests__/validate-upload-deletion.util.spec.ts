@@ -63,7 +63,7 @@ describe('validateUploadDeletion', () => {
     });
 
     it('throws if user is owner but upload.type is not a generalAccessType', () => {
-      const upload: Upload = { type: UseCaseUpload.FeasibilityQuery } as Upload;
+      const upload: Upload = { type: UseCaseUpload.LocationContract } as Upload;
       expect(() => validateUploadDeletion(baseProposal, upload, researcherUser)).toThrow(ForbiddenException);
     });
 

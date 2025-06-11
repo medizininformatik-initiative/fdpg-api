@@ -85,7 +85,20 @@ describe('ProposalPdfService', () => {
       feasibility: {
         id: undefined,
       },
-      cohorts: [],
+      cohorts: {
+        selectedCohorts: [
+          {
+            feasibilityQueryId: 1,
+            label: 'label',
+            isManualUpload: false,
+          },
+          {
+            feasibilityQueryId: 2,
+            label: 'label',
+            isManualUpload: true,
+          },
+        ],
+      },
     },
   };
 
@@ -207,7 +220,6 @@ describe('ProposalPdfService', () => {
           feasibility: {
             id: feasibilityId,
           },
-          cohorts: [],
         },
         toObject: function () {
           return JSON.parse(JSON.stringify(this));

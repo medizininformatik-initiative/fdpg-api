@@ -185,3 +185,16 @@ export const checkAccessForUacMember = (proposal: ProposalDocument, user: UserPi
 const throwForbiddenError = (message?: string) => {
   throw new ForbiddenException(message);
 };
+
+export const validateModifyingCohortAccess = (proposal: ProposalDocument, user: IRequestUser) => {
+  if (user.singleKnownRole === Role.FdpgMember && proposal.status !== ProposalStatus.FdpgCheck) {
+    throwForbiddenError('FDPG Members can modify cohorts only in FdpgCheck step');
+  }
+
+  if (
+    user.singleKnownRole === Role.Researcher &&
+    ![ProposalStatus.Draft, ProposalStatus.Rework].includes(proposal.status)
+  ) {
+    throwForbiddenError('Cohorts cannot be changed at this step');
+  }
+};
