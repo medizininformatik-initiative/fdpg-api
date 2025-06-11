@@ -10,6 +10,7 @@ import {
   Request,
   StreamableFile,
   UploadedFile,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -32,7 +33,9 @@ import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
 import { UploadGetDto } from '../dto/upload.dto';
-import { CohortUploadDto } from '../dto/cohort-upload.dto';
+import { CohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { createMulterOptions } from 'src/shared/utils/multer-options.util';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -184,18 +187,19 @@ export class ProposalMiscController {
   @ProposalValidation(true)
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CohortUploadDto })
+  @UsePipes(ValidationPipe)
+  @UseInterceptors(FileInterceptor('file', createMulterOptions()))
   async uploadManualCohort(
     @Param() { id }: MongoIdParamDto,
-    @Body() newCohort: SelectedCohortDto,
+    @Body() newCohort: SelectedCohortUploadDto,
     @UploadedFile() file: Express.Multer.File,
     @Request() { user }: FdpgRequest,
   ): Promise<{ insertedCohort: SelectedCohortDto; uploadedFile: UploadGetDto }> {
-    console.log('==================received');
     return await this.proposalMiscService.addManualUploadCohort(id, newCohort, file, user);
   }
 
   @Auth(Role.Researcher, Role.FdpgMember)
-  @Delete(':proposalId/cohort/:cohortId')
+  @Delete(':mainId/cohort/:subId')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Deletes the upload and cohort on a proposal' })
   @ProposalValidation(true)
@@ -203,6 +207,7 @@ export class ProposalMiscController {
     @Param() { mainId, subId }: MongoTwoIdsParamDto,
     @Request() { user }: FdpgRequest,
   ): Promise<SelectedCohortDto> {
+    console.log({ mainId, subId });
     return await this.proposalMiscService.deleteCohort(mainId, subId, user);
   }
 }

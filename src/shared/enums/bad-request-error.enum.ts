@@ -13,5 +13,5 @@ export enum BadRequestError {
   ReportsMaxUploadCount = '400-012',
   LocationNotAssignedToContract = '400-013',
   LocationRevertValidation = '400-014',
-  CohortUniquenessName = '400-015',
+  MaximumCohortSizeReached = '400-015',
 }

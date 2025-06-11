@@ -15,11 +15,6 @@ export class SelectedCohortDto extends WithIdForArrayDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(1000)
-  @Transform((obj) => {
-    console.log({ obj });
-
-    return obj.value.label;
-  })
   label: string;
 
   @Expose()

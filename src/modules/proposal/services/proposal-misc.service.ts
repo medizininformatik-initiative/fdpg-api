@@ -42,6 +42,7 @@ import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { validateModifyingCohortAccess } from '../utils/validate-access.util';
 import { ProposalUploadService } from './proposal-upload.service';
+import { SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 
 @Injectable()
 export class ProposalMiscService {
@@ -287,19 +288,19 @@ export class ProposalMiscService {
 
   async addManualUploadCohort(
     proposalId: string,
-    cohort: SelectedCohortDto,
+    cohort: SelectedCohortUploadDto,
     file: Express.Multer.File,
     user: IRequestUser,
   ): Promise<{ insertedCohort: SelectedCohortDto; uploadedFile: UploadGetDto }> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     validateModifyingCohortAccess(toBeUpdated, user);
 
-    if (toBeUpdated.userProject.cohorts.selectedCohorts.some((persisted) => persisted.label === cohort.label)) {
+    if (toBeUpdated.userProject.cohorts.selectedCohorts.length >= 49) {
       const errorInfo = new ValidationErrorInfo({
-        constraint: 'uniqueCohortName',
-        message: 'Cohort name is not unique',
+        constraint: 'Maximum cohorts reached',
+        message: 'maximum cohorts reached',
         property: 'selectedCohorts',
-        code: BadRequestError.CohortUniquenessName,
+        code: BadRequestError.MaximumCohortSizeReached,
       });
       throw new ValidationException([errorInfo]);
     }
@@ -316,7 +317,7 @@ export class ProposalMiscService {
         uploadId: upload._id,
         comment: cohort.comment,
         isManualUpload: true,
-        feasibilityQueryId: cohort.feasibilityQueryId,
+        feasibilityQueryId: undefined,
       };
 
       if (!toBeUpdated.userProject.cohorts.selectedCohorts) {
@@ -347,6 +348,7 @@ export class ProposalMiscService {
 
   async deleteCohort(proposalId: string, cohortId: string, user: IRequestUser): Promise<SelectedCohortDto> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
     validateModifyingCohortAccess(toBeUpdated, user);
 
     const cohortIndex = toBeUpdated.userProject.cohorts?.selectedCohorts?.findIndex(
@@ -363,7 +365,9 @@ export class ProposalMiscService {
       throw new NotFoundException('Cohort could not be found');
     }
 
-    await this.uploadService.deleteUpload(toBeUpdated, cohort.uploadId, user);
+    if (cohort.uploadId) {
+      await this.uploadService.deleteUpload(toBeUpdated, cohort.uploadId, user);
+    }
 
     toBeUpdated.userProject.cohorts?.selectedCohorts?.splice?.(cohortIndex, 1);
 

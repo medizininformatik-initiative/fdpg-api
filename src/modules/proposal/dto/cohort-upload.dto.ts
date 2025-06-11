@@ -1,6 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { SelectedCohortDto } from './proposal/user-project/selected-cohort.dto';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
+
+@Exclude()
+export class SelectedCohortUploadDto {
+  @Expose()
+  @IsString()
+  @IsNotEmptyString()
+  @MaxLength(1000)
+  @Transform(({ obj }) => {
+    console.log(JSON.parse(obj.newCohort));
+    return JSON.parse(obj.newCohort).label;
+  })
+  label: string;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  @MaxLength(10000)
+  @Transform(({ obj }) => {
+    console.log(JSON.parse(obj.newCohort));
+    return JSON.parse(obj.newCohort).comment;
+  })
+  comment?: string;
+
+  @Expose()
+  @IsBoolean()
+  @Transform(({ obj }) => {
+    console.log(JSON.parse(obj.newCohort));
+    return JSON.parse(obj.newCohort).isManualUpload;
+  })
+  isManualUpload: boolean;
+}
 
 @Exclude()
 export class CohortUploadDto {
@@ -12,10 +44,7 @@ export class CohortUploadDto {
   file: any;
 
   @Expose()
-  @Transform((obj) => {
-    console.log({ obj });
-
-    return obj;
-  })
-  newCohort: SelectedCohortDto;
+  @Type(() => SelectedCohortUploadDto)
+  @ValidateNested()
+  newCohort: SelectedCohortUploadDto;
 }
