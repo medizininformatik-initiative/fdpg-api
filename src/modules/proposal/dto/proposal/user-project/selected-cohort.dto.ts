@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -7,8 +7,8 @@ import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.vali
 export class SelectedCohortDto extends WithIdForArrayDto {
   @Expose()
   @IsNumber()
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
-  feasibilityQueryId: number;
+  @IsOptional()
+  feasibilityQueryId?: number;
 
   @Expose()
   @IsString()
@@ -27,4 +27,13 @@ export class SelectedCohortDto extends WithIdForArrayDto {
   @IsString()
   @IsOptional()
   uploadId?: string;
+
+  @Expose()
+  @IsBoolean()
+  isManualUpload?: boolean;
+
+  @Expose()
+  @IsNumber()
+  @IsOptional()
+  numberOfPatients?: number;
 }

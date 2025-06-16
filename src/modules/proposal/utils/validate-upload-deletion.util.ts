@@ -2,7 +2,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../enums/proposal-status.enum';
-import { DirectUpload, UploadType } from '../enums/upload-type.enum';
+import { DirectUpload, UploadType, UseCaseUpload } from '../enums/upload-type.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
 
@@ -36,7 +36,14 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
   const isGeneralAccessType = generalAccessTypes.includes(upload.type);
   const isEditable = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.Rework;
 
-  if (!isOwner || !isGeneralAccessType) {
+  if ((!isOwner || !isGeneralAccessType) && upload.type !== UseCaseUpload.FeasibilityQuery) {
+    throwForbiddenError();
+  }
+
+  if (
+    upload.type === UseCaseUpload.FeasibilityQuery &&
+    ![ProposalStatus.Draft, ProposalStatus.Rework].includes(proposal.status)
+  ) {
     throwForbiddenError();
   }
 
@@ -44,7 +51,7 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
     throwForbiddenError();
   }
 
-  const isEthicSectionDone = proposal.userProject.ethicVote.isDone;
+  const isEthicSectionDone = proposal.userProject?.ethicVote?.isDone;
   if (
     (upload.type === DirectUpload.EthicVote || upload.type === DirectUpload.EthicVoteDeclarationOfNonResponsibility) &&
     !isEditable &&

@@ -28,6 +28,20 @@ import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
+import { ProposalValidation } from '../enums/porposal-validation.enum';
+import { plainToClass } from 'class-transformer';
+import { UseCaseUpload } from '../enums/upload-type.enum';
+import { addUpload, getBlobName } from '../utils/proposal.utils';
+import { UploadDto, UploadGetDto } from '../dto/upload.dto';
+import { StorageService } from 'src/modules/storage/storage.service';
+import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
+import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
+import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
+import { validateModifyingCohortAccess } from '../utils/validate-access.util';
+import { ProposalUploadService } from './proposal-upload.service';
+import { SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 
 @Injectable()
 export class ProposalMiscService {
@@ -39,6 +53,8 @@ export class ProposalMiscService {
     private schedulerService: SchedulerService,
     private proposalPdfService: ProposalPdfService,
     private proposalFormService: ProposalFormService,
+    private storageService: StorageService,
+    private uploadService: ProposalUploadService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -267,5 +283,100 @@ export class ProposalMiscService {
 
   async getAllProposalFormVersions(): Promise<ProposalFormDto[]> {
     return await this.proposalFormService.findAll();
+  }
+
+  async addManualUploadCohort(
+    proposalId: string,
+    cohort: SelectedCohortUploadDto,
+    file: Express.Multer.File,
+    user: IRequestUser,
+  ): Promise<{ insertedCohort: SelectedCohortDto; uploadedFile: UploadGetDto }> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    validateModifyingCohortAccess(toBeUpdated, user);
+
+    if (toBeUpdated.userProject.cohorts.selectedCohorts.length >= 49) {
+      const errorInfo = new ValidationErrorInfo({
+        constraint: 'Maximum cohorts reached',
+        message: 'maximum cohorts reached',
+        property: 'selectedCohorts',
+        code: BadRequestError.MaximumCohortSizeReached,
+      });
+      throw new ValidationException([errorInfo]);
+    }
+
+    try {
+      const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.FeasibilityQuery);
+      await this.storageService.uploadFile(blobName, file, user);
+      const upload = new UploadDto(blobName, file, UseCaseUpload.FeasibilityQuery, user);
+
+      addUpload(toBeUpdated, upload);
+
+      const selectedCohort: SelectedCohort = {
+        label: cohort.label,
+        uploadId: upload._id,
+        comment: cohort.comment,
+        isManualUpload: true,
+        feasibilityQueryId: undefined,
+        numberOfPatients: cohort.numberOfPatients,
+      };
+
+      if (!toBeUpdated.userProject.cohorts.selectedCohorts) {
+        toBeUpdated.userProject.cohorts.selectedCohorts = [];
+      }
+
+      toBeUpdated.userProject.cohorts.selectedCohorts.push(selectedCohort);
+
+      const saved = await toBeUpdated.save();
+
+      const insertedCohort = saved.userProject.cohorts?.selectedCohorts?.at(-1);
+      const insertedUpload = saved.uploads?.at?.(-1);
+
+      const cohortDto = plainToClass(SelectedCohortDto, JSON.parse(JSON.stringify(insertedCohort)), {
+        strategy: 'excludeAll',
+        groups: [ProposalValidation.IsOutput],
+      });
+      const uploadDto = plainToClass(UploadGetDto, JSON.parse(JSON.stringify(insertedUpload)), {
+        strategy: 'excludeAll',
+        groups: [ProposalValidation.IsOutput],
+      });
+
+      return { insertedCohort: cohortDto, uploadedFile: uploadDto };
+    } catch (exception) {
+      throw exception;
+    }
+  }
+
+  async deleteCohort(proposalId: string, cohortId: string, user: IRequestUser): Promise<SelectedCohortDto> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    validateModifyingCohortAccess(toBeUpdated, user);
+
+    const cohortIndex = toBeUpdated.userProject.cohorts?.selectedCohorts?.findIndex(
+      (c) => c._id.toString() === cohortId,
+    );
+
+    if (cohortIndex === -1) {
+      throw new NotFoundException('Cohort could not be found');
+    }
+
+    const cohort = toBeUpdated.userProject.cohorts?.selectedCohorts?.[cohortIndex];
+
+    if (!cohort || cohort._id.toString() !== cohortId) {
+      throw new NotFoundException('Cohort could not be found');
+    }
+
+    if (cohort.uploadId) {
+      await this.uploadService.deleteUpload(toBeUpdated, cohort.uploadId, user);
+    }
+
+    toBeUpdated.userProject.cohorts?.selectedCohorts?.splice?.(cohortIndex, 1);
+
+    await toBeUpdated.save();
+
+    const deletedPlain = JSON.parse(JSON.stringify(cohort));
+    return plainToClass(SelectedCohortDto, deletedPlain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   }
 }

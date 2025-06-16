@@ -5,8 +5,8 @@ export type SelectedCohortDocument = SelectedCohort & Document;
 
 @Schema({ _id: true })
 export class SelectedCohort {
-  @Prop({ type: Number, required: true })
-  feasibilityQueryId: number;
+  @Prop({ type: Number, required: false })
+  feasibilityQueryId?: number;
 
   @Prop({ type: String, required: true })
   label: string;
@@ -18,6 +18,12 @@ export class SelectedCohort {
   uploadId?: string;
 
   _id?: string;
+
+  @Prop({ type: Boolean, default: false })
+  isManualUpload: boolean;
+
+  @Prop({ type: Number, default: false })
+  numberOfPatients?: number;
 }
 
 export const SelectedCohortSchema = SchemaFactory.createForClass(SelectedCohort);

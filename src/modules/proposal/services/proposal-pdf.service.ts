@@ -18,13 +18,7 @@ import { DataPrivacyTextSingleLanguage } from 'src/modules/admin/dto/data-privac
 import { PdfEngineService } from 'src/modules/pdf-engine/pdf-engine.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
-
-interface CohortData {
-  feasibilityQueryId: number;
-  label: string;
-  comment?: string;
-  uploadId?: string;
-}
+import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
 
 @Injectable()
 export class ProposalPdfService {
@@ -40,26 +34,33 @@ export class ProposalPdfService {
     const hasLegacyFeasibilityId = proposal.userProject.feasibility?.id !== undefined;
     const selectedCohorts = proposal.userProject.cohorts?.selectedCohorts || [];
     if (hasLegacyFeasibilityId || selectedCohorts.length > 0) {
-      const cohorts: CohortData[] = selectedCohorts.map((cohort: any) => ({
+      const cohorts: SelectedCohort[] = selectedCohorts.map((cohort: SelectedCohort) => ({
         feasibilityQueryId: cohort.feasibilityQueryId,
         label: cohort.label,
         comment: cohort.comment,
         uploadId: cohort.uploadId,
+        isManualUpload: cohort.isManualUpload,
       }));
 
       if (
         hasLegacyFeasibilityId &&
         !cohorts.some((cohort) => cohort.feasibilityQueryId === proposal.userProject.feasibility.id)
       ) {
-        const newCohort: CohortData = {
+        const newCohort: SelectedCohort = {
           feasibilityQueryId: proposal.userProject.feasibility.id,
           label: 'Machbarkeits-Anfrage',
+          isManualUpload: false,
+          comment: undefined,
         };
-        cohorts.push(newCohort);
+        proposal.userProject.cohorts?.selectedCohorts?.push(newCohort);
       }
 
-      await Promise.allSettled(
-        cohorts.map(async (cohort) => {
+      const updatedStatus = await Promise.allSettled(
+        proposal.userProject.cohorts?.selectedCohorts?.map(async (cohort) => {
+          if (cohort.isManualUpload) {
+            return cohort;
+          }
+
           const queryContent = await this.feasibilityService.getQueryContentById(cohort.feasibilityQueryId, 'JSON');
           const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
           const feasibilityFile: Express.Multer.File = {
@@ -77,9 +78,21 @@ export class ProposalPdfService {
             UseCaseUpload.FeasibilityQuery,
             user,
           );
+
           addUpload(proposal, feasibilityUpload);
+          cohort.uploadId = feasibilityUpload._id;
+
+          return cohort;
         }),
       );
+
+      const failed = updatedStatus.filter((req) => req.status === 'rejected').map((req) => req.reason);
+
+      if (failed.length > 0) {
+        console.error(
+          `Some cohorts could not be saved for proposalId '${proposal._id}': ${failed.reduce((prev, curr) => prev + '\n\n' + curr, '')}`,
+        );
+      }
     }
   }
 
