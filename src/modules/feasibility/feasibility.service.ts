@@ -53,14 +53,15 @@ export class FeasibilityService {
         headers: {
           Accept: headerFileType,
         },
-        params: {
-          'skip-validation': false,
-        },
         responseType: fileType === 'ZIP' ? 'arraybuffer' : 'json',
       });
 
       if (response.data !== '' && response.data !== undefined) {
-        return response.data;
+        if (fileType === 'ZIP') {
+          return Buffer.from(response.data);
+        } else {
+          return response.data;
+        }
       } else {
         return { error: 'No content for feasibility query' };
       }

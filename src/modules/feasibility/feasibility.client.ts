@@ -3,6 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ITokenResult } from '../../shared/types/token-result.interface';
+import { Agent } from 'https';
+import * as https from 'https';
+import * as fs from 'fs';
 
 @Injectable()
 export class FeasibilityClient {
@@ -11,6 +14,7 @@ export class FeasibilityClient {
     this.configureClient();
     this.obtainToken();
     this.configureInterceptors();
+    this.obtainCertificate();
   }
 
   public client: AxiosInstance;
@@ -20,6 +24,7 @@ export class FeasibilityClient {
   private clientId: string;
   private clientSecret: string;
   private currentAccessToken: string;
+  private agent: Agent;
 
   private configureService() {
     this.keycloakHost = this.configService.get('FEASIBILITY_KEYCLOAK_HOST') || this.configService.get('KEYCLOAK_HOST');
@@ -30,6 +35,11 @@ export class FeasibilityClient {
     this.tokenEndpoint = `${this.keycloakHost}/auth/realms/${keycloakRealm}/protocol/openid-connect/token`;
 
     this.feasibilityBaseUrl = feasibilityHost;
+  }
+
+  private async obtainCertificate() {
+    const certificates = fs.readFileSync('certs/ca-chain.pem');
+    this.agent = new https.Agent({ ca: certificates });
   }
 
   private configureClient() {
@@ -97,6 +107,10 @@ export class FeasibilityClient {
       if (this.currentAccessToken) {
         const authHeader = `Bearer ${this.currentAccessToken}`;
         config.headers.set('Authorization', authHeader);
+      }
+
+      if (this.agent) {
+        config.httpsAgent = this.agent;
       }
 
       return Promise.resolve(config);
