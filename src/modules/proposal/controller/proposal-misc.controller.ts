@@ -207,7 +207,6 @@ export class ProposalMiscController {
     @Param() { mainId, subId }: MongoTwoIdsParamDto,
     @Request() { user }: FdpgRequest,
   ): Promise<SelectedCohortDto> {
-    console.log({ mainId, subId });
     return await this.proposalMiscService.deleteCohort(mainId, subId, user);
   }
 }

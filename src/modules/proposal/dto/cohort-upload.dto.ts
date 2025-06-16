@@ -10,7 +10,6 @@ export class SelectedCohortUploadDto {
   @IsNotEmptyString()
   @MaxLength(1000)
   @Transform(({ obj }) => {
-    console.log(JSON.parse(obj.newCohort));
     return JSON.parse(obj.newCohort).label;
   })
   label: string;
@@ -20,7 +19,6 @@ export class SelectedCohortUploadDto {
   @IsOptional()
   @MaxLength(10000)
   @Transform(({ obj }) => {
-    console.log(JSON.parse(obj.newCohort));
     return JSON.parse(obj.newCohort).comment;
   })
   comment?: string;
@@ -28,7 +26,6 @@ export class SelectedCohortUploadDto {
   @Expose()
   @IsBoolean()
   @Transform(({ obj }) => {
-    console.log(JSON.parse(obj.newCohort));
     return JSON.parse(obj.newCohort).isManualUpload;
   })
   isManualUpload: boolean;
@@ -36,7 +33,6 @@ export class SelectedCohortUploadDto {
   @Expose()
   @IsNumber()
   @Transform(({ obj }) => {
-    console.log(JSON.parse(obj.newCohort));
     return JSON.parse(obj.newCohort).numberOfPatients;
   })
   numberOfPatients: number;

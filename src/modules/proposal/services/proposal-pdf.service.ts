@@ -34,7 +34,7 @@ export class ProposalPdfService {
     const hasLegacyFeasibilityId = proposal.userProject.feasibility?.id !== undefined;
     const selectedCohorts = proposal.userProject.cohorts?.selectedCohorts || [];
     if (hasLegacyFeasibilityId || selectedCohorts.length > 0) {
-      const cohorts: SelectedCohort[] = selectedCohorts.map((cohort: any) => ({
+      const cohorts: SelectedCohort[] = selectedCohorts.map((cohort: SelectedCohort) => ({
         feasibilityQueryId: cohort.feasibilityQueryId,
         label: cohort.label,
         comment: cohort.comment,
