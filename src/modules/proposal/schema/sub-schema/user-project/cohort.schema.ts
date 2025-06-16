@@ -9,6 +9,9 @@ export class Cohort {
   @Prop({ type: [SelectedCohortSchema], default: [] })
   selectedCohorts: SelectedCohort[];
 
+  @Prop()
+  details?: string;
+
   _id?: string;
 
   @Prop({
