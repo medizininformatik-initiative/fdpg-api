@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class UuidParamDto {
   @Expose()
@@ -22,4 +22,10 @@ export class UuidQueryDto {
   @IsUUID(4)
   @IsOptional()
   id?: string;
+}
+
+export class NumberIdQueryIdDto {
+  @Expose()
+  @IsOptional()
+  id?: number;
 }

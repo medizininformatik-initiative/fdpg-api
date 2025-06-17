@@ -23,6 +23,7 @@ EXPOSE 3000
 
 COPY static-content ./static-content
 COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/certs ./certs
 COPY --from=productionModules /usr/src/app/node_modules ./node_modules
 
 CMD ["node", "dist/main"]
