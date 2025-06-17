@@ -78,7 +78,7 @@ jobs:
 
       - name: set variables for dev
         if: ${{env.isDev == 'true'}}
-        run: echo "imageTag=latest" >> "$GITHUB_ENV"
+        run: echo "imageTag=${{env.npmVersionString}}_${{env.pipeDate}}_${{env.buildNumberOfDate}}_dev" >> "$GITHUB_ENV"
 
       - name: set variables when neither main nor dev
         if: ${{env.isDev == 'false' && env.isMain == 'false'}}
