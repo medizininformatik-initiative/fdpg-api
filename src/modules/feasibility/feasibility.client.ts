@@ -38,8 +38,12 @@ export class FeasibilityClient {
   }
 
   private async obtainCertificate() {
-    const certificates = fs.readFileSync('certs/ca-chain.pem');
-    this.agent = new https.Agent({ ca: certificates });
+    try {
+      const certificates = fs.readFileSync('certs/intermediate_chain_datenportal.pem');
+      this.agent = new https.Agent({ ca: certificates });
+    } catch (e) {
+      console.error("Can't set feasibility agent", e);
+    }
   }
 
   private configureClient() {

@@ -14,4 +14,5 @@ export enum BadRequestError {
   LocationNotAssignedToContract = '400-013',
   LocationRevertValidation = '400-014',
   MaximumCohortSizeReached = '400-015',
+  FeasibilityError = '400-016',
 }

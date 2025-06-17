@@ -5,7 +5,6 @@ COPY yarn.lock ./
 RUN yarn install
 COPY . .
 RUN yarn build
-RUN yarn fetch:cert || echo "WARNING: Certificate fetch failed, proceeding"
 
 FROM node:22-alpine as productionModules
 WORKDIR /usr/src/app

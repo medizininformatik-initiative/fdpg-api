@@ -4,6 +4,10 @@ import { plainToInstance } from 'class-transformer';
 import { FeasibilityUserQueryDetailDto } from './dto/feasibility-user-query-detail.dto';
 import { FeasibilityClient } from './feasibility.client';
 import { IFeasibilityUserQueryDetail } from './types/feasibility-user-query-detail.interface';
+import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
+import { ValidationError } from 'class-validator';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 
 @Injectable()
 export class FeasibilityService {
@@ -66,7 +70,14 @@ export class FeasibilityService {
         return { error: 'No content for feasibility query' };
       }
     } catch (error) {
-      return { error: 'Failed to fetch the feasibility', message: JSON.stringify(error) };
+      console.error('Failed to fetch the feasibility', error);
+      const errorInfo = new ValidationErrorInfo({
+        constraint: 'feasibilityError',
+        message: 'Something went wrong calling the feasibility API',
+        property: 'feasibility',
+        code: BadRequestError.FeasibilityError,
+      });
+      throw new ValidationException([errorInfo]);
     }
   }
 }

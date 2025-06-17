@@ -122,6 +122,3 @@ dist
 /storage
 
 .DS_Store
-
-# Certificates
-certs*

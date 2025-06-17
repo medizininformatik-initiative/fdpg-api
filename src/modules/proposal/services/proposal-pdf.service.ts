@@ -61,26 +61,30 @@ export class ProposalPdfService {
             return cohort;
           }
 
-          const queryContent = await this.feasibilityService.getQueryContentById(cohort.feasibilityQueryId, 'JSON');
-          const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
-          const feasibilityFile: Express.Multer.File = {
-            buffer: feasibilityBuffer,
-            originalname: `${cohort.label}.json`,
-            mimetype: SupportedMimetype.Json,
-            size: Buffer.byteLength(feasibilityBuffer),
-          } as Express.Multer.File;
+          try {
+            const queryContent = await this.feasibilityService.getQueryContentById(cohort.feasibilityQueryId, 'JSON');
+            const feasibilityBuffer = Buffer.from(JSON.stringify(queryContent, null, 2));
+            const feasibilityFile: Express.Multer.File = {
+              buffer: feasibilityBuffer,
+              originalname: `${cohort.label}.json`,
+              mimetype: SupportedMimetype.Json,
+              size: Buffer.byteLength(feasibilityBuffer),
+            } as Express.Multer.File;
 
-          const feasibilityBlobName = getBlobName(proposal._id, UseCaseUpload.FeasibilityQuery);
-          await this.storageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
-          const feasibilityUpload = new UploadDto(
-            feasibilityBlobName,
-            feasibilityFile,
-            UseCaseUpload.FeasibilityQuery,
-            user,
-          );
+            const feasibilityBlobName = getBlobName(proposal._id, UseCaseUpload.FeasibilityQuery);
+            await this.storageService.uploadFile(feasibilityBlobName, feasibilityFile, user);
+            const feasibilityUpload = new UploadDto(
+              feasibilityBlobName,
+              feasibilityFile,
+              UseCaseUpload.FeasibilityQuery,
+              user,
+            );
 
-          addUpload(proposal, feasibilityUpload);
-          cohort.uploadId = feasibilityUpload._id;
+            addUpload(proposal, feasibilityUpload);
+            cohort.uploadId = feasibilityUpload._id;
+          } catch (e) {
+            console.error("Couldn't fetch feasibility resources", e);
+          }
 
           return cohort;
         }),
