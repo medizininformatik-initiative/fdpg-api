@@ -62,7 +62,8 @@ export class ProposalMiscService {
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
     const document = await this.proposalCrudService.findDocument(proposalId, user);
     const researchers = document.participants.map(
-      (participant) => new ResearcherIdentityDto(participant.researcher, participant.participantCategory),
+      (participant) =>
+        new ResearcherIdentityDto(participant.researcher, participant.participantCategory, participant.participantRole),
     );
 
     const tasks = researchers.map((researcher) => {

@@ -1,8 +1,10 @@
 import { Expose } from 'class-transformer';
 import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ParticipantRoleType } from 'src/modules/proposal/enums/participant-role-type.enum';
 import { ParticipantType } from 'src/modules/proposal/enums/participant-type.enum';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { ParticipantCategory } from 'src/modules/proposal/schema/sub-schema/participants/participant-category.schema';
+import { ParticipantRole } from 'src/modules/proposal/schema/sub-schema/participants/participant-role.schema';
 import { Researcher } from 'src/modules/proposal/schema/sub-schema/participants/researcher.schema';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -39,7 +41,7 @@ export class ResearcherDto extends WithIdForObjectDto {
 }
 
 export class ResearcherIdentityDto extends ResearcherDto {
-  constructor(researcher: Researcher | ResearcherDto, category: ParticipantCategory) {
+  constructor(researcher: Researcher | ResearcherDto, category: ParticipantCategory, role: ParticipantRole) {
     super();
     this._id = researcher._id;
     this.firstName = researcher.firstName;
@@ -47,6 +49,7 @@ export class ResearcherIdentityDto extends ResearcherDto {
     this.affiliation = researcher.affiliation;
     this.email = researcher.email;
     this.participantType = category.category;
+    this.participantRole = role.role;
   }
 
   @Expose()
@@ -63,4 +66,7 @@ export class ResearcherIdentityDto extends ResearcherDto {
 
   @Expose()
   participantType: ParticipantType;
+
+  @Expose()
+  participantRole: ParticipantRoleType;
 }
