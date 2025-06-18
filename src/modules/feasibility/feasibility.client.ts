@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
-import axios, { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { ITokenResult } from '../../shared/types/token-result.interface';
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { Agent } from 'https';
 import * as https from 'https';
 import * as fs from 'fs';
+import { FeasibilityAuthenticationClient } from './feasibility-authentication.client';
 
 @Injectable()
 export class FeasibilityClient {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private feasibilityAuthenticationClient: FeasibilityAuthenticationClient,
+  ) {
     this.configureService();
     this.configureClient();
     this.obtainToken();
@@ -18,21 +20,12 @@ export class FeasibilityClient {
   }
 
   public client: AxiosInstance;
-  private keycloakHost: string;
   private feasibilityBaseUrl: string;
-  private tokenEndpoint: string;
-  private clientId: string;
-  private clientSecret: string;
   private currentAccessToken: string;
   private agent: Agent;
 
   private configureService() {
-    this.keycloakHost = this.configService.get('FEASIBILITY_KEYCLOAK_HOST') || this.configService.get('KEYCLOAK_HOST');
     const feasibilityHost = this.configService.get('FEASIBILITY_HOST');
-    const keycloakRealm = this.configService.get('KEYCLOAK_REALM');
-    this.clientId = this.configService.get('KEYCLOAK_CLIENT_FOR_FEASIBILITY_ID');
-    this.clientSecret = this.configService.get('KEYCLOAK_CLIENT_FOR_FEASIBILITY_SECRET');
-    this.tokenEndpoint = `${this.keycloakHost}/auth/realms/${keycloakRealm}/protocol/openid-connect/token`;
 
     this.feasibilityBaseUrl = feasibilityHost;
   }
@@ -56,50 +49,10 @@ export class FeasibilityClient {
   }
 
   private async obtainToken() {
-    const tracer = trace.getTracer('basic');
-    const span = tracer.startSpan('Feasibility Client - Obtain Token', {
-      kind: SpanKind.CLIENT,
-      root: true,
-      attributes: {
-        ['http.method']: 'POST',
-        ['http.host']: this.keycloakHost,
-        ['http.target']: this.tokenEndpoint,
-        ['http.url']: this.tokenEndpoint,
-        ['feasibilityClient.keycloakClientId']: this.clientId,
-        ['feasibilityClient.keycloakClientSecret']:
-          '*******' + this.clientSecret.slice(this.clientSecret.length - 2, this.clientSecret.length),
-      },
-    });
-
-    let tokenResult: AxiosResponse<ITokenResult, any>;
-    try {
-      const tokenResult = await this.client.post<ITokenResult>(
-        this.tokenEndpoint,
-        new URLSearchParams({
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          grant_type: 'client_credentials',
-        }),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'x-no-trace': true } },
-      );
-
-      this.currentAccessToken = tokenResult.data.access_token;
-      trace.deleteSpan(context.active());
-    } catch (error) {
-      const e = new Error(error.response?.data?.error_description ?? 'Failed to obtain a keycloak access_token');
-      e.name = error.response?.statusText ?? 'Token Error';
-      span.recordException({
-        code: error.response?.status ?? 500,
-        name: e.name,
-        message: JSON.stringify(error.response?.data),
-        stack: e.stack,
-      });
-      span.setStatus({ code: SpanStatusCode.ERROR, message: e.name });
-      span.end();
-    }
-
-    // Get new token at the half of the lifetime of the token or retry after a minute
-    setTimeout(this.obtainToken.bind(this), (tokenResult ? tokenResult.data.expires_in : 120 / 2) * 1_000);
+    const tokenResult = await this.feasibilityAuthenticationClient.obtainToken();
+    this.currentAccessToken = tokenResult?.access_token;
+    const expiresIn = tokenResult?.expires_in ?? 120;
+    setTimeout(this.obtainToken.bind(this), (expiresIn / 2) * 1_000);
   }
 
   private configureInterceptors() {

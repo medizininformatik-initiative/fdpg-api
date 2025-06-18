@@ -5,7 +5,6 @@ import { FeasibilityUserQueryDetailDto } from './dto/feasibility-user-query-deta
 import { FeasibilityClient } from './feasibility.client';
 import { IFeasibilityUserQueryDetail } from './types/feasibility-user-query-detail.interface';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
-import { ValidationError } from 'class-validator';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 
