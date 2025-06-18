@@ -49,7 +49,7 @@ export class ResearcherIdentityDto extends ResearcherDto {
     this.affiliation = researcher.affiliation;
     this.email = researcher.email;
     this.participantType = category.category;
-    this.participantRole = role.role;
+    this.participantRole = role?.role ? role.role : ParticipantRoleType.Researcher;
   }
 
   @Expose()

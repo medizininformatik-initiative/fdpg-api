@@ -42,6 +42,9 @@ import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { validateModifyingCohortAccess } from '../utils/validate-access.util';
 import { ProposalUploadService } from './proposal-upload.service';
 import { SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
+import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { Participant } from '../schema/sub-schema/participant.schema';
+import { ParticipantDto } from '../dto/proposal/participant.dto';
 
 @Injectable()
 export class ProposalMiscService {
@@ -376,6 +379,25 @@ export class ProposalMiscService {
 
     const deletedPlain = JSON.parse(JSON.stringify(cohort));
     return plainToClass(SelectedCohortDto, deletedPlain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  }
+
+  async updateParticipants(id: string, participants: Participant[], user: IRequestUser) {
+    const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
+
+    // Validate that the user has permission to update participants
+    if (proposal.status !== ProposalStatus.Draft && !user.roles.includes(Role.FdpgMember)) {
+      throw new ForbiddenException('Only FDPG members can update participants after draft status');
+    }
+
+    // Assign participants directly
+    proposal.participants = participants;
+
+    // Save and return the updated proposal
+    const savedProposal = await proposal.save();
+    return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });
