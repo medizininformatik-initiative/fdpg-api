@@ -44,7 +44,6 @@ import { ProposalUploadService } from './proposal-upload.service';
 import { SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { Participant } from '../schema/sub-schema/participant.schema';
-import { ParticipantDto } from '../dto/proposal/participant.dto';
 
 @Injectable()
 export class ProposalMiscService {
