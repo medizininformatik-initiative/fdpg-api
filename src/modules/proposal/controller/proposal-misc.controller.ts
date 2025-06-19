@@ -42,6 +42,7 @@ import { ProposalIdQueryIdDto } from 'src/shared/dto/proposal-id-query-id.dto';
 import { Response } from 'express';
 import { ParticipantDto } from '../dto/proposal/participant.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { MiiLocation } from 'src/shared/constants/mii-locations';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -258,6 +259,52 @@ export class ProposalMiscController {
     @Body('participants') participants: ParticipantDto[],
     @Request() { user }: FdpgRequest,
   ): Promise<ProposalGetDto> {
-    return this.proposalMiscService.updateParticipants(id, participants, user);
+    const mappedParticipants = participants.map((p) => ({
+      ...p,
+      _id: p._id ?? '',
+      researcher: {
+        ...p.researcher,
+        _id: p.researcher._id!,
+        isDone: p.researcher.isDone ?? false,
+      },
+      institute: p.institute.miiLocation
+        ? {
+            ...p.institute,
+            miiLocation: p.institute.miiLocation as MiiLocation,
+            name: p.institute.name || undefined,
+            streetAddress: undefined,
+            houseNumber: undefined,
+            postalCode: undefined,
+            city: undefined,
+            country: undefined,
+            email: undefined,
+            isDone: p.institute.isDone ?? false,
+            _id: p.institute._id ?? '',
+          }
+        : {
+            ...p.institute,
+            miiLocation: undefined,
+            name: p.institute.name ?? '',
+            streetAddress: p.institute.streetAddress ?? '',
+            houseNumber: p.institute.houseNumber ?? '',
+            postalCode: p.institute.postalCode ?? '',
+            city: p.institute.city ?? '',
+            country: p.institute.country,
+            email: p.institute.email ?? '',
+            isDone: p.institute.isDone ?? false,
+            _id: p.institute._id ?? '',
+          },
+      participantCategory: {
+        ...p.participantCategory,
+        _id: p.participantCategory._id ?? '',
+        isDone: p.participantCategory.isDone ?? false,
+      },
+      participantRole: {
+        ...p.participantRole,
+        _id: p.participantRole._id ?? '',
+        isDone: p.participantRole.isDone ?? false,
+      },
+    }));
+    return this.proposalMiscService.updateParticipants(id, mappedParticipants, user);
   }
 }
