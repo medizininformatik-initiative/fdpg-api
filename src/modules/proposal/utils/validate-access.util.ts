@@ -187,8 +187,13 @@ const throwForbiddenError = (message?: string) => {
 };
 
 export const validateModifyingCohortAccess = (proposal: ProposalDocument, user: IRequestUser) => {
-  if (user.singleKnownRole === Role.FdpgMember && proposal.status !== ProposalStatus.FdpgCheck) {
-    throwForbiddenError('FDPG Members can modify cohorts only in FdpgCheck step');
+  if (
+    user.singleKnownRole === Role.FdpgMember &&
+    ![ProposalStatus.Draft, ProposalStatus.Rework, ProposalStatus.FdpgCheck, ProposalStatus.LocationCheck].includes(
+      proposal.status,
+    )
+  ) {
+    throwForbiddenError('FDPG Members can modify cohorts only in Draft/Rework/FdpgCheck/LocationCheck step');
   }
 
   if (
