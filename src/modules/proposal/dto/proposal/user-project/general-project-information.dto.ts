@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsArray, IsDate, IsNumber, IsOptional, MaxLength, ValidateIf } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
@@ -13,8 +13,13 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   projectTitle: string;
 
   @Expose()
-  @Type(() => Date)
   @ValidateIf((o) => o.desiredStartTimeType === 'later')
+  @Transform(({ value, obj }) => {
+    if (obj.desiredStartTimeType === 'immediate') {
+      return null;
+    }
+    return value ? new Date(value) : value;
+  })
   @IsDate()
   @IsAfterToday({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
@@ -37,7 +42,6 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   fundingReferenceNumber: string;
 
   @Expose()
-  @MaxLength(10000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   desiredStartTimeType: string;
