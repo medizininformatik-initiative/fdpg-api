@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { Agent } from 'https';
-import * as https from 'https';
-import * as fs from 'fs';
 import { FeasibilityAuthenticationClient } from './feasibility-authentication.client';
 
 @Injectable()
@@ -16,27 +13,16 @@ export class FeasibilityClient {
     this.configureClient();
     this.obtainToken();
     this.configureInterceptors();
-    this.obtainCertificate();
   }
 
   public client: AxiosInstance;
   private feasibilityBaseUrl: string;
   private currentAccessToken: string;
-  private agent: Agent;
 
   private configureService() {
     const feasibilityHost = this.configService.get('FEASIBILITY_HOST');
 
     this.feasibilityBaseUrl = feasibilityHost;
-  }
-
-  private async obtainCertificate() {
-    try {
-      const certificates = fs.readFileSync('certs/intermediate_chain_datenportal.pem');
-      this.agent = new https.Agent({ ca: certificates });
-    } catch (e) {
-      console.error("Can't set feasibility agent", e);
-    }
   }
 
   private configureClient() {
@@ -64,10 +50,6 @@ export class FeasibilityClient {
       if (this.currentAccessToken) {
         const authHeader = `Bearer ${this.currentAccessToken}`;
         config.headers.set('Authorization', authHeader);
-      }
-
-      if (this.agent) {
-        config.httpsAgent = this.agent;
       }
 
       return Promise.resolve(config);
