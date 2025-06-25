@@ -227,7 +227,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.deleteCohort(mainId, subId, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Post('query/csv')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: "Returns a queries zipped csv's" })
@@ -243,7 +243,7 @@ export class ProposalMiscController {
       });
       return res.send(result);
     } else {
-      return res.status(204).send(); // No content
+      return res.status(204).send();
     }
   }
 }
