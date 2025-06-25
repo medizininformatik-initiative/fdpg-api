@@ -36,6 +36,7 @@ import { SelectedCohortUploadDto } from '../../dto/cohort-upload.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { addUpload, getBlobName } from '../../utils/proposal.utils';
+import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -89,6 +90,7 @@ describe('ProposalMiscService', () => {
   let proposalFormService: jest.Mocked<ProposalFormService>;
   let uploadService: jest.Mocked<ProposalUploadService>;
   let storageService: jest.Mocked<StorageService>;
+  let feasibilityService: jest.Mocked<FeasibilityService>;
 
   const request = {
     user: {
@@ -242,6 +244,12 @@ describe('ProposalMiscService', () => {
             deleteUpload: jest.fn(),
           },
         },
+        {
+          provide: FeasibilityService,
+          useValue: {
+            getQueryContentById: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -256,6 +264,7 @@ describe('ProposalMiscService', () => {
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
     uploadService = module.get<ProposalUploadService>(ProposalUploadService) as jest.Mocked<ProposalUploadService>;
     storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
   });
 
   it('should be defined', () => {
