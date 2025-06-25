@@ -425,7 +425,7 @@ export class ProposalMiscService {
   }
 
   async getFeasibilityCsvByQueryId(proposalId: string, queryId: number, user: IRequestUser): Promise<any> {
-    if (user.singleKnownRole !== Role.FdpgMember) {
+    if (user.singleKnownRole === Role.Researcher) {
       const proposal = await this.proposalCrudService.find(proposalId, user);
 
       if (!proposal.userProject.cohorts.selectedCohorts.some((cohort) => cohort.feasibilityQueryId === queryId)) {
