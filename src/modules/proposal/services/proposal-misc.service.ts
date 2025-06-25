@@ -41,9 +41,8 @@ import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { validateModifyingCohortAccess } from '../utils/validate-access.util';
 import { ProposalUploadService } from './proposal-upload.service';
-import { AutomaticSelectedCohortUploadDto, CohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
+import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
-import { SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { Participant } from '../schema/sub-schema/participant.schema';
 
