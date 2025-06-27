@@ -45,6 +45,7 @@ import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dt
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { Participant } from '../schema/sub-schema/participant.schema';
+import { mergeDeep } from '../utils/merge-proposal.util';
 
 @Injectable()
 export class ProposalMiscService {
@@ -440,18 +441,21 @@ export class ProposalMiscService {
 
     return result;
   }
+  private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
+    const isEditableStatus = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck;
+    const isFdpgMember = user.roles.includes(Role.FdpgMember);
+
+    return isEditableStatus || isFdpgMember;
+  }
   async updateParticipants(id: string, participants: Participant[], user: IRequestUser) {
     const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
 
-    // Validate that the user has permission to update participants
-    if (proposal.status !== ProposalStatus.Draft && !user.roles.includes(Role.FdpgMember)) {
-      throw new ForbiddenException('Only FDPG members can update participants after draft status');
+    if (!this.canUpdateParticipants(proposal, user)) {
+      throw new ForbiddenException('Only FDPG members can update participants after draft/FDPG_CHECK status');
     }
 
-    // Assign participants directly
-    proposal.participants = participants;
+    mergeDeep(proposal, { participants });
 
-    // Save and return the updated proposal
     const savedProposal = await proposal.save();
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
