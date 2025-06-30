@@ -237,11 +237,14 @@ export class ProposalMiscController {
     @Res() res: Response,
   ) {
     const result = await this.proposalMiscService.getFeasibilityCsvByQueryId(proposalId, queryId, user);
-    if (result && result instanceof Buffer) {
+
+    if (result && Buffer.isBuffer(result)) {
       res.set({
         'Content-Type': 'application/zip',
+        'Content-Disposition': 'attachment; filename="query-result.zip"',
+        'Content-Length': result.length,
       });
-      return res.send(result);
+      return res.status(200).send(result);
     } else {
       return res.status(204).send();
     }
