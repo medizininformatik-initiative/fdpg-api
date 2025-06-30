@@ -78,6 +78,7 @@ const mergeDeep = (target, ...sources) => {
  * @param dbItem ProposalDocument
  * @param apiItem ProposalUpdateDto
  */
+export { mergeDeep };
 export const mergeProposal = (dbItem: ProposalDocument, apiItem: ProposalUpdateDto): void => {
   if (
     !!dbItem.userProject?.typeOfUse?.pseudonymizationInfoTexts &&
