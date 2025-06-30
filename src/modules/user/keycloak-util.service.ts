@@ -25,9 +25,15 @@ export class KeycloakUtilService {
    * @param contacts email addressees that are supposed to be used
    * @returns distinct email addresses that are actually fully registered in keycloak
    */
-  getValidContacts = async (contacts: string[]): Promise<string[]> => {
+  getValidContacts = async (contacts: string[], withFilterForReceivingMails = true): Promise<string[]> => {
     const validUsers = await this.keycloakService.getValidUsersByEmailSettled(contacts);
-    return [...new Set(validUsers.map((user) => user.email))];
+    return [
+      ...new Set(
+        validUsers
+          .filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true))
+          .map((user) => user.email),
+      ),
+    ];
   };
 
   /**
@@ -35,9 +41,11 @@ export class KeycloakUtilService {
    * @param userIds userIds that are supposed to be used
    * @returns email addresses that are actually fully registered in keycloak
    */
-  getValidContactsByUserIds = async (userIds: string[]): Promise<string[]> => {
+  getValidContactsByUserIds = async (userIds: string[], withFilterForReceivingMails = true): Promise<string[]> => {
     const validUsers = await this.keycloakService.getValidUsersByIdSettled(userIds);
-    return validUsers.map((user) => user.email);
+    return validUsers
+      .filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true))
+      .map((user) => user.email);
   };
 
   /**
@@ -46,7 +54,11 @@ export class KeycloakUtilService {
    * @param members Keycloak users that should math the desired locations
    * @returns A subset of the users based on their locations
    */
-  getLocationContacts(locations: MiiLocation[], members: Pick<IGetKeycloakUser, 'attributes' | 'email'>[]): string[] {
+  getLocationContacts(
+    locations: MiiLocation[],
+    members: Pick<IGetKeycloakUser, 'attributes' | 'email'>[],
+    withFilterForReceivingMails = true,
+  ): string[] {
     const filtered = locations.includes(MiiLocation.VirtualAll)
       ? members
       : members.filter((member) => {
@@ -54,7 +66,9 @@ export class KeycloakUtilService {
           return memberLocation ? locations.includes(memberLocation) : false;
         });
 
-    return filtered.map((member) => member.email);
+    return filtered
+      .filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true))
+      .map((member) => member.email);
   }
 
   /** Returns all users with role FdpgMember */
@@ -108,7 +122,10 @@ export class KeycloakUtilService {
     return result;
   }
 
-  async getFdpgMemberLevelContacts(proposal: Proposal | ProposalWithoutContent): Promise<ICachedKeycloakUser[]> {
+  async getFdpgMemberLevelContacts(
+    proposal: Proposal | ProposalWithoutContent,
+    withFilterForReceivingMails = true,
+  ): Promise<ICachedKeycloakUser[]> {
     const validFdpgContacts = await this.getFdpgMembers();
 
     const dataSourceKeycloakContacts = await Promise.all(
@@ -116,36 +133,43 @@ export class KeycloakUtilService {
     );
 
     const dataSourceContacts = dataSourceKeycloakContacts.flatMap((dataSourceMembers) => dataSourceMembers);
-    return Array.from(new Set([...validFdpgContacts, ...dataSourceContacts]));
+    return Array.from(new Set([...validFdpgContacts, ...dataSourceContacts])).filter((user) =>
+      withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true,
+    );
   }
 
   /** Returns all users with role DizMember */
-  async getDizMembers(): Promise<ICachedKeycloakUser[]> {
+  async getDizMembers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
     let dizMember: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(CacheKey.AllDizMember);
 
     if (dizMember && dizMember.length > 0) {
-      return dizMember;
+      return dizMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
     }
 
     const dizMemberFullModel = await this.keycloakService.getUsersByRole(Role.DizMember);
     dizMember = dizMemberFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
 
     await this.cacheManager.set(CacheKey.AllDizMember, dizMember, this.ROLE_CACHE_TIME);
-    return dizMember;
+    return dizMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
   }
 
   /** Returns all users with role UacMember */
-  async getUacMembers(): Promise<ICachedKeycloakUser[]> {
+  async getUacMembers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
     let uacMember: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(CacheKey.AllUacMember);
 
     if (uacMember && uacMember.length > 0) {
-      return uacMember;
+      return uacMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
     }
 
     const uacMemberFullModel = await this.keycloakService.getUsersByRole(Role.UacMember);
     uacMember = uacMemberFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
 
     await this.cacheManager.set(CacheKey.AllUacMember, uacMember, this.ROLE_CACHE_TIME);
-    return uacMember;
+    return uacMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
+  }
+
+  filterForReceivingEmail(user: Pick<IGetKeycloakUser, 'attributes'>): boolean {
+    const receiveEmailAttribute = user?.attributes?.receiveProposalEmails?.[0] ?? true;
+    return typeof receiveEmailAttribute === 'string' ? receiveEmailAttribute === 'true' : receiveEmailAttribute;
   }
 }

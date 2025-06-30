@@ -29,6 +29,7 @@ export interface IBaseKeycloakUser {
     'organization.postalCode'?: string[];
     'organization.email'?: string[];
     'organization.city'?: string[];
+    receiveProposalEmails?: boolean[] | string[];
   };
   disableableCredentialTypes?: any[];
   requiredActions?: KeycloakRequiredAction[];
