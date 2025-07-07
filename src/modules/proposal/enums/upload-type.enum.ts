@@ -3,6 +3,7 @@ export enum DirectUpload {
   EthicVote = 'ETHIC_VOTE',
   EthicVoteDeclarationOfNonResponsibility = 'ETHIC_VOTE_DECLARATION_OF_NON_RESPONSIBILITY',
   AdditionalDocument = 'ADDITIONAL_DOCUMENT',
+  ContractAppendix = 'CONTRACT_APPENDIX',
 }
 
 export enum UseCaseUpload {
