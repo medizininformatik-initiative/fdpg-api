@@ -41,7 +41,8 @@ import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { validateModifyingCohortAccess } from '../utils/validate-access.util';
 import { ProposalUploadService } from './proposal-upload.service';
-import { SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
+import { AutomaticSelectedCohortUploadDto, CohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
+import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 
 @Injectable()
 export class ProposalMiscService {
@@ -55,6 +56,7 @@ export class ProposalMiscService {
     private proposalFormService: ProposalFormService,
     private storageService: StorageService,
     private uploadService: ProposalUploadService,
+    private feasibilityService: FeasibilityService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -346,6 +348,48 @@ export class ProposalMiscService {
     }
   }
 
+  async automaticCohortAdd(
+    proposalId: string,
+    cohort: AutomaticSelectedCohortUploadDto,
+    user: IRequestUser,
+  ): Promise<SelectedCohortDto> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    validateModifyingCohortAccess(toBeUpdated, user);
+
+    if (toBeUpdated.userProject.cohorts.selectedCohorts.length >= 49) {
+      const errorInfo = new ValidationErrorInfo({
+        constraint: 'Maximum cohorts reached',
+        message: 'maximum cohorts reached',
+        property: 'selectedCohorts',
+        code: BadRequestError.MaximumCohortSizeReached,
+      });
+      throw new ValidationException([errorInfo]);
+    }
+
+    const selectedCohort: SelectedCohort = {
+      label: cohort.label,
+      uploadId: undefined,
+      comment: cohort.comment,
+      isManualUpload: false,
+      feasibilityQueryId: cohort.feasibilityQueryId,
+      numberOfPatients: cohort.numberOfPatients,
+    };
+
+    toBeUpdated.userProject.cohorts.selectedCohorts.push(selectedCohort);
+
+    const saved = await toBeUpdated.save();
+
+    const insertedCohort = saved.userProject.cohorts?.selectedCohorts?.at(-1);
+
+    const cohortDto = plainToClass(SelectedCohortDto, JSON.parse(JSON.stringify(insertedCohort)), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+
+    return cohortDto;
+  }
+
   async deleteCohort(proposalId: string, cohortId: string, user: IRequestUser): Promise<SelectedCohortDto> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
@@ -378,5 +422,19 @@ export class ProposalMiscService {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });
+  }
+
+  async getFeasibilityCsvByQueryId(proposalId: string, queryId: number, user: IRequestUser): Promise<any> {
+    if (user.singleKnownRole === Role.Researcher) {
+      const proposal = await this.proposalCrudService.find(proposalId, user);
+
+      if (!proposal.userProject.cohorts.selectedCohorts.some((cohort) => cohort.feasibilityQueryId === queryId)) {
+        throw new ForbiddenException('Cannot access cohort');
+      }
+    }
+
+    const result = await this.feasibilityService.getQueryContentById(queryId, 'ZIP');
+
+    return result;
   }
 }

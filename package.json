@@ -21,8 +21,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "fetch:cert": "./fetch-cert-chain.sh"
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/axios": "^3.1.2",
@@ -61,7 +60,8 @@
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.0.1",
     "rxjs": "^7.8.1",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "yauzl": "^3.2.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.8",
