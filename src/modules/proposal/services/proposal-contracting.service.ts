@@ -34,6 +34,7 @@ import {
   addHistoryItemForStatus,
   addHistoryItemForUacApproval,
   addHistoryItemForUacCondition,
+  addHistoryItemForContractUpdate,
 } from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { revertLocationVote } from '../utils/revert-location-vote.util';
@@ -162,6 +163,36 @@ export class ProposalContractingService {
       });
       throw new ValidationException([errorInfo]);
     }
+  }
+
+  async updateContractDraft(
+    proposalId: string,
+    file: Express.Multer.File,
+    uploadIdToBeReplaced: string,
+    user: IRequestUser,
+  ): Promise<void> {
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    if (toBeUpdated.status !== ProposalStatus.Contracting) {
+      const errorInfo = new ValidationErrorInfo({
+        constraint: 'notInContracting',
+        message: 'Proposal is not in Contracting status',
+        property: 'status',
+        code: BadRequestError.NotInContractingStatus,
+      });
+      throw new ValidationException([errorInfo]);
+    }
+
+    await this.proposalUploadService.deleteUpload(toBeUpdated, uploadIdToBeReplaced, user);
+
+    const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractDraft);
+    await this.storageService.uploadFile(blobName, file, user);
+    const upload = new UploadDto(blobName, file, UseCaseUpload.ContractDraft, user);
+
+    addUpload(toBeUpdated, upload);
+    addHistoryItemForContractUpdate(toBeUpdated, user);
+
+    await toBeUpdated.save();
   }
 
   async signContract(

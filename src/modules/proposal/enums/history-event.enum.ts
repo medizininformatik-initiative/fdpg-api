@@ -43,6 +43,7 @@ export enum HistoryEventType {
   ContractLocationApproved = 'CONTRACT_LOCATION_APPROVED',
   ContractLocationRejected = 'CONTRACT_LOCATION_REJECTED',
   ContractSystemRejected = 'CONTRACT_SYSTEM_REJECTED',
+  ContractUpdated = 'CONTRACT_UPDATED',
 
   /** Deadline Changes */
   FdpgDeadlineChange = 'FDPG_DEADLINE_CHANGE',

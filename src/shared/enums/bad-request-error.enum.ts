@@ -15,4 +15,5 @@ export enum BadRequestError {
   LocationRevertValidation = '400-014',
   MaximumCohortSizeReached = '400-015',
   FeasibilityError = '400-016',
+  NotInContractingStatus = '400-017',
 }
