@@ -250,7 +250,7 @@ export class ProposalMiscController {
       return res.status(204).send();
     }
   }
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember)
   @Patch(':id/participants')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Updates the participants of a proposal' })
