@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Put,
   Request,
@@ -39,6 +40,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { createMulterOptions } from 'src/shared/utils/multer-options.util';
 import { ProposalIdQueryIdDto } from 'src/shared/dto/proposal-id-query-id.dto';
 import { Response } from 'express';
+import { ParticipantDto } from '../dto/proposal/participant.dto';
+import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { Participant } from '../schema/sub-schema/participant.schema';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -248,5 +252,17 @@ export class ProposalMiscController {
     } else {
       return res.status(204).send();
     }
+  }
+  @Auth(Role.Researcher, Role.FdpgMember)
+  @Patch(':id/participants')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Updates the participants of a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  async updateParticipants(
+    @Param('id') id: string,
+    @Body('participants') participants: ParticipantDto[],
+    @Request() { user }: FdpgRequest,
+  ): Promise<ProposalGetDto> {
+    return this.proposalMiscService.updateParticipants(id, participants as Participant[], user);
   }
 }

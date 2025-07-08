@@ -132,7 +132,11 @@ describe('ProposalMiscService', () => {
     _id: 'userId',
     email: 'info@appsfactory.de',
   };
-  const participant = { researcher, participantCategory: ParticipantType.ProjectLeader };
+  const participant = {
+    researcher,
+    participantCategory: ParticipantType.ProjectLeader,
+    participantRole: { role: 'PARTICIPATING_SCIENTIST' },
+  };
 
   const deadlines = {
     [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date(2027, 5, 1),
