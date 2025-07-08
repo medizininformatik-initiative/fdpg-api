@@ -103,6 +103,10 @@ export class StatusChangeService {
           ]),
         ];
 
+        proposalAfterChanges.uacApprovedLocations = proposalAfterChanges.uacApprovedLocations.filter(
+          (approvedLocation) => !proposalAfterChanges.requestedButExcludedLocations.includes(approvedLocation),
+        );
+
         proposalAfterChanges.openDizChecks = [];
         proposalAfterChanges.dizApprovedLocations = [];
         proposalAfterChanges.signedContracts = [];

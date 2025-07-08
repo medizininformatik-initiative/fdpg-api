@@ -223,3 +223,9 @@ export const addHistoryItemForChangedDeadline = (deadlineType: DueDateEnum, prop
 
   pushHistoryItem(proposal, user, type);
 };
+
+export const addHistoryItemForContractUpdate = (proposal: Proposal, user: IRequestUser) => {
+  const type = HistoryEventType.ContractUpdated;
+
+  pushHistoryItem(proposal, user, type);
+};
