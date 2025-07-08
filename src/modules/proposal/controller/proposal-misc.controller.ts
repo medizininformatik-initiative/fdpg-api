@@ -5,9 +5,11 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Put,
   Request,
+  Res,
   StreamableFile,
   UploadedFile,
   UseInterceptors,
@@ -33,9 +35,14 @@ import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
 import { UploadGetDto } from '../dto/upload.dto';
-import { CohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
+import { AutomaticSelectedCohortUploadDto, CohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createMulterOptions } from 'src/shared/utils/multer-options.util';
+import { ProposalIdQueryIdDto } from 'src/shared/dto/proposal-id-query-id.dto';
+import { Response } from 'express';
+import { ParticipantDto } from '../dto/proposal/participant.dto';
+import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { Participant } from '../schema/sub-schema/participant.schema';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -181,7 +188,7 @@ export class ProposalMiscController {
   }
 
   @Auth(Role.Researcher, Role.FdpgMember)
-  @Put(':id/cohort')
+  @Put(':id/cohort/manual')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a manual upload cohort on a proposal' })
   @ProposalValidation(true)
@@ -199,6 +206,20 @@ export class ProposalMiscController {
   }
 
   @Auth(Role.Researcher, Role.FdpgMember)
+  @Put(':id/cohort/automatic')
+  @ApiNotFoundResponse({ description: 'Item could not be found.' })
+  @ApiOperation({ summary: 'Creates a cohort on a proposal' })
+  @ProposalValidation()
+  @UsePipes(ValidationPipe)
+  async uploadAutomaticCohort(
+    @Param() { id }: MongoIdParamDto,
+    @Body() newCohort: AutomaticSelectedCohortUploadDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<SelectedCohortDto> {
+    return await this.proposalMiscService.automaticCohortAdd(id, newCohort, user);
+  }
+
+  @Auth(Role.Researcher, Role.FdpgMember)
   @Delete(':mainId/cohort/:subId')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Deletes the upload and cohort on a proposal' })
@@ -208,5 +229,40 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<SelectedCohortDto> {
     return await this.proposalMiscService.deleteCohort(mainId, subId, user);
+  }
+
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Post('query/csv')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: "Returns a queries zipped csv's" })
+  async getFeasibilityCsvByQueryId(
+    @Body() { proposalId, queryId }: ProposalIdQueryIdDto,
+    @Request() { user }: FdpgRequest,
+    @Res() res: Response,
+  ) {
+    const result = await this.proposalMiscService.getFeasibilityCsvByQueryId(proposalId, queryId, user);
+
+    if (result && Buffer.isBuffer(result)) {
+      res.set({
+        'Content-Type': 'application/zip',
+        'Content-Disposition': 'attachment; filename="query-result.zip"',
+        'Content-Length': result.length,
+      });
+      return res.status(200).send(result);
+    } else {
+      return res.status(204).send();
+    }
+  }
+  @Auth(Role.Researcher, Role.FdpgMember)
+  @Patch(':id/participants')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Updates the participants of a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  async updateParticipants(
+    @Param('id') id: string,
+    @Body('participants') participants: ParticipantDto[],
+    @Request() { user }: FdpgRequest,
+  ): Promise<ProposalGetDto> {
+    return this.proposalMiscService.updateParticipants(id, participants as Participant[], user);
   }
 }

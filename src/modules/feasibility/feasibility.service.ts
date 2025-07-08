@@ -3,10 +3,11 @@ import axios, { AxiosInstance } from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { FeasibilityUserQueryDetailDto } from './dto/feasibility-user-query-detail.dto';
 import { FeasibilityClient } from './feasibility.client';
-import { IFeasibilityUserQueryDetail } from './types/feasibility-user-query-detail.interface';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
+import * as yauzl from 'yauzl';
+import { IFeasibilityUserQueryDetail } from './types/feasibility-user-query-detail.interface';
 
 @Injectable()
 export class FeasibilityService {
@@ -41,6 +42,28 @@ export class FeasibilityService {
     return response.data;
   }
 
+  private async isValidZip(buffer) {
+    return new Promise((resolve) => {
+      yauzl.fromBuffer(buffer, { lazyEntries: true }, (err, zipfile) => {
+        if (err || !zipfile) return resolve(false);
+
+        let isCorrupted = false;
+
+        zipfile.readEntry();
+        zipfile.on('entry', () => {
+          zipfile.readEntry();
+        });
+        zipfile.on('error', () => {
+          isCorrupted = true;
+          resolve(false);
+        });
+        zipfile.on('end', () => {
+          if (!isCorrupted) resolve(true);
+        });
+      });
+    });
+  }
+
   async getQueryContentById(queryId: number, fileType: 'JSON' | 'ZIP' = 'JSON'): Promise<any> {
     try {
       const headerFileType = (() => {
@@ -61,7 +84,20 @@ export class FeasibilityService {
 
       if (response.data !== '' && response.data !== undefined) {
         if (fileType === 'ZIP') {
-          return Buffer.from(response.data);
+          const bufferData = Buffer.from(response.data);
+          const isValid = await this.isValidZip(bufferData);
+
+          if (isValid) {
+            return bufferData;
+          }
+
+          const errorInfo = new ValidationErrorInfo({
+            constraint: 'feasibilityError',
+            message: 'ZIP file is not valid',
+            property: 'feasibility',
+            code: BadRequestError.FeasibilityError,
+          });
+          throw new ValidationException([errorInfo]);
         } else {
           return response.data;
         }

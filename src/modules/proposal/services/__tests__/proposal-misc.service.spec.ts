@@ -23,7 +23,7 @@ import { validateFdpgCheckStatus } from '../../utils/validate-fdpg-check-status.
 import { updateFdpgChecklist } from '../../utils/add-fdpg-checklist.util';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { getError } from 'test/get-error';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ProposalTypeOfUse } from '../../enums/proposal-type-of-use.enum';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { DueDateEnum } from '../../enums/due-date.enum';
@@ -32,6 +32,11 @@ import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.ser
 import { ProposalPdfService } from '../proposal-pdf.service';
 import { ProposalUploadService } from '../proposal-upload.service';
 import { StorageService } from 'src/modules/storage/storage.service';
+import { SelectedCohortUploadDto } from '../../dto/cohort-upload.dto';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
+import { addUpload, getBlobName } from '../../utils/proposal.utils';
+import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -68,6 +73,11 @@ jest.mock('../../utils/due-date-verification.util', () => ({
   isDateChangeValid: jest.fn().mockReturnValue(true),
 }));
 
+jest.mock('../../utils/proposal.utils', () => ({
+  addUpload: jest.fn(),
+  getBlobName: jest.fn().mockReturnValue('blobName'),
+}));
+
 describe('ProposalMiscService', () => {
   let proposalMiscService: ProposalMiscService;
 
@@ -80,6 +90,7 @@ describe('ProposalMiscService', () => {
   let proposalFormService: jest.Mocked<ProposalFormService>;
   let uploadService: jest.Mocked<ProposalUploadService>;
   let storageService: jest.Mocked<StorageService>;
+  let feasibilityService: jest.Mocked<FeasibilityService>;
 
   const request = {
     user: {
@@ -121,7 +132,11 @@ describe('ProposalMiscService', () => {
     _id: 'userId',
     email: 'info@appsfactory.de',
   };
-  const participant = { researcher, participantCategory: ParticipantType.ProjectLeader };
+  const participant = {
+    researcher,
+    participantCategory: ParticipantType.ProjectLeader,
+    participantRole: { role: 'PARTICIPATING_SCIENTIST' },
+  };
 
   const deadlines = {
     [DueDateEnum.DUE_DAYS_FDPG_CHECK]: new Date(2027, 5, 1),
@@ -143,6 +158,19 @@ describe('ProposalMiscService', () => {
       },
     },
     deadlines: { ...deadlines },
+  };
+
+  const cohortFile: Express.Multer.File = {
+    fieldname: 'fieldname',
+    originalname: 'filename.json',
+    encoding: '7bit',
+    mimetype: SupportedMimetype.Json,
+    size: 1,
+    buffer: Buffer.from('{}'),
+    destination: '/tmp',
+    filename: 'mocked-file.json',
+    path: '/tmp/mocked-file.json',
+    stream: {} as any,
   };
 
   const getProposalDocument = () => {
@@ -210,12 +238,20 @@ describe('ProposalMiscService', () => {
           provide: StorageService,
           useValue: {
             findAll: jest.fn(),
+            uploadFile: jest.fn(),
           },
         },
         {
           provide: ProposalUploadService,
           useValue: {
             findAll: jest.fn(),
+            deleteUpload: jest.fn(),
+          },
+        },
+        {
+          provide: FeasibilityService,
+          useValue: {
+            getQueryContentById: jest.fn(),
           },
         },
       ],
@@ -232,6 +268,7 @@ describe('ProposalMiscService', () => {
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
     uploadService = module.get<ProposalUploadService>(ProposalUploadService) as jest.Mocked<ProposalUploadService>;
     storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
   });
 
   it('should be defined', () => {
@@ -514,6 +551,200 @@ describe('ProposalMiscService', () => {
       expect(eventEngineService.handleDeadlineChange).toHaveBeenCalledWith(proposalDocument, updates);
 
       expect(proposalDocument.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('should upload a new cohort', () => {
+    it('should fail on 49 cohorts', async () => {
+      const proposalDocument = getProposalDocument();
+      const proposal = {
+        ...proposalDocument,
+        status: ProposalStatus.Draft,
+        userProject: {
+          cohorts: {
+            selectedCohorts: Array.from({ length: 49 }, (_, i) => {
+              const idx = i + 1;
+              return {
+                _id: `id-${idx}`,
+                feasibilityQueryId: idx,
+                label: `label-${idx}`,
+                uploadId: `uploadId-${idx}`,
+                isManualUpload: true,
+                numberOfPatients: idx,
+              };
+            }),
+          },
+        },
+      } as ProposalDocument;
+
+      const newCohort: SelectedCohortUploadDto = { label: 'label-50', isManualUpload: true, numberOfPatients: 50 };
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+
+      await expect(
+        proposalMiscService.addManualUploadCohort('id', newCohort, cohortFile, fdpgMemberRequest.user),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should insert', async () => {
+      const proposalDocument = getProposalDocument();
+      const proposal = {
+        ...proposalDocument,
+        status: ProposalStatus.Draft,
+        userProject: {
+          cohorts: {
+            selectedCohorts: [],
+          },
+        },
+        uploads: [],
+      } as ProposalDocument;
+
+      const newCohort: SelectedCohortUploadDto = { label: 'label-50', isManualUpload: true, numberOfPatients: 50 };
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+      (addUpload as jest.Mock).mockImplementation((prp, upl) => {
+        prp.uploads = [upl];
+      });
+
+      const { insertedCohort, uploadedFile } = await proposalMiscService.addManualUploadCohort(
+        'id',
+        newCohort,
+        cohortFile,
+        fdpgMemberRequest.user,
+      );
+
+      expect(getBlobName).toHaveBeenCalled();
+
+      expect(insertedCohort).toBeDefined();
+      expect(insertedCohort.label).toEqual(newCohort.label);
+
+      expect(uploadedFile).toBeDefined();
+      expect(uploadedFile.fileName).toEqual(cohortFile.originalname);
+
+      expect(proposal.userProject.cohorts.selectedCohorts.length).toEqual(1);
+      expect(proposal.uploads.length).toEqual(1);
+    });
+
+    it('should fail modification access for Fdpg User', async () => {
+      const proposalDocument = getProposalDocument();
+      const proposal = {
+        ...proposalDocument,
+        status: ProposalStatus.Archived,
+        userProject: {
+          cohorts: {
+            selectedCohorts: [],
+          },
+        },
+      } as ProposalDocument;
+
+      const newCohort: SelectedCohortUploadDto = { label: 'label-50', isManualUpload: true, numberOfPatients: 50 };
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+
+      await expect(
+        proposalMiscService.addManualUploadCohort('id', newCohort, cohortFile, fdpgMemberRequest.user),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should fail modification access for Researcher User', async () => {
+      const proposalDocument = getProposalDocument();
+      const proposal = {
+        ...proposalDocument,
+        status: ProposalStatus.Archived,
+        userProject: {
+          cohorts: {
+            selectedCohorts: [],
+          },
+        },
+      } as ProposalDocument;
+
+      const newCohort: SelectedCohortUploadDto = { label: 'label-50', isManualUpload: true, numberOfPatients: 50 };
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+
+      await expect(
+        proposalMiscService.addManualUploadCohort('id', newCohort, cohortFile, request.user),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('should delete a cohort', () => {
+    it('should delete', async () => {
+      const proposalDocument = getProposalDocument();
+
+      const proposal = {
+        ...proposalDocument,
+        status: ProposalStatus.Draft,
+        userProject: {
+          cohorts: {
+            selectedCohorts: Array.from({ length: 49 }, (_, i) => {
+              const idx = i + 1;
+              return {
+                _id: `id-${idx}`,
+                feasibilityQueryId: idx,
+                label: `label-${idx}`,
+                uploadId: `uploadId-${idx}`,
+                isManualUpload: true,
+                numberOfPatients: idx,
+              };
+            }),
+          },
+        },
+        uploads: [],
+      } as ProposalDocument;
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+
+      const cohortDeletionId = 'id-25';
+
+      const deletedCohort = await proposalMiscService.deleteCohort(
+        'proposal-id',
+        cohortDeletionId,
+        fdpgMemberRequest.user,
+      );
+
+      expect(deletedCohort).toBeDefined();
+      expect(deletedCohort._id).toEqual(cohortDeletionId);
+      expect(proposal.userProject.cohorts.selectedCohorts.length).toBe(48);
+      expect(
+        proposal.userProject.cohorts.selectedCohorts.some((cohort) => cohort._id === cohortDeletionId),
+      ).toBeFalsy();
+    });
+
+    it('should fail modification access for Fdpg User', async () => {
+      const proposalDocument = getProposalDocument();
+      const proposal = {
+        ...proposalDocument,
+        status: ProposalStatus.Archived,
+        userProject: {
+          cohorts: {
+            selectedCohorts: [],
+          },
+        },
+      } as ProposalDocument;
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+
+      await expect(
+        proposalMiscService.deleteCohort('proposal-Id', 'cohort-deletion-id', fdpgMemberRequest.user),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should fail modification access for Researcher User', async () => {
+      const proposalDocument = getProposalDocument();
+      const proposal = {
+        ...proposalDocument,
+        status: ProposalStatus.Archived,
+        userProject: {
+          cohorts: {
+            selectedCohorts: [],
+          },
+        },
+      } as ProposalDocument;
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+
+      await expect(proposalMiscService.deleteCohort('proposal-Id', 'cohort-deletion-id', request.user)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 });
