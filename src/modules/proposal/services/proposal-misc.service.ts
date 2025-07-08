@@ -443,7 +443,7 @@ export class ProposalMiscService {
   }
   private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
     const isEditableStatus = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck;
-    const isFdpgMember = [Role.FdpgMember, Role.DataSourceMember].includes(user.singleKnownRole);
+    const isFdpgMember = user.singleKnownRole === Role.FdpgMember;
 
     return isEditableStatus || isFdpgMember;
   }
