@@ -1,5 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { Salutation } from '../enums/salutation.enum';
 import { IGetKeycloakUser, IUpdateKeycloakProfile } from '../types/keycloak-user.interface';
@@ -26,6 +26,10 @@ export class UpdateUserDto {
   @IsNotEmptyString()
   affiliation: string;
 
+  @Expose()
+  @IsBoolean()
+  receiveProposalEmails: boolean;
+
   @Exclude()
   getMergedUser(keycloakUser: IGetKeycloakUser): IUpdateKeycloakProfile {
     const mergedUser = {
@@ -35,6 +39,7 @@ export class UpdateUserDto {
         ...keycloakUser.attributes,
         salutation: [this.salutation],
         affiliation: [this.affiliation],
+        receiveProposalEmails: [this.receiveProposalEmails],
       },
     };
 
