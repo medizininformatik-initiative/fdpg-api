@@ -41,8 +41,11 @@ import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { validateModifyingCohortAccess } from '../utils/validate-access.util';
 import { ProposalUploadService } from './proposal-upload.service';
-import { AutomaticSelectedCohortUploadDto, CohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
+import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
+import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { Participant } from '../schema/sub-schema/participant.schema';
+import { mergeDeep } from '../utils/merge-proposal.util';
 
 @Injectable()
 export class ProposalMiscService {
@@ -62,7 +65,8 @@ export class ProposalMiscService {
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
     const document = await this.proposalCrudService.findDocument(proposalId, user);
     const researchers = document.participants.map(
-      (participant) => new ResearcherIdentityDto(participant.researcher, participant.participantCategory),
+      (participant) =>
+        new ResearcherIdentityDto(participant.researcher, participant.participantCategory, participant.participantRole),
     );
 
     const tasks = researchers.map((researcher) => {
@@ -436,5 +440,26 @@ export class ProposalMiscService {
     const result = await this.feasibilityService.getQueryContentById(queryId, 'ZIP');
 
     return result;
+  }
+  private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
+    const isEditableStatus = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck;
+    const isFdpgMember = user.singleKnownRole === Role.FdpgMember;
+
+    return isEditableStatus || isFdpgMember;
+  }
+  async updateParticipants(id: string, participants: Participant[], user: IRequestUser) {
+    const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
+
+    if (!this.canUpdateParticipants(proposal, user)) {
+      throw new ForbiddenException('Only FDPG members can update participants after draft/FDPG_CHECK status');
+    }
+
+    mergeDeep(proposal, { participants });
+
+    const savedProposal = await proposal.save();
+    return plainToClass(ProposalGetDto, savedProposal.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   }
 }
