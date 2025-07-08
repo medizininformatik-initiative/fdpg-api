@@ -10,10 +10,3 @@ export class ParticipantRoleDto extends WithIdForObjectDto {
   @IsEnum(ParticipantRoleType)
   role: ParticipantRoleType;
 }
-
-export class ParticipantRoleOptionalDto extends WithIdForObjectDto {
-  @Expose()
-  @IsOptional()
-  @IsEnum(ParticipantRoleType)
-  role: ParticipantRoleType;
-}
