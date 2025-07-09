@@ -1,90 +1,211 @@
-import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
-import { UuidParamDto } from 'src/shared/dto/uuid-id-param.dto';
-import { FdpgRequest } from 'src/shared/types/request-user.interface';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { PasswordResetDto } from '../dto/password-reset.dto';
-import { ResendInvitationDto } from '../dto/resend-invitation.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { KeycloakService } from '../keycloak.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 import { UserController } from '../user.controller';
-
-const moduleMocker = new ModuleMocker(global);
+import { KeycloakService } from '../keycloak.service';
+import { KeycloakUtilService } from '../keycloak-util.service';
+import { IGetKeycloakUser } from '../types/keycloak-user.interface';
+import { UserQueryDto } from '../dto/user-query.dto';
+import { KeycloakRequiredAction } from '../enums/keycloak-required-action.enum';
 
 describe('UserController', () => {
-  let userController: UserController;
-  let keycloakService: KeycloakService;
+  let controller: UserController;
+  let keycloakService: jest.Mocked<KeycloakService>;
+  let keycloakUtilService: jest.Mocked<KeycloakUtilService>;
+
+  const mockUser: IGetKeycloakUser = {
+    id: '1',
+    username: 'testuser',
+    email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+    enabled: true,
+    emailVerified: true,
+    requiredActions: [],
+    attributes: {},
+    createdTimestamp: Date.now(),
+    totp: false,
+  };
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-    })
-      .useMocker((token) => {
-        if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
-        }
-      })
-      .compile();
+      providers: [
+        {
+          provide: KeycloakService,
+          useValue: {
+            createUser: jest.fn(),
+            getUsers: jest.fn(),
+            updateProfile: jest.fn(),
+            resendInvitation: jest.fn(),
+            executeActionsEmailForPassword: jest.fn(),
+          },
+        },
+        {
+          provide: KeycloakUtilService,
+          useValue: {
+            filterForReceivingEmail: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
 
-    keycloakService = moduleRef.get<KeycloakService>(KeycloakService);
-    userController = moduleRef.get<UserController>(UserController);
+    controller = module.get<UserController>(UserController);
+    keycloakService = module.get(KeycloakService);
+    keycloakUtilService = module.get(KeycloakUtilService);
   });
 
-  describe('create', () => {
-    it('should create the user', async () => {
-      const input = new CreateUserDto();
-      const result = 'userId';
-      jest.spyOn(keycloakService, 'createUser').mockResolvedValue(result);
+  describe('getUserEmails', () => {
+    it('should get all user emails with default settings', async () => {
+      const query: UserQueryDto = {};
+      const mockUsers = [mockUser];
 
-      const call = userController.create(input);
-      expect(await call).toBe(result);
-      expect(keycloakService.createUser).toHaveBeenCalledWith(input);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(keycloakService.getUsers).toHaveBeenCalledWith();
+      expect(keycloakUtilService.filterForReceivingEmail).toHaveBeenCalledWith(mockUser);
+      expect(result).toEqual({
+        emails: ['test@example.com'],
+        total: 1,
+      });
+    });
+
+    it('should exclude users with unverified emails', async () => {
+      const query: UserQueryDto = {};
+      const unverifiedUser = { ...mockUser, emailVerified: false };
+      const mockUsers = [mockUser, unverifiedUser];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: ['test@example.com'],
+        total: 1,
+      });
+    });
+
+    it('should exclude users with required actions', async () => {
+      const query: UserQueryDto = {};
+      const userWithActions = { ...mockUser, requiredActions: [KeycloakRequiredAction.UpdatePassword] };
+      const mockUsers = [mockUser, userWithActions];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: ['test@example.com'],
+        total: 1,
+      });
+    });
+
+    it('should exclude users who disabled email notifications by default', async () => {
+      const query: UserQueryDto = {};
+      const mockUsers = [mockUser];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(false);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: [],
+        total: 0,
+      });
+    });
+
+    it('should include users who disabled email notifications when includeInvalidEmails is true', async () => {
+      const query: UserQueryDto = { includeInvalidEmails: true };
+      const mockUsers = [mockUser];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(false);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(keycloakUtilService.filterForReceivingEmail).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        emails: ['test@example.com'],
+        total: 1,
+      });
+    });
+
+    it('should handle empty user list', async () => {
+      const query: UserQueryDto = {};
+      const mockUsers: IGetKeycloakUser[] = [];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: [],
+        total: 0,
+      });
+    });
+
+    it('should handle multiple valid users', async () => {
+      const query: UserQueryDto = {};
+      const mockUser2 = { ...mockUser, id: '2', email: 'test2@example.com' };
+      const mockUsers = [mockUser, mockUser2];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: ['test@example.com', 'test2@example.com'],
+        total: 2,
+      });
     });
   });
 
-  describe('updateProfile', () => {
-    it('should trigger the actions email to reset the password', async () => {
-      const input = new UpdateUserDto();
-      const param = new UuidParamDto();
-      const userId = 'userId';
-      param.id = userId;
-      const user = {};
-      const request = { user } as FdpgRequest;
-      const result = undefined;
+  describe('getUserByEmail', () => {
+    it('should return user when found by email', async () => {
+      const email = 'test@example.com';
+      const emailParam = { email };
+      const mockUsers = [mockUser];
 
-      const call = userController.updateProfile(param, input, request);
-      expect(await call).toBe(result);
-      expect(keycloakService.updateProfile).toHaveBeenCalledWith(userId, input, user);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+
+      const result = await controller.getUserByEmail(emailParam);
+
+      expect(keycloakService.getUsers).toHaveBeenCalledWith({ email, exact: true });
+      expect(result).toEqual(mockUser);
     });
-  });
 
-  describe('resendInvitation', () => {
-    it('should resend the invitation to the user', async () => {
-      const input = new ResendInvitationDto();
-      const result = undefined;
-      jest.spyOn(keycloakService, 'resendInvitation').mockResolvedValue(result);
+    it('should throw NotFoundException when user not found', async () => {
+      const email = 'notfound@example.com';
+      const emailParam = { email };
+      const mockUsers: IGetKeycloakUser[] = [];
 
-      const call = userController.resendInvitation(input);
-      expect(await call).toBe(result);
-      expect(keycloakService.resendInvitation).toHaveBeenCalledWith(input);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+
+      await expect(controller.getUserByEmail(emailParam)).rejects.toThrow(
+        new NotFoundException(`User with email ${email} not found`),
+      );
+
+      expect(keycloakService.getUsers).toHaveBeenCalledWith({ email, exact: true });
     });
-  });
 
-  describe('passwordChange', () => {
-    it('should trigger the actions email to reset the password', async () => {
-      const input = new PasswordResetDto();
-      const param = new UuidParamDto();
-      const userId = 'userId';
-      param.id = userId;
-      const user = {};
-      const request = { user } as FdpgRequest;
-      const result = undefined;
+    it('should return first user when multiple users found with same email', async () => {
+      const email = 'test@example.com';
+      const emailParam = { email };
+      const mockUser2 = { ...mockUser, id: '2' };
+      const mockUsers = [mockUser, mockUser2];
 
-      const call = userController.passwordChange(param, input, request);
-      expect(await call).toBe(result);
-      expect(keycloakService.executeActionsEmailForPassword).toHaveBeenCalledWith(userId, input, user);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+
+      const result = await controller.getUserByEmail(emailParam);
+
+      expect(keycloakService.getUsers).toHaveBeenCalledWith({ email, exact: true });
+      expect(result).toEqual(mockUser); // Should return the first user
     });
   });
 });

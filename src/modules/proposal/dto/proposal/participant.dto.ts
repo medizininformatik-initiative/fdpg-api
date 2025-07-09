@@ -1,5 +1,5 @@
 import { Expose, Type } from 'class-transformer';
-import { IsObject, ValidateNested } from 'class-validator';
+import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
 import InstituteDto from './participants/institute.dto';
 import { ParticipantCategoryDto } from './participants/participant-category.dto';
@@ -31,4 +31,9 @@ export class ParticipantDto extends WithIdForArrayDto {
   @IsObject()
   @Type(() => ParticipantRoleDto)
   participantRole: ParticipantRoleDto;
+
+  @Expose()
+  @IsOptional()
+  @Type(() => Boolean)
+  addedByFdpg: boolean;
 }

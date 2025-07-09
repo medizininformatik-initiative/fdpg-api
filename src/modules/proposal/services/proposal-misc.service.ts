@@ -66,7 +66,13 @@ export class ProposalMiscService {
     const document = await this.proposalCrudService.findDocument(proposalId, user);
     const researchers = document.participants.map(
       (participant) =>
-        new ResearcherIdentityDto(participant.researcher, participant.participantCategory, participant.participantRole),
+        new ResearcherIdentityDto(
+          participant.researcher,
+          participant.participantCategory,
+          participant.participantRole,
+          participant.addedByFdpg,
+          participant._id,
+        ),
     );
 
     const tasks = researchers.map((researcher) => {
@@ -455,6 +461,26 @@ export class ProposalMiscService {
     }
 
     mergeDeep(proposal, { participants });
+
+    const savedProposal = await proposal.save();
+    return plainToClass(ProposalGetDto, savedProposal.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  }
+  async removeParticipant(id: string, participantId: string, user: IRequestUser): Promise<ProposalGetDto> {
+    const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
+
+    if (!this.canUpdateParticipants(proposal, user)) {
+      throw new ForbiddenException('Only FDPG members can remove participants after draft/FDPG_CHECK status');
+    }
+
+    const participantIndex = proposal.participants.findIndex((p) => p._id.toString() === participantId);
+    if (participantIndex === -1) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    proposal.participants.splice(participantIndex, 1);
 
     const savedProposal = await proposal.save();
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
