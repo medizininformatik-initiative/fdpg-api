@@ -41,15 +41,25 @@ export class UserController {
 
   @Get('emails')
   @Auth(Role.Admin, Role.FdpgMember)
-  @ApiOperation({ summary: 'Get email addresses of all valid users' })
+  @ApiOperation({
+    summary: 'Get email addresses of all valid users',
+    description: 'Get email addresses. Use startsWith parameter to filter emails that start with specific characters.',
+  })
   @ApiOkResponse({ description: 'List of email addresses', type: UserEmailResponseDto })
   async getUserEmails(@Query() query: UserQueryDto): Promise<UserEmailResponseDto> {
     let emails: string[] = [];
     const allUsers = await this.keycloakService.getUsers();
+
     emails = allUsers
       .filter((user) => user.emailVerified && user.requiredActions.length === 0)
-      .filter((user) => query.includeInvalidEmails || this.keycloakUtilService.filterForReceivingEmail(user))
-      .map((user) => user.email);
+      .filter((user) => this.keycloakUtilService.filterForReceivingEmail(user))
+      .map((user) => user.email)
+      .filter((email) => {
+        if (query.startsWith) {
+          return email.toLowerCase().startsWith(query.startsWith.toLowerCase());
+        }
+        return true;
+      });
 
     return {
       emails,

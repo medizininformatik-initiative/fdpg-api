@@ -119,22 +119,6 @@ describe('UserController', () => {
       });
     });
 
-    it('should include users who disabled email notifications when includeInvalidEmails is true', async () => {
-      const query: UserQueryDto = { includeInvalidEmails: true };
-      const mockUsers = [mockUser];
-
-      keycloakService.getUsers.mockResolvedValue(mockUsers);
-      keycloakUtilService.filterForReceivingEmail.mockReturnValue(false);
-
-      const result = await controller.getUserEmails(query);
-
-      expect(keycloakUtilService.filterForReceivingEmail).not.toHaveBeenCalled();
-      expect(result).toEqual({
-        emails: ['test@example.com'],
-        total: 1,
-      });
-    });
-
     it('should handle empty user list', async () => {
       const query: UserQueryDto = {};
       const mockUsers: IGetKeycloakUser[] = [];
@@ -162,6 +146,55 @@ describe('UserController', () => {
       expect(result).toEqual({
         emails: ['test@example.com', 'test2@example.com'],
         total: 2,
+      });
+    });
+
+    it('should filter emails by startsWith parameter', async () => {
+      const query: UserQueryDto = { startsWith: 'tes' };
+      const mockUser2 = { ...mockUser, id: '2', email: 'other@example.com' };
+      const mockUser3 = { ...mockUser, id: '3', email: 'test2@example.com' };
+      const mockUsers = [mockUser, mockUser2, mockUser3];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: ['test@example.com', 'test2@example.com'],
+        total: 2,
+      });
+    });
+
+    it('should filter emails by startsWith parameter case insensitive', async () => {
+      const query: UserQueryDto = { startsWith: 'TES' };
+      const mockUser2 = { ...mockUser, id: '2', email: 'OTHER@example.com' };
+      const mockUser3 = { ...mockUser, id: '3', email: 'test2@example.com' };
+      const mockUsers = [mockUser, mockUser2, mockUser3];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: ['test@example.com', 'test2@example.com'],
+        total: 2,
+      });
+    });
+
+    it('should return empty array when no emails match startsWith parameter', async () => {
+      const query: UserQueryDto = { startsWith: 'xyz' };
+      const mockUsers = [mockUser];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual({
+        emails: [],
+        total: 0,
       });
     });
   });
