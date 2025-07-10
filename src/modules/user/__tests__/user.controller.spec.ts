@@ -256,6 +256,25 @@ describe('UserController', () => {
         total: 1,
       });
     });
+
+    it('should exclude users without attributes or MII_LOCATION', async () => {
+      const query: UserQueryDto = {};
+      const userWithoutAttributes = { ...mockUser, attributes: undefined };
+      const userWithEmptyAttributes = { ...mockUser, attributes: {} };
+      const userWithoutLocation = { ...mockUser, attributes: { someOtherProp: 'value' } };
+      const mockUsers = [mockUser, userWithoutAttributes, userWithEmptyAttributes, userWithoutLocation];
+
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      // Only mockUser should pass all filters (has MII_LOCATION)
+      expect(result).toEqual({
+        emails: ['test@example.com'],
+        total: 1,
+      });
+    });
   });
 
   describe('getUserByEmail', () => {

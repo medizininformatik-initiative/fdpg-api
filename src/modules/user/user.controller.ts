@@ -77,7 +77,7 @@ export class UserController {
     emails = allUsers
       .filter((user) => user.emailVerified && user.requiredActions.length === 0)
       .filter((user) => this.keycloakUtilService.filterForReceivingEmail(user))
-      .filter((user) => user.attributes.MII_LOCATION)
+      .filter((user) => user.attributes?.MII_LOCATION)
       .map((user) => user.email)
       .filter((email) => {
         if (query.startsWith) {
