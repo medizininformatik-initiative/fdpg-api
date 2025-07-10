@@ -6,6 +6,7 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { Proposal } from '../schema/proposal.schema';
 import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
 import { DueDateEnum } from '../enums/due-date.enum';
+import { Participant } from '../schema/sub-schema/participant.schema';
 
 const pushHistoryItem = (
   proposalAfterChanges: Proposal,
@@ -228,4 +229,62 @@ export const addHistoryItemForContractUpdate = (proposal: Proposal, user: IReque
   const type = HistoryEventType.ContractUpdated;
 
   pushHistoryItem(proposal, user, type);
+};
+
+export const addHistoryItemForParticipantAdded = (
+  proposal: Proposal,
+  user: IRequestUser,
+  participant: Participant,
+): void => {
+  const type = HistoryEventType.ParticipantAdded;
+  const participantName = `${participant.researcher?.firstName || ''} ${participant.researcher?.lastName || ''}`.trim();
+  pushHistoryItem(proposal, user, type, participantName as any);
+};
+
+export const addHistoryItemForParticipantRemoved = (
+  proposal: Proposal,
+  user: IRequestUser,
+  participant: Participant,
+): void => {
+  const type = HistoryEventType.ParticipantRemoved;
+  const participantName = `${participant.researcher?.firstName || ''} ${participant.researcher?.lastName || ''}`.trim();
+  pushHistoryItem(proposal, user, type, participantName as any);
+};
+
+export const addHistoryItemForParticipantsUpdated = (
+  proposal: Proposal,
+  user: IRequestUser,
+  oldParticipants: Participant[],
+  newParticipants: Participant[],
+): void => {
+  const getParticipantKey = (p: Participant) => p.researcher?.email;
+
+  const oldParticipantMap = new Map(oldParticipants.map((p) => [getParticipantKey(p), p]));
+  const newParticipantMap = new Map(newParticipants.map((p) => [getParticipantKey(p), p]));
+
+  let hasChanges = false;
+
+  for (const [key, participant] of oldParticipantMap) {
+    if (!newParticipantMap.has(key)) {
+      addHistoryItemForParticipantRemoved(proposal, user, participant);
+      hasChanges = true;
+    }
+  }
+
+  for (const [key, participant] of newParticipantMap) {
+    if (!oldParticipantMap.has(key)) {
+      addHistoryItemForParticipantAdded(proposal, user, participant);
+      hasChanges = true;
+    }
+  }
+
+  // If no specific additions/removals but lengths or content changed, log a general update
+  if (
+    !hasChanges &&
+    (oldParticipants.length !== newParticipants.length ||
+      JSON.stringify(oldParticipants) !== JSON.stringify(newParticipants))
+  ) {
+    const type = HistoryEventType.ParticipantUpdated;
+    pushHistoryItem(proposal, user, type);
+  }
 };

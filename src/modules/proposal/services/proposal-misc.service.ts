@@ -11,6 +11,8 @@ import {
   addHistoryItemForChangedDeadline,
   addHistoryItemForProposalLock,
   addHistoryItemForStatus,
+  addHistoryItemForParticipantsUpdated,
+  addHistoryItemForParticipantRemoved,
 } from '../utils/proposal-history.util';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
@@ -460,7 +462,11 @@ export class ProposalMiscService {
       throw new ForbiddenException('Only FDPG members can update participants after draft/FDPG_CHECK status');
     }
 
+    const oldParticipants = [...proposal.participants];
     mergeDeep(proposal, { participants });
+
+    // Compare old participants with the actual merged state
+    addHistoryItemForParticipantsUpdated(proposal, user, oldParticipants, proposal.participants);
 
     const savedProposal = await proposal.save();
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
@@ -480,7 +486,10 @@ export class ProposalMiscService {
       throw new NotFoundException('Participant not found');
     }
 
+    const removedParticipant = proposal.participants[participantIndex];
     proposal.participants.splice(participantIndex, 1);
+
+    addHistoryItemForParticipantRemoved(proposal, user, removedParticipant);
 
     const savedProposal = await proposal.save();
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
