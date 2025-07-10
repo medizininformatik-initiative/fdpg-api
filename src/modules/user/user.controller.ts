@@ -1,4 +1,16 @@
-import { Body, Get, HttpCode, NotFoundException, Param, Patch, Post, Put, Query, Request } from '@nestjs/common';
+import {
+  Body,
+  Get,
+  HttpCode,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Request,
+  Inject,
+} from '@nestjs/common';
 import {
   ApiConflictResponse,
   ApiNoContentResponse,
@@ -6,10 +18,13 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
 import { UuidParamDto } from 'src/shared/dto/uuid-id-param.dto';
 import { Role } from 'src/shared/enums/role.enum';
+import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { UserValidation } from './decorators/validation.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -30,6 +45,7 @@ export class UserController {
   constructor(
     private readonly keycloakService: KeycloakService,
     private readonly keycloakUtilService: KeycloakUtilService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   @Post()
@@ -48,11 +64,20 @@ export class UserController {
   @ApiOkResponse({ description: 'List of email addresses', type: UserEmailResponseDto })
   async getUserEmails(@Query() query: UserQueryDto): Promise<UserEmailResponseDto> {
     let emails: string[] = [];
-    const allUsers = await this.keycloakService.getUsers();
+
+    let allUsers: IGetKeycloakUser[] = await this.cacheManager.get<IGetKeycloakUser[]>(CacheKey.AllUsers);
+
+    if (!allUsers) {
+      // cache for 1 hour
+      allUsers = await this.keycloakService.getUsers();
+      const oneHourInMs = 60 * 60 * 1000;
+      await this.cacheManager.set(CacheKey.AllUsers, allUsers, oneHourInMs);
+    }
 
     emails = allUsers
       .filter((user) => user.emailVerified && user.requiredActions.length === 0)
       .filter((user) => this.keycloakUtilService.filterForReceivingEmail(user))
+      .filter((user) => user.attributes.MII_LOCATION)
       .map((user) => user.email)
       .filter((email) => {
         if (query.startsWith) {

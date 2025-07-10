@@ -1,16 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserController } from '../user.controller';
 import { KeycloakService } from '../keycloak.service';
 import { KeycloakUtilService } from '../keycloak-util.service';
 import { IGetKeycloakUser } from '../types/keycloak-user.interface';
 import { UserQueryDto } from '../dto/user-query.dto';
 import { KeycloakRequiredAction } from '../enums/keycloak-required-action.enum';
+import { MiiLocation } from 'src/shared/constants/mii-locations';
 
 describe('UserController', () => {
   let controller: UserController;
   let keycloakService: jest.Mocked<KeycloakService>;
   let keycloakUtilService: jest.Mocked<KeycloakUtilService>;
+  let cacheManager: jest.Mocked<any>;
 
   const mockUser: IGetKeycloakUser = {
     id: '1',
@@ -21,7 +24,9 @@ describe('UserController', () => {
     enabled: true,
     emailVerified: true,
     requiredActions: [],
-    attributes: {},
+    attributes: {
+      MII_LOCATION: [MiiLocation.UKT],
+    },
     createdTimestamp: Date.now(),
     totp: false,
   };
@@ -46,15 +51,29 @@ describe('UserController', () => {
             filterForReceivingEmail: jest.fn(),
           },
         },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<UserController>(UserController);
     keycloakService = module.get(KeycloakService);
     keycloakUtilService = module.get(KeycloakUtilService);
+    cacheManager = module.get(CACHE_MANAGER);
   });
 
   describe('getUserEmails', () => {
+    beforeEach(() => {
+      // Reset cache to return null (cache miss) by default
+      cacheManager.get.mockResolvedValue(null);
+      cacheManager.set.mockResolvedValue(undefined);
+    });
+
     it('should get all user emails with default settings', async () => {
       const query: UserQueryDto = {};
       const mockUsers = [mockUser];
@@ -64,7 +83,9 @@ describe('UserController', () => {
 
       const result = await controller.getUserEmails(query);
 
+      expect(cacheManager.get).toHaveBeenCalled();
       expect(keycloakService.getUsers).toHaveBeenCalledWith();
+      expect(cacheManager.set).toHaveBeenCalled();
       expect(keycloakUtilService.filterForReceivingEmail).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({
         emails: ['test@example.com'],
@@ -195,6 +216,44 @@ describe('UserController', () => {
       expect(result).toEqual({
         emails: [],
         total: 0,
+      });
+    });
+
+    it('should use cached users when available (cache hit)', async () => {
+      const query: UserQueryDto = {};
+      const cachedUsers = [mockUser];
+
+      cacheManager.get.mockResolvedValue(cachedUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(cacheManager.get).toHaveBeenCalledWith('CACHE_KEY_ALL_USERS');
+      expect(keycloakService.getUsers).not.toHaveBeenCalled(); // Should not call service if cached
+      expect(cacheManager.set).not.toHaveBeenCalled(); // Should not set cache if already cached
+      expect(result).toEqual({
+        emails: ['test@example.com'],
+        total: 1,
+      });
+    });
+
+    it('should cache users for 1 hour when fetched from service (cache miss)', async () => {
+      const query: UserQueryDto = {};
+      const mockUsers = [mockUser];
+
+      // Mock cache miss
+      cacheManager.get.mockResolvedValue(null);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(cacheManager.get).toHaveBeenCalledWith('CACHE_KEY_ALL_USERS');
+      expect(keycloakService.getUsers).toHaveBeenCalled();
+      expect(cacheManager.set).toHaveBeenCalledWith('CACHE_KEY_ALL_USERS', mockUsers, 60 * 60 * 1000);
+      expect(result).toEqual({
+        emails: ['test@example.com'],
+        total: 1,
       });
     });
   });
