@@ -11,6 +11,8 @@ import {
   addHistoryItemForChangedDeadline,
   addHistoryItemForProposalLock,
   addHistoryItemForStatus,
+  addHistoryItemForParticipantsUpdated,
+  addHistoryItemForParticipantRemoved,
 } from '../utils/proposal-history.util';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
@@ -66,7 +68,13 @@ export class ProposalMiscService {
     const document = await this.proposalCrudService.findDocument(proposalId, user);
     const researchers = document.participants.map(
       (participant) =>
-        new ResearcherIdentityDto(participant.researcher, participant.participantCategory, participant.participantRole),
+        new ResearcherIdentityDto(
+          participant.researcher,
+          participant.participantCategory,
+          participant.participantRole,
+          participant.addedByFdpg,
+          participant._id,
+        ),
     );
 
     const tasks = researchers.map((researcher) => {
@@ -454,7 +462,34 @@ export class ProposalMiscService {
       throw new ForbiddenException('Only FDPG members can update participants after draft/FDPG_CHECK status');
     }
 
+    const oldParticipants = [...proposal.participants];
     mergeDeep(proposal, { participants });
+
+    // Compare old participants with the actual merged state
+    addHistoryItemForParticipantsUpdated(proposal, user, oldParticipants, proposal.participants);
+
+    const savedProposal = await proposal.save();
+    return plainToClass(ProposalGetDto, savedProposal.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  }
+  async removeParticipant(id: string, participantId: string, user: IRequestUser): Promise<ProposalGetDto> {
+    const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
+
+    if (!this.canUpdateParticipants(proposal, user)) {
+      throw new ForbiddenException('Only FDPG members can remove participants after draft/FDPG_CHECK status');
+    }
+
+    const participantIndex = proposal.participants.findIndex((p) => p._id.toString() === participantId);
+    if (participantIndex === -1) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    const removedParticipant = proposal.participants[participantIndex];
+    proposal.participants.splice(participantIndex, 1);
+
+    addHistoryItemForParticipantRemoved(proposal, user, removedParticipant);
 
     const savedProposal = await proposal.save();
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {

@@ -265,4 +265,16 @@ export class ProposalMiscController {
   ): Promise<ProposalGetDto> {
     return this.proposalMiscService.updateParticipants(id, participants as Participant[], user);
   }
+  @Auth(Role.FdpgMember)
+  @Delete(':id/participants/:participantId')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Removes a participant from a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal or participant could not be found' })
+  async removeParticipant(
+    @Param('id') id: string,
+    @Param('participantId') participantId: string,
+    @Request() { user }: FdpgRequest,
+  ): Promise<ProposalGetDto> {
+    return this.proposalMiscService.removeParticipant(id, participantId, user);
+  }
 }

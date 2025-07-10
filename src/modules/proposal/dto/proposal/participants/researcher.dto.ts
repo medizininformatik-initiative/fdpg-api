@@ -41,7 +41,13 @@ export class ResearcherDto extends WithIdForObjectDto {
 }
 
 export class ResearcherIdentityDto extends ResearcherDto {
-  constructor(researcher: Researcher | ResearcherDto, category: ParticipantCategory, role: ParticipantRole) {
+  constructor(
+    researcher: Researcher | ResearcherDto,
+    category: ParticipantCategory,
+    role: ParticipantRole,
+    addedByFdpg: boolean,
+    participantId: string,
+  ) {
     super();
     this._id = researcher._id;
     this.firstName = researcher.firstName;
@@ -50,6 +56,8 @@ export class ResearcherIdentityDto extends ResearcherDto {
     this.email = researcher.email;
     this.participantType = category.category;
     this.participantRole = role?.role ? role.role : ParticipantRoleType.Researcher;
+    this.addedByFdpg = addedByFdpg || false;
+    this.participantId = participantId;
   }
 
   @Expose()
@@ -69,4 +77,10 @@ export class ResearcherIdentityDto extends ResearcherDto {
 
   @Expose()
   participantRole: ParticipantRoleType;
+
+  @Expose()
+  addedByFdpg: boolean = false;
+
+  @Expose()
+  participantId: string;
 }

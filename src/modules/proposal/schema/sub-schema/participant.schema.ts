@@ -21,6 +21,9 @@ export class Participant {
   @Prop({ type: ParticipantRoleSchema })
   participantRole: ParticipantRole;
 
+  @Prop({ type: Boolean, default: false })
+  addedByFdpg?: boolean;
+
   _id: string;
 }
 
