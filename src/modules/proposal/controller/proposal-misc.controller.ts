@@ -16,7 +16,14 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiNoContentResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { MarkAsDoneDto } from 'src/modules/comment/dto/mark-as-done.dto';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
@@ -43,6 +50,7 @@ import { Response } from 'express';
 import { ParticipantDto } from '../dto/proposal/participant.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { Participant } from '../schema/sub-schema/participant.schema';
+import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -276,5 +284,30 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<ProposalGetDto> {
     return this.proposalMiscService.removeParticipant(id, participantId, user);
+  }
+
+  @Auth(Role.DizMember)
+  @Post(':id/diz-details')
+  @ApiOperation({ summary: 'Create DIZ details for a proposal' })
+  @ApiResponse({ status: 201, description: 'DIZ details created successfully', type: DizDetailsGetDto })
+  async createDizDetails(
+    @Param() { id }: MongoIdParamDto,
+    @Body() createDto: DizDetailsCreateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DizDetailsGetDto> {
+    return this.proposalMiscService.createDizDetails(id, createDto, user);
+  }
+
+  @Auth(Role.DizMember)
+  @Put(':id/diz-details/:dizDetailsId')
+  @ApiOperation({ summary: 'Update DIZ details for a proposal' })
+  @ApiResponse({ status: 200, description: 'DIZ details updated successfully', type: DizDetailsGetDto })
+  async updateDizDetails(
+    @Param() { id }: MongoIdParamDto,
+    @Param('dizDetailsId') dizDetailsId: string,
+    @Body() updateDto: DizDetailsUpdateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DizDetailsGetDto> {
+    return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
   }
 }

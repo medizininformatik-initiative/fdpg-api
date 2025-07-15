@@ -41,13 +41,15 @@ import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
-import { validateModifyingCohortAccess } from '../utils/validate-access.util';
+import { validateModifyingCohortAccess, validateProposalAccess } from '../utils/validate-access.util';
 import { ProposalUploadService } from './proposal-upload.service';
 import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
+import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
+import { ConflictException } from '@nestjs/common';
 
 @Injectable()
 export class ProposalMiscService {
@@ -493,6 +495,85 @@ export class ProposalMiscService {
 
     const savedProposal = await proposal.save();
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  }
+  async createDizDetails(
+    proposalId: string,
+    createDto: DizDetailsCreateDto,
+    user: IRequestUser,
+  ): Promise<DizDetailsGetDto> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    if (!proposal) {
+      throw new NotFoundException('Proposal not found');
+    }
+
+    validateProposalAccess(proposal, user, true);
+
+    // Only DIZ members can create DIZ details
+    if (user.singleKnownRole !== Role.DizMember) {
+      throw new ForbiddenException('Only DIZ members can create DIZ details');
+    }
+
+    // Check if DIZ details already exist for this location
+    const existingDizDetail = proposal.dizDetails.find((detail) => detail.location === user.miiLocation);
+
+    if (existingDizDetail) {
+      throw new ConflictException('DIZ details already exist for this location');
+    }
+
+    const newDizDetail = {
+      location: user.miiLocation,
+      localProjectIdentifier: createDto.localProjectIdentifier,
+      documentationLinks: createDto.documentationLinks,
+    };
+
+    proposal.dizDetails.push(newDizDetail as any);
+    const savedProposal = await proposal.save();
+
+    const createdDizDetail = savedProposal.dizDetails[savedProposal.dizDetails.length - 1];
+
+    return plainToClass(DizDetailsGetDto, createdDizDetail, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  }
+
+  async updateDizDetails(
+    proposalId: string,
+    dizDetailsId: string,
+    updateDto: DizDetailsUpdateDto,
+    user: IRequestUser,
+  ): Promise<DizDetailsGetDto> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    if (!proposal) {
+      throw new NotFoundException('Proposal not found');
+    }
+
+    validateProposalAccess(proposal, user, true);
+
+    // Only DIZ members can update DIZ details
+    if (user.singleKnownRole !== Role.DizMember) {
+      throw new ForbiddenException('Only DIZ members can update DIZ details');
+    }
+
+    const dizDetailIndex = proposal.dizDetails.findIndex(
+      (detail) => detail._id.toString() === dizDetailsId && detail.location === user.miiLocation,
+    );
+
+    if (dizDetailIndex === -1) {
+      throw new NotFoundException('DIZ details not found for this location');
+    }
+
+    proposal.dizDetails[dizDetailIndex].localProjectIdentifier = updateDto.localProjectIdentifier;
+    proposal.dizDetails[dizDetailIndex].documentationLinks = updateDto.documentationLinks;
+
+    await proposal.save();
+
+    return plainToClass(DizDetailsGetDto, proposal.dizDetails[dizDetailIndex], {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });

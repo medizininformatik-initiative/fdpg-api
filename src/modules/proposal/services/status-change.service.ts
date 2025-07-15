@@ -63,8 +63,8 @@ export class StatusChangeService {
         proposalAfterChanges.requestedButExcludedLocations = [];
 
         const wantsAllLocationsOrNothing =
-          proposalAfterChanges.userProject.addressees.desiredLocations.includes(MiiLocation.VirtualAll) ||
-          !proposalAfterChanges.userProject.addressees.desiredLocations.length;
+          proposalAfterChanges.userProject.addressees?.desiredLocations.includes(MiiLocation.VirtualAll) ||
+          !proposalAfterChanges.userProject.addressees?.desiredLocations.length;
 
         const requestedLocations = wantsAllLocationsOrNothing
           ? [...ALL_ACTIVE_LOCATIONS]

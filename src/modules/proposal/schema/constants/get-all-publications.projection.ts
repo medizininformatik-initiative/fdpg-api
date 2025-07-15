@@ -1,5 +1,3 @@
-import { Proposal } from '../proposal.schema';
-
-export const getAllPublicationsProjection: Partial<Record<NestedPath<Proposal>, number>> = {
+export const getAllPublicationsProjection: Record<string, number> = {
   publications: 1,
 };

@@ -1,6 +1,4 @@
-import { Proposal } from '../proposal.schema';
-
-export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = {
+export const GetListProjection: Record<string, number> = {
   projectAbbreviation: 1,
   createdAt: 1,
   updatedAt: 1,
@@ -31,4 +29,5 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   contractRejectedByResearcher: 1,
   additionalLocationInformation: 1,
   selectedDataSources: 1,
+  dizDetails: 1,
 };

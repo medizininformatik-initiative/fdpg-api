@@ -5,7 +5,7 @@ import { StorageService } from '../../storage/storage.service';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { DirectUpload } from '../enums/upload-type.enum';
 import { ProposalCrudService } from './proposal-crud.service';
-import { Proposal, ProposalDocument } from '../schema/proposal.schema';
+import { ProposalDocument } from '../schema/proposal.schema';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateUploadDeletion } from '../utils/validate-upload-deletion.util';
 
@@ -36,7 +36,7 @@ export class ProposalUploadService {
   }
 
   async getDownloadUrl(proposalId: string, uploadId: string, user: IRequestUser): Promise<string> {
-    const uploadProjection: Partial<Record<NestedPath<Proposal>, number>> = {
+    const uploadProjection: Record<string, number> = {
       uploads: 1,
       // Needed for access control:
       openDizChecks: 1,
