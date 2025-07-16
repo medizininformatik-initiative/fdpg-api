@@ -16,14 +16,10 @@ const pushHistoryItem = <T extends HistoryEventType>(
   location?: MiiLocation,
   data?: HistoryEventDataMap<T>,
 ) => {
-  let eventData: Record<string, string | number> = {};
-  if (data && typeof data === 'object') {
-    eventData = data as Record<string, string | number>;
-  }
   const event: HistoryEvent = {
     type,
     location,
-    data: eventData,
+    data: data ?? {},
     owner: {
       firstName: user.firstName,
       lastName: user.lastName,
