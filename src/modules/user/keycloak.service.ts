@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { AxiosError, AxiosInstance } from 'axios';
+import { all, AxiosError, AxiosInstance } from 'axios';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import { Role } from 'src/shared/enums/role.enum';
@@ -23,7 +23,6 @@ import { KeycloakRequiredAction } from './enums/keycloak-required-action.enum';
 import { handleRegisterErrors, throwInvalidLocation } from './error-handling/create-user.errors';
 import { handleActionsEmailError } from './error-handling/user-invite.errors';
 import { KeycloakClient } from './keycloak.client';
-import { KeycloakUtilService } from './keycloak-util.service';
 import { IKeycloakActionsEmail } from './types/keycloak-actions-email.interface';
 import { IKeycloakRole } from './types/keycloak-role-assignment.interface';
 import { IKeycloakUserQuery } from './types/keycloak-user-query.interface';
@@ -34,7 +33,6 @@ export class KeycloakService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private keycloakClient: KeycloakClient,
-    private keycloakUtilService: KeycloakUtilService,
   ) {
     this.apiClient = this.keycloakClient.client;
   }
@@ -279,17 +277,21 @@ export class KeycloakService {
       await this.cacheManager.set(CacheKey.AllUsers, allUsers, oneHourInMs);
     }
 
-    const emails = allUsers
-      .filter((user) => user.emailVerified && user.requiredActions.length === 0)
-      .filter((user) => this.keycloakUtilService.filterForReceivingEmail(user))
-      .filter((user) => user.attributes?.MII_LOCATION)
-      .map((user) => user.email)
-      .filter((email) => {
-        if (query.startsWith) {
-          return email.toLowerCase().startsWith(query.startsWith.toLowerCase());
-        }
-        return true;
-      });
+    const lowerCasedSearch = query.startsWith?.toLowerCase();
+    const emails = allUsers.reduce<string[]>((acc, user) => {
+      if (!user.emailVerified || user.requiredActions.length > 0) {
+        return acc;
+      }
+      if (!user.attributes?.MII_LOCATION) {
+        return acc;
+      }
+      if (lowerCasedSearch && !user.email.toLowerCase().startsWith(lowerCasedSearch)) {
+        return acc;
+      }
+      acc.push(user.email);
+
+      return acc;
+    }, []);
 
     return {
       emails,
