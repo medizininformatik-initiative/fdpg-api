@@ -1,4 +1,3 @@
-import { NestedPath } from 'src/shared/types/nested-key-of.type';
 import { Proposal } from '../proposal.schema';
 
 export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = {

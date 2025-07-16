@@ -8,7 +8,6 @@ import { ProposalCrudService } from './proposal-crud.service';
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateUploadDeletion } from '../utils/validate-upload-deletion.util';
-import { NestedPath } from 'src/shared/types/nested-key-of.type';
 
 @Injectable()
 export class ProposalUploadService {
