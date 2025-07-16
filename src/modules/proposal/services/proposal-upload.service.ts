@@ -5,9 +5,10 @@ import { StorageService } from '../../storage/storage.service';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { DirectUpload } from '../enums/upload-type.enum';
 import { ProposalCrudService } from './proposal-crud.service';
-import { ProposalDocument } from '../schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { validateUploadDeletion } from '../utils/validate-upload-deletion.util';
+import { NestedPath } from 'src/shared/types/nested-key-of.type';
 
 @Injectable()
 export class ProposalUploadService {
@@ -36,7 +37,7 @@ export class ProposalUploadService {
   }
 
   async getDownloadUrl(proposalId: string, uploadId: string, user: IRequestUser): Promise<string> {
-    const uploadProjection: Record<string, number> = {
+    const uploadProjection: Partial<Record<NestedPath<Proposal>, number>> = {
       uploads: 1,
       // Needed for access control:
       openDizChecks: 1,

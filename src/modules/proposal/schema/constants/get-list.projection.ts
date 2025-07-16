@@ -1,4 +1,7 @@
-export const GetListProjection: Record<string, number> = {
+import { NestedPath } from 'src/shared/types/nested-key-of.type';
+import { Proposal } from '../proposal.schema';
+
+export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = {
   projectAbbreviation: 1,
   createdAt: 1,
   updatedAt: 1,
