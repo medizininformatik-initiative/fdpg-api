@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { all, AxiosError, AxiosInstance } from 'axios';
+import { AxiosError, AxiosInstance } from 'axios';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import { Role } from 'src/shared/enums/role.enum';
