@@ -16,11 +16,14 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { PasswordResetDto } from './dto/password-reset.dto';
 import { ResendInvitationDto } from './dto/resend-invitation.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserQueryDto } from './dto/user-query.dto';
+import { UserEmailResponseDto } from './dto/user-response.dto';
 import { KeycloakLocale } from './enums/keycloak-locale.enum';
 import { KeycloakRequiredAction } from './enums/keycloak-required-action.enum';
 import { handleRegisterErrors, throwInvalidLocation } from './error-handling/create-user.errors';
 import { handleActionsEmailError } from './error-handling/user-invite.errors';
 import { KeycloakClient } from './keycloak.client';
+import { KeycloakUtilService } from './keycloak-util.service';
 import { IKeycloakActionsEmail } from './types/keycloak-actions-email.interface';
 import { IKeycloakRole } from './types/keycloak-role-assignment.interface';
 import { IKeycloakUserQuery } from './types/keycloak-user-query.interface';
@@ -31,6 +34,7 @@ export class KeycloakService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private keycloakClient: KeycloakClient,
+    private keycloakUtilService: KeycloakUtilService,
   ) {
     this.apiClient = this.keycloakClient.client;
   }
@@ -263,5 +267,33 @@ export class KeycloakService {
     } catch (error) {
       handleActionsEmailError(error);
     }
+  }
+
+  async getUserEmails(query: UserQueryDto): Promise<UserEmailResponseDto> {
+    let allUsers: IGetKeycloakUser[] = await this.cacheManager.get<IGetKeycloakUser[]>(CacheKey.AllUsers);
+
+    if (!allUsers) {
+      // cache for 1 hour
+      allUsers = await this.getUsers();
+      const oneHourInMs = 60 * 60 * 1000;
+      await this.cacheManager.set(CacheKey.AllUsers, allUsers, oneHourInMs);
+    }
+
+    const emails = allUsers
+      .filter((user) => user.emailVerified && user.requiredActions.length === 0)
+      .filter((user) => this.keycloakUtilService.filterForReceivingEmail(user))
+      .filter((user) => user.attributes?.MII_LOCATION)
+      .map((user) => user.email)
+      .filter((email) => {
+        if (query.startsWith) {
+          return email.toLowerCase().startsWith(query.startsWith.toLowerCase());
+        }
+        return true;
+      });
+
+    return {
+      emails,
+      total: emails.length,
+    };
   }
 }
