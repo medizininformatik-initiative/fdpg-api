@@ -7,18 +7,23 @@ import { Proposal } from '../schema/proposal.schema';
 import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
 import { DueDateEnum } from '../enums/due-date.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
+import { HistoryEventDataMap } from '../types/history-event-data-map.type';
 
-const pushHistoryItem = (
+const pushHistoryItem = <T extends HistoryEventType>(
   proposalAfterChanges: Proposal,
   user: IRequestUser,
-  type: HistoryEventType,
+  type: T,
   location?: MiiLocation,
-  data?: Record<string, string | number>,
+  data?: HistoryEventDataMap[T],
 ) => {
+  let eventData: Record<string, string | number> = {};
+  if (data && typeof data === 'object') {
+    eventData = data as Record<string, string | number>;
+  }
   const event: HistoryEvent = {
     type,
     location,
-    data: data || {},
+    data: eventData,
     owner: {
       firstName: user.firstName,
       lastName: user.lastName,
@@ -240,7 +245,7 @@ export const addHistoryItemForParticipantAdded = (
 ): void => {
   const type = HistoryEventType.ParticipantAdded;
   const participantName = `${participant.researcher?.firstName || ''} ${participant.researcher?.lastName || ''}`.trim();
-  pushHistoryItem(proposal, user, type, null, { participantName });
+  pushHistoryItem(proposal, user, type, undefined, { participantName });
 };
 
 export const addHistoryItemForParticipantRemoved = (
@@ -250,7 +255,7 @@ export const addHistoryItemForParticipantRemoved = (
 ): void => {
   const type = HistoryEventType.ParticipantRemoved;
   const participantName = `${participant.researcher?.firstName || ''} ${participant.researcher?.lastName || ''}`.trim();
-  pushHistoryItem(proposal, user, type, null, { participantName });
+  pushHistoryItem(proposal, user, type, undefined, { participantName });
 };
 
 export const addHistoryItemForParticipantsUpdated = (
