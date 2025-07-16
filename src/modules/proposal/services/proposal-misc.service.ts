@@ -222,7 +222,7 @@ export class ProposalMiscService {
   ): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user);
 
-    validateUpdateAdditionalInformationAccess(toBeUpdated);
+    validateUpdateAdditionalInformationAccess(toBeUpdated, user);
 
     toBeUpdated.additionalLocationInformation = (toBeUpdated.additionalLocationInformation ?? []).filter(
       (additionalInformation) => additionalInformation.location !== user.miiLocation,
