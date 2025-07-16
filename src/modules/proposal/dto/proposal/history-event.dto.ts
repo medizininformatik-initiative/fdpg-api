@@ -18,5 +18,5 @@ export class HistoryEventGetDto {
   location: MiiLocation;
 
   @Expose()
-  participantName: string;
+  data: Record<string, string | number>;
 }

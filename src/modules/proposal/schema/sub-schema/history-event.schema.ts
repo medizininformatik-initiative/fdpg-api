@@ -22,10 +22,10 @@ export class HistoryEvent {
   proposalVersion: Version;
 
   @Prop({
-    type: String,
+    type: Object,
     required: false,
   })
-  participantName?: string;
+  data?: Record<string, string | number>;
 
   @Prop({
     type: Date,

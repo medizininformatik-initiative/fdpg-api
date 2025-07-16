@@ -13,12 +13,12 @@ const pushHistoryItem = (
   user: IRequestUser,
   type: HistoryEventType,
   location?: MiiLocation,
-  participantName?: string,
+  data?: Record<string, string | number>,
 ) => {
   const event: HistoryEvent = {
     type,
     location,
-    participantName,
+    data: data || {},
     owner: {
       firstName: user.firstName,
       lastName: user.lastName,
@@ -240,7 +240,7 @@ export const addHistoryItemForParticipantAdded = (
 ): void => {
   const type = HistoryEventType.ParticipantAdded;
   const participantName = `${participant.researcher?.firstName || ''} ${participant.researcher?.lastName || ''}`.trim();
-  pushHistoryItem(proposal, user, type, null, participantName);
+  pushHistoryItem(proposal, user, type, null, { participantName });
 };
 
 export const addHistoryItemForParticipantRemoved = (
@@ -250,7 +250,7 @@ export const addHistoryItemForParticipantRemoved = (
 ): void => {
   const type = HistoryEventType.ParticipantRemoved;
   const participantName = `${participant.researcher?.firstName || ''} ${participant.researcher?.lastName || ''}`.trim();
-  pushHistoryItem(proposal, user, type, null, participantName);
+  pushHistoryItem(proposal, user, type, null, { participantName });
 };
 
 export const addHistoryItemForParticipantsUpdated = (
