@@ -14,7 +14,7 @@ const pushHistoryItem = <T extends HistoryEventType>(
   user: IRequestUser,
   type: T,
   location?: MiiLocation,
-  data?: HistoryEventDataMap[T],
+  data?: HistoryEventDataMap<T>,
 ) => {
   let eventData: Record<string, string | number> = {};
   if (data && typeof data === 'object') {
