@@ -22,6 +22,12 @@ export class HistoryEvent {
   proposalVersion: Version;
 
   @Prop({
+    type: String,
+    required: false,
+  })
+  participantName?: string;
+
+  @Prop({
     type: Date,
     default: Date.now,
     immutable: true,
