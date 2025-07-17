@@ -47,6 +47,7 @@ import { UserProjectDto } from './user-project.dto';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { AdditionalLocationInformationGetDto } from './additional-location-information.dto';
+import { DizDetailsGetDto } from './diz-details.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
@@ -374,6 +375,21 @@ export class ProposalGetDto extends ProposalBaseDto {
     });
   })
   additionalLocationInformation: AdditionalLocationInformationGetDto[];
+
+  @Expose({ groups: [Role.DizMember, Role.UacMember] })
+  @Type(() => DizDetailsGetDto)
+  @Transform(({ value, options }) => {
+    const { role, location } = getRoleFromTransform(options);
+
+    return value.filter((dizDetail: DizDetailsGetDto) => {
+      if (role === Role.DizMember || role === Role.UacMember) {
+        return dizDetail.location === location;
+      }
+
+      return true;
+    });
+  })
+  dizDetails: DizDetailsGetDto[];
 
   // LOCATION Tasks <----
 

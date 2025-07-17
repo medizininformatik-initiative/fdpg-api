@@ -25,6 +25,7 @@ import {
   AdditionalLocationInformation,
   AdditionalLocationInformationSchema,
 } from './sub-schema/additional-location-information.schema';
+import { DizDetails, DizDetailsSchema } from './sub-schema/diz-details.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 
 export type ProposalDocument = Proposal & Document;
@@ -111,6 +112,9 @@ export class Proposal {
 
   @Prop({ type: [AdditionalLocationInformationSchema], default: [] })
   additionalLocationInformation: AdditionalLocationInformation[];
+
+  @Prop({ type: [DizDetailsSchema], default: [] })
+  dizDetails: DizDetails[];
 
   @Prop({ type: [ReportSchema], default: [] })
   reports: Report[];

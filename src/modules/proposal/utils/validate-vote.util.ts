@@ -25,8 +25,15 @@ export const validateDizApproval = (proposal: Proposal, user: IRequestUser) => {
 };
 
 export const validateDizConditionApproval = (proposal: Proposal, user: IRequestUser) => {
-  if (proposal.status !== ProposalStatus.LocationCheck) {
-    throw new ForbiddenException('The current status does not allow to set the diz approval');
+  // DIZ members can approve in LocationCheck and Contracting
+  if (user?.singleKnownRole === Role.DizMember) {
+    if (proposal.status !== ProposalStatus.LocationCheck && proposal.status !== ProposalStatus.Contracting) {
+      throw new ForbiddenException('DIZ members can only set condition approval during location check or contracting.');
+    }
+  } else {
+    if (proposal.status !== ProposalStatus.LocationCheck) {
+      throw new ForbiddenException('The current status does not allow to set the diz approval');
+    }
   }
 
   const canUpdateCondition =
