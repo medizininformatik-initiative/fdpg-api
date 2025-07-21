@@ -35,6 +35,7 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
 const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser) => {
   const isOwner = proposal.owner.id === user.userId;
   if (!isOwner && !isParticipatingScientist(proposal, user)) {
+    console.log({ user, prOw: proposal.projectResponsible });
     throwForbiddenError(
       `Proposal has a different owner than this researcher and is not in the list of participating researchers`,
     );
@@ -42,7 +43,10 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
 };
 
 const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser) => {
-  return proposal.participants.filter((participant) => participant.researcher.email === user.email).length > 0;
+  return (
+    proposal.participants.filter((participant) => participant.researcher.email === user.email).length > 0 ||
+    proposal.projectResponsible?.researcher?.email === user.email
+  );
 };
 
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
