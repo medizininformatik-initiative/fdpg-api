@@ -6,7 +6,7 @@ type Join<K, P> = K extends string | number
     : never
   : never;
 
-type NestedPath<T, D extends number = 10> = [D] extends [never]
+type NestedPath<T, D extends number = 3> = [D] extends [never]
   ? never
   : T extends object
     ? {
