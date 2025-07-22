@@ -79,6 +79,7 @@ export class ProposalCrudService {
       dbProjection['reports.content'] = 0;
     } else if (user.singleKnownRole === Role.DizMember) {
       dbProjection.owner = 1;
+      dbProjection.projectResponsible = 1;
       dbProjection.locationConditionDraft = 1;
       dbProjection.conditionalApprovals = 1;
       dbProjection.openDizChecks = 1;
@@ -90,6 +91,7 @@ export class ProposalCrudService {
       dbProjection.additionalLocationInformation = 1;
     } else if (user.singleKnownRole === Role.UacMember) {
       dbProjection.owner = 1;
+      dbProjection.projectResponsible = 1;
       dbProjection.locationConditionDraft = 1;
       dbProjection.conditionalApprovals = 1;
       dbProjection.dizApprovedLocations = 1;
@@ -100,6 +102,7 @@ export class ProposalCrudService {
       dbProjection.additionalLocationInformation = 1;
     } else {
       dbProjection.owner = 1;
+      dbProjection.projectResponsible = 1;
       dbProjection.participants = 1;
       dbProjection.deadlines = 1;
       dbProjection.selectedDataSources = 1;
@@ -217,6 +220,7 @@ export class ProposalCrudService {
 
   private addParticipatingScientistIndicator(plain: any, user: IRequestUser) {
     plain.isParticipatingScientist =
-      (plain.participants || []).filter((participant) => participant.researcher.email === user.email).length > 0;
+      (plain.participants || []).filter((participant) => participant.researcher.email === user.email).length > 0 ||
+      plain.projectResponsible?.researcher?.email === user.email;
   }
 }

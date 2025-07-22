@@ -42,7 +42,10 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
 };
 
 const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser) => {
-  return proposal.participants.filter((participant) => participant.researcher.email === user.email).length > 0;
+  return (
+    proposal.participants.filter((participant) => participant.researcher.email === user.email).length > 0 ||
+    proposal.projectResponsible?.researcher?.email === user.email
+  );
 };
 
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
