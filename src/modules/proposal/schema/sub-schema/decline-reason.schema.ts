@@ -26,6 +26,11 @@ export class DeclineReason {
     immutable: true,
   })
   createdAt: Date;
+
+  @Prop({
+    type: Boolean,
+  })
+  isLate?: boolean;
 }
 
 export const DeclineReasonSchema = SchemaFactory.createForClass(DeclineReason);

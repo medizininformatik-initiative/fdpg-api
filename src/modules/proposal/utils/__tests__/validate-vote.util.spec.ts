@@ -103,7 +103,7 @@ describe('validateDizConditionApproval', () => {
   it('throws if status is not LocationCheck', () => {
     baseProposal.status = ProposalStatus.Draft;
     expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrowError(
-      'The current status does not allow to set the diz approval',
+      'DIZ members can only set condition approval during location check or contracting.',
     );
   });
 
@@ -127,6 +127,19 @@ describe('validateDizConditionApproval', () => {
   it('throws if neither openDizConditionChecks nor canUpdateCondition', () => {
     expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrowError(
       'The location is not allowed to provide a vote. It might have already voted',
+    );
+  });
+
+  it('allows for DIZ member in Contracting phase', () => {
+    baseProposal.status = ProposalStatus.Contracting;
+    baseProposal.openDizConditionChecks = [loc];
+    expect(() => validateDizConditionApproval(baseProposal, dizUser)).not.toThrow();
+  });
+
+  it('throws for DIZ member in non-allowed phase', () => {
+    baseProposal.status = ProposalStatus.DataResearch;
+    expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrowError(
+      'DIZ members can only set condition approval during location check or contracting.',
     );
   });
 });

@@ -56,6 +56,11 @@ export class ConditionalApproval {
     type: Date,
   })
   signedAt: Date;
+
+  @Prop({
+    type: Boolean,
+  })
+  isLate?: boolean;
 }
 
 export const ConditionalApprovalSchema = SchemaFactory.createForClass(ConditionalApproval);

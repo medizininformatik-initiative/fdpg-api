@@ -23,7 +23,7 @@ export class ParticipantEmailSummaryService {
   ]);
 
   async handleParticipatingScientistSummary(proposal: ProposalWithoutContent, proposalUrl: string, fromDateTime: Date) {
-    if (proposal.participants.length === 0) {
+    if (proposal.participants.length === 0 && !proposal.projectResponsible.researcher) {
       return;
     }
 
@@ -45,7 +45,10 @@ export class ParticipantEmailSummaryService {
     const emailTasks: Promise<void>[] = [];
 
     const participantTask = async () => {
-      const participants = [...proposal.participants.map((participant) => participant.researcher.email)];
+      const participants = [
+        ...proposal.participants.map((participant) => participant.researcher.email),
+        proposal.projectResponsible?.researcher?.email,
+      ].filter((participant) => participant);
       const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
 
       const mail = buildParticipatingEmailSummary(validParticipantsContacts, mailBodyChanges, proposal, proposalUrl);
