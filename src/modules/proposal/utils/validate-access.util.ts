@@ -35,7 +35,6 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
 const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser) => {
   const isOwner = proposal.owner.id === user.userId;
   if (!isOwner && !isParticipatingScientist(proposal, user)) {
-    console.log({ user, prOw: proposal.projectResponsible });
     throwForbiddenError(
       `Proposal has a different owner than this researcher and is not in the list of participating researchers`,
     );
