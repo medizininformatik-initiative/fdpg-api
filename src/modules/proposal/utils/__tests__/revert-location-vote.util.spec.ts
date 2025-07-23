@@ -106,10 +106,10 @@ describe('revertLocationVoteUtil', () => {
       expect(proposal.declineReasons).toEqual([declineReason]);
       await revertLocationVote(proposal, declineReason.location, request.user, proposalUploadServiceMock);
 
-      expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
+      expect(getLocationStateMock).toHaveBeenCalledWith(proposal, request.user);
       expect(proposal.declineReasons).not.toEqual([declineReason]);
       expect(proposal.declineReasons.length).toEqual(0);
-      expect(clearLocationsVotes).toBeCalledWith(proposal, declineReason.location);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, declineReason.location);
       expect(proposal.requestedButExcludedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([declineReason.location]);
     });
@@ -130,10 +130,10 @@ describe('revertLocationVoteUtil', () => {
 
       expect(proposal.uacApprovals).toEqual([uacApproval]);
       await revertLocationVote(proposal, uacApproval.location, request.user, proposalUploadServiceMock);
-      expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
+      expect(getLocationStateMock).toHaveBeenCalledWith(proposal, request.user);
       expect(proposal.uacApprovals.length).toEqual(0);
       expect(proposal.uacApprovals).not.toEqual([uacApproval]);
-      expect(clearLocationsVotes).toBeCalledWith(proposal, uacApproval.location);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, uacApproval.location);
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([uacApproval.location]);
     });
@@ -176,13 +176,13 @@ describe('revertLocationVoteUtil', () => {
 
         expect(proposal.uacApprovals).toEqual([approval]);
         await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
-        expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
+        expect(getLocationStateMock).toHaveBeenCalledWith(proposal, request.user);
         if (expectedDataAmountReached) {
-          expect(removeFdpgTaskByType).not.toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+          expect(removeFdpgTaskByType).not.toHaveBeenCalledWith(proposal, FdpgTaskType.DataAmountReached);
         } else {
-          expect(removeFdpgTaskByType).toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+          expect(removeFdpgTaskByType).toHaveBeenCalledWith(proposal, FdpgTaskType.DataAmountReached);
         }
-        expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+        expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, condition.location);
         expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
         expect(proposal.openDizChecks).toEqual([condition.location]);
       });
@@ -209,9 +209,9 @@ describe('revertLocationVoteUtil', () => {
 
       expect(proposal.uacApprovals).toEqual([approval]);
       await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
-      expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
-      expect(removeFdpgTaskByType).toBeCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
-      expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+      expect(getLocationStateMock).toHaveBeenCalledWith(proposal, request.user);
+      expect(removeFdpgTaskByType).toHaveBeenCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, condition.location);
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([condition.location]);
     });
@@ -252,13 +252,13 @@ describe('revertLocationVoteUtil', () => {
 
         expect(proposal.uacApprovals).toEqual([approval]);
         await revertLocationVote(proposal, approval.location, request.user, proposalUploadServiceMock);
-        expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
+        expect(getLocationStateMock).toHaveBeenCalledWith(proposal, request.user);
         if (expectedDataAmountReached) {
-          expect(removeFdpgTaskByType).not.toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+          expect(removeFdpgTaskByType).not.toHaveBeenCalledWith(proposal, FdpgTaskType.DataAmountReached);
         } else {
-          expect(removeFdpgTaskByType).toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+          expect(removeFdpgTaskByType).toHaveBeenCalledWith(proposal, FdpgTaskType.DataAmountReached);
         }
-        expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+        expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, condition.location);
         expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
         expect(proposal.openDizChecks).toEqual([condition.location]);
       });
@@ -283,9 +283,9 @@ describe('revertLocationVoteUtil', () => {
       });
 
       await revertLocationVote(proposal, condition.location, request.user, proposalUploadServiceMock);
-      expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
-      expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
-      expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+      expect(getLocationStateMock).toHaveBeenCalledWith(proposal, request.user);
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, condition.fdpgTaskId);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, condition.location);
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([condition.location]);
     });
@@ -305,10 +305,10 @@ describe('revertLocationVoteUtil', () => {
       });
 
       await revertLocationVote(proposal, condition.location, request.user, proposalUploadServiceMock);
-      expect(getLocationStateMock).toBeCalledWith(proposal, request.user);
-      expect(proposalUploadServiceMock.deleteUpload).toBeCalledTimes(1);
-      expect(proposalUploadServiceMock.deleteUpload).toBeCalledWith(proposal, condition.uploadId, request.user);
-      expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
+      expect(getLocationStateMock).toHaveBeenCalledWith(proposal, request.user);
+      expect(proposalUploadServiceMock.deleteUpload).toHaveBeenCalledTimes(1);
+      expect(proposalUploadServiceMock.deleteUpload).toHaveBeenCalledWith(proposal, condition.uploadId, request.user);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, condition.location);
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizChecks).toEqual([condition.location]);
     });

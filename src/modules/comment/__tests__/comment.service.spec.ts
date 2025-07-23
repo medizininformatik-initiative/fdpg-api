@@ -18,16 +18,18 @@ import { CommentCreateReferenceDto } from '../dto/comment-query.dto';
 import { CommentCreateDto, CommentUpdateDto } from '../dto/comment.dto';
 import { CommentType } from '../enums/comment-type.enum';
 import { ReferenceType } from '../enums/reference-type.enum';
-import { CommentDocument } from '../schema/comment.schema';
+import { Comment, CommentDocument } from '../schema/comment.schema';
 import { ProposalCrudService } from 'src/modules/proposal/services/proposal-crud.service';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
 
 class CommentModel {
-  constructor(private data) {}
-  save = jest.fn().mockResolvedValue({
-    ...this.data,
-    toObject: jest.fn().mockImplementation(() => JSON.parse(JSON.stringify(this))),
-  });
+  save: jest.Mock;
+  constructor(private data) {
+    this.save = jest.fn().mockResolvedValue({
+      ...this.data,
+      toObject: jest.fn().mockImplementation(() => JSON.parse(JSON.stringify(this))),
+    });
+  }
   static find = jest.fn();
   static findById = jest.fn();
   static findOne = jest.fn();
@@ -149,8 +151,8 @@ describe('CommentService', () => {
       expect(result.referenceDocumentId).toEqual(referenceDocumentId);
       expect(result.referenceObjectId).toEqual(referenceObjectId);
       expect(result.referenceType).toEqual(referenceType);
-      expect(proposalCrudService.findDocument).toBeCalledWith(referenceDocumentId, user);
-      expect(eventEngineService.handleProposalCommentCreation).toBeCalledWith(proposal, expect.anything(), user);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(referenceDocumentId, user);
+      expect(eventEngineService.handleProposalCommentCreation).toHaveBeenCalledWith(proposal, expect.anything(), user);
     });
 
     it('should create comments for diz users to fdpg', async () => {
@@ -175,12 +177,12 @@ describe('CommentService', () => {
       expect(result.referenceDocumentId).toEqual(referenceDocumentId);
       expect(result.referenceObjectId).toEqual(referenceObjectId);
       expect(result.referenceType).toEqual(referenceType);
-      expect(proposalCrudService.findDocument).toBeCalledWith(referenceDocumentId, user);
-      expect(eventEngineService.handleProposalCommentCreation).toBeCalledWith(proposal, expect.anything(), user);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(referenceDocumentId, user);
+      expect(eventEngineService.handleProposalCommentCreation).toHaveBeenCalledWith(proposal, expect.anything(), user);
 
       expect(result.fdpgTaskId).toEqual('TaskId');
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.Comment);
-      expect(proposal.save).toBeCalledTimes(1);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.Comment);
+      expect(proposal.save).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -231,12 +233,12 @@ describe('CommentService', () => {
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       const result = await service.createAnswer(answerCreateDto, commentId, user);
-      expect(validateAnswer).toBeCalledWith(mainComment, user);
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.Comment);
-      expect(proposal.save).toBeCalledTimes(1);
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(validateAnswer).toHaveBeenCalledWith(mainComment, user);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.Comment);
+      expect(proposal.save).toHaveBeenCalledTimes(1);
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(result.answers.length).toBe(0);
-      expect(eventEngineService.handleProposalCommentAnswerCreation).toBeCalledWith(
+      expect(eventEngineService.handleProposalCommentAnswerCreation).toHaveBeenCalledWith(
         proposal,
         expect.objectContaining({ content: 'comment' }),
         expect.objectContaining({ content: 'answer' }),
@@ -286,8 +288,8 @@ describe('CommentService', () => {
         filter.locations = { $in: [user.miiLocation, MiiLocation.VirtualAll] };
       }
 
-      expect(CommentModel.find).toBeCalledWith(filter);
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(CommentModel.find).toHaveBeenCalledWith(filter);
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(result).toEqual([{ answers: [] }]);
     });
   });
@@ -324,11 +326,11 @@ describe('CommentService', () => {
 
       const result = await service.updateComment(commentId, updateCommentDto, user);
 
-      expect(CommentModel.findById).toBeCalledWith(commentId);
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(CommentModel.findById).toHaveBeenCalledWith(commentId);
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(mainComment.locations).toEqual(newLocations);
       expect(mainComment.content).toEqual(newContent);
-      expect(mainComment.save).toBeCalledTimes(1);
+      expect(mainComment.save).toHaveBeenCalledTimes(1);
       expect(result).toEqual('toObjectResult');
     });
 
@@ -365,11 +367,11 @@ describe('CommentService', () => {
 
       const result = await service.updateComment(commentId, updateCommentDto, user);
 
-      expect(CommentModel.findById).toBeCalledWith(commentId);
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(CommentModel.findById).toHaveBeenCalledWith(commentId);
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(mainComment.locations).toEqual(oldLocations);
       expect(mainComment.content).toEqual(newContent);
-      expect(mainComment.save).toBeCalledTimes(1);
+      expect(mainComment.save).toHaveBeenCalledTimes(1);
       expect(result).toEqual('toObjectResult');
     });
 
@@ -443,7 +445,7 @@ describe('CommentService', () => {
       CommentModel.findById.mockResolvedValueOnce(mainComment);
 
       const result = await service.updateComment(commentId, updateCommentDto, user);
-      expect(mainComment.save).toBeCalledTimes(1);
+      expect(mainComment.save).toHaveBeenCalledTimes(1);
       expect(result).toEqual('toObjectResult');
     });
   });
@@ -495,7 +497,7 @@ describe('CommentService', () => {
 
       const result = await service.updateAnswer(commentId, answerId, updateAnswerDto, user);
 
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(result).toEqual('toObjectResult');
       expect(answer.locations).toEqual(oldLocations);
       expect(answer.locations).not.toEqual(newLocations);
@@ -548,7 +550,7 @@ describe('CommentService', () => {
 
       const result = await service.updateAnswer(commentId, answerId, updateAnswerDto, user);
 
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(result).toEqual('toObjectResult');
       expect(answer.locations).not.toEqual(oldLocations);
       expect(answer.locations).toEqual(newLocations);
@@ -602,7 +604,7 @@ describe('CommentService', () => {
 
       const result = await service.updateAnswer(commentId, answerId, updateAnswerDto, user);
 
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(result).toEqual('toObjectResult');
       expect(answer.locations).not.toEqual(oldLocations);
       expect(answer.locations).toEqual(newLocations);
@@ -689,9 +691,9 @@ describe('CommentService', () => {
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
       await service.deleteComment('commentId', user);
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'mainCommentTaskId');
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'answerTaskId');
-      expect(mainComment.deleteOne).toBeCalledTimes(1);
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'mainCommentTaskId');
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'answerTaskId');
+      expect(mainComment.deleteOne).toHaveBeenCalledTimes(1);
     });
 
     it('diz member can delete own comment', async () => {
@@ -723,9 +725,9 @@ describe('CommentService', () => {
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
       await service.deleteComment('commentId', user);
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'mainCommentTaskId');
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'answerTaskId');
-      expect(mainComment.deleteOne).toBeCalledTimes(1);
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'mainCommentTaskId');
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'answerTaskId');
+      expect(mainComment.deleteOne).toHaveBeenCalledTimes(1);
     });
 
     it('diz member can not delete others comment', async () => {
@@ -792,8 +794,8 @@ describe('CommentService', () => {
 
       await service.markCommentAsDone('commentId', true, user);
 
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'mainCommentTaskId');
-      expect(eventEngineService.handleProposalTaskCompletion).toBeCalledWith(proposal, 'saveResult', user);
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'mainCommentTaskId');
+      expect(eventEngineService.handleProposalTaskCompletion).toHaveBeenCalledWith(proposal, 'saveResult', user);
       expect(mainComment.isDone).toBeTruthy();
     });
 
@@ -824,8 +826,8 @@ describe('CommentService', () => {
 
       await service.markCommentAsDone('commentId', false, user);
 
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.Comment);
-      expect(eventEngineService.handleProposalTaskCompletion).toBeCalledWith(proposal, 'saveResult', user);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.Comment);
+      expect(eventEngineService.handleProposalTaskCompletion).toHaveBeenCalledWith(proposal, 'saveResult', user);
       expect(mainComment.isDone).toBeFalsy();
     });
   });
@@ -874,10 +876,10 @@ describe('CommentService', () => {
 
       const result = await service.deleteAnswer(commentId, answerId, user);
 
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(result).toEqual('toObjectResult');
       expect(mainComment.answers.length).toEqual(0);
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'answerTaskId');
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'answerTaskId');
     });
 
     it('answer owner should be able to delete answers', async () => {
@@ -923,10 +925,10 @@ describe('CommentService', () => {
 
       const result = await service.deleteAnswer(commentId, answerId, user);
 
-      expect(filterAllowedAnswers).toBeCalledWith(user, expect.anything());
+      expect(filterAllowedAnswers).toHaveBeenCalledWith(user, expect.anything());
       expect(result).toEqual('toObjectResult');
       expect(mainComment.answers.length).toEqual(0);
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'answerTaskId');
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'answerTaskId');
     });
 
     it('should throw for deleting others answers', async () => {
@@ -1014,7 +1016,7 @@ describe('CommentService', () => {
 
       await service.markAnswerAsDone(commentId, answerId, true, user);
 
-      expect(removeFdpgTask).toBeCalledWith(proposal, 'answerTaskId');
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, 'answerTaskId');
       expect(answer.isDone).toBeTruthy();
     });
 
@@ -1055,7 +1057,7 @@ describe('CommentService', () => {
 
       await service.markAnswerAsDone(commentId, answerId, false, user);
 
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.Comment);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.Comment);
       expect(answer.isDone).toBeFalsy();
     });
   });

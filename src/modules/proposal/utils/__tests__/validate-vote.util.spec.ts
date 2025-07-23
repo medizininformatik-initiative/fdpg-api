@@ -44,7 +44,7 @@ describe('validateDizApproval', () => {
 
   it('throws if status is not LocationCheck', () => {
     baseProposal.status = ProposalStatus.Draft;
-    expect(() => validateDizApproval(baseProposal, dizUser)).toThrowError(
+    expect(() => validateDizApproval(baseProposal, dizUser)).toThrow(
       'The current status does not allow to set the diz approval',
     );
   });
@@ -68,7 +68,7 @@ describe('validateDizApproval', () => {
 
   it('throws if neither openDizChecks nor canUpdateCondition', () => {
     // openDizChecks empty, conditionalApprovals empty, uacApprovals empty
-    expect(() => validateDizApproval(baseProposal, dizUser)).toThrowError(
+    expect(() => validateDizApproval(baseProposal, dizUser)).toThrow(
       'The location is not allowed to provide a vote. It might have already voted',
     );
   });
@@ -102,7 +102,7 @@ describe('validateDizConditionApproval', () => {
 
   it('throws if status is not LocationCheck', () => {
     baseProposal.status = ProposalStatus.Draft;
-    expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrowError(
+    expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrow(
       'The current status does not allow to set the diz approval',
     );
   });
@@ -125,7 +125,7 @@ describe('validateDizConditionApproval', () => {
   });
 
   it('throws if neither openDizConditionChecks nor canUpdateCondition', () => {
-    expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrowError(
+    expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrow(
       'The location is not allowed to provide a vote. It might have already voted',
     );
   });
@@ -152,7 +152,7 @@ describe('validateUacApproval', () => {
 
   it('throws if status is not LocationCheck', () => {
     baseProposal.status = ProposalStatus.FdpgCheck;
-    expect(() => validateUacApproval(baseProposal, uacUser)).toThrowError(
+    expect(() => validateUacApproval(baseProposal, uacUser)).toThrow(
       'The current status does not allow to set the uac approval',
     );
   });
@@ -166,7 +166,7 @@ describe('validateUacApproval', () => {
   it('throws if dizApprovedLocations does not include user location', () => {
     baseProposal.status = ProposalStatus.LocationCheck;
     baseProposal.dizApprovedLocations = [];
-    expect(() => validateUacApproval(baseProposal, uacUser)).toThrowError(
+    expect(() => validateUacApproval(baseProposal, uacUser)).toThrow(
       'The location is not allowed to provide a vote. It might have already voted',
     );
   });
@@ -222,7 +222,7 @@ describe('validateRevertLocationVote', () => {
   it('throws ForbiddenException if status is not LocationCheck', () => {
     baseProposal.openDizChecks = [];
     baseProposal.status = ProposalStatus.Draft;
-    expect(() => validateRevertLocationVote(baseProposal, loc, fdpgUser)).toThrowError(
+    expect(() => validateRevertLocationVote(baseProposal, loc, fdpgUser)).toThrow(
       'The current status does not allow to revert the location vote',
     );
   });
