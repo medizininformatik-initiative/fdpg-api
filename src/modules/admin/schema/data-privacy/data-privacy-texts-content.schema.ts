@@ -1,16 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Messages, MessagesSchema } from 'src/shared/schema/messages/messages.schema';
 
 export type DataPrivacyTextsContentDocument = DataPrivacyTextsContent & Document;
 
 @Schema({ _id: false })
 export class DataPrivacyTextsContent {
-  @Prop(MessagesSchema)
-  headline: Messages;
+  @Prop({ type: String })
+  headline: string;
 
-  @Prop(MessagesSchema)
-  text: Messages;
+  @Prop({ type: String })
+  text: string;
 }
 
 const DataPrivacyTextsContentSchema = SchemaFactory.createForClass(DataPrivacyTextsContent);

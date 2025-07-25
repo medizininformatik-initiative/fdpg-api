@@ -1,18 +1,13 @@
-import { Exclude, Expose, Type } from 'class-transformer';
-import { IsObject, ValidateNested } from 'class-validator';
-import { MessagesDto } from '../../../../shared/dto/messages/messages.dto';
+import { Exclude, Expose } from 'class-transformer';
+import { IsString } from 'class-validator';
 
 @Exclude()
 export class DataPrivacyTextsContentDto {
   @Expose()
-  @Type(() => MessagesDto)
-  @IsObject()
-  @ValidateNested()
-  headline: MessagesDto;
+  @IsString()
+  headline: string;
 
   @Expose()
-  @Type(() => MessagesDto)
-  @IsObject()
-  @ValidateNested()
-  text: MessagesDto;
+  @IsString()
+  text: string;
 }
