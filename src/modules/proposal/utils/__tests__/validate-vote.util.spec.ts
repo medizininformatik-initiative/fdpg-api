@@ -138,7 +138,7 @@ describe('validateDizConditionApproval', () => {
 
   it('throws for DIZ member in non-allowed phase', () => {
     baseProposal.status = ProposalStatus.DataResearch;
-    expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrowError(
+    expect(() => validateDizConditionApproval(baseProposal, dizUser)).toThrow(
       'DIZ members can only set condition approval during location check or contracting.',
     );
   });
