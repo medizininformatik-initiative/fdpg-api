@@ -154,34 +154,20 @@ describe('AdminConfigService', () => {
       const dataPrivacyConfig: DataPrivacyConfigCreateDto = {
         messages: {
           [ProposalTypeOfUse.Biosample]: {
-            headline: {
-              en: 'testEN',
-              de: 'testDE',
-            },
-            text: {
-              en: 'testEN',
-              de: 'testDE',
-            },
+            headline: 'test',
+            text: 'test',
           },
           [ProposalTypeOfUse.Distributed]: {
-            headline: {
-              en: 'testEN',
-              de: 'testDE',
-            },
-            text: {
-              en: 'testEN',
-              de: 'testDE',
-            },
+            headline: 'test',
+            text: 'test',
           },
           [ProposalTypeOfUse.Centralized]: {
-            headline: {
-              en: 'testEN',
-              de: 'testDE',
-            },
-            text: {
-              en: 'testEN',
-              de: 'testDE',
-            },
+            headline: 'test',
+            text: 'test',
+          },
+          all: {
+            headline: 'test',
+            text: 'test',
           },
         },
       };
