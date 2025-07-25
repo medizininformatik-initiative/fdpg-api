@@ -27,6 +27,9 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
             },
           },
         },
+        {
+          'projectResponsible.researcher.email': user.email,
+        },
       ],
       status: RESEARCHER_STATUS[panelQuery],
     };

@@ -19,4 +19,7 @@ export class DeclineReasonDto {
 
   @Expose()
   createdAt: Date;
+
+  @Expose()
+  isLate?: boolean;
 }

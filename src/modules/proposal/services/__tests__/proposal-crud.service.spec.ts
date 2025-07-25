@@ -236,6 +236,7 @@ describe('ProposalCrudService', () => {
       const expectedProjection = {
         ['reports.content']: 1,
         owner: 1,
+        projectResponsible: 1,
         participants: 1,
         deadlines: 1,
         selectedDataSources: 1,
@@ -264,6 +265,7 @@ describe('ProposalCrudService', () => {
       const expectedProjection = {
         ['reports.content']: 1,
         owner: 1,
+        projectResponsible: 1,
         additionalLocationInformation: 1,
         conditionalApprovals: 1,
         locationConditionDraft: 1,
@@ -293,6 +295,7 @@ describe('ProposalCrudService', () => {
       const expectedProjection = {
         ['reports.content']: 1,
         owner: 1,
+        projectResponsible: 1,
         additionalLocationInformation: 1,
         conditionalApprovals: 1,
         dizApprovedLocations: 1,
