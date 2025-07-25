@@ -1,10 +1,10 @@
 import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
-import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
+import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { CHECKLIST_OPTIONS } from 'src/modules/proposal/dto/proposal/checklist.types';
 
 export class Migration007 implements IDbMigration {
-  constructor(private proposalModel: Model<Proposal>) {}
+  constructor(private proposalModel: Model<ProposalDocument>) {}
 
   async up() {
     console.log('Running migration: Update proposal checklists to include TNZ option');

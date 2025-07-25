@@ -23,7 +23,7 @@ describe('transForm', () => {
 
   it('throws an Error when the input is not an object', () => {
     // e.g., a string
-    expect(() => transForm('not-an-object' as any, DummyDto, {})).toThrowError('Expected value to be of type object');
+    expect(() => transForm('not-an-object' as any, DummyDto, {})).toThrow('Expected value to be of type object');
   });
 });
 

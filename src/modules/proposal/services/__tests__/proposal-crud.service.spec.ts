@@ -174,12 +174,12 @@ describe('ProposalCrudService', () => {
 
       const result = await proposalCrudService.create(createDto, request.user);
 
-      expect(addHistoryItemForStatus).toBeCalledWith(
+      expect(addHistoryItemForStatus).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: proposal.projectAbbreviation }),
         request.user,
       );
 
-      expect(statusChangeService.handleEffects).toBeCalledWith(
+      expect(statusChangeService.handleEffects).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: proposal.projectAbbreviation }),
         null,
         request.user,
@@ -202,7 +202,7 @@ describe('ProposalCrudService', () => {
 
       const result = await proposalCrudService.create(createDto, request.user);
 
-      expect(eventEngineService.handleProposalStatusChange).toBeCalledWith(
+      expect(eventEngineService.handleProposalStatusChange).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: proposal.projectAbbreviation }),
       );
 
@@ -227,8 +227,8 @@ describe('ProposalCrudService', () => {
         willBeModified,
       );
       expect(result).toEqual(proposal);
-      expect(ProposalModel.findById).toBeCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toBeCalledWith(proposal, request.user, willBeModified);
+      expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, willBeModified);
     });
 
     it('should find a proposal with projection', async () => {
@@ -255,8 +255,8 @@ describe('ProposalCrudService', () => {
         willBeModified,
       );
       expect(result).toEqual(proposal);
-      expect(ProposalModel.findById).toBeCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toBeCalledWith(proposal, request.user, willBeModified);
+      expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, willBeModified);
     });
 
     it('should find a proposal with diz member projection', async () => {
@@ -285,8 +285,8 @@ describe('ProposalCrudService', () => {
 
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
-      expect(ProposalModel.findById).toBeCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toBeCalledWith(proposal, user, willBeModified);
+      expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, willBeModified);
     });
 
     it('should find a proposal with uac member projection', async () => {
@@ -314,8 +314,8 @@ describe('ProposalCrudService', () => {
 
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
-      expect(ProposalModel.findById).toBeCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toBeCalledWith(proposal, user, willBeModified);
+      expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, willBeModified);
     });
 
     it('should throw 404 if not found', async () => {
@@ -348,7 +348,7 @@ describe('ProposalCrudService', () => {
         strategy: 'excludeAll',
         groups: [...userGroups, ProposalValidation.IsOutput, request.user.singleKnownRole],
       };
-      expect(plainToClass).toBeCalledWith(ProposalGetDto, proposalContent, plainToClassConfig);
+      expect(plainToClass).toHaveBeenCalledWith(ProposalGetDto, proposalContent, plainToClassConfig);
 
       expect(result).toEqual(proposalContent);
     });
@@ -373,7 +373,7 @@ describe('ProposalCrudService', () => {
 
       const result = await proposalCrudService.findAll(sortOrder, panelQuery, request.user);
 
-      expect(ProposalModel.find).toBeCalledWith(filterQueryResult, null, {
+      expect(ProposalModel.find).toHaveBeenCalledWith(filterQueryResult, null, {
         sort: { [sortOrder.sortBy]: sortOrder.order },
         projection: GetListProjection,
       });
@@ -399,9 +399,9 @@ describe('ProposalCrudService', () => {
 
         const result = await proposalCrudService.update(proposalId, proposalUpdate, request.user);
 
-        expect(validateMatchingId).toBeCalledWith(proposalId, proposalUpdate._id);
+        expect(validateMatchingId).toHaveBeenCalledWith(proposalId, proposalUpdate._id);
 
-        expect(statusChangeService.handleEffects).toBeCalledWith(
+        expect(statusChangeService.handleEffects).toHaveBeenCalledWith(
           expect.objectContaining(toBeUpdated),
           toBeUpdated.status,
           request.user,
@@ -410,11 +410,11 @@ describe('ProposalCrudService', () => {
         expect(result).toEqual(proposalUpdate);
 
         if (proposalStatus === ProposalStatus.Draft) {
-          expect(validateStatusChange).not.toBeCalledWith(toBeUpdated, proposalUpdate.status, request.user);
-          expect(eventEngineService.handleProposalStatusChange).not.toBeCalled();
+          expect(validateStatusChange).not.toHaveBeenCalledWith(toBeUpdated, proposalUpdate.status, request.user);
+          expect(eventEngineService.handleProposalStatusChange).not.toHaveBeenCalled();
         } else {
-          expect(validateStatusChange).toBeCalledWith(toBeUpdated, proposalUpdate.status, request.user);
-          expect(eventEngineService.handleProposalStatusChange).toBeCalledWith(saveResult);
+          expect(validateStatusChange).toHaveBeenCalledWith(toBeUpdated, proposalUpdate.status, request.user);
+          expect(eventEngineService.handleProposalStatusChange).toHaveBeenCalledWith(saveResult);
         }
       },
     );
@@ -428,7 +428,7 @@ describe('ProposalCrudService', () => {
 
       await proposalCrudService.delete(proposalId, request.user);
 
-      expect(sharedService.deleteProposalWithDependencies).toBeCalledWith(proposal, request.user);
+      expect(sharedService.deleteProposalWithDependencies).toHaveBeenCalledWith(proposal, request.user);
     });
   });
 
@@ -455,8 +455,8 @@ describe('ProposalCrudService', () => {
 
       const result = await proposalCrudService.duplicate(proposalId, request.user);
 
-      expect(proposalCrudService.checkUnique).toBeCalledTimes(2);
-      expect(proposalCrudService.create).toBeCalledWith(expectedProposal, request.user);
+      expect(proposalCrudService.checkUnique).toHaveBeenCalledTimes(2);
+      expect(proposalCrudService.create).toHaveBeenCalledWith(expectedProposal, request.user);
       expect(result).toEqual(expectedProposal);
     });
   });
@@ -477,7 +477,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.checkUnique(checkUniqueProposalDto, proposalId);
 
       expect(result).toEqual(false);
-      expect(ProposalModel.exists).toBeCalledWith(filter);
+      expect(ProposalModel.exists).toHaveBeenCalledWith(filter);
     });
   });
 });
