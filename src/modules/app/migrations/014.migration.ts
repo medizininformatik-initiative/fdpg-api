@@ -9,16 +9,19 @@ export class Migration014 implements IDbMigration {
   constructor(@InjectModel(Proposal.name) private proposalModel: Model<Proposal>) {}
 
   async up(): Promise<void> {
-    console.log('Starting migration 014: Backing up cohorts and fixing nested selectedCohorts structure');
+    console.log('Starting migration 014: Fixing nested selectedCohorts structure');
     try {
       const proposals = await this.proposalModel.collection
-        .find({ 'userProject.cohorts': { $exists: true } })
+        .find({ 'userProject.cohorts.selectedCohorts.selectedCohorts': { $exists: true, $type: 'array' } })
         .toArray();
 
-      console.log(`Found ${proposals.length} proposals with cohorts`);
+      console.log(`Found ${proposals.length} proposals with nested selectedCohorts`);
 
       for (const proposal of proposals) {
-        if (proposal.userProject?.cohorts) {
+        if (
+          proposal.userProject?.cohorts?.selectedCohorts?.selectedCohorts &&
+          Array.isArray(proposal.userProject.cohorts.selectedCohorts.selectedCohorts)
+        ) {
           console.log(`Processing proposal ${proposal._id}`);
 
           // Backup existing cohorts under userProject._cohorts field
@@ -30,31 +33,28 @@ export class Migration014 implements IDbMigration {
           );
           console.log(`Backup result for proposal ${proposal._id}:`, backupResult);
 
-          // Replace entire cohorts with the first element of cohorts.selectedCohorts
-          if (proposal.userProject.cohorts.selectedCohorts && proposal.userProject.cohorts.selectedCohorts.length > 0) {
-            const firstSelectedCohort = proposal.userProject.cohorts.selectedCohorts[0];
+          // Replace entire cohorts with cohorts.selectedCohorts[0]
+          const firstSelectedCohort = proposal.userProject.cohorts.selectedCohorts[0];
 
-            if (firstSelectedCohort && typeof firstSelectedCohort === 'object') {
-              console.log(`Replacing cohorts with first selectedCohort in proposal ${proposal._id}`);
+          if (firstSelectedCohort && typeof firstSelectedCohort === 'object') {
+            console.log(`Replacing cohorts with selectedCohorts[0] in proposal ${proposal._id}`);
 
-              const updatedCohorts = firstSelectedCohort;
+            const updateResult = await this.proposalModel.collection.updateOne(
+              { _id: proposal._id },
+              {
+                $set: { 'userProject.cohorts': firstSelectedCohort },
+              },
+            );
 
-              const updateResult = await this.proposalModel.collection.updateOne(
-                { _id: proposal._id },
-                {
-                  $set: { 'userProject.cohorts': updatedCohorts },
-                },
-              );
+            console.log(`Update result for proposal ${proposal._id}:`, updateResult);
 
-              console.log(`Update result for proposal ${proposal._id}:`, updateResult);
-
-              const updatedProposal = await this.proposalModel.collection.findOne({ _id: proposal._id });
-              console.log(`Verification for proposal ${proposal._id}:`, {
-                cohortStructure: typeof updatedProposal.userProject?.cohorts,
-                hasSelectedCohorts: 'selectedCohorts' in (updatedProposal.userProject?.cohorts || {}),
-                hasBackup: 'userProject._cohort' in updatedProposal,
-              });
-            }
+            const updatedProposal = await this.proposalModel.collection.findOne({ _id: proposal._id });
+            console.log(`Verification for proposal ${proposal._id}:`, {
+              cohortStructure: typeof updatedProposal.userProject?.cohorts,
+              hasNestedSelectedCohorts:
+                'selectedCohorts' in (updatedProposal.userProject?.cohorts?.selectedCohorts || {}),
+              hasBackup: '_cohorts' in (updatedProposal.userProject || {}),
+            });
           }
         }
       }
@@ -69,21 +69,21 @@ export class Migration014 implements IDbMigration {
     console.log('Starting migration 014 down: Restoring cohorts from backup');
     try {
       const proposals = await this.proposalModel.collection
-        .find({ 'userProject._cohort': { $exists: true } })
+        .find({ 'userProject._cohorts': { $exists: true } })
         .toArray();
 
-      console.log(`Found ${proposals.length} proposals with _cohort backup`);
+      console.log(`Found ${proposals.length} proposals with _cohorts backup`);
 
       for (const proposal of proposals) {
-        if (proposal.userProject?._cohort) {
+        if (proposal.userProject?._cohorts) {
           console.log(`Restoring proposal ${proposal._id}`);
 
           // Restore cohorts from backup
           const restoreResult = await this.proposalModel.collection.updateOne(
             { _id: proposal._id },
             {
-              $set: { 'userProject.cohorts': proposal.userProject._cohort },
-              $unset: { 'userProject._cohort': '' },
+              $set: { 'userProject.cohorts': proposal.userProject._cohorts },
+              $unset: { 'userProject._cohorts': '' },
             },
           );
 
