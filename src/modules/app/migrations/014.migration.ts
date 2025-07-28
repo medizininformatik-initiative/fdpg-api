@@ -12,15 +12,15 @@ export class Migration014 implements IDbMigration {
     console.log('Starting migration 014: Fixing nested selectedCohorts structure');
     try {
       const proposals = await this.proposalModel.collection
-        .find({ 'userProject.cohorts.selectedCohorts.selectedCohorts': { $exists: true, $type: 'array' } })
+        .find({ 'userProject.cohorts.selectedCohorts.0.selectedCohorts': { $exists: true } })
         .toArray();
 
       console.log(`Found ${proposals.length} proposals with nested selectedCohorts`);
 
       for (const proposal of proposals) {
         if (
-          proposal.userProject?.cohorts?.selectedCohorts?.selectedCohorts &&
-          Array.isArray(proposal.userProject.cohorts.selectedCohorts.selectedCohorts)
+          proposal.userProject?.cohorts?.selectedCohorts?.[0]?.selectedCohorts !== undefined &&
+          proposal.userProject.cohorts.selectedCohorts.length > 0
         ) {
           console.log(`Processing proposal ${proposal._id}`);
 
@@ -33,29 +33,26 @@ export class Migration014 implements IDbMigration {
           );
           console.log(`Backup result for proposal ${proposal._id}:`, backupResult);
 
-          // Replace entire cohorts with cohorts.selectedCohorts[0]
+          // Replace entire cohorts with the first element from selectedCohorts array
           const firstSelectedCohort = proposal.userProject.cohorts.selectedCohorts[0];
 
-          if (firstSelectedCohort && typeof firstSelectedCohort === 'object') {
-            console.log(`Replacing cohorts with selectedCohorts[0] in proposal ${proposal._id}`);
+          console.log(`Replacing cohorts with selectedCohorts[0] in proposal ${proposal._id}`);
 
-            const updateResult = await this.proposalModel.collection.updateOne(
-              { _id: proposal._id },
-              {
-                $set: { 'userProject.cohorts': firstSelectedCohort },
-              },
-            );
+          const updateResult = await this.proposalModel.collection.updateOne(
+            { _id: proposal._id },
+            {
+              $set: { 'userProject.cohorts': firstSelectedCohort },
+            },
+          );
 
-            console.log(`Update result for proposal ${proposal._id}:`, updateResult);
+          console.log(`Update result for proposal ${proposal._id}:`, updateResult);
 
-            const updatedProposal = await this.proposalModel.collection.findOne({ _id: proposal._id });
-            console.log(`Verification for proposal ${proposal._id}:`, {
-              cohortStructure: typeof updatedProposal.userProject?.cohorts,
-              hasNestedSelectedCohorts:
-                'selectedCohorts' in (updatedProposal.userProject?.cohorts?.selectedCohorts || {}),
-              hasBackup: '_cohorts' in (updatedProposal.userProject || {}),
-            });
-          }
+          const updatedProposal = await this.proposalModel.collection.findOne({ _id: proposal._id });
+          console.log(`Verification for proposal ${proposal._id}:`, {
+            cohortStructure: typeof updatedProposal.userProject?.cohorts,
+            hasSelectedCohorts: 'selectedCohorts' in (updatedProposal.userProject?.cohorts || {}),
+            hasBackup: '_cohorts' in (updatedProposal.userProject || {}),
+          });
         }
       }
       console.log('Migration 014 completed successfully');
