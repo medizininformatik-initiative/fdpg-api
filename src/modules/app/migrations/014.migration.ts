@@ -62,35 +62,7 @@ export class Migration014 implements IDbMigration {
     }
   }
 
-  async down(): Promise<void> {
-    console.log('Starting migration 014 down: Restoring cohorts from backup');
-    try {
-      const proposals = await this.proposalModel.collection
-        .find({ 'userProject._cohorts': { $exists: true } })
-        .toArray();
-
-      console.log(`Found ${proposals.length} proposals with _cohorts backup`);
-
-      for (const proposal of proposals) {
-        if (proposal.userProject?._cohorts) {
-          console.log(`Restoring proposal ${proposal._id}`);
-
-          // Restore cohorts from backup
-          const restoreResult = await this.proposalModel.collection.updateOne(
-            { _id: proposal._id },
-            {
-              $set: { 'userProject.cohorts': proposal.userProject._cohorts },
-              $unset: { 'userProject._cohorts': '' },
-            },
-          );
-
-          console.log(`Restore result for proposal ${proposal._id}:`, restoreResult);
-        }
-      }
-      console.log('Migration 014 down completed successfully');
-    } catch (error) {
-      console.error('Error in migration 014 down:', error);
-      throw error;
-    }
+  async down() {
+    console.log('Down migration not implemented');
   }
 }
