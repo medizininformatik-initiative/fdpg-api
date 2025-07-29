@@ -50,7 +50,6 @@ export class Migration015 implements IDbMigration {
               feasibilityQueryId: feasibility.id,
               label: 'Machbarkeits-Anfrage',
               isManualUpload: false,
-              numberOfPatients: feasibility.numberOfPatients || 0,
             });
 
             console.log(`Added feasibility ID ${feasibility.id} to selectedCohorts for proposal ${proposal._id}`);
@@ -74,7 +73,7 @@ export class Migration015 implements IDbMigration {
             },
           );
 
-          console.log(`Update result for proposal ${proposal._id}:`, updateResult);
+          console.log(`Update result for proposal ${proposal._id}:`, JSON.stringify(updateResult));
 
           // Verify the update
           const updatedProposal = await this.proposalModel.collection.findOne({ _id: proposal._id });
