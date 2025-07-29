@@ -7,3 +7,4 @@ export * from './011.migration';
 export * from './012.migration';
 export * from './013.migration';
 export * from './014.migration';
+export * from './015.migration';
