@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LocationGroup, LocationGroupSchema } from './schema/location-group.schema';
+import { Location, LocationSchema } from './schema/location.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       {
-        name: LocationGroup.name,
-        schema: LocationGroupSchema,
+        name: Location.name,
+        schema: LocationSchema,
       },
     ]),
   ],
 })
-export class LocationGroupModule {}
+export class LocationModule {}

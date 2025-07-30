@@ -4,6 +4,9 @@ export type LocationDocument = Location & Document;
 
 @Schema()
 export class Location {
+
+  identifier: string;
+
   externalCode: string;
 
   name: string;
