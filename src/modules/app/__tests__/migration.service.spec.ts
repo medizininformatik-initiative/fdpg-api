@@ -47,6 +47,14 @@ jest.mock('../migrations', () => ({
     up: jest.fn(),
     down: jest.fn(),
   })),
+  Migration015: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
+  Migration016: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
 }));
 
 describe('MigrationService', () => {
