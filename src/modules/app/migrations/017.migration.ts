@@ -3,13 +3,13 @@ import { IDbMigration } from '../types/db-migration.interface';
 import { DataPrivacyConfigDocument } from 'src/modules/admin/schema/data-privacy/data-privacy-config.schema';
 import { ConfigType } from 'src/modules/admin/enums/config-type.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
-import { DataPrivacySeedDife, dataPrivacySeedMii } from './constants/016.migration.constants';
+import { DataPrivacySeedDife, dataPrivacySeedMii } from './constants/017.migration.constants';
 
-export class Migration016 implements IDbMigration {
+export class Migration017 implements IDbMigration {
   constructor(private dataPrivacyConfigModel: Model<DataPrivacyConfigDocument>) {}
 
   async up() {
-    console.log('Running migration 016: Update DIFE data privacy configuration');
+    console.log('Running migration 017: Update DIFE data privacy configuration');
 
     try {
       await this.dataPrivacyConfigModel.updateOne(
