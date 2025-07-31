@@ -8,4 +8,5 @@ export * from './012.migration';
 export * from './013.migration';
 export * from './014.migration';
 export * from './015.migration';
+export * from './016.migration';
 export * from './017.migration';
