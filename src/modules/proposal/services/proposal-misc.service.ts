@@ -183,7 +183,6 @@ export class ProposalMiscService {
   async markSectionAsDone(proposalId: string, sectionId: string, isDone: boolean, user: IRequestUser): Promise<void> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
-    console.log({proposalObj: JSON.stringify(proposal.toObject()), sectionId, isDone})
     const section = findByKeyNested(proposal.toObject(), '_id', sectionId);
 
     if (!section) {
