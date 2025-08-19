@@ -31,7 +31,7 @@ export const findByKeyNested = (
       return { ref: target, path: pathAcc };
     }
     for (const nestedKey of Object.keys(target)) {
-      if (typeof target[nestedKey] === 'object') {
+      if (typeof target[nestedKey] === 'object' && target[nestedKey] != null) {
         const nestedObject = findByKeyNested(target[nestedKey], key, value, [...pathAcc, nestedKey]);
         if (nestedObject && isNotEmpty(nestedObject.ref)) {
           return nestedObject;
