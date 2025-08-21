@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EmailService } from 'src/modules/email/email.service';
 import { DueDateEnum } from 'src/modules/proposal/enums/due-date.enum';
-import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
+import { Proposal, ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { recalculateAllUacDelayStatus } from 'src/modules/proposal/utils/uac-delay-tracking.util';
 import {
@@ -20,9 +20,14 @@ export class DeadlineEventService {
     private emailService: EmailService,
   ) {}
 
-  async sendForDeadlineChange(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>, proposalUrl: string) {
+  async sendForDeadlineChange(
+    proposal: ProposalDocument,
+    changeList: Record<DueDateEnum, Date | null>,
+    proposalUrl: string,
+  ) {
     if (changeList[DueDateEnum.DUE_DAYS_LOCATION_CHECK] !== undefined) {
       recalculateAllUacDelayStatus(proposal);
+      await proposal.save();
     }
 
     const fdpgMailMessage = this.buildFdpgMailMessage(proposal, changeList, proposalUrl);
