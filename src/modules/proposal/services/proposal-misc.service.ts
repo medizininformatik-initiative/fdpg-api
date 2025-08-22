@@ -46,10 +46,12 @@ import { ProposalUploadService } from './proposal-upload.service';
 import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { ConflictException } from '@nestjs/common';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class ProposalMiscService {
@@ -78,6 +80,18 @@ export class ProposalMiscService {
           participant._id,
         ),
     );
+    const responsibleResearcher = document.projectResponsible;
+    if (responsibleResearcher && responsibleResearcher.researcher) {
+      researchers.push(
+        new ResearcherIdentityDto(
+          responsibleResearcher.researcher,
+          responsibleResearcher.participantCategory,
+          responsibleResearcher.participantRole,
+          false,
+          new Types.ObjectId().toString(),
+        ),
+      );
+    }
 
     const tasks = researchers.map((researcher) => {
       if (researcher.email) {
@@ -465,7 +479,50 @@ export class ProposalMiscService {
     }
 
     const oldParticipants = [...proposal.participants];
-    mergeDeep(proposal, { participants });
+
+    const responsible = (participants || []).find(
+      (p) => p?.participantRole?.role === ParticipantRoleType.ResponsibleScientist,
+    );
+
+    if (responsible) {
+      const filteredParticipants = (participants || []).filter(
+        (p) => p?.participantRole?.role !== ParticipantRoleType.ResponsibleScientist,
+      );
+
+      // If there is an existing projectResponsible, move them into participants
+      const existingResponsible = proposal.projectResponsible;
+      if (existingResponsible?.researcher) {
+        const existsInFiltered = filteredParticipants.some(
+          (p) => p?.researcher?.email?.toLowerCase?.() === existingResponsible?.researcher?.email?.toLowerCase?.(),
+        );
+        if (!existsInFiltered) {
+          const toParticipant = {
+            researcher: JSON.parse(JSON.stringify(existingResponsible.researcher)),
+            institute: JSON.parse(JSON.stringify(existingResponsible.institute)),
+            participantCategory: JSON.parse(JSON.stringify(existingResponsible.participantCategory)),
+            participantRole: JSON.parse(JSON.stringify(existingResponsible.participantRole)),
+            addedByFdpg: false,
+          } as any;
+          toParticipant.participantRole.role = ParticipantRoleType.ParticipatingScientist;
+          filteredParticipants.push(toParticipant);
+        }
+      }
+
+      const newProjectResponsible = {
+        // Preserve existing projectResponsibility flags/settings
+        projectResponsibility: proposal.projectResponsible?.projectResponsibility
+          ? JSON.parse(JSON.stringify(proposal.projectResponsible.projectResponsibility))
+          : undefined,
+        researcher: JSON.parse(JSON.stringify(responsible?.researcher)),
+        institute: JSON.parse(JSON.stringify(responsible?.institute)),
+        participantCategory: JSON.parse(JSON.stringify(responsible?.participantCategory)),
+        participantRole: JSON.parse(JSON.stringify(responsible?.participantRole)),
+      } as any;
+
+      mergeDeep(proposal, { participants: filteredParticipants, projectResponsible: newProjectResponsible });
+    } else {
+      mergeDeep(proposal, { participants });
+    }
 
     // Compare old participants with the actual merged state
     addHistoryItemForParticipantsUpdated(proposal, user, oldParticipants, proposal.participants);
