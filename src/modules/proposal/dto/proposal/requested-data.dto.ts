@@ -24,6 +24,8 @@ export class RequestedDataDto extends WithIdForObjectDto {
 
   @Expose()
   @IsNumber()
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+  })
   desiredControlDataAmount: number;
 }
