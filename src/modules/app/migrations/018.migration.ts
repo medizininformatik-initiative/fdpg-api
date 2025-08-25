@@ -5,11 +5,11 @@ import { ConfigType } from 'src/modules/admin/enums/config-type.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { DataPrivacySeedDife, dataPrivacySeedMii } from './constants/017.migration.constants';
 
-export class Migration017 implements IDbMigration {
+export class Migration018 implements IDbMigration {
   constructor(private dataPrivacyConfigModel: Model<DataPrivacyConfigDocument>) {}
 
   async up() {
-    console.log('Running migration 017: Update DIFE data privacy configuration');
+    console.log('Running migration 018: Update DIFE data privacy configuration');
 
     try {
       await this.dataPrivacyConfigModel.updateOne(
@@ -44,6 +44,6 @@ export class Migration017 implements IDbMigration {
   }
 
   async down() {
-    console.log('Running migration 016 down: No action taken');
+    console.log('Running migration 018 down: No action taken');
   }
 }

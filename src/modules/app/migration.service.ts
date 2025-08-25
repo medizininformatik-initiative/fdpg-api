@@ -15,7 +15,7 @@ import {
   Migration014,
   Migration015,
   Migration016,
-  Migration017,
+  Migration018,
 } from './migrations';
 import { Migration, MigrationDocument } from './schema/migration.schema';
 import { IDbMigration } from './types/db-migration.interface';
