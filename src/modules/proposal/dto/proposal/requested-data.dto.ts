@@ -7,19 +7,25 @@ import { ProposalValidation } from '../../enums/porposal-validation.enum';
 export class RequestedDataDto extends WithIdForObjectDto {
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+  })
   @MaxLength(10000)
   patientInfo: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+  })
   @MaxLength(10000)
   dataInfo: string;
 
   @Expose()
   @IsNumber()
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+  })
   desiredDataAmount: number;
 
   @Expose()
