@@ -81,7 +81,11 @@ export class ProposalMiscService {
         ),
     );
     const responsibleResearcher = document.projectResponsible;
-    if (responsibleResearcher && responsibleResearcher.researcher) {
+    if (
+      !responsibleResearcher.projectResponsibility?.applicantIsProjectResponsible &&
+      responsibleResearcher.researcher &&
+      responsibleResearcher.researcher.email
+    ) {
       researchers.push(
         new ResearcherIdentityDto(
           responsibleResearcher.researcher,
