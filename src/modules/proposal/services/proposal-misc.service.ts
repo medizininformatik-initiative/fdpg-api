@@ -82,6 +82,7 @@ export class ProposalMiscService {
     );
     const responsibleResearcher = document.projectResponsible;
     if (
+      responsibleResearcher &&
       !responsibleResearcher.projectResponsibility?.applicantIsProjectResponsible &&
       responsibleResearcher.researcher &&
       responsibleResearcher.researcher.email
@@ -505,7 +506,7 @@ export class ProposalMiscService {
             institute: JSON.parse(JSON.stringify(existingResponsible.institute)),
             participantCategory: JSON.parse(JSON.stringify(existingResponsible.participantCategory)),
             participantRole: JSON.parse(JSON.stringify(existingResponsible.participantRole)),
-            addedByFdpg: false,
+            addedByFdpg: existingResponsible.addedByFdpg,
           } as any;
           toParticipant.participantRole.role = ParticipantRoleType.ParticipatingScientist;
           filteredParticipants.push(toParticipant);
@@ -521,6 +522,7 @@ export class ProposalMiscService {
         institute: JSON.parse(JSON.stringify(responsible?.institute)),
         participantCategory: JSON.parse(JSON.stringify(responsible?.participantCategory)),
         participantRole: JSON.parse(JSON.stringify(responsible?.participantRole)),
+        addedByFdpg: true,
       } as any;
 
       mergeDeep(proposal, { participants: filteredParticipants, projectResponsible: newProjectResponsible });
