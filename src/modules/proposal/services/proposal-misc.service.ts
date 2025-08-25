@@ -102,7 +102,7 @@ export class ProposalMiscService {
     const results = await Promise.allSettled(tasks);
 
     results.forEach((result) => {
-      if (result.status === 'fulfilled' && result.value.length > 0) {
+      if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
         researchers.map((researcher) => {
           if (researcher.email.toLocaleLowerCase() === result.value[0].email.toLocaleLowerCase()) {
             const isEmailVerified = !result.value.some((user) => !user.emailVerified);
