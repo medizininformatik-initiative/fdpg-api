@@ -1,49 +1,39 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
-import { DataPrivacyConfigDocument } from 'src/modules/admin/schema/data-privacy/data-privacy-config.schema';
-import { ConfigType } from 'src/modules/admin/enums/config-type.enum';
-import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
-import { DataPrivacySeedDife, dataPrivacySeedMii } from './constants/017.migration.constants';
+import { Proposal } from '../../proposal/schema/proposal.schema';
+import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
 
+@Injectable()
 export class Migration017 implements IDbMigration {
-  constructor(private dataPrivacyConfigModel: Model<DataPrivacyConfigDocument>) {}
+  constructor(@InjectModel(Proposal.name) private proposalModel: Model<Proposal>) {}
 
-  async up() {
-    console.log('Running migration 017: Update DIFE data privacy configuration');
-
+  async up(): Promise<void> {
+    console.log('Starting migration 017: Ensure proposals have MII in selectedDataSources');
     try {
-      await this.dataPrivacyConfigModel.updateOne(
-        { platform: PlatformIdentifier.DIFE },
-        {
-          $set: {
-            ...DataPrivacySeedDife,
-            type: ConfigType.DataPrivacy,
-            updatedAt: new Date(),
-          },
-        },
-        { upsert: true },
-      );
+      // Match proposals where selectedDataSources is missing, null, or empty array
+      const filter = {
+        $or: [
+          { selectedDataSources: { $exists: false } },
+          { selectedDataSources: { $eq: null } },
+          { selectedDataSources: { $size: 0 } },
+        ],
+      } as any;
 
-      await this.dataPrivacyConfigModel.updateOne(
-        { platform: PlatformIdentifier.Mii },
-        {
-          $set: {
-            ...dataPrivacySeedMii,
-            type: ConfigType.DataPrivacy,
-            updatedAt: new Date(),
-          },
-        },
-        { upsert: true },
-      );
+      const update = {
+        $set: { selectedDataSources: [PlatformIdentifier.Mii] },
+      };
 
-      console.log('Successfully updated MII and DIFE data privacy configuration');
+      const result = await this.proposalModel.collection.updateMany(filter, update);
+      console.log(`Migration 017 updated ${result.modifiedCount ?? 0} proposals`);
     } catch (error) {
-      console.error('Error updating MII and DIFE data privacy configuration:', error);
+      console.error('Error in migration 017:', error);
       throw error;
     }
   }
 
-  async down() {
-    console.log('Running migration 016 down: No action taken');
+  async down(): Promise<void> {
+    console.log('Down migration for 017 is not implemented');
   }
 }

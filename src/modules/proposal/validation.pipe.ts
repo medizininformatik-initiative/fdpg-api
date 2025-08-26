@@ -74,6 +74,10 @@ export class ProposalValidationPipe implements PipeTransform<any> {
 
     groups.push(ProposalValidation.IsNotDraft);
 
+    if (object.status === ProposalStatus.Rework) {
+      groups.push(ProposalValidation.IsRework);
+    }
+
     if (object.userProject?.typeOfUse?.usage?.includes(ProposalTypeOfUse.Biosample)) {
       groups.push(ProposalValidation.IsBiosampleType);
     }
