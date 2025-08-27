@@ -24,6 +24,9 @@ export class ProjectResponsible {
 
   @Prop({ type: ProjectResponsibilitySchema })
   projectResponsibility: ProjectResponsibility;
+
+  @Prop({ type: Boolean, default: false })
+  addedByFdpg: boolean;
 }
 
 export const ProjectResponsibleSchema = SchemaFactory.createForClass(ProjectResponsible);
