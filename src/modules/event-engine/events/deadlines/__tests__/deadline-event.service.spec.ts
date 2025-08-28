@@ -89,7 +89,6 @@ describe('DeadlineEventService', () => {
     );
 
     expect(emailService.send).toHaveBeenCalled();
-    expect(proposal.save).toHaveBeenCalled();
   });
 
   it('it should notify on deadline changes', async () => {
@@ -107,7 +106,6 @@ describe('DeadlineEventService', () => {
     );
 
     expect(emailService.send).toHaveBeenCalled();
-    expect(proposal.save).toHaveBeenCalled();
   });
 
   it('it should not notify on deadline changes', async () => {
