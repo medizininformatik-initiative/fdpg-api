@@ -3,7 +3,7 @@ import { DeadlineEventService } from '../deadline-event.service';
 import { EmailService } from 'src/modules/email/email.service';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
+import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
 import { DueDateEnum } from 'src/modules/proposal/enums/due-date.enum';
 
@@ -17,12 +17,8 @@ describe('DeadlineEventService', () => {
     owner: {
       id: 'ownerId',
     },
-    openDizChecks: [],
     dizApprovedLocations: [MiiLocation.UKL],
-    openDizConditionChecks: [],
-    uacApprovedLocations: [],
-    save: jest.fn(),
-  } as any as ProposalDocument;
+  } as any as Proposal;
 
   const proposalUrl = 'proposalUrl';
 
@@ -112,6 +108,5 @@ describe('DeadlineEventService', () => {
     await deadlineEventService.sendForDeadlineChange(proposal, {} as any as Record<DueDateEnum, Date>, proposalUrl);
 
     expect(emailService.send).toHaveBeenCalledTimes(0);
-    expect(proposal.save).toHaveBeenCalledTimes(0);
   });
 });
