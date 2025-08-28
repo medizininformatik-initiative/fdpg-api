@@ -177,7 +177,7 @@ export class EventEngineService {
     }
   }
 
-  async handleDeadlineChange(proposal: ProposalDocument, changeList: Record<DueDateEnum, Date | null>) {
+  async handleDeadlineChange(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>) {
     const proposalUrl = this.getProposalUrl(proposal);
     await this.deadlineEventService.sendForDeadlineChange(proposal, changeList, proposalUrl);
   }
