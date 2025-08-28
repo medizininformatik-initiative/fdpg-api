@@ -51,6 +51,7 @@ import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { ConflictException } from '@nestjs/common';
+import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -299,6 +300,10 @@ export class ProposalMiscService {
     proposal.deadlines = updatedDeadlines;
 
     setDueDate(proposal, !!proposal.researcherSignedAt);
+
+    if (changeList[DueDateEnum.DUE_DAYS_LOCATION_CHECK] !== undefined) {
+      recalculateAllUacDelayStatus(proposal);
+    }
 
     await proposal.save();
     if (Object.keys(changeList).length > 0) {

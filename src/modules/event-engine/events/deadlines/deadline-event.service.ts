@@ -3,7 +3,6 @@ import { EmailService } from 'src/modules/email/email.service';
 import { DueDateEnum } from 'src/modules/proposal/enums/due-date.enum';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
-import { recalculateAllUacDelayStatus } from 'src/modules/proposal/utils/uac-delay-tracking.util';
 import {
   fdpgDeadlineEmailHeader,
   defaultDeadlineEmailBody,
@@ -21,10 +20,6 @@ export class DeadlineEventService {
   ) {}
 
   async sendForDeadlineChange(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>, proposalUrl: string) {
-    if (changeList[DueDateEnum.DUE_DAYS_LOCATION_CHECK] !== undefined) {
-      recalculateAllUacDelayStatus(proposal);
-    }
-
     const fdpgMailMessage = this.buildFdpgMailMessage(proposal, changeList, proposalUrl);
     const dizMailMessage = this.buildDizMailMessage(proposal, changeList, proposalUrl);
     const uacMailMessage = this.buildUacMailMessage(proposal, changeList, proposalUrl);
