@@ -82,7 +82,7 @@ describe('addLocationVoteUtil', () => {
 
       addDizApproval(proposal, request.user, vote);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
       expect(proposal.dizApprovedLocations).toEqual([request.user.miiLocation]);
     });
 
@@ -95,7 +95,7 @@ describe('addLocationVoteUtil', () => {
 
       addDizApproval(proposal, request.user, vote);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
       expect(proposal.dizApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.requestedButExcludedLocations).toEqual([request.user.miiLocation]);
       expect(proposal.declineReasons.length).toEqual(1);
@@ -117,7 +117,7 @@ describe('addLocationVoteUtil', () => {
       } as any as UploadDto;
       addUacApprovalWithCondition(proposal, request.user, vote, upload);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
       expect(proposal.openDizConditionChecks).toEqual([request.user.miiLocation]);
       expect(proposal.locationConditionDraft.length).toEqual(1);
       expect(proposal.locationConditionDraft[0].location).toEqual(request.user.miiLocation);
@@ -138,7 +138,7 @@ describe('addLocationVoteUtil', () => {
       } as any as UploadDto;
       addUacApprovalWithCondition(proposal, request.user, vote, upload);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
 
       expect(proposal.uacApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.openDizConditionChecks).not.toEqual([request.user.miiLocation]);
@@ -156,7 +156,7 @@ describe('addLocationVoteUtil', () => {
 
       addDizConditionApproval(proposal, request.user, vote);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
       expect(proposal.openDizConditionChecks).toEqual([]);
       expect(proposal.openDizConditionChecks.length).toEqual(0);
       expect(proposal.uacApprovals[0].location).toEqual(request.user.miiLocation);
@@ -176,8 +176,8 @@ describe('addLocationVoteUtil', () => {
 
       addDizConditionApproval(proposal, request.user, vote);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
 
       expect(proposal.dizApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.requestedButExcludedLocations).toEqual([request.user.miiLocation]);
@@ -197,7 +197,7 @@ describe('addLocationVoteUtil', () => {
 
       addDizConditionApproval(proposal, request.user, vote);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
       expect(proposal.openDizConditionChecks).toEqual([]);
       expect(proposal.openDizConditionChecks.length).toEqual(0);
       expect(proposal.uacApprovals[0].location).toEqual(request.user.miiLocation);
@@ -217,8 +217,8 @@ describe('addLocationVoteUtil', () => {
 
       addDizConditionApproval(proposal, request.user, vote);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, request.user.miiLocation);
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, request.user.miiLocation);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.UacApprovalComplete);
 
       expect(proposal.dizApprovedLocations).not.toEqual([request.user.miiLocation]);
       expect(proposal.requestedButExcludedLocations).toEqual([request.user.miiLocation]);
@@ -241,15 +241,15 @@ describe('addLocationVoteUtil', () => {
 
       addDizConditionReview(proposal, condition, vote, request.user);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
-      expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, condition.location);
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, condition.fdpgTaskId);
 
       expect(condition.isAccepted).toEqual(vote);
       expect(condition.reviewedAt).toBeDefined();
       expect(condition.reviewedByOwnerId).toEqual(request.user.userId);
       expect(proposal.totalPromisedDataAmount).toEqual(100);
       expect(proposal.uacApprovedLocations).toEqual([condition.location]);
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.DataAmountReached);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.DataAmountReached);
     });
 
     it('should add the condition review for declining', () => {
@@ -264,8 +264,8 @@ describe('addLocationVoteUtil', () => {
 
       addDizConditionReview(proposal, condition, vote, request.user);
 
-      expect(clearLocationsVotes).toBeCalledWith(proposal, condition.location);
-      expect(removeFdpgTask).toBeCalledWith(proposal, condition.fdpgTaskId);
+      expect(clearLocationsVotes).toHaveBeenCalledWith(proposal, condition.location);
+      expect(removeFdpgTask).toHaveBeenCalledWith(proposal, condition.fdpgTaskId);
 
       expect(condition.isAccepted).toEqual(vote);
       expect(condition.reviewedAt).toBeDefined();

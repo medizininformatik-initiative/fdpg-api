@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { MarkAsDoneDto } from 'src/modules/comment/dto/mark-as-done.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
@@ -9,8 +8,6 @@ import { RevertLocationVoteDto } from '../../dto/revert-location-vote.dto';
 import { SignContractDto } from '../../dto/sign-contract.dto';
 import { ProposalContractingController } from '../proposal-contracting.controller';
 import { ProposalContractingService } from '../../services/proposal-contracting.service';
-
-const moduleMocker = new ModuleMocker(global);
 
 describe('ProposalContractingController', () => {
   let proposalContractingController: ProposalContractingController;
@@ -38,9 +35,11 @@ describe('ProposalContractingController', () => {
     })
       .useMocker((token) => {
         if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
+          return Object.fromEntries(
+            Object.getOwnPropertyNames(token.prototype)
+              .filter((key) => key !== 'constructor')
+              .map((key) => [key, jest.fn()]),
+          );
         }
       })
       .compile();

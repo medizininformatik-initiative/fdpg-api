@@ -142,7 +142,7 @@ describe('AddContractSignUtil', () => {
       expect(uacApproval.signedAt).toBeDefined();
       expect(uacApproval.signedByOwnerId).toBe(request.user.userId);
       expect(uacApproval.isContractSigned).toBeTruthy();
-      expect(addFdpgTaskAndReturnId).toBeCalledWith(proposal, FdpgTaskType.ContractComplete);
+      expect(addFdpgTaskAndReturnId).toHaveBeenCalledWith(proposal, FdpgTaskType.ContractComplete);
     });
 
     it(`should handle the ${Role.DizMember} sign for conditional approved proposals`, () => {

@@ -1,12 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { FeasibilityUserQueryDetailDto } from '../dto/feasibility-user-query-detail.dto';
 import { FeasibilityController } from '../feasibility.controller';
 import { FeasibilityService } from '../feasibility.service';
-
-const moduleMocker = new ModuleMocker(global);
 
 describe('FeasibilityController', () => {
   let feasibilityController: FeasibilityController;
@@ -34,9 +31,11 @@ describe('FeasibilityController', () => {
     })
       .useMocker((token) => {
         if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
+          return Object.fromEntries(
+            Object.getOwnPropertyNames(token.prototype)
+              .filter((key) => key !== 'constructor')
+              .map((key) => [key, jest.fn()]),
+          );
         }
       })
       .compile();

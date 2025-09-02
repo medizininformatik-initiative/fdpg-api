@@ -1,13 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { MongoIdParamDto, MongoTwoIdsParamDto } from 'src/shared/dto/mongo-id-param.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { PublicationCreateDto, PublicationGetDto, PublicationUpdateDto } from '../../dto/proposal/publication.dto';
 import { ProposalPublicationController } from '../proposal-publication.controller';
 import { ProposalPublicationService } from '../../services/proposal-publication.service';
-
-const moduleMocker = new ModuleMocker(global);
 
 describe('ProposalPublicationController', () => {
   let proposalPublicationController: ProposalPublicationController;
@@ -42,9 +39,11 @@ describe('ProposalPublicationController', () => {
     })
       .useMocker((token) => {
         if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
+          return Object.fromEntries(
+            Object.getOwnPropertyNames(token.prototype)
+              .filter((key) => key !== 'constructor')
+              .map((key) => [key, jest.fn()]),
+          );
         }
       })
       .compile();

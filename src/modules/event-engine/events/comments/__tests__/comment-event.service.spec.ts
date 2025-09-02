@@ -366,7 +366,7 @@ describe('CommentEventService', () => {
         if (prevent) {
           expect(emailService.send).not.toHaveBeenCalled();
         } else {
-          expect(keycloakUtilService.getDizMembers).toBeCalledTimes(1);
+          expect(keycloakUtilService.getDizMembers).toHaveBeenCalledTimes(1);
           expect(keycloakUtilService.getLocationContacts).toHaveBeenCalledWith([MiiLocation.UKL], dizMembers);
           expect(emailService.send).toHaveBeenCalledWith({ content: 'getProposalTaskCompletionEmailForDiz' });
         }
@@ -388,7 +388,7 @@ describe('CommentEventService', () => {
         if (prevent) {
           expect(emailService.send).not.toHaveBeenCalled();
         } else {
-          expect(keycloakUtilService.getUacMembers).toBeCalledTimes(1);
+          expect(keycloakUtilService.getUacMembers).toHaveBeenCalledTimes(1);
           expect(keycloakUtilService.getLocationContacts).toHaveBeenCalledWith([MiiLocation.UKL], uacMembers);
           expect(emailService.send).toHaveBeenCalledWith({ content: 'getProposalTaskCompletionEmailForUac' });
         }

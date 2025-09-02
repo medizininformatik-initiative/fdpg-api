@@ -1,13 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { UploadGetDto } from '../../dto/upload.dto';
 import { DirectUpload } from '../../enums/upload-type.enum';
 import { ProposalUploadController } from '../proposal-upload.controller';
 import { ProposalUploadService } from '../../services/proposal-upload.service';
-
-const moduleMocker = new ModuleMocker(global);
 
 describe('ProposalUploadController', () => {
   let proposalUploadController: ProposalUploadController;
@@ -35,9 +32,11 @@ describe('ProposalUploadController', () => {
     })
       .useMocker((token) => {
         if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
+          return Object.fromEntries(
+            Object.getOwnPropertyNames(token.prototype)
+              .filter((key) => key !== 'constructor')
+              .map((key) => [key, jest.fn()]),
+          );
         }
       })
       .compile();

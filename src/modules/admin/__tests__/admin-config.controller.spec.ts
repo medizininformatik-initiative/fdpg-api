@@ -1,13 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { AdminConfigController } from '../admin-config.controller';
 import { AdminConfigService } from '../admin-config.service';
 import { TermsConfigCreateDto, TermsConfigGetDto } from '../dto/terms/terms-config.dto';
 import { PlatformIdentifier } from '../enums/platform-identifier.enum';
 import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from '../dto/data-privacy/data-privacy-config.dto';
 import { DataSourceDto } from '../dto/data-source.dto';
-
-const moduleMocker = new ModuleMocker(global);
 
 describe('AdminConfigController', () => {
   let adminConfigController: AdminConfigController;
@@ -19,9 +16,11 @@ describe('AdminConfigController', () => {
     })
       .useMocker((token) => {
         if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
+          return Object.fromEntries(
+            Object.getOwnPropertyNames(token.prototype)
+              .filter((key) => key !== 'constructor')
+              .map((key) => [key, jest.fn()]),
+          );
         }
       })
       .compile();

@@ -60,7 +60,7 @@ describe('StorageService', () => {
 
     it('should call the containerClient to upload the blob', async () => {
       await storageService.uploadFile(blobName, file, user);
-      expect(clientMock.putObject).toBeCalledTimes(1);
+      expect(clientMock.putObject).toHaveBeenCalledTimes(1);
     });
 
     it('should throw if the containerClient fails', async () => {
@@ -94,14 +94,14 @@ describe('StorageService', () => {
   describe('deleteBlob', () => {
     it('should call the blobClient to delete the blob', async () => {
       await storageService.deleteBlob(blobName);
-      expect(clientMock.removeObject).toBeCalledTimes(1);
+      expect(clientMock.removeObject).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('deleteManyBlobs', () => {
     it('should call the blobBatchClient to delete many blobs', async () => {
       await storageService.deleteManyBlobs(['blobName1', 'blobName2']);
-      expect(clientMock.removeObjects).toBeCalledTimes(1);
+      expect(clientMock.removeObjects).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -324,7 +324,7 @@ describe('ProposalContractingService', () => {
       await proposalContractingService.signContract(proposalId, vote, file, request.user);
 
       expect(validateContractSign).toHaveBeenCalledWith(proposalDocument, request.user, vote, file);
-      expect(addContractSign).toBeCalledWith(proposalDocument, vote, request.user);
+      expect(addContractSign).toHaveBeenCalledWith(proposalDocument, vote, request.user);
 
       expect(addHistoryItemForContractSign).toHaveBeenCalledWith(proposalDocument, request.user, vote.value);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);

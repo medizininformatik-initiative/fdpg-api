@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
-import { Proposal } from '../../proposal/schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../../proposal/schema/proposal.schema';
 import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
 
 @Injectable()
 export class Migration017 implements IDbMigration {
-  constructor(@InjectModel(Proposal.name) private proposalModel: Model<Proposal>) {}
+  constructor(@InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>) {}
 
   async up(): Promise<void> {
     console.log('Starting migration 017: Ensure proposals have MII in selectedDataSources');

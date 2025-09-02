@@ -103,5 +103,5 @@ export class ReportDto extends ReportGetDto {
     this.uploads = [];
   }
 
-  uploads: UploadDto[];
+  declare uploads: UploadDto[];
 }
