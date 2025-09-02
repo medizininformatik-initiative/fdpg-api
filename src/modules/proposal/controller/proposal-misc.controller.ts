@@ -311,7 +311,7 @@ export class ProposalMiscController {
     return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Post(':id/uploads/export')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Returns all proposal uploads as a zip file' })
