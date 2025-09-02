@@ -4,7 +4,7 @@ import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
-import { defaultResource, resourceFromAttributes } from '@opentelemetry/resources';
+import { Resource } from '@opentelemetry/resources';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
@@ -20,8 +20,8 @@ export const configureTelemetry = (config: {
 }) => {
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.WARN);
   if (config.enableTelemetry) {
-    const resource = defaultResource().merge(
-      resourceFromAttributes({
+    const resource = Resource.default().merge(
+      new Resource({
         [ATTR_SERVICE_NAME]: 'FDPG-API_' + config.env,
         [ATTR_SERVICE_VERSION]: config.softwareVersion,
         ['deployment.environment']: config.env,

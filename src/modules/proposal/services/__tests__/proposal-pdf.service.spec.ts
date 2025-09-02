@@ -81,6 +81,7 @@ describe('ProposalPdfService', () => {
     userProject: {
       typeOfUse: {
         usage: [ProposalTypeOfUse.Biosample],
+        difeUsage: [ProposalTypeOfUse.Distributed],
       },
       feasibility: {
         id: undefined,
@@ -116,14 +117,8 @@ describe('ProposalPdfService', () => {
   const privacyTextMock = {
     messages: {
       [ProposalTypeOfUse.Biosample]: {
-        headline: {
-          de: 'headlineDE',
-          en: 'headlineEN',
-        },
-        text: {
-          de: 'textDE',
-          en: 'textEN',
-        },
+        headline: 'headline',
+        text: 'text',
       },
     },
   };
@@ -198,7 +193,7 @@ describe('ProposalPdfService', () => {
       await proposalPdfService.getPdfProposalFile(proposalDocument, request.user);
       jest.advanceTimersByTime(600);
 
-      const expectedDataPrivacy = [{ headline: 'headlineDE', text: 'textDE' }];
+      const expectedDataPrivacy = [{ headline: 'headline', text: 'text' }];
       expect(pdfEngineService.createProposalPdf).toHaveBeenCalled();
       expect(pdfEngineService.createProposalPdf).toHaveBeenCalledWith(
         expect.objectContaining({ projectAbbreviation: proposalDocument.projectAbbreviation }),
