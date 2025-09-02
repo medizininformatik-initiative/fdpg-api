@@ -16,7 +16,8 @@ export const setUacVoteDelayStatus = (
   const uacDeadline = proposal.deadlines?.[DueDateEnum.DUE_DAYS_LOCATION_CHECK];
 
   // Mark as late if vote was submitted after the deadline
-  if (uacDeadline && voteObject.createdAt > uacDeadline) {
+  const createdAt = voteObject.createdAt ?? new Date();
+  if (uacDeadline && createdAt > uacDeadline) {
     voteObject.isLate = true;
   } else {
     voteObject.isLate = false;

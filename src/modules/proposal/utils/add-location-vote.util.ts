@@ -64,6 +64,7 @@ export const addUacApprovalWithCondition = (
       conditionReasoning,
     };
 
+    (conditionalApproval as ConditionalApproval).createdAt = new Date();
     setConditionalApprovalDelayStatus(conditionalApproval as ConditionalApproval, proposal);
 
     if (proposal.locationConditionDraft) {
@@ -107,6 +108,7 @@ export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, 
       isContractSigned: false,
     };
 
+    (uacApproval as UacApproval).createdAt = new Date();
     setUacApprovalDelayStatus(uacApproval as UacApproval, proposal);
 
     // Flow:
@@ -166,6 +168,7 @@ export const addDizApprovalWithCondition = (
     fdpgTaskId,
   };
 
+  (conditionalApproval as ConditionalApproval).createdAt = new Date();
   setConditionalApprovalDelayStatus(conditionalApproval as ConditionalApproval, proposal);
 
   if (vote.value === true) {
