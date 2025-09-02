@@ -3,12 +3,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
 import { Model } from 'mongoose';
 import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from './dto/data-privacy/data-privacy-config.dto';
+import { AlertConfigCreateDto, AlertConfigGetDto } from './dto/alert/alert-config.dto';
 import { TermsConfigGetDto } from './dto/terms/terms-config.dto';
 import { ConfigType } from './enums/config-type.enum';
 import { PlatformIdentifier } from './enums/platform-identifier.enum';
 import { DataPrivacyConfig, DataPrivacyConfigDocument } from './schema/data-privacy/data-privacy-config.schema';
+import { AlertConfig, AlertConfigDocument } from './schema/alert/alert-config.schema';
 import { TermsConfig, TermsConfigDocument } from './schema/terms/terms-config.schema';
 import { DataSourceDto } from './dto/data-source.dto';
+import { StorageService } from '../storage/storage.service';
+import { IRequestUser } from 'src/shared/types/request-user.interface';
 
 @Injectable()
 export class AdminConfigService {
@@ -18,6 +22,10 @@ export class AdminConfigService {
 
     @InjectModel(DataPrivacyConfig.name)
     private dataPrivacyConfigModel: Model<DataPrivacyConfigDocument>,
+
+    @InjectModel(AlertConfig.name)
+    private alertConfigModel: Model<AlertConfigDocument>,
+    private storageService: StorageService,
   ) {}
 
   async findTermsConfig(platform: PlatformIdentifier): Promise<TermsConfigGetDto> {
@@ -85,5 +93,45 @@ export class AdminConfigService {
     };
 
     return dataSources;
+  }
+
+  async getAlertConfig(): Promise<AlertConfigGetDto> {
+    const document = await this.alertConfigModel.findOne({ type: ConfigType.Alert });
+    if (document) {
+      const plain = document.toObject();
+      return plainToClass(AlertConfigGetDto, plain);
+    } else {
+      return plainToClass(AlertConfigGetDto, {
+        logo: undefined,
+        isVisible: false,
+        message: '',
+      });
+    }
+  }
+
+  async updateAlertConfig(
+    alertConfig: AlertConfigCreateDto,
+    logo: Express.Multer.File | undefined,
+    user: IRequestUser,
+  ): Promise<void> {
+    let logoUrl: string | undefined = alertConfig.logo;
+    if (logo) {
+      const objectName = `config/alert/logo-${Date.now()}-${logo.originalname}`;
+      await this.storageService.uploadFile(objectName, logo, user);
+      logoUrl = await this.storageService.getSasUrl(objectName, true);
+    }
+
+    await this.alertConfigModel.updateOne(
+      { type: ConfigType.Alert },
+      {
+        $set: {
+          ...alertConfig,
+          ...(logoUrl ? { logo: logoUrl } : {}),
+          updatedAt: new Date(),
+          type: ConfigType.Alert,
+        },
+      },
+      { upsert: true },
+    );
   }
 }
