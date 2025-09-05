@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
+import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
@@ -46,6 +47,7 @@ import { ProposalUploadService } from './proposal-upload.service';
 import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { MiiLocationService } from 'src/modules/mii-location/mii-location.service';
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
@@ -67,6 +69,7 @@ export class ProposalMiscService {
     private storageService: StorageService,
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
+    private miiLocationService: MiiLocationService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -475,6 +478,146 @@ export class ProposalMiscService {
 
     return result;
   }
+
+  async generateLocationCsv(proposalId: string, user: IRequestUser): Promise<Buffer> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    // Get all unique locations from various arrays
+    const allLocations = new Set<MiiLocation>();
+
+    // Add locations from all relevant arrays
+    proposal.openDizChecks?.forEach((loc) => allLocations.add(loc));
+    proposal.dizApprovedLocations?.forEach((loc) => allLocations.add(loc));
+    proposal.openDizConditionChecks?.forEach((loc) => allLocations.add(loc));
+    proposal.uacApprovedLocations?.forEach((loc) => allLocations.add(loc));
+    proposal.requestedButExcludedLocations?.forEach((loc) => allLocations.add(loc));
+    proposal.signedContracts?.forEach((loc) => allLocations.add(loc));
+
+    // Add locations from conditional approvals
+    proposal.conditionalApprovals?.forEach((approval) => allLocations.add(approval.location));
+
+    // Add locations from UAC approvals
+    proposal.uacApprovals?.forEach((approval) => allLocations.add(approval.location));
+
+    // Add locations from additional location information
+    proposal.additionalLocationInformation?.forEach((info) => allLocations.add(info.location));
+
+    // Fetch MII location information for all locations
+    const miiLocationMap = await this.miiLocationService.getAllLocationInfo();
+
+    // Create CSV headers
+    const headers = [
+      'Rubrum',
+      'Location Code',
+      'Location Display Name',
+      'Location ID',
+      'Conditions',
+      'Approval Status',
+      'Publication Name',
+      'Consent (Legal Basis)',
+    ];
+
+    // Generate CSV rows
+    const rows = await Promise.all(
+      Array.from(allLocations).map(async (location) => {
+        // Find conditional approval for this location
+        const conditionalApproval = proposal.conditionalApprovals?.find((approval) => approval.location === location);
+
+        // Find UAC approval for this location (currently not used but available for future enhancements)
+        // const uacApproval = proposal.uacApprovals?.find((approval) => approval.location === location);
+
+        // Find additional location information
+        const additionalInfo = proposal.additionalLocationInformation?.find((info) => info.location === location);
+
+        // Get MII location information
+        const miiLocationInfo = miiLocationMap.get(location);
+
+        // Determine approval status
+        let approvalStatus = '';
+        if (proposal.uacApprovedLocations?.includes(location)) {
+          approvalStatus = 'Approved';
+        } else if (proposal.requestedButExcludedLocations?.includes(location)) {
+          approvalStatus = 'Denied';
+        } else if (proposal.openDizChecks?.includes(location)) {
+          approvalStatus = 'Denied (No Response)';
+        } else {
+          approvalStatus = 'Unknown';
+        }
+
+        // Get conditions (conditionReasoning from conditionalApprovals)
+        const conditions = conditionalApproval?.conditionReasoning || '';
+
+        // Get publication name
+        const publicationName = additionalInfo?.locationPublicationName || '';
+
+        // Get consent information
+        const consent = additionalInfo?.legalBasis ? 'true' : 'false';
+
+        return [
+          '', // Rubrum
+          location, // Location Code
+          miiLocationInfo?.display || location, // Location Display Name (fallback to code if not found)
+          miiLocationInfo?.id || location, // Location ID (fallback to code if not found)
+          conditions, // Conditions
+          approvalStatus, // Approval Status
+          publicationName, // Publication Name
+          consent, // Consent (Legal Basis)
+        ];
+      }),
+    );
+
+    // Convert to CSV format
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    return Buffer.from(csvContent, 'utf-8');
+  }
+
+  async generateLocationCsvDownloadLink(
+    proposalId: string,
+    user: IRequestUser,
+  ): Promise<{
+    downloadUrl: string;
+    filename: string;
+    expiresAt: string;
+  }> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    // Generate CSV content
+    const csvBuffer = await this.generateLocationCsv(proposalId, user);
+
+    // Create a temporary file for download
+    const filename = `location-contracting-info-${proposal.projectAbbreviation || proposalId}-${new Date().toISOString().split('T')[0]}.csv`;
+
+    // Create a temporary file object
+    const tempFile: Express.Multer.File = {
+      buffer: csvBuffer,
+      originalname: filename,
+      mimetype: 'text/plain',
+      size: csvBuffer.length,
+    } as Express.Multer.File;
+
+    // Generate a unique blob name for temporary storage
+    const blobName = `temp/csv-downloads/${proposalId}/${Date.now()}-${filename}`;
+
+    // Upload the file to temporary storage
+    await this.storageService.uploadFile(blobName, tempFile, user);
+
+    // Generate a signed URL that expires in 1 hour
+    const downloadUrl = await this.storageService.getSasUrl(blobName, true);
+
+    // Calculate expiration time (1 hour from now)
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    return {
+      downloadUrl,
+      filename,
+      expiresAt,
+    };
+  }
+
   private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
     const isEditableStatus = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck;
     const isFdpgMember = user.singleKnownRole === Role.FdpgMember;

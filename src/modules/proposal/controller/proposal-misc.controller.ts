@@ -261,6 +261,36 @@ export class ProposalMiscController {
       return res.status(204).send();
     }
   }
+
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Get(':id/locations/csv')
+  @ApiOperation({ summary: 'Get download link for CSV with all location information for contracting' })
+  @ApiResponse({
+    status: 200,
+    description: 'Download link for CSV file with location information',
+    schema: {
+      type: 'object',
+      properties: {
+        downloadUrl: {
+          type: 'string',
+          description: 'Temporary download URL for the CSV file',
+        },
+        filename: {
+          type: 'string',
+          description: 'Suggested filename for the download',
+        },
+        expiresAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'When the download URL expires',
+        },
+      },
+    },
+  })
+  async getLocationCsvDownloadLink(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest) {
+    return await this.proposalMiscService.generateLocationCsvDownloadLink(id, user);
+  }
+
   @Auth(Role.Researcher, Role.FdpgMember)
   @Patch(':id/participants')
   @UsePipes(ValidationPipe)

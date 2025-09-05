@@ -135,4 +135,24 @@ describe('ProposalMiscController', () => {
       expect(proposalMiscService.getPdfProposalFile).toHaveBeenCalledWith(params.id, request.user);
     });
   });
+
+  describe('getLocationCsvDownloadLink', () => {
+    it('should return download link for location CSV', async () => {
+      const params = {
+        id: 'mongoId',
+      };
+      const mockDownloadResponse = {
+        downloadUrl: 'https://storage.example.com/temp/csv-downloads/mongoId/1234567890-location-contracting-info.csv',
+        filename: 'location-contracting-info-TEST_PROJECT-2024-01-15.csv',
+        expiresAt: '2024-01-15T15:00:00.000Z',
+      };
+
+      jest.spyOn(proposalMiscService, 'generateLocationCsvDownloadLink').mockResolvedValue(mockDownloadResponse);
+
+      const result = await proposalController.getLocationCsvDownloadLink(params, request);
+
+      expect(proposalMiscService.generateLocationCsvDownloadLink).toHaveBeenCalledWith(params.id, request.user);
+      expect(result).toEqual(mockDownloadResponse);
+    });
+  });
 });
