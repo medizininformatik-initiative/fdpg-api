@@ -55,6 +55,7 @@ import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../d
 import { ConflictException } from '@nestjs/common';
 import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
 import { Types } from 'mongoose';
+import { convert } from 'html-to-text';
 
 @Injectable()
 export class ProposalMiscService {
@@ -482,10 +483,8 @@ export class ProposalMiscService {
   async generateLocationCsv(proposalId: string, user: IRequestUser): Promise<Buffer> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
-    // Get all unique locations from various arrays
     const allLocations = new Set<MiiLocation>();
 
-    // Add locations from all relevant arrays
     proposal.openDizChecks?.forEach((loc) => allLocations.add(loc));
     proposal.dizApprovedLocations?.forEach((loc) => allLocations.add(loc));
     proposal.openDizConditionChecks?.forEach((loc) => allLocations.add(loc));
@@ -493,43 +492,30 @@ export class ProposalMiscService {
     proposal.requestedButExcludedLocations?.forEach((loc) => allLocations.add(loc));
     proposal.signedContracts?.forEach((loc) => allLocations.add(loc));
 
-    // Add locations from conditional approvals
     proposal.conditionalApprovals?.forEach((approval) => allLocations.add(approval.location));
 
-    // Add locations from UAC approvals
     proposal.uacApprovals?.forEach((approval) => allLocations.add(approval.location));
 
-    // Add locations from additional location information
     proposal.additionalLocationInformation?.forEach((info) => allLocations.add(info.location));
 
-    // Fetch MII location information for all locations
     const miiLocationMap = await this.miiLocationService.getAllLocationInfo();
 
-    // Create CSV headers
     const headers = [
       'Rubrum',
       'Location Code',
       'Location Display Name',
-      'Location ID',
       'Conditions',
       'Approval Status',
       'Publication Name',
       'Consent (Legal Basis)',
     ];
 
-    // Generate CSV rows
     const rows = await Promise.all(
       Array.from(allLocations).map(async (location) => {
-        // Find conditional approval for this location
         const conditionalApproval = proposal.conditionalApprovals?.find((approval) => approval.location === location);
 
-        // Find UAC approval for this location (currently not used but available for future enhancements)
-        // const uacApproval = proposal.uacApprovals?.find((approval) => approval.location === location);
-
-        // Find additional location information
         const additionalInfo = proposal.additionalLocationInformation?.find((info) => info.location === location);
 
-        // Get MII location information
         const miiLocationInfo = miiLocationMap.get(location);
 
         // Determine approval status
@@ -544,20 +530,17 @@ export class ProposalMiscService {
           approvalStatus = 'Unknown';
         }
 
-        // Get conditions (conditionReasoning from conditionalApprovals)
-        const conditions = conditionalApproval?.conditionReasoning || '';
-
-        // Get publication name
+        const conditions = conditionalApproval?.conditionReasoning
+          ? convert(conditionalApproval.conditionReasoning, { wordwrap: false })
+          : '';
         const publicationName = additionalInfo?.locationPublicationName || '';
 
-        // Get consent information
         const consent = additionalInfo?.legalBasis ? 'true' : 'false';
 
         return [
           '', // Rubrum
           location, // Location Code
           miiLocationInfo?.display || location, // Location Display Name (fallback to code if not found)
-          miiLocationInfo?.id || location, // Location ID (fallback to code if not found)
           conditions, // Conditions
           approvalStatus, // Approval Status
           publicationName, // Publication Name
@@ -585,13 +568,10 @@ export class ProposalMiscService {
   }> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
-    // Generate CSV content
     const csvBuffer = await this.generateLocationCsv(proposalId, user);
 
-    // Create a temporary file for download
     const filename = `location-contracting-info-${proposal.projectAbbreviation || proposalId}-${new Date().toISOString().split('T')[0]}.csv`;
 
-    // Create a temporary file object
     const tempFile: Express.Multer.File = {
       buffer: csvBuffer,
       originalname: filename,
@@ -599,16 +579,13 @@ export class ProposalMiscService {
       size: csvBuffer.length,
     } as Express.Multer.File;
 
-    // Generate a unique blob name for temporary storage
     const blobName = `temp/csv-downloads/${proposalId}/${Date.now()}-${filename}`;
 
-    // Upload the file to temporary storage
     await this.storageService.uploadFile(blobName, tempFile, user);
 
     // Generate a signed URL that expires in 1 hour
     const downloadUrl = await this.storageService.getSasUrl(blobName, true);
 
-    // Calculate expiration time (1 hour from now)
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     return {

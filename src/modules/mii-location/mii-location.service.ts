@@ -29,17 +29,15 @@ export class MiiLocationService {
   private getMiiCodeSystemUrl(): string {
     return this.configService.get<string>(
       'MII_CODESYSTEM_URL',
-      'https://simplifier.net/MedizininformatikInitiative-Kerndatensatz/mii-cs-meta-diz-standorte/~json',
+      'https://fhir.simplifier.net/R4/CodeSystem/84198ff6-2c92-426f-96f2-bacd648543bb',
     );
   }
 
   async getLocationInfo(locationCode: string): Promise<MiiLocationInfo | null> {
-    // Check cache first
     if (this.isCacheValid() && this.locationCache.has(locationCode)) {
       return this.locationCache.get(locationCode);
     }
 
-    // Fetch fresh data if cache is invalid
     if (!this.isCacheValid()) {
       await this.fetchAndCacheLocationData();
     }
@@ -69,7 +67,6 @@ export class MiiLocationService {
             this.locationCache.set(concept.code, {
               code: concept.code,
               display: concept.display,
-              id: concept.id || concept.code, // Use code as ID if no specific ID provided
             });
           }
         });
@@ -81,7 +78,6 @@ export class MiiLocationService {
       }
     } catch (error) {
       this.logger.error('Failed to fetch MII location data:', error.message);
-      // Don't throw error - allow the system to continue with just location codes
     }
   }
 
@@ -89,7 +85,6 @@ export class MiiLocationService {
     return this.cacheExpiry !== null && this.cacheExpiry > new Date();
   }
 
-  // Method to manually refresh cache (useful for testing or admin operations)
   async refreshCache(): Promise<void> {
     this.cacheExpiry = null;
     await this.fetchAndCacheLocationData();

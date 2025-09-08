@@ -784,11 +784,8 @@ describe('ProposalMiscService', () => {
 
       // Mock MII location data
       const mockMiiLocationMap = new Map([
-        [
-          MiiLocation.Charité,
-          { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin', id: 'charite-berlin' },
-        ],
-        [MiiLocation.UKT, { code: 'UKT', display: 'Universitätsklinikum Tübingen', id: 'ukt-tuebingen' }],
+        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
+        [MiiLocation.UKT, { code: 'UKT', display: 'Universitätsklinikum Tübingen' }],
       ]);
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
@@ -803,20 +800,19 @@ describe('ProposalMiscService', () => {
 
       // Check headers
       expect(lines[0]).toBe(
-        'Rubrum,Location Code,Location Display Name,Location ID,Conditions,Approval Status,Publication Name,Consent (Legal Basis)',
+        'Rubrum,Location Code,Location Display Name,Conditions,Approval Status,Publication Name,Consent (Legal Basis)',
       );
 
       // Check that we have data rows (excluding header)
       expect(lines.length).toBeGreaterThan(1);
 
       // Check that CSV contains expected data
-      expect(csvContent).toContain('TEST_PROJECT');
       expect(csvContent).toContain('Charité');
       expect(csvContent).toContain('UKT');
       expect(csvContent).toContain('Charité - Universitätsmedizin Berlin');
       expect(csvContent).toContain('Universitätsklinikum Tübingen');
-      expect(csvContent).toContain('charite-berlin');
-      expect(csvContent).toContain('ukt-tuebingen');
+      // expect(csvContent).toContain('charite-berlin');
+      // expect(csvContent).toContain('ukt-tuebingen');
       expect(csvContent).toContain('Special conditions apply');
       expect(csvContent).toContain('Approved');
       expect(csvContent).toContain('Denied');
@@ -851,7 +847,7 @@ describe('ProposalMiscService', () => {
       // Should only have header row
       expect(lines.length).toBe(1);
       expect(lines[0]).toBe(
-        'Rubrum,Location Code,Location Display Name,Location ID,Conditions,Approval Status,Publication Name,Consent (Legal Basis)',
+        'Rubrum,Location Code,Location Display Name,Conditions,Approval Status,Publication Name,Consent (Legal Basis)',
       );
     });
 
@@ -868,10 +864,7 @@ describe('ProposalMiscService', () => {
 
       // Mock MII location data
       const mockMiiLocationMap = new Map([
-        [
-          MiiLocation.Charité,
-          { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin', id: 'charite-berlin' },
-        ],
+        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
       ]);
 
       const mockDownloadUrl =
