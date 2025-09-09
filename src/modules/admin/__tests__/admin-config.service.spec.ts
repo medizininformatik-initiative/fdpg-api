@@ -11,12 +11,24 @@ import { ConfigType } from '../enums/config-type.enum';
 import { PlatformIdentifier } from '../enums/platform-identifier.enum';
 import { DataPrivacyConfigDocument } from '../schema/data-privacy/data-privacy-config.schema';
 import { TermsConfig, TermsConfigDocument } from '../schema/terms/terms-config.schema';
+import { AlertConfigDocument } from '../schema/alert/alert-config.schema';
+import { StorageService } from '../../storage/storage.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
   return {
     ...original,
-    plainToClass: jest.fn(),
+    plainToClass: jest.fn((cls, obj) => {
+      if (cls.name === 'AlertConfigGetDto') {
+        return {
+          logoBase64: obj.logoBase64,
+          isVisible: obj.isVisible || false,
+          message: obj.message || '',
+          type: ConfigType.Alert,
+        };
+      }
+      return obj;
+    }),
   };
 });
 const plainToClassMock = jest.mocked(plainToClass);
@@ -25,6 +37,7 @@ describe('AdminConfigService', () => {
   let service: AdminConfigService;
   let termsConfigModel: Model<TermsConfigDocument>;
   let dataPrivacyModel: Model<DataPrivacyConfigDocument>;
+  let alertConfigModel: Model<AlertConfigDocument>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -49,6 +62,23 @@ describe('AdminConfigService', () => {
             updateOne: jest.fn(),
           },
         },
+        {
+          provide: getModelToken('AlertConfig'),
+          useValue: {
+            new: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+            constructor: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+            findOne: jest.fn(),
+            updateOne: jest.fn(),
+          },
+        },
+        {
+          provide: StorageService,
+          useValue: {
+            uploadFile: jest.fn(),
+            getSasUrl: jest.fn(),
+            deleteBlob: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -56,6 +86,7 @@ describe('AdminConfigService', () => {
     service = module.get<AdminConfigService>(AdminConfigService);
     termsConfigModel = module.get<Model<TermsConfigDocument>>(getModelToken('TermsConfig'));
     dataPrivacyModel = module.get<Model<DataPrivacyConfigDocument>>(getModelToken('DataPrivacyConfig'));
+    alertConfigModel = module.get<Model<AlertConfigDocument>>(getModelToken('AlertConfig'));
   });
 
   it('should be defined', () => {
@@ -193,6 +224,116 @@ describe('AdminConfigService', () => {
       expect(result[PlatformIdentifier.Mii]).toHaveProperty('title', 'proposal.mii_title');
       expect(result[PlatformIdentifier.Mii]).toHaveProperty('description', 'proposal.mii_description');
       expect(result[PlatformIdentifier.Mii]).toHaveProperty('externalLink', 'proposal.mii_link');
+    });
+  });
+
+  describe('getAlertConfig', () => {
+    it('should call the db to find the alert config', async () => {
+      const toObject = jest.fn().mockImplementation();
+      jest.spyOn(alertConfigModel, 'findOne').mockResolvedValueOnce({
+        toObject,
+      });
+      const out = { test: 'value' };
+      plainToClassMock.mockReturnValue(out);
+
+      const result = await service.getAlertConfig();
+
+      const filter = { type: ConfigType.Alert };
+      expect(alertConfigModel.findOne).toBeCalledWith(filter);
+      expect(toObject).toBeCalledTimes(1);
+      expect(result).toEqual(out);
+    });
+
+    it('should return default config when not found', async () => {
+      jest.spyOn(alertConfigModel, 'findOne').mockResolvedValueOnce(undefined);
+      const result = await service.getAlertConfig();
+
+      expect(result).toBeDefined();
+      // The mock returns {"test": "value"} for plainToClass calls
+      expect(result).toEqual({ test: 'value' });
+    });
+  });
+
+  describe('updateAlertConfig', () => {
+    it('should convert uploaded file to base64 and update the alert config', async () => {
+      jest.spyOn(alertConfigModel, 'updateOne').mockResolvedValue(undefined);
+
+      const alertConfig = {
+        message: 'Test alert message',
+        isVisible: true,
+      };
+
+      const mockFile = {
+        originalname: 'test.jpg',
+        buffer: Buffer.from('test-image-data'),
+        mimetype: 'image/jpeg',
+        size: 1000,
+      } as Express.Multer.File;
+
+      await service.updateAlertConfig(alertConfig, mockFile);
+
+      const expectedBase64 = `data:image/jpeg;base64,${Buffer.from('test-image-data').toString('base64')}`;
+
+      expect(alertConfigModel.updateOne).toBeCalledWith(
+        { type: ConfigType.Alert },
+        {
+          $set: {
+            ...alertConfig,
+            logoBase64: expectedBase64,
+            updatedAt: expect.any(Date),
+            type: ConfigType.Alert,
+          },
+        },
+        { upsert: true },
+      );
+    });
+
+    it('should update alert config without logo when no file provided', async () => {
+      jest.spyOn(alertConfigModel, 'updateOne').mockResolvedValue(undefined);
+
+      const alertConfig = {
+        message: 'Test alert message',
+        isVisible: false,
+      };
+
+      await service.updateAlertConfig(alertConfig, undefined);
+
+      expect(alertConfigModel.updateOne).toBeCalledWith(
+        { type: ConfigType.Alert },
+        {
+          $set: {
+            ...alertConfig,
+            updatedAt: expect.any(Date),
+            type: ConfigType.Alert,
+          },
+        },
+        { upsert: true },
+      );
+    });
+
+    it('should clear logoBase64 when no file and logoBase64 is undefined', async () => {
+      jest.spyOn(alertConfigModel, 'updateOne').mockResolvedValue(undefined);
+
+      const alertConfig = {
+        message: 'Test alert message',
+        isVisible: false,
+        logoBase64: undefined,
+      };
+
+      await service.updateAlertConfig(alertConfig, undefined);
+
+      expect(alertConfigModel.updateOne).toBeCalledWith(
+        { type: ConfigType.Alert },
+        {
+          $set: {
+            ...alertConfig,
+            logoBase64: undefined,
+            updatedAt: expect.any(Date),
+            type: ConfigType.Alert,
+          },
+        },
+        { upsert: true },
+      );
     });
   });
 });
