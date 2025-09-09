@@ -56,6 +56,7 @@ import { ConflictException } from '@nestjs/common';
 import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
 import { Types } from 'mongoose';
 import { convert } from 'html-to-text';
+import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 
 @Injectable()
 export class ProposalMiscService {
@@ -558,19 +559,12 @@ export class ProposalMiscService {
     return Buffer.from(csvContent, 'utf-8');
   }
 
-  async generateLocationCsvDownloadLink(
-    proposalId: string,
-    user: IRequestUser,
-  ): Promise<{
-    downloadUrl: string;
-    filename: string;
-    expiresAt: string;
-  }> {
+  async generateLocationCsvDownloadLink(proposalId: string, user: IRequestUser): Promise<CsvDownloadResponseDto> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
     const csvBuffer = await this.generateLocationCsv(proposalId, user);
 
-    const filename = `location-contracting-info-${proposal.projectAbbreviation || proposalId}-${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `${new Date().toISOString().split('T')[0]}-location-contracting-info-${proposal.projectAbbreviation}.csv`;
 
     const tempFile: Express.Multer.File = {
       buffer: csvBuffer,

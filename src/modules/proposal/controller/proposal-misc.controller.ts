@@ -51,6 +51,7 @@ import { ParticipantDto } from '../dto/proposal/participant.dto';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
+import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -268,26 +269,12 @@ export class ProposalMiscController {
   @ApiResponse({
     status: 200,
     description: 'Download link for CSV file with location information',
-    schema: {
-      type: 'object',
-      properties: {
-        downloadUrl: {
-          type: 'string',
-          description: 'Temporary download URL for the CSV file',
-        },
-        filename: {
-          type: 'string',
-          description: 'Suggested filename for the download',
-        },
-        expiresAt: {
-          type: 'string',
-          format: 'date-time',
-          description: 'When the download URL expires',
-        },
-      },
-    },
+    type: CsvDownloadResponseDto,
   })
-  async getLocationCsvDownloadLink(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest) {
+  async getLocationCsvDownloadLink(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<CsvDownloadResponseDto> {
     return await this.proposalMiscService.generateLocationCsvDownloadLink(id, user);
   }
 

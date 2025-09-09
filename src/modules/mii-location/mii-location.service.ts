@@ -1,5 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import axios, { AxiosInstance } from 'axios';
 
 export interface MiiLocationInfo {
@@ -12,11 +15,12 @@ export interface MiiLocationInfo {
 export class MiiLocationService {
   private readonly logger = new Logger(MiiLocationService.name);
   private readonly httpClient: AxiosInstance;
-  private locationCache: Map<string, MiiLocationInfo> = new Map();
-  private cacheExpiry: Date | null = null;
-  private readonly CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly CACHE_DURATION_MS = 0.3 * 60 * 60 * 1000; // 30 minutes
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {
     this.httpClient = axios.create({
       timeout: 10000,
       headers: {
@@ -34,22 +38,31 @@ export class MiiLocationService {
   }
 
   async getLocationInfo(locationCode: string): Promise<MiiLocationInfo | null> {
-    if (this.isCacheValid() && this.locationCache.has(locationCode)) {
-      return this.locationCache.get(locationCode);
+    const cachedData = await this.cacheManager.get<Map<string, MiiLocationInfo>>(CacheKey.MiiLocations);
+
+    if (cachedData && cachedData.has(locationCode)) {
+      return cachedData.get(locationCode);
     }
 
-    if (!this.isCacheValid()) {
+    if (!cachedData) {
       await this.fetchAndCacheLocationData();
+      const refreshedData = await this.cacheManager.get<Map<string, MiiLocationInfo>>(CacheKey.MiiLocations);
+      return refreshedData?.get(locationCode) || null;
     }
 
-    return this.locationCache.get(locationCode) || null;
+    return null;
   }
 
   async getAllLocationInfo(): Promise<Map<string, MiiLocationInfo>> {
-    if (!this.isCacheValid()) {
+    const cachedData = await this.cacheManager.get<Map<string, MiiLocationInfo>>(CacheKey.MiiLocations);
+
+    if (!cachedData) {
       await this.fetchAndCacheLocationData();
+      const refreshedData = await this.cacheManager.get<Map<string, MiiLocationInfo>>(CacheKey.MiiLocations);
+      return refreshedData || new Map();
     }
-    return new Map(this.locationCache);
+
+    return cachedData;
   }
 
   private async fetchAndCacheLocationData(): Promise<void> {
@@ -60,19 +73,19 @@ export class MiiLocationService {
       const response = await this.httpClient.get(url);
 
       if (response.data && response.data.concept) {
-        this.locationCache.clear();
+        const locationCache = new Map<string, MiiLocationInfo>();
 
         response.data.concept.forEach((concept: any) => {
           if (concept.code && concept.display) {
-            this.locationCache.set(concept.code, {
+            locationCache.set(concept.code, {
               code: concept.code,
               display: concept.display,
             });
           }
         });
 
-        this.cacheExpiry = new Date(Date.now() + this.CACHE_DURATION_MS);
-        this.logger.log(`Successfully cached ${this.locationCache.size} MII locations`);
+        await this.cacheManager.set(CacheKey.MiiLocations, locationCache, this.CACHE_DURATION_MS);
+        this.logger.log(`Successfully cached ${locationCache.size} MII locations`);
       } else {
         this.logger.warn('Invalid response structure from MII CodeSystem');
       }
@@ -81,12 +94,8 @@ export class MiiLocationService {
     }
   }
 
-  private isCacheValid(): boolean {
-    return this.cacheExpiry !== null && this.cacheExpiry > new Date();
-  }
-
   async refreshCache(): Promise<void> {
-    this.cacheExpiry = null;
+    await this.cacheManager.del(CacheKey.MiiLocations);
     await this.fetchAndCacheLocationData();
   }
 }
