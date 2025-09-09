@@ -63,42 +63,17 @@ export class StorageService {
     return await this.minioClient.presignedGetObject(this.bucketName, blobName, lifetimeInSeconds);
   }
 
-  async downloadFile(blobName: string): Promise<Buffer> {
-    const exists = await this.blobExists(blobName);
-    if (!exists) {
-      throw new NotFoundException(`Upload does not exist: ${blobName}`);
-    }
-
-    try {
-      const dataStream = await this.minioClient.getObject(this.bucketName, blobName);
-
-      return new Promise((resolve, reject) => {
-        const chunks: Buffer[] = [];
-
-        dataStream.on('data', (chunk) => {
-          chunks.push(chunk);
-        });
-
-        dataStream.on('end', () => {
-          resolve(Buffer.concat(chunks));
-        });
-
-        dataStream.on('error', (error) => {
-          reject(new Error(`Failed to stream file ${blobName}: ${error.message}`));
-        });
-      });
-    } catch (error) {
-      throw new NotFoundException(`Failed to download file ${blobName}: ${error.message}`);
-    }
-  }
-
-  private async blobExists(blobName: string): Promise<boolean> {
+  async blobExists(blobName: string): Promise<boolean> {
     try {
       await this.minioClient.statObject(this.bucketName, blobName);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
+  }
+
+  async getObject(blobName: string) {
+    return await this.minioClient.getObject(this.bucketName, blobName);
   }
 
   async deleteBlob(blobName: string): Promise<void> {

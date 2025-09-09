@@ -310,35 +310,4 @@ export class ProposalMiscController {
   ): Promise<DizDetailsGetDto> {
     return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
   }
-
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
-  @Post(':id/uploads/export')
-  @UsePipes(ValidationPipe)
-  @ApiOperation({ summary: 'Returns all proposal uploads as a zip file' })
-  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
-  async exportAllUploadsAsZip(
-    @Param() { id }: MongoIdParamDto,
-    @Request() { user }: FdpgRequest,
-    @Res() res: Response,
-  ) {
-    const { zipBuffer, projectAbbreviation } = await this.proposalMiscService.exportAllUploadsAsZip(id, user);
-
-    if (zipBuffer && Buffer.isBuffer(zipBuffer)) {
-      const filename = `${projectAbbreviation}.zip`;
-
-      const encodedFilename = encodeURIComponent(filename);
-      const contentDisposition = `attachment; filename*=UTF-8''${encodedFilename}`;
-
-      res.set({
-        'Content-Type': 'application/zip',
-        'Content-Disposition': contentDisposition,
-        'Content-Length': zipBuffer.length,
-        'Access-Control-Expose-Headers': 'Content-Disposition, X-Filename',
-        'X-Filename': filename,
-      });
-      return res.status(200).send(zipBuffer);
-    } else {
-      return res.status(204).send();
-    }
-  }
 }

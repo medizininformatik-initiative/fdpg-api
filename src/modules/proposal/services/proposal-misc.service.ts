@@ -37,6 +37,7 @@ import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { StorageService } from 'src/modules/storage/storage.service';
+import { ProposalDownloadService } from './proposal-download.service';
 import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
 import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
@@ -65,6 +66,7 @@ export class ProposalMiscService {
     private proposalPdfService: ProposalPdfService,
     private proposalFormService: ProposalFormService,
     private storageService: StorageService,
+    private proposalDownloadService: ProposalDownloadService,
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
   ) {}
@@ -663,7 +665,7 @@ export class ProposalMiscService {
 
     const downloadPromises = proposal.uploads.map(async (upload) => {
       try {
-        const fileBuffer = await this.storageService.downloadFile(upload.blobName);
+        const fileBuffer = await this.proposalDownloadService.downloadFile(upload.blobName);
         const fileName = upload.fileName || `upload_${upload._id}`;
         zip.file(fileName, fileBuffer);
         return { success: true, fileName };
