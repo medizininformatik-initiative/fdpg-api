@@ -12,7 +12,6 @@ import { AlertConfig, AlertConfigDocument } from './schema/alert/alert-config.sc
 import { TermsConfig, TermsConfigDocument } from './schema/terms/terms-config.schema';
 import { DataSourceDto } from './dto/data-source.dto';
 import { StorageService } from '../storage/storage.service';
-import { IRequestUser } from 'src/shared/types/request-user.interface';
 
 @Injectable()
 export class AdminConfigService {
@@ -97,41 +96,40 @@ export class AdminConfigService {
 
   async getAlertConfig(): Promise<AlertConfigGetDto> {
     const document = await this.alertConfigModel.findOne({ type: ConfigType.Alert });
+
     if (document) {
       const plain = document.toObject();
       return plainToClass(AlertConfigGetDto, plain);
     } else {
       return plainToClass(AlertConfigGetDto, {
-        logo: undefined,
+        logoBase64: undefined,
         isVisible: false,
         message: '',
       });
     }
   }
 
-  async updateAlertConfig(
-    alertConfig: AlertConfigCreateDto,
-    logo: Express.Multer.File | undefined,
-    user: IRequestUser,
-  ): Promise<void> {
-    let logoUrl: string | undefined = alertConfig.logo;
+  async updateAlertConfig(alertConfig: AlertConfigCreateDto, logo: Express.Multer.File | undefined): Promise<void> {
+    let logoBase64: string | undefined;
+
     if (logo) {
-      const objectName = `config/alert/logo-${Date.now()}-${logo.originalname}`;
-      await this.storageService.uploadFile(objectName, logo, user);
-      logoUrl = await this.storageService.getSasUrl(objectName, true);
+      // Convert uploaded file to base64
+      logoBase64 = `data:${logo.mimetype};base64,${logo.buffer.toString('base64')}`;
     }
 
-    await this.alertConfigModel.updateOne(
-      { type: ConfigType.Alert },
-      {
-        $set: {
-          ...alertConfig,
-          ...(logoUrl ? { logo: logoUrl } : {}),
-          updatedAt: new Date(),
-          type: ConfigType.Alert,
-        },
-      },
-      { upsert: true },
-    );
+    const updateData: any = {
+      ...alertConfig,
+      updatedAt: new Date(),
+      type: ConfigType.Alert,
+    };
+
+    if (logoBase64) {
+      updateData.logoBase64 = logoBase64;
+    } else if (alertConfig.logoBase64 === undefined) {
+      updateData.logoBase64 = undefined;
+    }
+
+    // Simply overwrite the database record - no file cleanup needed for base64
+    await this.alertConfigModel.updateOne({ type: ConfigType.Alert }, { $set: updateData }, { upsert: true });
   }
 }

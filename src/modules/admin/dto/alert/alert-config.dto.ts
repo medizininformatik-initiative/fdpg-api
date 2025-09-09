@@ -7,8 +7,8 @@ export class AlertConfigBaseDto {
   @Expose()
   @IsString()
   @IsOptional()
-  @MaxLength(2048)
-  logo?: string;
+  @MaxLength(100000)
+  logoBase64?: string;
 
   @Expose()
   @Transform(({ value }) => {

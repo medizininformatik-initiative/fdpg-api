@@ -6,7 +6,6 @@ import {
   Put,
   UploadedFile,
   UseInterceptors,
-  Request,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -23,7 +22,6 @@ import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from './dto/data-
 import { DataSourceDto } from './dto/data-source.dto';
 import { AlertConfigCreateDto, AlertConfigGetDto } from './dto/alert/alert-config.dto';
 import { createMulterOptions } from 'src/shared/utils/multer-options.util';
-import { FdpgRequest } from 'src/shared/types/request-user.interface';
 
 @ApiController('config')
 export class AdminConfigController {
@@ -108,8 +106,7 @@ export class AdminConfigController {
   async updateAlertConfig(
     @UploadedFile() logo: Express.Multer.File,
     @Body() alertConfig: AlertConfigCreateDto,
-    @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    return this.adminConfigService.updateAlertConfig(alertConfig, logo, user);
+    return this.adminConfigService.updateAlertConfig(alertConfig, logo);
   }
 }

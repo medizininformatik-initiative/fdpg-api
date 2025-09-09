@@ -13,7 +13,7 @@ export class AlertConfig {
   type: ConfigType.Alert;
 
   @Prop({ type: String, required: false })
-  logo?: string;
+  logoBase64?: string;
 
   @Prop({ type: Boolean, required: true })
   isVisible: boolean;
