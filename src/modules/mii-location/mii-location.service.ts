@@ -15,26 +15,25 @@ export interface MiiLocationInfo {
 export class MiiLocationService {
   private readonly logger = new Logger(MiiLocationService.name);
   private readonly httpClient: AxiosInstance;
-  private readonly CACHE_DURATION_MS = 0.3 * 60 * 60 * 1000; // 30 minutes
-
+  private readonly CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+  private readonly baseUrl: string;
   constructor(
     private configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
+    this.baseUrl = this.configService.get<string>(
+      'MII_CODESYSTEM_URL',
+      'https://fhir.simplifier.net/R4/CodeSystem/84198ff6-2c92-426f-96f2-bacd648543bb',
+    );
+
     this.httpClient = axios.create({
+      baseURL: this.baseUrl,
       timeout: 10000,
       headers: {
         Accept: 'application/json',
         'User-Agent': 'FDPG-API/1.0',
       },
     });
-  }
-
-  private getMiiCodeSystemUrl(): string {
-    return this.configService.get<string>(
-      'MII_CODESYSTEM_URL',
-      'https://fhir.simplifier.net/R4/CodeSystem/84198ff6-2c92-426f-96f2-bacd648543bb',
-    );
   }
 
   async getLocationInfo(locationCode: string): Promise<MiiLocationInfo | null> {
@@ -67,10 +66,9 @@ export class MiiLocationService {
 
   private async fetchAndCacheLocationData(): Promise<void> {
     try {
-      const url = this.getMiiCodeSystemUrl();
-      this.logger.log(`Fetching MII location data from: ${url}`);
+      this.logger.log(`Fetching MII location data from: ${this.baseUrl}`);
 
-      const response = await this.httpClient.get(url);
+      const response = await this.httpClient.get('');
 
       if (response.data && response.data.concept) {
         const locationCache = new Map<string, MiiLocationInfo>();
