@@ -31,12 +31,14 @@ import { isDateChangeValid, isDateOrderValid } from '../../utils/due-date-verifi
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalPdfService } from '../proposal-pdf.service';
 import { ProposalUploadService } from '../proposal-upload.service';
+import { ProposalDownloadService } from '../proposal-download.service';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { SelectedCohortUploadDto } from '../../dto/cohort-upload.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { addUpload, getBlobName } from '../../utils/proposal.utils';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
+import { MiiLocationService } from 'src/modules/mii-location/mii-location.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -90,7 +92,9 @@ describe('ProposalMiscService', () => {
   let proposalFormService: jest.Mocked<ProposalFormService>;
   let uploadService: jest.Mocked<ProposalUploadService>;
   let storageService: jest.Mocked<StorageService>;
+  let proposalDownloadService: jest.Mocked<ProposalDownloadService>;
   let feasibilityService: jest.Mocked<FeasibilityService>;
+  let miiLocationService: jest.Mocked<MiiLocationService>;
 
   const request = {
     user: {
@@ -239,6 +243,13 @@ describe('ProposalMiscService', () => {
           useValue: {
             findAll: jest.fn(),
             uploadFile: jest.fn(),
+            getSasUrl: jest.fn(),
+          },
+        },
+        {
+          provide: ProposalDownloadService,
+          useValue: {
+            downloadFile: jest.fn(),
           },
         },
         {
@@ -252,6 +263,13 @@ describe('ProposalMiscService', () => {
           provide: FeasibilityService,
           useValue: {
             getQueryContentById: jest.fn(),
+          },
+        },
+        {
+          provide: MiiLocationService,
+          useValue: {
+            getAllLocationInfo: jest.fn(),
+            getLocationInfo: jest.fn(),
           },
         },
       ],
@@ -268,7 +286,11 @@ describe('ProposalMiscService', () => {
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
     uploadService = module.get<ProposalUploadService>(ProposalUploadService) as jest.Mocked<ProposalUploadService>;
     storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    proposalDownloadService = module.get<ProposalDownloadService>(
+      ProposalDownloadService,
+    ) as jest.Mocked<ProposalDownloadService>;
     feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
+    miiLocationService = module.get<MiiLocationService>(MiiLocationService) as jest.Mocked<MiiLocationService>;
   });
 
   it('should be defined', () => {
@@ -460,7 +482,7 @@ describe('ProposalMiscService', () => {
       await proposalMiscService.setFdpgChecklist(proposalId, checklist, request.user);
 
       expect(updateFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist);
-      expect(proposalDocument.save).toBeCalled();
+      expect(proposalDocument.save).toHaveBeenCalled();
     });
   });
 
@@ -745,6 +767,139 @@ describe('ProposalMiscService', () => {
       await expect(proposalMiscService.deleteCohort('proposal-Id', 'cohort-deletion-id', request.user)).rejects.toThrow(
         ForbiddenException,
       );
+    });
+  });
+
+  describe('generateLocationCsv', () => {
+    it('should generate CSV with location information', async () => {
+      const proposal = {
+        _id: 'proposal-id',
+        projectAbbreviation: 'TEST_PROJECT',
+        openDizChecks: [MiiLocation.Charité, MiiLocation.UKT],
+        uacApprovedLocations: [MiiLocation.Charité],
+        requestedButExcludedLocations: [MiiLocation.UKT],
+        conditionalApprovals: [
+          {
+            location: MiiLocation.Charité,
+            conditionReasoning: 'Special conditions apply',
+          },
+        ],
+        additionalLocationInformation: [
+          {
+            location: MiiLocation.Charité,
+            locationPublicationName: 'Charité Publication',
+            legalBasis: true,
+          },
+        ],
+      } as any;
+
+      // Mock MII location data
+      const mockMiiLocationMap = new Map([
+        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
+        [MiiLocation.UKT, { code: 'UKT', display: 'Universitätsklinikum Tübingen' }],
+      ]);
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+      miiLocationService.getAllLocationInfo.mockResolvedValueOnce(mockMiiLocationMap);
+
+      const result = await proposalMiscService.generateLocationCsv('proposal-id', request.user);
+
+      expect(result).toBeInstanceOf(Buffer);
+
+      const csvContent = result.toString('utf-8');
+      const lines = csvContent.split('\n');
+
+      // Check headers
+      expect(lines[0]).toBe(
+        'Rubrum,Location Code,Location Display Name,Conditions,Approval Status,Publication Name,Consent (Legal Basis)',
+      );
+
+      // Check that we have data rows (excluding header)
+      expect(lines.length).toBeGreaterThan(1);
+
+      // Check that CSV contains expected data
+      expect(csvContent).toContain('Charité');
+      expect(csvContent).toContain('UKT');
+      expect(csvContent).toContain('Charité - Universitätsmedizin Berlin');
+      expect(csvContent).toContain('Universitätsklinikum Tübingen');
+      // expect(csvContent).toContain('charite-berlin');
+      // expect(csvContent).toContain('ukt-tuebingen');
+      expect(csvContent).toContain('Special conditions apply');
+      expect(csvContent).toContain('Approved');
+      expect(csvContent).toContain('Denied');
+      expect(csvContent).toContain('Charité Publication');
+      expect(csvContent).toContain('true');
+    });
+
+    it('should handle empty location arrays', async () => {
+      const proposal = {
+        _id: 'proposal-id',
+        projectAbbreviation: 'EMPTY_PROJECT',
+        openDizChecks: [],
+        uacApprovedLocations: [],
+        requestedButExcludedLocations: [],
+        conditionalApprovals: [],
+        additionalLocationInformation: [],
+      } as any;
+
+      // Mock empty MII location data
+      const mockMiiLocationMap = new Map();
+
+      proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
+      miiLocationService.getAllLocationInfo.mockResolvedValueOnce(mockMiiLocationMap);
+
+      const result = await proposalMiscService.generateLocationCsv('proposal-id', request.user);
+
+      expect(result).toBeInstanceOf(Buffer);
+
+      const csvContent = result.toString('utf-8');
+      const lines = csvContent.split('\n');
+
+      // Should only have header row
+      expect(lines.length).toBe(1);
+      expect(lines[0]).toBe(
+        'Rubrum,Location Code,Location Display Name,Conditions,Approval Status,Publication Name,Consent (Legal Basis)',
+      );
+    });
+
+    it('should generate download link for location CSV', async () => {
+      const proposal = {
+        _id: 'proposal-id',
+        projectAbbreviation: 'TEST_PROJECT',
+        openDizChecks: [MiiLocation.Charité],
+        uacApprovedLocations: [],
+        requestedButExcludedLocations: [],
+        conditionalApprovals: [],
+        additionalLocationInformation: [],
+      } as any;
+
+      // Mock MII location data
+      const mockMiiLocationMap = new Map([
+        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
+      ]);
+
+      const mockDownloadUrl =
+        'https://storage.example.com/temp/csv-downloads/proposal-id/1234567890-location-contracting-info.csv';
+
+      // Mock the findDocument call twice - once for the download link method and once for the CSV generation
+      proposalCrudService.findDocument
+        .mockResolvedValueOnce(proposal) // First call in generateLocationCsvDownloadLink
+        .mockResolvedValueOnce(proposal); // Second call in generateLocationCsv (called internally)
+
+      miiLocationService.getAllLocationInfo.mockResolvedValueOnce(mockMiiLocationMap);
+      storageService.uploadFile.mockResolvedValueOnce(undefined);
+      storageService.getSasUrl.mockResolvedValueOnce(mockDownloadUrl);
+
+      const result = await proposalMiscService.generateLocationCsvDownloadLink('proposal-id', request.user);
+
+      expect(result).toHaveProperty('downloadUrl');
+      expect(result).toHaveProperty('filename');
+      expect(result).toHaveProperty('expiresAt');
+      expect(result.downloadUrl).toBe(mockDownloadUrl);
+      expect(result.filename).toContain('location-contracting-info-TEST_PROJECT');
+      expect(result.filename).toContain('.csv');
+      expect(new Date(result.expiresAt)).toBeInstanceOf(Date);
+      expect(new Date(result.expiresAt).getTime()).toBeGreaterThan(Date.now());
     });
   });
 });

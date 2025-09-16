@@ -23,6 +23,7 @@ import { Proposal, ProposalSchema } from '../proposal/schema/proposal.schema';
 import { DataPrivacyConfig, DataPrivacyConfigSchema } from '../admin/schema/data-privacy/data-privacy-config.schema';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { ProposalForm, ProposalFormSchema } from '../proposal-form/schema/proposal-form.schema';
+import { MiiLocationModule } from '../mii-location/mii-location.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { ProposalForm, ProposalFormSchema } from '../proposal-form/schema/propos
     PdfEngineModule,
     FeasibilityModule,
     ProposalFormModule,
+    MiiLocationModule,
   ],
   controllers: [AppController],
   providers: [

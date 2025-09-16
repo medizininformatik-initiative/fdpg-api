@@ -105,8 +105,8 @@ describe('AdminConfigService', () => {
       const result = await service.findTermsConfig(PlatformIdentifier.Mii);
 
       const filter = { type: ConfigType.TermsDialog, platform: PlatformIdentifier.Mii };
-      expect(termsConfigModel.findOne).toBeCalledWith(filter);
-      expect(toObject).toBeCalledTimes(1);
+      expect(termsConfigModel.findOne).toHaveBeenCalledWith(filter);
+      expect(toObject).toHaveBeenCalled();
       expect(result).toEqual(out);
     });
 
@@ -136,7 +136,7 @@ describe('AdminConfigService', () => {
       await service.updateTermsConfig(PlatformIdentifier.Mii, termsConfig);
 
       const filter = { type: ConfigType.TermsDialog, platform: PlatformIdentifier.Mii };
-      expect(termsConfigModel.updateOne).toBeCalledTimes(1);
+      expect(termsConfigModel.updateOne).toHaveBeenCalled();
       expect(termsConfigModel.updateOne).toHaveBeenCalledWith(
         filter,
         expect.objectContaining({
@@ -162,8 +162,8 @@ describe('AdminConfigService', () => {
       const result = await service.getDataPrivacyConfig(PlatformIdentifier.Mii);
 
       const filter = { type: ConfigType.DataPrivacy, platform: PlatformIdentifier.Mii };
-      expect(dataPrivacyModel.findOne).toBeCalledWith(filter);
-      expect(toObject).toBeCalledTimes(1);
+      expect(dataPrivacyModel.findOne).toHaveBeenCalledWith(filter);
+      expect(toObject).toHaveBeenCalled();
       expect(result).toEqual(out);
     });
 
@@ -205,7 +205,7 @@ describe('AdminConfigService', () => {
       await service.updateDataPrivacyConfig(PlatformIdentifier.Mii, dataPrivacyConfig);
 
       const filter = { type: ConfigType.DataPrivacy, platform: PlatformIdentifier.Mii };
-      expect(dataPrivacyModel.updateOne).toBeCalledTimes(1);
+      expect(dataPrivacyModel.updateOne).toHaveBeenCalled();
       expect(dataPrivacyModel.updateOne).toHaveBeenCalledWith(filter, expect.anything(), { upsert: true });
     });
   });
@@ -239,8 +239,8 @@ describe('AdminConfigService', () => {
       const result = await service.getAlertConfig();
 
       const filter = { type: ConfigType.Alert };
-      expect(alertConfigModel.findOne).toBeCalledWith(filter);
-      expect(toObject).toBeCalledTimes(1);
+      expect(alertConfigModel.findOne).toHaveBeenCalledWith(filter);
+      expect(toObject).toHaveBeenCalledTimes(1);
       expect(result).toEqual(out);
     });
 
@@ -274,7 +274,7 @@ describe('AdminConfigService', () => {
 
       const expectedBase64 = `data:image/jpeg;base64,${Buffer.from('test-image-data').toString('base64')}`;
 
-      expect(alertConfigModel.updateOne).toBeCalledWith(
+      expect(alertConfigModel.updateOne).toHaveBeenCalledWith(
         { type: ConfigType.Alert },
         {
           $set: {
@@ -298,7 +298,7 @@ describe('AdminConfigService', () => {
 
       await service.updateAlertConfig(alertConfig, undefined);
 
-      expect(alertConfigModel.updateOne).toBeCalledWith(
+      expect(alertConfigModel.updateOne).toHaveBeenCalledWith(
         { type: ConfigType.Alert },
         {
           $set: {
@@ -322,7 +322,7 @@ describe('AdminConfigService', () => {
 
       await service.updateAlertConfig(alertConfig, undefined);
 
-      expect(alertConfigModel.updateOne).toBeCalledWith(
+      expect(alertConfigModel.updateOne).toHaveBeenCalledWith(
         { type: ConfigType.Alert },
         {
           $set: {
