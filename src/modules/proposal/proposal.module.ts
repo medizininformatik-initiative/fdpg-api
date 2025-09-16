@@ -26,6 +26,7 @@ import { StatusChangeService } from './services/status-change.service';
 import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviation.validator';
 import { ProposalPdfService } from './services/proposal-pdf.service';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
+import { MiiLocationModule } from '../mii-location/mii-location.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ProposalFormModule } from '../proposal-form/proposal-form.module';
     SchedulerModule,
     AdminModule,
     ProposalFormModule,
+    MiiLocationModule,
   ],
   controllers: [
     ProposalCrudController,
