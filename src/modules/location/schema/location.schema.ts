@@ -1,25 +1,36 @@
-import { Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 export type LocationDocument = Location & Document;
 
-@Schema()
+@Schema({ _id: false })
 export class Location {
+  @Prop({ type: String })
+  _id: string;
 
-  identifier: string;
-
+  @Prop({ required: true, unique: true })
   externalCode: string;
 
-  name: string;
+  display: string;
 
-  city?: string;
+  defintion?: string;
 
   consortium: string;
 
-  trv?: string;
+  contract?: string;
 
+  abbreviation?: string;
+
+  @Prop({ type: Boolean, default: false })
+  dataIntegrationCenter: boolean;
+
+  @Prop({ type: Boolean, default: false })
   dataManagementCenter: boolean;
 
   deprecationDate?: Date;
+
+  @Prop({ type: Boolean, default: false })
+  deprecated: boolean;
 }
 
 export const LocationSchema = SchemaFactory.createForClass(Location);
