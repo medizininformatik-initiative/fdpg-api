@@ -15,6 +15,10 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     checkAccessForResearcher(proposal, user);
   }
 
+  if (user.singleKnownRole === Role.RegisteringMember) {
+    checkAccessForRegisteringMember(proposal, user);
+  }
+
   if (user.singleKnownRole === Role.FdpgMember) {
     checkAccessForFdpgMember(proposal, willBeModified);
   }
@@ -37,6 +41,15 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
   if (!isOwner && !isParticipatingScientist(proposal, user)) {
     throwForbiddenError(
       `Proposal has a different owner than this researcher and is not in the list of participating researchers`,
+    );
+  }
+};
+
+const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequestUser) => {
+  const isOwner = proposal.owner.id === user.userId;
+  if (!isOwner && !isParticipatingScientist(proposal, user)) {
+    throwForbiddenError(
+      `Proposal has a different owner than this registering member and is not in the list of participating researchers`,
     );
   }
 };
@@ -200,7 +213,7 @@ export const validateModifyingCohortAccess = (proposal: ProposalDocument, user: 
   }
 
   if (
-    user.singleKnownRole === Role.Researcher &&
+    (user.singleKnownRole === Role.Researcher || user.singleKnownRole === Role.RegisteringMember) &&
     ![ProposalStatus.Draft, ProposalStatus.Rework].includes(proposal.status)
   ) {
     throwForbiddenError('Cohorts cannot be changed at this step');

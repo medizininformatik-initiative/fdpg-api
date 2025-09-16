@@ -68,7 +68,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getResearcherInfo(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Put(':id/status')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -195,7 +195,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getAllProposalFormVersions();
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Put(':id/cohort/manual')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a manual upload cohort on a proposal' })
@@ -213,7 +213,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.addManualUploadCohort(id, newCohort, file, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Put(':id/cohort/automatic')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a cohort on a proposal' })
@@ -227,7 +227,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.automaticCohortAdd(id, newCohort, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Delete(':mainId/cohort/:subId')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Deletes the upload and cohort on a proposal' })
@@ -239,7 +239,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.deleteCohort(mainId, subId, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Post('query/csv')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: "Returns a queries zipped csv's" })
@@ -261,7 +261,7 @@ export class ProposalMiscController {
       return res.status(204).send();
     }
   }
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Patch(':id/participants')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Updates the participants of a proposal' })

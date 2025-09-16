@@ -28,7 +28,7 @@ import { ProposalUploadService } from '../services/proposal-upload.service';
 export class ProposalUploadController {
   constructor(private readonly proposalUploadService: ProposalUploadService) {}
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Post(':id/upload')
   @UsePipes(ValidationPipe)
   @UseInterceptors(FileInterceptor('file', createMulterOptions()))
@@ -45,7 +45,7 @@ export class ProposalUploadController {
     return await this.proposalUploadService.upload(id, file, type, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Get(':mainId/upload/:subId')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Upload or proposal could not be found' })
@@ -57,7 +57,7 @@ export class ProposalUploadController {
     return await this.proposalUploadService.getDownloadUrl(mainId, subId, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Delete(':mainId/upload/:subId')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Upload or proposal could not be found' })
