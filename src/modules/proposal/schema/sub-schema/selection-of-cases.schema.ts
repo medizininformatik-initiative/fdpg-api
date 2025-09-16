@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { DifeSelectionOfCasesEntries } from '../../enums/dife-selection-of-cases.enum';
+import { Document } from 'mongoose';
 
 export type SelectionOfCasesDocument = SelectionOfCases & Document;
 

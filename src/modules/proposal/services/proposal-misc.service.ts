@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import * as JSZip from 'jszip';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { EventEngineService } from '../../event-engine/event-engine.service';
@@ -36,6 +37,7 @@ import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { StorageService } from 'src/modules/storage/storage.service';
+import { ProposalDownloadService } from './proposal-download.service';
 import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
 import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
@@ -46,10 +48,13 @@ import { ProposalUploadService } from './proposal-upload.service';
 import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { ConflictException } from '@nestjs/common';
+import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class ProposalMiscService {
@@ -62,6 +67,7 @@ export class ProposalMiscService {
     private proposalPdfService: ProposalPdfService,
     private proposalFormService: ProposalFormService,
     private storageService: StorageService,
+    private proposalDownloadService: ProposalDownloadService,
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
   ) {}
@@ -78,6 +84,23 @@ export class ProposalMiscService {
           participant._id,
         ),
     );
+    const responsibleResearcher = document.projectResponsible;
+    if (
+      responsibleResearcher &&
+      !responsibleResearcher.projectResponsibility?.applicantIsProjectResponsible &&
+      responsibleResearcher.researcher &&
+      responsibleResearcher.researcher.email
+    ) {
+      researchers.push(
+        new ResearcherIdentityDto(
+          responsibleResearcher.researcher,
+          responsibleResearcher.participantCategory,
+          responsibleResearcher.participantRole,
+          false,
+          new Types.ObjectId().toString(),
+        ),
+      );
+    }
 
     const tasks = researchers.map((researcher) => {
       if (researcher.email) {
@@ -88,7 +111,7 @@ export class ProposalMiscService {
     const results = await Promise.allSettled(tasks);
 
     results.forEach((result) => {
-      if (result.status === 'fulfilled' && result.value.length > 0) {
+      if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
         researchers.map((researcher) => {
           if (researcher.email.toLocaleLowerCase() === result.value[0].email.toLocaleLowerCase()) {
             const isEmailVerified = !result.value.some((user) => !user.emailVerified);
@@ -281,6 +304,10 @@ export class ProposalMiscService {
 
     setDueDate(proposal, !!proposal.researcherSignedAt);
 
+    if (changeList[DueDateEnum.DUE_DAYS_LOCATION_CHECK] !== undefined) {
+      recalculateAllUacDelayStatus(proposal);
+    }
+
     await proposal.save();
     if (Object.keys(changeList).length > 0) {
       await this.eventEngineService.handleDeadlineChange(proposal, changeList);
@@ -465,7 +492,51 @@ export class ProposalMiscService {
     }
 
     const oldParticipants = [...proposal.participants];
-    mergeDeep(proposal, { participants });
+
+    const responsible = (participants || []).find(
+      (p) => p?.participantRole?.role === ParticipantRoleType.ResponsibleScientist,
+    );
+
+    if (responsible) {
+      const filteredParticipants = (participants || []).filter(
+        (p) => p?.participantRole?.role !== ParticipantRoleType.ResponsibleScientist,
+      );
+
+      // If there is an existing projectResponsible, move them into participants
+      const existingResponsible = proposal.projectResponsible;
+      if (existingResponsible?.researcher) {
+        const existsInFiltered = filteredParticipants.some(
+          (p) => p?.researcher?.email?.toLowerCase?.() === existingResponsible?.researcher?.email?.toLowerCase?.(),
+        );
+        if (!existsInFiltered) {
+          const toParticipant = {
+            researcher: JSON.parse(JSON.stringify(existingResponsible.researcher)),
+            institute: JSON.parse(JSON.stringify(existingResponsible.institute)),
+            participantCategory: JSON.parse(JSON.stringify(existingResponsible.participantCategory)),
+            participantRole: JSON.parse(JSON.stringify(existingResponsible.participantRole)),
+            addedByFdpg: existingResponsible.addedByFdpg,
+          } as any;
+          toParticipant.participantRole.role = ParticipantRoleType.ParticipatingScientist;
+          filteredParticipants.push(toParticipant);
+        }
+      }
+
+      const newProjectResponsible = {
+        // Preserve existing projectResponsibility flags/settings
+        projectResponsibility: proposal.projectResponsible?.projectResponsibility
+          ? JSON.parse(JSON.stringify(proposal.projectResponsible.projectResponsibility))
+          : undefined,
+        researcher: JSON.parse(JSON.stringify(responsible?.researcher)),
+        institute: JSON.parse(JSON.stringify(responsible?.institute)),
+        participantCategory: JSON.parse(JSON.stringify(responsible?.participantCategory)),
+        participantRole: JSON.parse(JSON.stringify(responsible?.participantRole)),
+        addedByFdpg: true,
+      } as any;
+
+      mergeDeep(proposal, { participants: filteredParticipants, projectResponsible: newProjectResponsible });
+    } else {
+      mergeDeep(proposal, { participants });
+    }
 
     // Compare old participants with the actual merged state
     addHistoryItemForParticipantsUpdated(proposal, user, oldParticipants, proposal.participants);
@@ -577,5 +648,50 @@ export class ProposalMiscService {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });
+  }
+  async exportAllUploadsAsZip(
+    proposalId: string,
+    user: IRequestUser,
+  ): Promise<{ zipBuffer: Buffer; projectAbbreviation: string }> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, {
+      uploads: 1,
+      projectAbbreviation: 1,
+    });
+
+    if (!proposal.uploads || proposal.uploads.length === 0) {
+      throw new NotFoundException('No uploads found for this proposal');
+    }
+
+    if (!proposal.projectAbbreviation) {
+      throw new NotFoundException('Project abbreviation not found for this proposal');
+    }
+
+    const zip = new JSZip();
+
+    const downloadPromises = proposal.uploads.map(async (upload) => {
+      try {
+        const fileBuffer = await this.proposalDownloadService.downloadFile(upload.blobName);
+        const fileName = upload.fileName || `upload_${upload._id}`;
+        zip.file(fileName, fileBuffer);
+        return { success: true, fileName };
+      } catch (error) {
+        console.warn(`Skipping missing file ${upload.blobName}:`, error.message);
+        return { success: false, fileName: upload.fileName || `upload_${upload._id}`, error: error.message };
+      }
+    });
+
+    const results = await Promise.allSettled(downloadPromises);
+    const successful = results.filter((result) => result.status === 'fulfilled' && result.value.success).length;
+    const failed = results.filter(
+      (result) => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value.success),
+    ).length;
+
+    console.log(`Zip creation summary: ${successful} files added, ${failed} files skipped for proposal ${proposalId}.`);
+    if (successful === 0) {
+      throw new NotFoundException('No accessible files found for this proposal');
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    return { zipBuffer, projectAbbreviation: proposal.projectAbbreviation };
   }
 }

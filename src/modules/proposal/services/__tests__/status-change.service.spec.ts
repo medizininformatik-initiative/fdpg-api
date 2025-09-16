@@ -248,11 +248,16 @@ describe('StatusChangeService', () => {
           types: [ScheduleType.ParticipatingResearcherSummary],
         });
 
-        expect(declineUnansweredConditions).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user);
-        expect(declineUnselectedLocations).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user, [
-          MiiLocation.UKAU,
-        ]);
-        expect(removeFdpgTasksForContracting).toBeCalledWith(expect.objectContaining({ _id: proposalId }));
+        expect(declineUnansweredConditions).toHaveBeenCalledWith(
+          expect.objectContaining({ _id: proposalId }),
+          request.user,
+        );
+        expect(declineUnselectedLocations).toHaveBeenCalledWith(
+          expect.objectContaining({ _id: proposalId }),
+          request.user,
+          [MiiLocation.UKAU],
+        );
+        expect(removeFdpgTasksForContracting).toHaveBeenCalledWith(expect.objectContaining({ _id: proposalId }));
       });
     });
 
@@ -271,8 +276,11 @@ describe('StatusChangeService', () => {
           types: [ScheduleType.ParticipatingResearcherSummary],
         });
 
-        expect(declineUnansweredContracts).toBeCalledWith(expect.objectContaining({ _id: proposalId }), request.user);
-        expect(removeFdpgTasksForDataDelivery).toBeCalledWith(expect.objectContaining({ _id: proposalId }));
+        expect(declineUnansweredContracts).toHaveBeenCalledWith(
+          expect.objectContaining({ _id: proposalId }),
+          request.user,
+        );
+        expect(removeFdpgTasksForDataDelivery).toHaveBeenCalledWith(expect.objectContaining({ _id: proposalId }));
 
         expect(proposalDocument.openDizChecks).toEqual([]);
         expect(proposalDocument.dizApprovedLocations).toEqual([]);
@@ -382,8 +390,8 @@ describe('StatusChangeService', () => {
           types: [ScheduleType.ParticipatingResearcherSummary],
         });
 
-        expect(excludeAllRequestedLocations).toBeCalledWith(proposalDocument);
-        expect(schedulerService.cancelEventsForProposal).toBeCalledWith(proposalDocument);
+        expect(excludeAllRequestedLocations).toHaveBeenCalledWith(proposalDocument);
+        expect(schedulerService.cancelEventsForProposal).toHaveBeenCalledWith(proposalDocument);
       });
     });
   });

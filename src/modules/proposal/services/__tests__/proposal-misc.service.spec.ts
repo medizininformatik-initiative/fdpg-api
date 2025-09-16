@@ -31,6 +31,7 @@ import { isDateChangeValid, isDateOrderValid } from '../../utils/due-date-verifi
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalPdfService } from '../proposal-pdf.service';
 import { ProposalUploadService } from '../proposal-upload.service';
+import { ProposalDownloadService } from '../proposal-download.service';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { SelectedCohortUploadDto } from '../../dto/cohort-upload.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
@@ -90,6 +91,7 @@ describe('ProposalMiscService', () => {
   let proposalFormService: jest.Mocked<ProposalFormService>;
   let uploadService: jest.Mocked<ProposalUploadService>;
   let storageService: jest.Mocked<StorageService>;
+  let proposalDownloadService: jest.Mocked<ProposalDownloadService>;
   let feasibilityService: jest.Mocked<FeasibilityService>;
 
   const request = {
@@ -242,6 +244,12 @@ describe('ProposalMiscService', () => {
           },
         },
         {
+          provide: ProposalDownloadService,
+          useValue: {
+            downloadFile: jest.fn(),
+          },
+        },
+        {
           provide: ProposalUploadService,
           useValue: {
             findAll: jest.fn(),
@@ -268,6 +276,9 @@ describe('ProposalMiscService', () => {
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
     uploadService = module.get<ProposalUploadService>(ProposalUploadService) as jest.Mocked<ProposalUploadService>;
     storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    proposalDownloadService = module.get<ProposalDownloadService>(
+      ProposalDownloadService,
+    ) as jest.Mocked<ProposalDownloadService>;
     feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
   });
 
@@ -460,7 +471,7 @@ describe('ProposalMiscService', () => {
       await proposalMiscService.setFdpgChecklist(proposalId, checklist, request.user);
 
       expect(updateFdpgChecklist).toHaveBeenCalledWith(proposalDocument, checklist);
-      expect(proposalDocument.save).toBeCalled();
+      expect(proposalDocument.save).toHaveBeenCalled();
     });
   });
 

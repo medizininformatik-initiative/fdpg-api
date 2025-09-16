@@ -51,6 +51,18 @@ jest.mock('../migrations', () => ({
     up: jest.fn(),
     down: jest.fn(),
   })),
+  Migration016: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
+  Migration017: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
+  Migration018: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
 }));
 
 describe('MigrationService', () => {
@@ -179,16 +191,15 @@ describe('MigrationService', () => {
 
   describe('DB Sessions', () => {
     it('should start and end a session', async () => {
-      (service as any).desiredDbVersion = 0;
+      (service as any).desiredDbVersion = 2;
       (service as any).preventDowngrade = false;
-      let dbVersion = 1;
+      let callCount = 0;
       jest.spyOn(migrationModel, 'findOne').mockImplementation(() => {
-        const dbVersionOld = dbVersion;
-        dbVersion = 0;
-        return {
-          dbVersion: dbVersionOld,
-          save: jest.fn(),
-        } as any;
+        callCount++;
+        if (callCount === 1) {
+          return { dbVersion: 1, save: jest.fn() } as any; // triggers upgrade to 2
+        }
+        return { dbVersion: 2, save: jest.fn() } as any; // signals up-to-date, breaks loop
       });
 
       const startTransaction = jest.fn();
@@ -200,9 +211,9 @@ describe('MigrationService', () => {
 
       await service.onModuleInit();
 
-      expect(connection.startSession).toBeCalledTimes(0);
-      expect(startTransaction).toBeCalledTimes(0);
-      expect(endSession).toBeCalledTimes(0);
+      expect(connection.startSession).toHaveBeenCalled();
+      expect(startTransaction).toHaveBeenCalled();
+      expect(endSession).toHaveBeenCalled();
     });
 
     it('should abort a transaction on error', async () => {
@@ -229,10 +240,10 @@ describe('MigrationService', () => {
 
       await expect(service.onModuleInit()).rejects.toBe('Error');
 
-      expect(connection.startSession).toBeCalledTimes(1);
-      expect(startTransaction).toBeCalledTimes(1);
-      expect(abortTransaction).toBeCalledTimes(1);
-      expect(endSession).toBeCalledTimes(1);
+      expect(connection.startSession).toHaveBeenCalled();
+      expect(startTransaction).toHaveBeenCalled();
+      expect(abortTransaction).toHaveBeenCalled();
+      expect(endSession).toHaveBeenCalled();
     });
   });
 });

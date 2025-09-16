@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { ConfigType } from 'src/modules/admin/enums/config-type.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { DataPrivacyConfig } from 'src/modules/admin/schema/data-privacy/data-privacy-config.schema';

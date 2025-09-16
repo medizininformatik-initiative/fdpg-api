@@ -55,7 +55,7 @@ describe('JwtAuthGuard', () => {
       const call = guard.handleRequest.bind(guard);
       const error = await getError(async () => await call(new Error('test'), userToHandle, undefined));
       expect(error).toBeDefined();
-      expect(trace.getTracer).toBeCalledWith('basic');
+      expect(trace.getTracer).toHaveBeenCalledWith('basic');
       expect(startSpanMock).toHaveBeenCalledTimes(1);
       expect(endSpanMock).toHaveBeenCalledTimes(1);
     });
