@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
-import { Proposal } from '../../proposal/schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../../proposal/schema/proposal.schema';
 
 @Injectable()
 export class Migration014 implements IDbMigration {
-  constructor(@InjectModel(Proposal.name) private proposalModel: Model<Proposal>) {}
+  constructor(@InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>) {}
 
   async up(): Promise<void> {
     console.log('Starting migration 014: Fixing nested selectedCohorts structure');

@@ -45,7 +45,7 @@ describe('RoleGuard', () => {
 
       guard.canActivate(context);
 
-      expect(trace.getTracer).toBeCalledWith('basic');
+      expect(trace.getTracer).toHaveBeenCalledWith('basic');
       expect(startSpanMock).toHaveBeenCalledTimes(1);
       expect(endSpanMock).toHaveBeenCalledTimes(1);
     });

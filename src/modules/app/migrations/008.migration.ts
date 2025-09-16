@@ -1,12 +1,12 @@
 import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
-import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
+import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { ProposalForm } from 'src/modules/proposal-form/schema/proposal-form.schema';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 
 export class Migration008 implements IDbMigration {
   constructor(
-    private proposalModel: Model<Proposal>,
+    private proposalModel: Model<ProposalDocument>,
     private proposalFormModel: Model<ProposalForm>,
     private proposalFormService: ProposalFormService,
   ) {}

@@ -93,7 +93,7 @@ describe('validateContractSign', () => {
       );
       expect(() =>
         validateContractSign({ ...baseProposal, status: ProposalStatus.Draft }, dizUser, voteTrue, validFile),
-      ).toThrowError('The current status does not allow to sign contracts');
+      ).toThrow('The current status does not allow to sign contracts');
     });
   });
 
@@ -112,12 +112,12 @@ describe('validateContractSign', () => {
 
     it('throws ForbiddenException "The researcher contract is already signed" if already decided', () => {
       baseProposal.contractAcceptedByResearcher = true;
-      expect(() => validateContractSign(baseProposal, researcherUser, voteFalse, undefined)).toThrowError(
+      expect(() => validateContractSign(baseProposal, researcherUser, voteFalse, undefined)).toThrow(
         'The researcher contract is already signed',
       );
       baseProposal.contractAcceptedByResearcher = false;
       baseProposal.contractRejectedByResearcher = true;
-      expect(() => validateContractSign(baseProposal, researcherUser, voteTrue, validFile)).toThrowError(
+      expect(() => validateContractSign(baseProposal, researcherUser, voteTrue, validFile)).toThrow(
         'The researcher contract is already signed',
       );
     });
@@ -133,13 +133,13 @@ describe('validateContractSign', () => {
     it('throws ForbiddenException "The researcher has not signed the contract yet" if researcher decision missing', () => {
       baseProposal.contractAcceptedByResearcher = false;
       baseProposal.contractRejectedByResearcher = false;
-      expect(() => validateContractSign(baseProposal, dizUser, voteFalse, undefined)).toThrowError(
+      expect(() => validateContractSign(baseProposal, dizUser, voteFalse, undefined)).toThrow(
         'The researcher has not signed the contract yet',
       );
     });
 
     it('throws if location not in uacApprovedLocations', () => {
-      expect(() => validateContractSign(baseProposal, dizUser, voteTrue, validFile)).toThrowError(
+      expect(() => validateContractSign(baseProposal, dizUser, voteTrue, validFile)).toThrow(
         'The contract could not be signed. The location might be not valid to sign or already did',
       );
     });
@@ -147,7 +147,7 @@ describe('validateContractSign', () => {
     it('throws if location already in signedContracts', () => {
       baseProposal.uacApprovedLocations = [MiiLocation.BHC];
       baseProposal.signedContracts = [MiiLocation.BHC];
-      expect(() => validateContractSign(baseProposal, dizUser, voteFalse, undefined)).toThrowError(
+      expect(() => validateContractSign(baseProposal, dizUser, voteFalse, undefined)).toThrow(
         'The contract could not be signed. The location might be not valid to sign or already did',
       );
     });
