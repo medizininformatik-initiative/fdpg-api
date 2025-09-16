@@ -239,8 +239,8 @@ describe('AdminConfigService', () => {
       const result = await service.getAlertConfig();
 
       const filter = { type: ConfigType.Alert };
-      expect(alertConfigModel.findOne).toBeCalledWith(filter);
-      expect(toObject).toBeCalledTimes(1);
+      expect(alertConfigModel.findOne).toHaveBeenCalledWith(filter);
+      expect(toObject).toHaveBeenCalledTimes(1);
       expect(result).toEqual(out);
     });
 
@@ -274,7 +274,7 @@ describe('AdminConfigService', () => {
 
       const expectedBase64 = `data:image/jpeg;base64,${Buffer.from('test-image-data').toString('base64')}`;
 
-      expect(alertConfigModel.updateOne).toBeCalledWith(
+      expect(alertConfigModel.updateOne).toHaveBeenCalledWith(
         { type: ConfigType.Alert },
         {
           $set: {
@@ -298,7 +298,7 @@ describe('AdminConfigService', () => {
 
       await service.updateAlertConfig(alertConfig, undefined);
 
-      expect(alertConfigModel.updateOne).toBeCalledWith(
+      expect(alertConfigModel.updateOne).toHaveBeenCalledWith(
         { type: ConfigType.Alert },
         {
           $set: {
@@ -322,7 +322,7 @@ describe('AdminConfigService', () => {
 
       await service.updateAlertConfig(alertConfig, undefined);
 
-      expect(alertConfigModel.updateOne).toBeCalledWith(
+      expect(alertConfigModel.updateOne).toHaveBeenCalledWith(
         { type: ConfigType.Alert },
         {
           $set: {
