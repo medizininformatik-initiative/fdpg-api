@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import * as JSZip from 'jszip';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { EventEngineService } from '../../event-engine/event-engine.service';
@@ -36,6 +37,7 @@ import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
 import { StorageService } from 'src/modules/storage/storage.service';
+import { ProposalDownloadService } from './proposal-download.service';
 import { SelectedCohort } from '../schema/sub-schema/user-project/selected-cohort.schema';
 import { SelectedCohortDto } from '../dto/proposal/user-project/selected-cohort.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
@@ -65,6 +67,7 @@ export class ProposalMiscService {
     private proposalPdfService: ProposalPdfService,
     private proposalFormService: ProposalFormService,
     private storageService: StorageService,
+    private proposalDownloadService: ProposalDownloadService,
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
   ) {}
@@ -645,5 +648,50 @@ export class ProposalMiscService {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });
+  }
+  async exportAllUploadsAsZip(
+    proposalId: string,
+    user: IRequestUser,
+  ): Promise<{ zipBuffer: Buffer; projectAbbreviation: string }> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, {
+      uploads: 1,
+      projectAbbreviation: 1,
+    });
+
+    if (!proposal.uploads || proposal.uploads.length === 0) {
+      throw new NotFoundException('No uploads found for this proposal');
+    }
+
+    if (!proposal.projectAbbreviation) {
+      throw new NotFoundException('Project abbreviation not found for this proposal');
+    }
+
+    const zip = new JSZip();
+
+    const downloadPromises = proposal.uploads.map(async (upload) => {
+      try {
+        const fileBuffer = await this.proposalDownloadService.downloadFile(upload.blobName);
+        const fileName = upload.fileName || `upload_${upload._id}`;
+        zip.file(fileName, fileBuffer);
+        return { success: true, fileName };
+      } catch (error) {
+        console.warn(`Skipping missing file ${upload.blobName}:`, error.message);
+        return { success: false, fileName: upload.fileName || `upload_${upload._id}`, error: error.message };
+      }
+    });
+
+    const results = await Promise.allSettled(downloadPromises);
+    const successful = results.filter((result) => result.status === 'fulfilled' && result.value.success).length;
+    const failed = results.filter(
+      (result) => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value.success),
+    ).length;
+
+    console.log(`Zip creation summary: ${successful} files added, ${failed} files skipped for proposal ${proposalId}.`);
+    if (successful === 0) {
+      throw new NotFoundException('No accessible files found for this proposal');
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    return { zipBuffer, projectAbbreviation: proposal.projectAbbreviation };
   }
 }

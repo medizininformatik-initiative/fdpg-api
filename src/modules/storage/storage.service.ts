@@ -63,13 +63,17 @@ export class StorageService {
     return await this.minioClient.presignedGetObject(this.bucketName, blobName, lifetimeInSeconds);
   }
 
-  private async blobExists(blobName: string): Promise<boolean> {
+  async blobExists(blobName: string): Promise<boolean> {
     try {
       await this.minioClient.statObject(this.bucketName, blobName);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
+  }
+
+  async getObject(blobName: string) {
+    return await this.minioClient.getObject(this.bucketName, blobName);
   }
 
   async deleteBlob(blobName: string): Promise<void> {
