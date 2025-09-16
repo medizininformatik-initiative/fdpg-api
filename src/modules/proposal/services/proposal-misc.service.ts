@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import * as JSZip from 'jszip';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
+import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
@@ -48,6 +49,7 @@ import { ProposalUploadService } from './proposal-upload.service';
 import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
+import { MiiLocationService } from 'src/modules/mii-location/mii-location.service';
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
@@ -55,6 +57,8 @@ import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../d
 import { ConflictException } from '@nestjs/common';
 import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
 import { Types } from 'mongoose';
+import { convert } from 'html-to-text';
+import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 
 @Injectable()
 export class ProposalMiscService {
@@ -70,6 +74,7 @@ export class ProposalMiscService {
     private proposalDownloadService: ProposalDownloadService,
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
+    private miiLocationService: MiiLocationService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -478,6 +483,115 @@ export class ProposalMiscService {
 
     return result;
   }
+
+  async generateLocationCsv(proposalId: string, user: IRequestUser): Promise<Buffer> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    const allLocations = new Set<MiiLocation>();
+
+    proposal.openDizChecks?.forEach((loc) => allLocations.add(loc));
+    proposal.dizApprovedLocations?.forEach((loc) => allLocations.add(loc));
+    proposal.openDizConditionChecks?.forEach((loc) => allLocations.add(loc));
+    proposal.uacApprovedLocations?.forEach((loc) => allLocations.add(loc));
+    proposal.requestedButExcludedLocations?.forEach((loc) => allLocations.add(loc));
+    proposal.signedContracts?.forEach((loc) => allLocations.add(loc));
+
+    proposal.conditionalApprovals?.forEach((approval) => allLocations.add(approval.location));
+
+    proposal.uacApprovals?.forEach((approval) => allLocations.add(approval.location));
+
+    proposal.additionalLocationInformation?.forEach((info) => allLocations.add(info.location));
+
+    const miiLocationMap = await this.miiLocationService.getAllLocationInfo();
+
+    const headers = [
+      'Rubrum',
+      'Location Code',
+      'Location Display Name',
+      'Conditions',
+      'Approval Status',
+      'Publication Name',
+      'Consent (Legal Basis)',
+    ];
+
+    const rows = await Promise.all(
+      Array.from(allLocations).map(async (location) => {
+        const conditionalApproval = proposal.conditionalApprovals?.find((approval) => approval.location === location);
+
+        const additionalInfo = proposal.additionalLocationInformation?.find((info) => info.location === location);
+
+        const miiLocationInfo = miiLocationMap.get(location);
+
+        // Determine approval status
+        let approvalStatus = '';
+        if (proposal.uacApprovedLocations?.includes(location)) {
+          approvalStatus = 'Approved';
+        } else if (proposal.requestedButExcludedLocations?.includes(location)) {
+          approvalStatus = 'Denied';
+        } else if (proposal.openDizChecks?.includes(location)) {
+          approvalStatus = 'Denied (No Response)';
+        } else {
+          approvalStatus = 'Unknown';
+        }
+
+        const conditions = conditionalApproval?.conditionReasoning
+          ? convert(conditionalApproval.conditionReasoning, { wordwrap: false })
+          : '';
+        const publicationName = additionalInfo?.locationPublicationName || '';
+
+        const consent = additionalInfo?.legalBasis ? 'true' : 'false';
+
+        return [
+          '', // Rubrum
+          location, // Location Code
+          miiLocationInfo?.display || location, // Location Display Name (fallback to code if not found)
+          conditions, // Conditions
+          approvalStatus, // Approval Status
+          publicationName, // Publication Name
+          consent, // Consent (Legal Basis)
+        ];
+      }),
+    );
+
+    // Convert to CSV format
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    return Buffer.from(csvContent, 'utf-8');
+  }
+
+  async generateLocationCsvDownloadLink(proposalId: string, user: IRequestUser): Promise<CsvDownloadResponseDto> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    const csvBuffer = await this.generateLocationCsv(proposalId, user);
+
+    const filename = `${new Date().toISOString().split('T')[0]}-location-contracting-info-${proposal.projectAbbreviation}.csv`;
+
+    const tempFile: Express.Multer.File = {
+      buffer: csvBuffer,
+      originalname: filename,
+      mimetype: 'text/plain',
+      size: csvBuffer.length,
+    } as Express.Multer.File;
+
+    const blobName = `temp/csv-downloads/${proposalId}/${Date.now()}-${filename}`;
+
+    await this.storageService.uploadFile(blobName, tempFile, user);
+
+    // Generate a signed URL that expires in 1 hour
+    const downloadUrl = await this.storageService.getSasUrl(blobName, true);
+
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    return {
+      downloadUrl,
+      filename,
+      expiresAt,
+    };
+  }
+
   private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
     const isEditableStatus = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck;
     const isFdpgMember = user.singleKnownRole === Role.FdpgMember;
