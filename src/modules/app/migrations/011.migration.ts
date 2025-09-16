@@ -1,10 +1,10 @@
 import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
-import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
+import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { BiosampleType } from 'src/modules/proposal/enums/biosample-type.enum';
 
 export class Migration011 implements IDbMigration {
-  constructor(private proposalModel: Model<Proposal>) {}
+  constructor(private proposalModel: Model<ProposalDocument>) {}
 
   async up() {
     console.log('Running migration 011: Moving invalid biosample type values to typeDetails');

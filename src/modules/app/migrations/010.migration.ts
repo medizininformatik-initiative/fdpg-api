@@ -1,9 +1,9 @@
 import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
-import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
+import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 
 export class Migration010 implements IDbMigration {
-  constructor(private proposalModel: Model<Proposal>) {}
+  constructor(private proposalModel: Model<ProposalDocument>) {}
 
   async up() {
     console.log('Running migration 010: Converting internalCheckNotes from object to string');

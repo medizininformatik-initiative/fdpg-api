@@ -27,6 +27,8 @@ import { ProposalFormService } from '../proposal-form/proposal-form.service';
 
 @Injectable()
 export class MigrationService implements OnModuleInit {
+  private readonly migrations: Record<number, IDbMigration>;
+
   constructor(
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(Migration.name)
@@ -40,7 +42,29 @@ export class MigrationService implements OnModuleInit {
     @InjectModel(ProposalForm.name)
     private proposalFormModel: Model<ProposalForm>,
     private proposalFormService: ProposalFormService,
-  ) {}
+  ) {
+    this.migrations = {
+      0: new Migration000(this.migrationModel, this.termsConfigModel, this.dataPrivacyConfigModel),
+      1: this.dummyMigration,
+      2: this.dummyMigration,
+      3: this.dummyMigration,
+      4: this.dummyMigration,
+      5: this.dummyMigration,
+      6: this.dummyMigration,
+      7: new Migration007(this.proposalModel),
+      8: new Migration008(this.proposalModel, this.proposalFormModel, this.proposalFormService),
+      9: new Migration009(this.dataPrivacyConfigModel),
+      10: new Migration010(this.proposalModel),
+      11: new Migration011(this.proposalModel),
+      12: new Migration012(this.proposalModel),
+      13: new Migration013(this.proposalModel),
+      14: new Migration014(this.proposalModel),
+      15: new Migration015(this.proposalModel),
+      16: new Migration016(this.proposalModel),
+      17: new Migration017(this.proposalModel),
+      18: new Migration018(this.dataPrivacyConfigModel),
+    };
+  }
 
   private readonly desiredDbVersion = 18;
 
@@ -50,28 +74,6 @@ export class MigrationService implements OnModuleInit {
   private readonly dummyMigration: IDbMigration = {
     up: async () => {},
     down: async () => {},
-  };
-
-  private readonly migrations: Record<number, IDbMigration> = {
-    0: new Migration000(this.migrationModel, this.termsConfigModel, this.dataPrivacyConfigModel),
-    1: this.dummyMigration,
-    2: this.dummyMigration,
-    3: this.dummyMigration,
-    4: this.dummyMigration,
-    5: this.dummyMigration,
-    6: this.dummyMigration,
-    7: new Migration007(this.proposalModel),
-    8: new Migration008(this.proposalModel, this.proposalFormModel, this.proposalFormService),
-    9: new Migration009(this.dataPrivacyConfigModel),
-    10: new Migration010(this.proposalModel),
-    11: new Migration011(this.proposalModel),
-    12: new Migration012(this.proposalModel),
-    13: new Migration013(this.proposalModel),
-    14: new Migration014(this.proposalModel),
-    15: new Migration015(this.proposalModel),
-    16: new Migration016(this.proposalModel),
-    17: new Migration017(this.proposalModel),
-    18: new Migration018(this.dataPrivacyConfigModel),
   };
 
   private async runMigration(currentVersion?: number) {

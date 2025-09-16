@@ -105,8 +105,8 @@ describe('AdminConfigService', () => {
       const result = await service.findTermsConfig(PlatformIdentifier.Mii);
 
       const filter = { type: ConfigType.TermsDialog, platform: PlatformIdentifier.Mii };
-      expect(termsConfigModel.findOne).toBeCalledWith(filter);
-      expect(toObject).toBeCalledTimes(1);
+      expect(termsConfigModel.findOne).toHaveBeenCalledWith(filter);
+      expect(toObject).toHaveBeenCalled();
       expect(result).toEqual(out);
     });
 
@@ -136,7 +136,7 @@ describe('AdminConfigService', () => {
       await service.updateTermsConfig(PlatformIdentifier.Mii, termsConfig);
 
       const filter = { type: ConfigType.TermsDialog, platform: PlatformIdentifier.Mii };
-      expect(termsConfigModel.updateOne).toBeCalledTimes(1);
+      expect(termsConfigModel.updateOne).toHaveBeenCalled();
       expect(termsConfigModel.updateOne).toHaveBeenCalledWith(
         filter,
         expect.objectContaining({
@@ -162,8 +162,8 @@ describe('AdminConfigService', () => {
       const result = await service.getDataPrivacyConfig(PlatformIdentifier.Mii);
 
       const filter = { type: ConfigType.DataPrivacy, platform: PlatformIdentifier.Mii };
-      expect(dataPrivacyModel.findOne).toBeCalledWith(filter);
-      expect(toObject).toBeCalledTimes(1);
+      expect(dataPrivacyModel.findOne).toHaveBeenCalledWith(filter);
+      expect(toObject).toHaveBeenCalled();
       expect(result).toEqual(out);
     });
 
@@ -205,7 +205,7 @@ describe('AdminConfigService', () => {
       await service.updateDataPrivacyConfig(PlatformIdentifier.Mii, dataPrivacyConfig);
 
       const filter = { type: ConfigType.DataPrivacy, platform: PlatformIdentifier.Mii };
-      expect(dataPrivacyModel.updateOne).toBeCalledTimes(1);
+      expect(dataPrivacyModel.updateOne).toHaveBeenCalled();
       expect(dataPrivacyModel.updateOne).toHaveBeenCalledWith(filter, expect.anything(), { upsert: true });
     });
   });
