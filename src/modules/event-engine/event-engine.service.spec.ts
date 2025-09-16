@@ -146,12 +146,12 @@ describe('EventEngineService', () => {
 
   it('should handleProposalStatusChange', async () => {
     await eventEngineService.handleProposalStatusChange(proposal as any);
-    expect(statusChangeService.handleStatusChange).toBeCalledWith(proposal, expectedUrl);
+    expect(statusChangeService.handleStatusChange).toHaveBeenCalledWith(proposal, expectedUrl);
   });
 
   it('should handleProposalLockChange', async () => {
     await eventEngineService.handleProposalLockChange(proposal as any);
-    expect(proposalLockService.handleProposalLockChange).toBeCalledWith(proposal, expectedUrl);
+    expect(proposalLockService.handleProposalLockChange).toHaveBeenCalledWith(proposal, expectedUrl);
   });
   proposalModel;
   it('should handleProposalStatusSchedule', async () => {
@@ -178,7 +178,7 @@ describe('EventEngineService', () => {
 
     await eventEngineService.handleProposalStatusSchedule(event);
 
-    expect(statusReminderService.handleStatusReminder).toBeCalledWith(
+    expect(statusReminderService.handleStatusReminder).toHaveBeenCalledWith(
       expect.objectContaining({ _id: 'proposalId' }),
       expectedUrl,
       event,
@@ -189,28 +189,28 @@ describe('EventEngineService', () => {
     const vote = true;
     const location = MiiLocation.UKL;
     await eventEngineService.handleProposalDizApproval(proposal as any, vote, location);
-    expect(locationVoteService.handleDizApproval).toBeCalledWith(proposal, vote, location, expectedUrl);
+    expect(locationVoteService.handleDizApproval).toHaveBeenCalledWith(proposal, vote, location, expectedUrl);
   });
 
   it('should handleProposalUacApproval', async () => {
     const vote = true;
     const location = MiiLocation.UKL;
     await eventEngineService.handleProposalUacApproval(proposal as any, vote, location);
-    expect(locationVoteService.handleUacApproval).toBeCalledWith(proposal, vote, location, expectedUrl);
+    expect(locationVoteService.handleUacApproval).toHaveBeenCalledWith(proposal, vote, location, expectedUrl);
   });
 
   it('should handleProposalContractSign', async () => {
     const vote = true;
     const user = { name: 'Test' } as any;
     await eventEngineService.handleProposalContractSign(proposal as any, vote, user);
-    expect(contractingService.handleContractSign).toBeCalledWith(proposal, vote, user, expectedUrl);
+    expect(contractingService.handleContractSign).toHaveBeenCalledWith(proposal, vote, user, expectedUrl);
   });
 
   it('should handleProposalCommentCreation', async () => {
     const user = { name: 'Test' } as any;
     const comment = { content: 'comment' } as any;
     await eventEngineService.handleProposalCommentCreation(proposal as any, comment, user);
-    expect(commentEventService.handleCommentCreation).toBeCalledWith(proposal, comment, user, expectedUrl);
+    expect(commentEventService.handleCommentCreation).toHaveBeenCalledWith(proposal, comment, user, expectedUrl);
   });
 
   it('should handleProposalCommentAnswerCreation', async () => {
@@ -218,7 +218,7 @@ describe('EventEngineService', () => {
     const comment = { content: 'comment' } as any;
     const answer = { content: 'answer' } as any;
     await eventEngineService.handleProposalCommentAnswerCreation(proposal as any, comment, answer, user);
-    expect(commentAnswerEventService.handleCommentAnswerCreation).toBeCalledWith(
+    expect(commentAnswerEventService.handleCommentAnswerCreation).toHaveBeenCalledWith(
       proposal,
       comment,
       answer,
@@ -231,42 +231,42 @@ describe('EventEngineService', () => {
     const user = { name: 'Test' } as any;
     const comment = { content: 'comment' } as any;
     await eventEngineService.handleProposalTaskCompletion(proposal as any, comment, user);
-    expect(commentEventService.handleTaskCompletion).toBeCalledWith(proposal, comment, user, expectedUrl);
+    expect(commentEventService.handleTaskCompletion).toHaveBeenCalledWith(proposal, comment, user, expectedUrl);
   });
 
   it('should handleProposalReportCreate', async () => {
     const report = { content: 'report' } as any;
     await eventEngineService.handleProposalReportCreate(proposal as any, report);
-    expect(reportsService.handleReportCreate).toBeCalledWith(proposal, report, expectedUrl);
+    expect(reportsService.handleReportCreate).toHaveBeenCalledWith(proposal, report, expectedUrl);
   });
 
   it('should handleProposalReportUpdate', async () => {
     const report = { content: 'report' } as any;
     await eventEngineService.handleProposalReportUpdate(proposal as any, report);
-    expect(reportsService.handleReportUpdate).toBeCalledWith(proposal, report, expectedUrl);
+    expect(reportsService.handleReportUpdate).toHaveBeenCalledWith(proposal, report, expectedUrl);
   });
 
   it('should handleProposalReportDelete', async () => {
     const report = { content: 'report' } as any;
     await eventEngineService.handleProposalReportDelete(proposal as any, report);
-    expect(reportsService.handleReportDelete).toBeCalledWith(proposal, report, expectedUrl);
+    expect(reportsService.handleReportDelete).toHaveBeenCalledWith(proposal, report, expectedUrl);
   });
 
   it('should handleProposalPublicationCreate', async () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationCreate(proposal as any, publication);
-    expect(publicationsService.handlePublicationCreate).toBeCalledWith(proposal, publication, expectedUrl);
+    expect(publicationsService.handlePublicationCreate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
   });
 
   it('should handleProposalPublicationUpdate', async () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationUpdate(proposal as any, publication);
-    expect(publicationsService.handlePublicationUpdate).toBeCalledWith(proposal, publication, expectedUrl);
+    expect(publicationsService.handlePublicationUpdate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
   });
 
   it('should handleProposalPublicationDelete', async () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationDelete(proposal as any, publication);
-    expect(publicationsService.handlePublicationDelete).toBeCalledWith(proposal, publication, expectedUrl);
+    expect(publicationsService.handlePublicationDelete).toHaveBeenCalledWith(proposal, publication, expectedUrl);
   });
 });

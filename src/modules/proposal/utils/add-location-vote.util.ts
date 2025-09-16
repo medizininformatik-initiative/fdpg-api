@@ -117,7 +117,7 @@ export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, 
     proposal.uacApprovals.push(uacApproval as UacApproval);
     proposal.totalPromisedDataAmount = calculateDataAmount(proposal);
 
-    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData?.desiredDataAmount ?? 0);
 
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
