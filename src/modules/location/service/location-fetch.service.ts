@@ -23,6 +23,7 @@ export class LocationFetchService {
     const miiCodesystemLocationDtos: MiiCodesystemLocationDto[] =
       response.data?.concept
         ?.filter?.((apiDto: any) => apiDto)
+        ?.filter?.((apiDto: any) => apiDto.code)
         .map?.(
           (apiDto: any) =>
             ({
