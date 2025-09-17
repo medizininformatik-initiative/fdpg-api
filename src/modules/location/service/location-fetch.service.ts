@@ -23,21 +23,20 @@ export class LocationFetchService {
     const miiCodesystemLocationDtos: MiiCodesystemLocationDto[] =
       response.data?.concept
         ?.filter?.((apiDto: any) => apiDto)
-        .forEach?.(
+        .map?.(
           (apiDto: any) =>
             ({
               code: apiDto.code,
               display: apiDto.display,
-              defintion: apiDto.defintion,
+              definition: apiDto.definition,
               consortium: this.getPropertyValue(apiDto, 'consortium', 'string'),
               uri: this.getPropertyValue(apiDto, 'uri', 'string'),
               status: this.getPropertyValue(apiDto, 'status', 'code'),
               contract: this.getPropertyValue(apiDto, 'contract', 'string'),
               abbreviation: this.getPropertyValue(apiDto, 'abbreviation', 'string'),
-              dic: this.getPropertyValue(apiDto, 'dic', 'boolean'),
-              dataManagement: this.getPropertyValue(apiDto, 'dataManagement', 'boolean'),
+              dic: this.getPropertyValue(apiDto, 'dic', 'boolean') ?? false,
+              dataManagement: this.getPropertyValue(apiDto, 'dataManagement', 'boolean') ?? false,
               deprecationDate: this.getPropertyValue(apiDto, 'deprecationDate', 'date'),
-              deprecated: this.getPropertyValue(apiDto, 'deprecated', 'boolean'),
               replaces: this.getPropertyValue(apiDto, 'replaces', 'code'),
               replacedBy: this.getPropertyValue(apiDto, 'replacedBy', 'code'),
             }) as MiiCodesystemLocationDto,
