@@ -11,14 +11,19 @@ export class Location {
   @Prop({ required: true, unique: true })
   externalCode: string;
 
+  @Prop({ type: String })
   display: string;
 
-  defintion?: string;
+  @Prop({ type: String })
+  definition?: string;
 
+  @Prop({ type: String })
   consortium: string;
 
+  @Prop({ type: String })
   contract?: string;
 
+  @Prop({ type: String })
   abbreviation?: string;
 
   @Prop({ type: Boolean, default: false })
@@ -27,6 +32,7 @@ export class Location {
   @Prop({ type: Boolean, default: false })
   dataManagementCenter: boolean;
 
+  @Prop({ type: Date })
   deprecationDate?: Date;
 
   @Prop({ type: Boolean, default: false })

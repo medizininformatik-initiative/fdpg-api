@@ -29,22 +29,11 @@ export const configureTelemetry = (config: {
       }),
     );
 
-    const spanProcessors = [
-      new BatchSpanProcessor(
-        new OTLPTraceExporter({
-          url: config.connectionString,
-        }),
-      ),
-    ];
+    const spanProcessors = [new BatchSpanProcessor(new OTLPTraceExporter({ url: config.connectionString }))];
 
-    const provider = new NodeTracerProvider({
-      resource,
-      spanProcessors,
-    });
+    const provider = new NodeTracerProvider({ resource, spanProcessors });
 
-    provider.register({
-      propagator: new W3CTraceContextPropagator(),
-    });
+    provider.register({ propagator: new W3CTraceContextPropagator() });
 
     registerInstrumentations({
       instrumentations: [
@@ -83,10 +72,20 @@ export const configureTelemetry = (config: {
           },
         }),
         new MongooseInstrumentation({
-          // No traces for mongodb native client
           suppressInternalInstrumentation: true,
+
           dbStatementSerializer: (operation: string, payload: SerializerPayload) => {
-            return `MONGO_STATEMENT: ${operation} ${JSON.stringify(payload)}`;
+            const sanitizedPayload = { ...payload };
+
+            if (sanitizedPayload.options?.session) {
+              delete sanitizedPayload.options.session;
+            }
+
+            if (Array.isArray(sanitizedPayload.documents)) {
+              sanitizedPayload.documents = `[${sanitizedPayload.documents.length} documents]`;
+            }
+
+            return `MONGO_STATEMENT: ${operation} ${JSON.stringify(sanitizedPayload)}`;
           },
         }),
       ],

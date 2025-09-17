@@ -25,6 +25,7 @@ import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { ProposalForm, ProposalFormSchema } from '../proposal-form/schema/proposal-form.schema';
 import { MiiLocationModule } from '../mii-location/mii-location.module';
 import { LocationModule } from '../location/location.module';
+import { Location, LocationSchema } from '../location/schema/location.schema';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { LocationModule } from '../location/location.module';
       { name: Proposal.name, schema: ProposalSchema },
       { name: DataPrivacyConfig.name, schema: DataPrivacyConfigSchema },
       { name: ProposalForm.name, schema: ProposalFormSchema },
+      { name: Location.name, schema: LocationSchema },
     ]),
 
     /** Modules */
