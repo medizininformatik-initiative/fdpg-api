@@ -33,6 +33,7 @@ export interface IProposalGetListSchema {
   contractAcceptedByResearcher: boolean;
   contractRejectedByResearcher: boolean;
   selectedDataSources: PlatformIdentifier[];
+  isRegister?: boolean;
 
   openFdpgTasks: FdpgTask[];
 

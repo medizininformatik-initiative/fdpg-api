@@ -81,6 +81,12 @@ export class Proposal {
   isLocked: boolean;
 
   @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isRegister: boolean;
+
+  @Prop({
     type: Number,
     default: 0,
   })

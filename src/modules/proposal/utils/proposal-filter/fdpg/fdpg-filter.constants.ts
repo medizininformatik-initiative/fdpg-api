@@ -21,6 +21,7 @@ const ONGOING_TO_CHECK = { status: { $in: [ProposalStatus.FinishedProject, Propo
 const ONGOING_IN_WORK = { status: { $in: [ProposalStatus.ExpectDataDelivery, ProposalStatus.DataResearch] } };
 const FINISHED = { status: { $in: [ProposalStatus.Rejected, ProposalStatus.ReadyToArchive] } };
 const ARCHIVED = { status: ProposalStatus.Archived };
+const REGISTER_PROPOSALS = { isRegister: true };
 
 export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgRequestedToCheck]: REQUESTED_TO_CHECK,
@@ -30,5 +31,6 @@ export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgOngoingToCheck]: ONGOING_TO_CHECK,
   [PanelQuery.FdpgOngoingInWork]: ONGOING_IN_WORK,
   [PanelQuery.FdpgFinished]: FINISHED,
+  [PanelQuery.RegisterProposals]: REGISTER_PROPOSALS,
   [PanelQuery.Archived]: ARCHIVED,
 };

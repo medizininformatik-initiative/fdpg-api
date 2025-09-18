@@ -32,4 +32,5 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   additionalLocationInformation: 1,
   selectedDataSources: 1,
   dizDetails: 1,
+  isRegister: 1,
 };

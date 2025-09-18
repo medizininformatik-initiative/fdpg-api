@@ -11,10 +11,33 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
     PanelQuery.ResearcherPending,
     PanelQuery.ResearcherOngoing,
     PanelQuery.ResearcherFinished,
+    PanelQuery.RegisterProposals,
     PanelQuery.Archived,
   ];
 
   if (allowedQuery.includes(panelQuery)) {
+    // Special handling for RegisterProposals - filter by isRegister instead of status
+    if (panelQuery === PanelQuery.RegisterProposals) {
+      return {
+        $or: [
+          {
+            ownerId: user.userId,
+          },
+          {
+            participants: {
+              $elemMatch: {
+                'researcher.email': user.email,
+              },
+            },
+          },
+          {
+            'projectResponsible.researcher.email': user.email,
+          },
+        ],
+        isRegister: true,
+      };
+    }
+
     return {
       $or: [
         {

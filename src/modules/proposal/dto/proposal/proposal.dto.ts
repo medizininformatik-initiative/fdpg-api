@@ -140,6 +140,10 @@ export class ProposalBaseDto {
   @IsString()
   @IsOptional()
   dataSourceLocaleId: string;
+
+  @Expose()
+  @IsOptional()
+  isRegister?: boolean;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -507,6 +511,7 @@ export class ProposalGetListDto {
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
     this.selectedDataSources = dbProjection.selectedDataSources;
+    this.isRegister = dbProjection.isRegister;
 
     if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -556,6 +561,7 @@ export class ProposalGetListDto {
 
   _id: string;
   selectedDataSources: PlatformIdentifier[];
+  isRegister?: boolean;
 }
 
 @Exclude()

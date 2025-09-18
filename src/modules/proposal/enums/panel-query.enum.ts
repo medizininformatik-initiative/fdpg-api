@@ -28,4 +28,7 @@ export enum PanelQuery {
   FdpgOngoingToCheck = 'FDPG_ONGOING_TO_CHECK',
   FdpgOngoingInWork = 'FDPG_ONGOING_IN_WORK',
   FdpgFinished = 'FDPG_FINISHED',
+
+  // Register Proposals
+  RegisterProposals = 'REGISTER_PROPOSALS',
 }

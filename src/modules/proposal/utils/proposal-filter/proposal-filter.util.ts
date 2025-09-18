@@ -10,8 +10,19 @@ import { getFilterForDiz } from './diz/diz-filter.util';
 import { getFilterForUac } from './uac/uac-filter.util';
 
 export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
+  // Special handling for register proposals when user has RegisteringMember role AND it's their selected role
+  if (
+    panelQuery === PanelQuery.RegisterProposals &&
+    user.roles.includes(Role.RegisteringMember) &&
+    user.singleKnownRole === Role.RegisteringMember
+  ) {
+    return getFilterForResearcher(panelQuery, user);
+  }
+
   switch (user.singleKnownRole) {
     case Role.Researcher:
+      return getFilterForResearcher(panelQuery, user);
+    case Role.RegisteringMember:
       return getFilterForResearcher(panelQuery, user);
     case Role.FdpgMember:
       return getFilterForFdpg(panelQuery);

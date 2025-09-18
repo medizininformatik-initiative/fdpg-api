@@ -11,6 +11,16 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     throwForbiddenError('Proposal is currently locked to modifications');
   }
 
+  // Special handling for register proposals when user's selected role is RegisteringMember
+  if (
+    proposal.isRegister &&
+    user.roles.includes(Role.RegisteringMember) &&
+    user.singleKnownRole === Role.RegisteringMember
+  ) {
+    checkAccessForRegisteringMember(proposal, user);
+    return; // Exit early for register proposals with RegisteringMember role
+  }
+
   if (user.singleKnownRole === Role.Researcher) {
     checkAccessForResearcher(proposal, user);
   }
@@ -62,7 +72,8 @@ const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser
 };
 
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
-  if (proposal.status === ProposalStatus.Draft && willBeModified) {
+  // Allow modification of register proposals even in Draft status
+  if (proposal.status === ProposalStatus.Draft && willBeModified && !proposal.isRegister) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
   }
 };
