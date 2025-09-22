@@ -26,6 +26,12 @@ export class Location {
   @Prop({ type: String })
   abbreviation?: string;
 
+  @Prop({ type: String })
+  uri?: string;
+
+  @Prop({ type: String })
+  rubrum?: string;
+
   @Prop({ type: Boolean, default: false })
   dataIntegrationCenter: boolean;
 

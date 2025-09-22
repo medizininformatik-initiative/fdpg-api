@@ -32,7 +32,7 @@ export class LocationFetchService {
               definition: apiDto.definition,
               consortium: this.getPropertyValue(apiDto, 'consortium', 'string'),
               uri: this.getPropertyValue(apiDto, 'uri', 'string'),
-              status: this.getPropertyValue(apiDto, 'status', 'code'),
+              status: (this.getPropertyValue(apiDto, 'status', 'code') as string | undefined)?.toLowerCase(),
               contract: this.getPropertyValue(apiDto, 'contract', 'string'),
               abbreviation: this.getPropertyValue(apiDto, 'abbreviation', 'string'),
               dic: this.getPropertyValue(apiDto, 'dic', 'boolean') ?? false,
