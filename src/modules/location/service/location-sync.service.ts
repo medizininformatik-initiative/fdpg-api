@@ -13,14 +13,12 @@ export class LocationSyncService {
   ) {}
 
   async syncLocations(): Promise<void> {
-    const allPersisted = await this.locationSevice.findAll();
+    const allPersisted = await this.locationSevice.findAllDocuments();
     const allApiDtos = await this.locationFetchService.fetchLocationsFromApi();
 
     const locationDtoLookUpMap = this.getVersionChainMap(allApiDtos);
 
     await this.locationSyncChangelogService.generateLocationSyncChangelogsFromApi(locationDtoLookUpMap, allPersisted);
-
-    await this.locationSyncChangelogService.findAll();
   }
 
   /**

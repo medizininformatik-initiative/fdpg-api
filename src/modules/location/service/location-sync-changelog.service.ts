@@ -6,6 +6,8 @@ import { LocationSyncChangeLogStatus } from '../enum/location-sync-changelog-sta
 import { MiiCodesystemLocationDto } from '../dto/mii-codesystem-location.dto';
 import { LocationDocument } from '../schema/location.schema';
 import { LocationSyncChangelogStrategy } from '../enum/location-sync-changelog-strategy.enum';
+import { LocationSyncChangelogGetDto } from '../dto/location-sync-changelog-get.dto';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class LocationSyncChangelogService {
@@ -14,7 +16,13 @@ export class LocationSyncChangelogService {
     private locationSyncChangelogModel: Model<LocationSyncChangelogDocument>,
   ) {}
 
-  async findAll(): Promise<LocationSyncChangelogDocument[]> {
+  async findAll(): Promise<LocationSyncChangelogGetDto[]> {
+    return (await this.locationSyncChangelogModel.find({}))
+      .map((model) => model.toObject())
+      .map((obj) => plainToClass(LocationSyncChangelogGetDto, obj));
+  }
+
+  async findAllDocuments(): Promise<LocationSyncChangelogDocument[]> {
     return await this.locationSyncChangelogModel.find({});
   }
 
@@ -41,9 +49,7 @@ export class LocationSyncChangelogService {
       this.buildChangelog(persistedLookUpMap, initialCode, finalEntry),
     )
       .filter((changelog) => !!changelog)
-      .map(
-        (newChangelog) => this.updatePendingChangelogs(newChangelog, pendingChanges) as LocationSyncChangelogDocument,
-      );
+      .map((newChangelog) => this.updatePendingChangelogs(newChangelog, pendingChanges));
 
     await this.processChangeLogs(changeLogs);
   }
@@ -52,7 +58,7 @@ export class LocationSyncChangelogService {
     persistedLookUpMap,
     initialCode: string,
     finalEntry: MiiCodesystemLocationDto,
-  ): LocationSyncChangelog {
+  ): LocationSyncChangelog | undefined {
     const persisted: LocationDocument | undefined = persistedLookUpMap[initialCode];
 
     const isDeprecated = !!finalEntry.replacedBy || !!finalEntry.deprecationDate || finalEntry.status == 'deprecated';
@@ -71,7 +77,7 @@ export class LocationSyncChangelogService {
       persisted.deprecated === isDeprecated;
 
     if (doEqual) {
-      return null;
+      return undefined;
     }
 
     const strategy = (() => {
