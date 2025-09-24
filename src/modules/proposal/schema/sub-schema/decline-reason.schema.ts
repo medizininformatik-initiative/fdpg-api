@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Owner, OwnerSchema } from 'src/shared/schema/owner.schema';
 import { DeclineType } from '../../enums/decline-type.enum';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type DeclineReasonDocument = DeclineReason & Document;
 
@@ -14,23 +14,19 @@ export class DeclineReason {
   @Prop()
   reason?: string;
 
-  @Prop(String)
-  location: MiiLocation;
+  @Prop({ type: String, ref: () => Location })
+  location: string;
 
   @Prop({ type: OwnerSchema })
   owner?: Owner;
 
-  @Prop({
-    type: Date,
-    default: Date.now,
-    immutable: true,
-  })
+  @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;
 
-  @Prop({
-    type: Boolean,
-  })
+  @Prop({ type: Boolean })
   isLate?: boolean;
 }
 
-export const DeclineReasonSchema = SchemaFactory.createForClass(DeclineReason);
+const DeclineReasonSchema = SchemaFactory.createForClass(DeclineReason);
+
+export { DeclineReasonSchema };

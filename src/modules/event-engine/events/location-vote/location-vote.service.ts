@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
 import {
   getDizApprovalEmailForUacMembers,
@@ -21,7 +20,7 @@ export class LocationVoteService {
     return numberOfVotedLocations >= proposal.numberOfRequestedLocations;
   }
 
-  async handleDizApproval(proposal: Proposal, vote: boolean, location: MiiLocation, proposalUrl: string) {
+  async handleDizApproval(proposal: Proposal, vote: boolean, location: string, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
     if (vote === true) {
       const uacTask = async () => {
@@ -49,7 +48,7 @@ export class LocationVoteService {
     await Promise.allSettled(emailTasks);
   }
 
-  async handleUacApproval(proposal: Proposal, vote: boolean, location: MiiLocation, proposalUrl: string) {
+  async handleUacApproval(proposal: Proposal, vote: boolean, location: string, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
 
     if (vote === true) {

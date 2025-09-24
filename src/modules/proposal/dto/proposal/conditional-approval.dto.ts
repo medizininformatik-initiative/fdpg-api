@@ -1,11 +1,10 @@
 import { Expose } from 'class-transformer';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { ExposeId } from 'src/shared/decorators/transform/expose-id.decorator';
 import { Role } from 'src/shared/enums/role.enum';
 
 export class ConditionalApprovalGetDto {
   @Expose()
-  location: MiiLocation;
+  location: string;
 
   @Expose()
   isAccepted: boolean;

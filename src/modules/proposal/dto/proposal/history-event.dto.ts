@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Exclude, Expose } from 'class-transformer';
 import { Version } from 'src/shared/schema/version.schema';
 import { HistoryEventType } from '../../enums/history-event.enum';
@@ -15,7 +14,7 @@ export class HistoryEventGetDto {
   createdAt: Date;
 
   @Expose()
-  location: MiiLocation;
+  location: string;
 
   @Expose()
   data: Record<string, string | number>;

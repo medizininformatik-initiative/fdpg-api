@@ -1,7 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import * as JSZip from 'jszip';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
@@ -281,10 +280,7 @@ export class ProposalMiscService {
 
     const deadlines = this.getDeadlinesByDto(dto);
 
-    const updatedDeadlines: Record<DueDateEnum, Date | null> = {
-      ...proposal.deadlines,
-      ...deadlines,
-    };
+    const updatedDeadlines: Record<DueDateEnum, Date | null> = { ...proposal.deadlines, ...deadlines };
 
     const changeList = getDueDateChangeList(proposal.deadlines, updatedDeadlines);
 
@@ -487,7 +483,7 @@ export class ProposalMiscService {
   async generateLocationCsv(proposalId: string, user: IRequestUser): Promise<Buffer> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
-    const allLocations = new Set<MiiLocation>();
+    const allLocations = new Set<string>();
 
     proposal.openDizChecks?.forEach((loc) => allLocations.add(loc));
     proposal.dizApprovedLocations?.forEach((loc) => allLocations.add(loc));
@@ -585,11 +581,7 @@ export class ProposalMiscService {
 
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-    return {
-      downloadUrl,
-      filename,
-      expiresAt,
-    };
+    return { downloadUrl, filename, expiresAt };
   }
 
   private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {

@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 @Schema({ _id: true })
 export class DizDetails {
-  @Prop(String)
-  location: MiiLocation;
+  @Prop({ type: String, ref: () => Location })
+  location: string;
 
   @Prop()
   localProjectIdentifier?: string;
@@ -15,4 +15,6 @@ export class DizDetails {
   _id: string;
 }
 
-export const DizDetailsSchema = SchemaFactory.createForClass(DizDetails);
+const DizDetailsSchema = SchemaFactory.createForClass(DizDetails);
+
+export { DizDetailsSchema };

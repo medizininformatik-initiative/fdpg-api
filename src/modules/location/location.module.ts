@@ -23,7 +23,7 @@ import { LocationSyncChangelogService } from './service/location-sync-changelog.
     LocationService,
     LocationSyncChangelogService,
   ],
-  exports: [LocationService, LocationSyncService],
+  exports: [LocationService, LocationSyncService, MongooseModule],
   controllers: [LocationController],
 })
 export class LocationModule {}

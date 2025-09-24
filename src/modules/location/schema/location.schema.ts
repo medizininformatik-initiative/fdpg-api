@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document, Model, Schema as MongooseSchema } from 'mongoose';
 
 export type LocationDocument = Location & Document;
 
@@ -49,3 +49,47 @@ export class Location {
 }
 
 export const LocationSchema = SchemaFactory.createForClass(Location);
+
+export const addLocationPreSaveHook = <TClass, ModelClass extends Document>(
+  schema: MongooseSchema<TClass>,
+  locationFields: (keyof TClass)[],
+  LocationModel: Model<Location>,
+): void => {
+  schema.pre<ModelClass>('save', async function (next) {
+    try {
+      await Promise.all(
+        (locationFields as string[]).map(async (field) => {
+          if (!this.isModified(field)) {
+            return;
+          }
+
+          const value = this.get(field);
+          let idsToCheck = [];
+          let expectedCount = 0;
+
+          if (Array.isArray(value)) {
+            idsToCheck = value;
+            expectedCount = value.length;
+          } else if (typeof value === 'string' && value.length > 0) {
+            idsToCheck = [value];
+            expectedCount = 1;
+          }
+
+          if (expectedCount === 0) {
+            return;
+          }
+
+          const count = await LocationModel.countDocuments({ _id: { $in: idsToCheck } });
+
+          if (count !== expectedCount) {
+            console.error(`Validation failed for field '${field}': one or more location IDs do not exist.`);
+            throw new mongoose.Error.ValidationError();
+          }
+        }),
+      );
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+};

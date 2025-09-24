@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import mongoose, { Document, Model, Schema as MongooseSchema } from 'mongoose';
 import { Owner, OwnerSchema } from 'src/shared/schema/owner.schema';
 import { Version, VersionSchema } from 'src/shared/schema/version.schema';
 import { ProposalStatus } from '../enums/proposal-status.enum';
-import { ConditionalApproval } from './sub-schema/conditional-approval.schema';
+import { ConditionalApproval, ConditionalApprovalSchema } from './sub-schema/conditional-approval.schema';
 import { DeclineReason, DeclineReasonSchema } from './sub-schema/decline-reason.schema';
 import { FdpgChecklist, FdpgChecklistSchema } from './sub-schema/fdpg-checklist.schema';
 import { FdpgTask } from './sub-schema/fdpg-task.schema';
@@ -14,7 +13,7 @@ import { Publication, PublicationSchema } from './sub-schema/publication.schema'
 import { ReportSchema, Report } from './sub-schema/report.schema';
 import { RequestedData, RequestedDataSchema } from './sub-schema/requested-data.schema';
 import { ScheduledEvent } from './sub-schema/scheduled-event.schema';
-import { UacApproval } from './sub-schema/uac-approval.schema';
+import { UacApproval, UacApprovalSchema } from './sub-schema/uac-approval.schema';
 import { Upload, UploadSchema } from './sub-schema/upload.schema';
 import { UserProject, UserProjectSchema } from './sub-schema/user-project.schema';
 import { Applicant, ApplicantSchema } from './sub-schema/applicant.schema';
@@ -27,21 +26,17 @@ import {
 } from './sub-schema/additional-location-information.schema';
 import { DizDetails, DizDetailsSchema } from './sub-schema/diz-details.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
+import { addLocationPreSaveHook, Location } from 'src/modules/location/schema/location.schema';
+import { InstituteSchema } from './sub-schema/participants/institute.schema';
+import { AddresseesSchema } from './sub-schema/user-project/addressees.schema';
 
 export type ProposalDocument = Proposal & Document;
-
 @Schema()
 export class Proposal {
-  @Prop({
-    unique: true,
-  })
+  @Prop({ unique: true })
   projectAbbreviation: string;
 
-  @Prop({
-    type: String,
-    enum: PlatformIdentifier,
-    default: PlatformIdentifier.Mii,
-  })
+  @Prop({ type: String, enum: PlatformIdentifier, default: PlatformIdentifier.Mii })
   platform: PlatformIdentifier;
 
   @Prop({ type: [String], enum: PlatformIdentifier, default: [] })
@@ -68,22 +63,13 @@ export class Proposal {
   @Prop({ type: FdpgChecklistSchema })
   fdpgChecklist: FdpgChecklist;
 
-  @Prop({
-    type: String,
-    enum: ProposalStatus,
-  })
+  @Prop({ type: String, enum: ProposalStatus })
   status: ProposalStatus;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   isLocked: boolean;
 
-  @Prop({
-    type: Number,
-    default: 0,
-  })
+  @Prop({ type: Number, default: 0 })
   formVersion: number;
 
   @Prop({ type: OwnerSchema })
@@ -92,10 +78,7 @@ export class Proposal {
   @Prop({ type: VersionSchema })
   version: Version;
 
-  @Prop({
-    type: String,
-    immutable: true,
-  })
+  @Prop({ type: String, immutable: true })
   ownerId: string;
 
   @Prop()
@@ -119,44 +102,25 @@ export class Proposal {
   @Prop({ type: [ReportSchema], default: [] })
   reports: Report[];
 
-  @Prop({
-    type: Date,
-    default: Date.now,
-    immutable: true,
-  })
+  @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;
 
-  @Prop({
-    type: Date,
-    default: Date.now,
-  })
+  @Prop({ type: Date, default: Date.now })
   updatedAt: Date;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   submittedAt: Date;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   dueDateForStatus: Date;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   statusChangeToLocationCheckAt: Date;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   statusChangeToLocationContractingAt: Date;
 
-  @Prop({
-    type: String,
-    unique: true,
-    sparse: true,
-  })
+  @Prop({ type: String, unique: true, sparse: true })
   dataSourceLocaleId: string;
 
   _id: string;
@@ -175,10 +139,7 @@ export class Proposal {
 
   // FDPG Tasks --->
   // Count should match the count of task details array
-  @Prop({
-    type: Number,
-    default: 0,
-  })
+  @Prop({ type: Number, default: 0 })
   openFdpgTasksCount: number;
 
   @Prop()
@@ -189,23 +150,23 @@ export class Proposal {
   // The following arrays should be used as a flow.
   // One location should only be in one state at the same time
 
-  @Prop([String])
-  openDizChecks: MiiLocation[];
+  @Prop({ type: [String], default: [], ref: () => Location })
+  openDizChecks: string[];
 
-  @Prop([String])
-  dizApprovedLocations: MiiLocation[];
+  @Prop({ type: [String], default: [], ref: () => Location })
+  dizApprovedLocations: string[];
 
-  @Prop([String])
-  openDizConditionChecks: MiiLocation[];
+  @Prop({ type: [String], default: [], ref: () => Location })
+  openDizConditionChecks: string[];
 
-  @Prop([String])
-  uacApprovedLocations: MiiLocation[];
+  @Prop({ type: [String], default: [], ref: () => Location })
+  uacApprovedLocations: string[];
 
-  @Prop([String])
-  requestedButExcludedLocations: MiiLocation[];
+  @Prop({ type: [String], default: [], ref: () => Location })
+  requestedButExcludedLocations: string[];
 
-  @Prop([String])
-  signedContracts: MiiLocation[];
+  @Prop({ type: [String], default: [], ref: () => Location })
+  signedContracts: string[];
   // LOCATION Tasks <----
 
   // Conditional and UAC approval are stored additionally to the "flow-arrays" and are persistent
@@ -222,51 +183,31 @@ export class Proposal {
   @Prop({ type: [DeclineReasonSchema], default: [] })
   declineReasons: DeclineReason[];
 
-  @Prop({
-    type: Number,
-    default: 0,
-  })
+  @Prop({ type: Number, default: 0 })
   totalPromisedDataAmount: number;
 
-  @Prop({
-    type: Number,
-    default: 0,
-  })
+  @Prop({ type: Number, default: 0 })
   totalContractedDataAmount: number;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   contractAcceptedByResearcher: boolean;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   contractRejectedByResearcher: boolean;
 
   @Prop()
   contractRejectedByResearcherReason: string;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   isContractingComplete: boolean;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   researcherSignedAt: Date;
 
   @Prop([ScheduledEvent])
   scheduledEvents: ScheduledEvent[];
 
-  @Prop({
-    type: Number,
-    default: 0,
-  })
+  @Prop({ type: Number, default: 0 })
   migrationVersion?: number;
 
   @Prop()
@@ -275,72 +216,100 @@ export class Proposal {
   @Prop()
   fdpgCheckNotes?: string;
 
-  @Prop({
-    type: Object,
-    default: () => ({ ...defaultDueDateValues }),
-  })
+  @Prop({ type: Object, default: () => ({ ...defaultDueDateValues }) })
   deadlines: Record<DueDateEnum, Date | null>;
 }
 
-const ProposalSchema = SchemaFactory.createForClass(Proposal);
+let ProposalSchema: MongooseSchema = undefined;
+const getProposalSchemaFactory = (LocationModel: Model<Location>) => {
+  if (ProposalSchema) {
+    return ProposalSchema;
+  }
 
-ProposalSchema.pre<Proposal>('save', function (next) {
-  this.updatedAt = new Date();
-  next();
-});
+  ProposalSchema = SchemaFactory.createForClass(Proposal);
 
-// Indexes for get by user and sort by key. Will be used by Researcher
-ProposalSchema.index({ ownerId: 1, status: 1, _id: 1 });
-ProposalSchema.index({ ownerId: 1, status: 1, submittedAt: 1 });
-ProposalSchema.index({ ownerId: 1, status: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ ownerId: 1, status: 1, projectAbbreviation: 1 });
+  ProposalSchema.pre<Proposal>('save', function (next) {
+    this.updatedAt = new Date();
+    next();
+  });
 
-// Participating Scientists
-ProposalSchema.index({ 'participants.researcher.email': 1, status: 1 });
+  // Indexes for get by user and sort by key. Will be used by Researcher
+  ProposalSchema.index({ ownerId: 1, status: 1, _id: 1 });
+  ProposalSchema.index({ ownerId: 1, status: 1, submittedAt: 1 });
+  ProposalSchema.index({ ownerId: 1, status: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ ownerId: 1, status: 1, projectAbbreviation: 1 });
 
-// Indexes for get by status and sort by key
-ProposalSchema.index({ status: 1, _id: 1 });
-ProposalSchema.index({ status: 1, submittedAt: 1 });
-ProposalSchema.index({ status: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ status: 1, projectAbbreviation: 1 });
-ProposalSchema.index({ status: 1, ownerName: 1 });
+  // Participating Scientists
+  ProposalSchema.index({ 'participants.researcher.email': 1, status: 1 });
 
-// FDPG Member with tasks check
-ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, _id: 1 });
-ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, submittedAt: 1 });
-ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, projectAbbreviation: 1 });
-ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, ownerName: 1 });
+  // Indexes for get by status and sort by key
+  ProposalSchema.index({ status: 1, _id: 1 });
+  ProposalSchema.index({ status: 1, submittedAt: 1 });
+  ProposalSchema.index({ status: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ status: 1, projectAbbreviation: 1 });
+  ProposalSchema.index({ status: 1, ownerName: 1 });
 
-// Location Member
-ProposalSchema.index({ status: 1, openDizChecks: 1, _id: 1 });
-ProposalSchema.index({ status: 1, openDizChecks: 1, submittedAt: 1 });
-ProposalSchema.index({ status: 1, openDizChecks: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ status: 1, openDizChecks: 1, projectAbbreviation: 1 });
-ProposalSchema.index({ status: 1, openDizChecks: 1, ownerName: 1 });
+  // FDPG Member with tasks check
+  ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, _id: 1 });
+  ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, submittedAt: 1 });
+  ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, projectAbbreviation: 1 });
+  ProposalSchema.index({ status: 1, openFdpgTasksCount: 1, ownerName: 1 });
 
-ProposalSchema.index({ status: 1, dizApprovedLocations: 1, _id: 1 });
-ProposalSchema.index({ status: 1, dizApprovedLocations: 1, submittedAt: 1 });
-ProposalSchema.index({ status: 1, dizApprovedLocations: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ status: 1, dizApprovedLocations: 1, projectAbbreviation: 1 });
-ProposalSchema.index({ status: 1, dizApprovedLocations: 1, ownerName: 1 });
+  // Location Member
+  ProposalSchema.index({ status: 1, openDizChecks: 1, _id: 1 });
+  ProposalSchema.index({ status: 1, openDizChecks: 1, submittedAt: 1 });
+  ProposalSchema.index({ status: 1, openDizChecks: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ status: 1, openDizChecks: 1, projectAbbreviation: 1 });
+  ProposalSchema.index({ status: 1, openDizChecks: 1, ownerName: 1 });
 
-ProposalSchema.index({ status: 1, uacApprovedLocations: 1, _id: 1 });
-ProposalSchema.index({ status: 1, uacApprovedLocations: 1, submittedAt: 1 });
-ProposalSchema.index({ status: 1, uacApprovedLocations: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ status: 1, uacApprovedLocations: 1, projectAbbreviation: 1 });
-ProposalSchema.index({ status: 1, uacApprovedLocations: 1, ownerName: 1 });
+  ProposalSchema.index({ status: 1, dizApprovedLocations: 1, _id: 1 });
+  ProposalSchema.index({ status: 1, dizApprovedLocations: 1, submittedAt: 1 });
+  ProposalSchema.index({ status: 1, dizApprovedLocations: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ status: 1, dizApprovedLocations: 1, projectAbbreviation: 1 });
+  ProposalSchema.index({ status: 1, dizApprovedLocations: 1, ownerName: 1 });
 
-ProposalSchema.index({ status: 1, signedContracts: 1, _id: 1 });
-ProposalSchema.index({ status: 1, signedContracts: 1, submittedAt: 1 });
-ProposalSchema.index({ status: 1, signedContracts: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ status: 1, signedContracts: 1, projectAbbreviation: 1 });
-ProposalSchema.index({ status: 1, signedContracts: 1, ownerName: 1 });
+  ProposalSchema.index({ status: 1, uacApprovedLocations: 1, _id: 1 });
+  ProposalSchema.index({ status: 1, uacApprovedLocations: 1, submittedAt: 1 });
+  ProposalSchema.index({ status: 1, uacApprovedLocations: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ status: 1, uacApprovedLocations: 1, projectAbbreviation: 1 });
+  ProposalSchema.index({ status: 1, uacApprovedLocations: 1, ownerName: 1 });
 
-ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, _id: 1 });
-ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, submittedAt: 1 });
-ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, dueDateForStatus: 1 });
-ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, projectAbbreviation: 1 });
-ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, ownerName: 1 });
+  ProposalSchema.index({ status: 1, signedContracts: 1, _id: 1 });
+  ProposalSchema.index({ status: 1, signedContracts: 1, submittedAt: 1 });
+  ProposalSchema.index({ status: 1, signedContracts: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ status: 1, signedContracts: 1, projectAbbreviation: 1 });
+  ProposalSchema.index({ status: 1, signedContracts: 1, ownerName: 1 });
 
-export { ProposalSchema };
+  ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, _id: 1 });
+  ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, submittedAt: 1 });
+  ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, dueDateForStatus: 1 });
+  ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, projectAbbreviation: 1 });
+  ProposalSchema.index({ status: 1, requestedButExcludedLocations: 1, ownerName: 1 });
+
+  addLocationPreSaveHook(
+    ProposalSchema,
+    [
+      'openDizChecks',
+      'dizApprovedLocations',
+      'openDizConditionChecks',
+      'uacApprovedLocations',
+      'requestedButExcludedLocations',
+      'signedContracts',
+    ],
+    LocationModel,
+  );
+  addLocationPreSaveHook(OwnerSchema, ['miiLocation'], LocationModel);
+  addLocationPreSaveHook(InstituteSchema, ['miiLocation'], LocationModel);
+  addLocationPreSaveHook(AddresseesSchema, ['desiredLocations'], LocationModel);
+  addLocationPreSaveHook(HistoryEventSchema, ['location'], LocationModel);
+  addLocationPreSaveHook(DizDetailsSchema, ['location'], LocationModel);
+  addLocationPreSaveHook(DeclineReasonSchema, ['location'], LocationModel);
+  addLocationPreSaveHook(ConditionalApprovalSchema, ['location'], LocationModel);
+  addLocationPreSaveHook(UacApprovalSchema, ['location'], LocationModel);
+  addLocationPreSaveHook(AdditionalLocationInformationSchema, ['location'], LocationModel);
+
+  return ProposalSchema;
+};
+
+export { getProposalSchemaFactory };

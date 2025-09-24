@@ -1,5 +1,4 @@
 import { SYSTEM_OWNER_ID } from 'src/shared/constants/global.constants';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../schema/proposal.schema';
 import { ConditionalApproval } from '../schema/sub-schema/conditional-approval.schema';
@@ -7,7 +6,7 @@ import { UacApproval } from '../schema/sub-schema/uac-approval.schema';
 import { addHistoryItemForContractSystemReject, addHistoryItemForUacCondition } from './proposal-history.util';
 import { excludeUnselectedLocations } from './unselect-approved-location.util';
 
-export const clearLocationsVotes = (proposal: Proposal, location: MiiLocation) => {
+export const clearLocationsVotes = (proposal: Proposal, location: string) => {
   proposal.openDizChecks = proposal.openDizChecks.filter((filterLocation) => filterLocation !== location);
   proposal.dizApprovedLocations = proposal.dizApprovedLocations.filter((filterLocation) => filterLocation !== location);
   proposal.openDizConditionChecks = proposal.openDizConditionChecks.filter(
@@ -39,11 +38,7 @@ export const excludeAllRequestedLocations = (proposal: Proposal) => {
   proposal.openDizConditionChecks = [];
 };
 
-export const declineUnselectedLocations = (
-  proposal: Proposal,
-  user: IRequestUser,
-  selectedLocations: MiiLocation[],
-) => {
+export const declineUnselectedLocations = (proposal: Proposal, user: IRequestUser, selectedLocations: string[]) => {
   proposal.uacApprovals.forEach((approval) => {
     if (!selectedLocations.includes(approval.location)) {
       excludeUnselectedLocations(proposal, user, approval);

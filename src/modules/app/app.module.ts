@@ -18,15 +18,10 @@ import { AdminModule } from '../admin/admin.module';
 import { FeasibilityModule } from '../feasibility/feasibility.module';
 import { MigrationService } from './migration.service';
 import { Migration, MigrationSchema } from './schema/migration.schema';
-import { TermsConfig, TermsConfigSchema } from '../admin/schema/terms/terms-config.schema';
-import { Proposal, ProposalSchema } from '../proposal/schema/proposal.schema';
-import { DataPrivacyConfig, DataPrivacyConfigSchema } from '../admin/schema/data-privacy/data-privacy-config.schema';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
-import { ProposalForm, ProposalFormSchema } from '../proposal-form/schema/proposal-form.schema';
 import { MiiLocationModule } from '../mii-location/mii-location.module';
 import { LocationModule } from '../location/location.module';
 import { Location, LocationSchema } from '../location/schema/location.schema';
-import { LocationSyncChangelog, LocationSyncChangelogSchema } from '../location/schema/location-sync-changelog.schema';
 
 @Module({
   imports: [
@@ -42,16 +37,11 @@ import { LocationSyncChangelog, LocationSyncChangelogSchema } from '../location/
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: Migration.name, schema: MigrationSchema },
-      { name: TermsConfig.name, schema: TermsConfigSchema },
-      { name: Proposal.name, schema: ProposalSchema },
-      { name: DataPrivacyConfig.name, schema: DataPrivacyConfigSchema },
-      { name: ProposalForm.name, schema: ProposalFormSchema },
       { name: Location.name, schema: LocationSchema },
-      { name: LocationSyncChangelog.name, schema: LocationSyncChangelogSchema },
     ]),
 
     /** Modules */
-
+    LocationModule,
     AuthModule,
     AdminModule,
     ProposalModule,
@@ -62,7 +52,6 @@ import { LocationSyncChangelog, LocationSyncChangelogSchema } from '../location/
     FeasibilityModule,
     ProposalFormModule,
     MiiLocationModule,
-    LocationModule,
   ],
   controllers: [AppController],
   providers: [AppService, MigrationService, { provide: APP_INTERCEPTOR, useClass: GlobalHeadersInterceptor }],
