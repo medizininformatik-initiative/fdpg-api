@@ -1,4 +1,4 @@
-export class LocationGetDto {
+export class LocationDto {
   _id: string;
   externalCode: string;
   display: string;

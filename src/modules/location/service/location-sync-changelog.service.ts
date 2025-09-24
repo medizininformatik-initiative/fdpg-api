@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { LocationSyncChangelog, LocationSyncChangelogDocument } from '../schema/location-sync-changelog';
+import { LocationSyncChangelog, LocationSyncChangelogDocument } from '../schema/location-sync-changelog.schema';
 import { Model } from 'mongoose';
 import { LocationSyncChangeLogStatus } from '../enum/location-sync-changelog-status.enum';
 import { MiiCodesystemLocationDto } from '../dto/mii-codesystem-location.dto';
 import { LocationDocument } from '../schema/location.schema';
 import { LocationSyncChangelogStrategy } from '../enum/location-sync-changelog-strategy.enum';
-import { LocationSyncChangelogGetDto } from '../dto/location-sync-changelog-get.dto';
 import { plainToClass } from 'class-transformer';
+import { LocationSyncChangelogDto } from '../dto/location-sync-changelog.dto';
+import { IRequestUser } from 'src/shared/types/request-user.interface';
 
 @Injectable()
 export class LocationSyncChangelogService {
@@ -16,10 +17,14 @@ export class LocationSyncChangelogService {
     private locationSyncChangelogModel: Model<LocationSyncChangelogDocument>,
   ) {}
 
-  async findAll(): Promise<LocationSyncChangelogGetDto[]> {
-    return (await this.locationSyncChangelogModel.find({}))
-      .map((model) => model.toObject())
-      .map((obj) => plainToClass(LocationSyncChangelogGetDto, obj));
+  async findById(id: string): Promise<LocationSyncChangelogDocument> {
+    return await this.locationSyncChangelogModel.findById(id);
+  }
+
+  async findAll(): Promise<LocationSyncChangelogDto[]> {
+    return (await this.findAllDocuments())
+      .map((model) => model.toObject() as LocationSyncChangelog)
+      .map((obj) => plainToClass(LocationSyncChangelogDto, obj));
   }
 
   async findAllDocuments(): Promise<LocationSyncChangelogDocument[]> {
@@ -35,8 +40,8 @@ export class LocationSyncChangelogService {
     locationApiDtoLookUpMap: Map<string, MiiCodesystemLocationDto>,
     persisted: LocationDocument[],
   ) {
-    const pendingChanges = (await this.findAllByStatus(LocationSyncChangeLogStatus.PENDING)).map((changeLog) =>
-      changeLog.toObject(),
+    const pendingChanges = (await this.findAllByStatus(LocationSyncChangeLogStatus.PENDING)).map(
+      (changeLog) => changeLog.toObject() as LocationSyncChangelog,
     );
 
     const persistedLookUpMap = persisted.reduce((accumulator, currentItem) => {
@@ -52,6 +57,37 @@ export class LocationSyncChangelogService {
       .map((newChangelog) => this.updatePendingChangelogs(newChangelog, pendingChanges));
 
     await this.processChangeLogs(changeLogs);
+  }
+
+  async updateStatus(
+    id: string,
+    changelog: LocationSyncChangelogDto,
+    user: IRequestUser,
+  ): Promise<LocationSyncChangelog> {
+    console.log({ id });
+    const doc = await this.findById(id);
+
+    if (
+      !(
+        doc.status === LocationSyncChangeLogStatus.PENDING &&
+        [LocationSyncChangeLogStatus.APPROVED, LocationSyncChangeLogStatus.DECLINED].includes(changelog.status)
+      )
+    ) {
+      throw new ForbiddenException("Status can only be changed from 'PENDING' to 'ACCEPTED' or 'DECLINED'");
+    }
+
+    console.log({ doc });
+
+    doc.status = changelog.status;
+    doc.statusSetBy = user.userId;
+    doc.statusSetDate = new Date();
+    doc.updated = new Date();
+
+    return await doc.save();
+  }
+
+  modelToDto(changelogDoc: LocationSyncChangelog): LocationSyncChangelogDto {
+    return plainToClass(LocationSyncChangelogDto, changelogDoc);
   }
 
   private buildChangelog(
@@ -142,14 +178,14 @@ export class LocationSyncChangelogService {
   ): LocationSyncChangelog {
     const [currentPending] = pendingChangelogs.filter((pending) => pending.forCode === newChangelog.forCode);
 
-    if (currentPending.status !== LocationSyncChangeLogStatus.PENDING) {
-      throw Error(`Tried to update immutable Changelog for code ${currentPending.forCode}`);
-    }
-
     if (currentPending) {
+      if (currentPending.status !== LocationSyncChangeLogStatus.PENDING) {
+        throw Error(`Tried to update immutable Changelog for code ${currentPending.forCode}`);
+      }
+
       return {
         ...currentPending,
-        created: newChangelog.created,
+        updated: new Date(),
         strategy: newChangelog.strategy,
         newLocationData: { ...newChangelog.newLocationData },
       };

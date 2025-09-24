@@ -1,9 +1,9 @@
 import { Expose, Type } from 'class-transformer';
 import { LocationSyncChangeLogStatus } from '../enum/location-sync-changelog-status.enum';
 import { LocationSyncChangelogStrategy } from '../enum/location-sync-changelog-strategy.enum';
-import { LocationGetDto } from './location-get.dto';
+import { LocationDto } from './location.dto';
 
-export class LocationSyncChangelogGetDto {
+export class LocationSyncChangelogDto {
   @Expose()
   _id: string;
 
@@ -26,10 +26,10 @@ export class LocationSyncChangelogGetDto {
   statusSetDate?: Date;
 
   @Expose()
-  @Type(() => LocationGetDto)
-  oldLocationData?: Omit<LocationGetDto, 'rubrum'>;
+  @Type(() => LocationDto)
+  oldLocationData?: Omit<LocationDto, 'rubrum'>;
 
   @Expose()
-  @Type(() => LocationGetDto)
-  newLocationData: Omit<LocationGetDto, 'rubrum'>;
+  @Type(() => LocationDto)
+  newLocationData: Omit<LocationDto, 'rubrum'>;
 }

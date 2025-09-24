@@ -35,6 +35,9 @@ export class LocationSyncChangelog {
 
   @Prop({ type: Object, required: true })
   newLocationData: LocationData;
+
+  @Prop({ type: Date })
+  updated?: Date;
 }
 
 export const LocationSyncChangelogSchema = SchemaFactory.createForClass(LocationSyncChangelog);

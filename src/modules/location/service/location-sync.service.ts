@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { LocationFetchService } from './location-fetch.service';
 import { LocationService } from './location.service';
 import { MiiCodesystemLocationDto } from '../dto/mii-codesystem-location.dto';
 import { LocationSyncChangelogService } from './location-sync-changelog.service';
+import { LocationSyncChangelogDto } from '../dto/location-sync-changelog.dto';
+import { IRequestUser } from 'src/shared/types/request-user.interface';
+import { Role } from 'src/shared/enums/role.enum';
+import { LocationSyncChangeLogStatus } from '../enum/location-sync-changelog-status.enum';
 
 @Injectable()
 export class LocationSyncService {
@@ -19,6 +23,23 @@ export class LocationSyncService {
     const locationDtoLookUpMap = this.getVersionChainMap(allApiDtos);
 
     await this.locationSyncChangelogService.generateLocationSyncChangelogsFromApi(locationDtoLookUpMap, allPersisted);
+  }
+
+  async setChangelogStatus(
+    changelogId: string,
+    changelog: LocationSyncChangelogDto,
+    user: IRequestUser,
+  ): Promise<LocationSyncChangelogDto> {
+    if (user.singleKnownRole !== Role.FdpgMember) {
+      throw new ForbiddenException('Only FDPG Members can change the status of changelogs');
+    }
+    const updatedChangelog = await this.locationSyncChangelogService.updateStatus(changelogId, changelog, user);
+
+    if (updatedChangelog.status === LocationSyncChangeLogStatus.APPROVED) {
+      await this.locationSevice.update(updatedChangelog.forCode, changelog.newLocationData);
+    }
+
+    return this.locationSyncChangelogService.modelToDto(updatedChangelog);
   }
 
   /**

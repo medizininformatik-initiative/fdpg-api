@@ -43,6 +43,9 @@ export class Location {
 
   @Prop({ type: Boolean, default: false })
   deprecated: boolean;
+
+  @Prop({ type: Date })
+  updated?: Date;
 }
 
 export const LocationSchema = SchemaFactory.createForClass(Location);
