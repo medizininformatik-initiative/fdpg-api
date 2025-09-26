@@ -87,6 +87,11 @@ export class ProposalValidationPipe implements PipeTransform<any> {
       groups.push(ProposalValidation.IsDIFEDataSource);
     }
 
+    // If this is a register proposal, add register validation group
+    if (object.isRegister) {
+      groups.push(ProposalValidation.IsRegister);
+    }
+
     return groups;
   }
 }

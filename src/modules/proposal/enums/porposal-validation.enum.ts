@@ -8,4 +8,5 @@ export enum ProposalValidation {
   IsMiiDataSource = 'GROUP_IS_MII_DATA_SOURCE',
   IsDIFEDataSource = 'GROUP_IS_DIFE_DATA_SOURCE',
   IsRework = 'GROUP_IS_REWORK',
+  IsRegister = 'GROUP_IS_REGISTER',
 }
