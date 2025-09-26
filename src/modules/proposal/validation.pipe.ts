@@ -90,6 +90,9 @@ export class ProposalValidationPipe implements PipeTransform<any> {
     // If this is a register proposal, add register validation group
     if (object.isRegister) {
       groups.push(ProposalValidation.IsRegister);
+    } else {
+      // Add special group for non-register, non-draft validations (like date validation)
+      groups.push(ProposalValidation.IsNotDraftAndNotRegister);
     }
 
     return groups;

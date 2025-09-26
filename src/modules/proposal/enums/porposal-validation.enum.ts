@@ -9,4 +9,5 @@ export enum ProposalValidation {
   IsDIFEDataSource = 'GROUP_IS_DIFE_DATA_SOURCE',
   IsRework = 'GROUP_IS_REWORK',
   IsRegister = 'GROUP_IS_REGISTER',
+  IsNotDraftAndNotRegister = 'GROUP_IS_NOT_DRAFT_AND_NOT_REGISTER',
 }

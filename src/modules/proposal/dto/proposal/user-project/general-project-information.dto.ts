@@ -21,8 +21,13 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
     return value ? new Date(value) : value;
   })
   @IsDate()
-  @IsAfterToday({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
+  @IsAfterToday({
+    groups: [ProposalValidation.IsNotDraftAndNotRegister],
+    // This validation only runs for non-draft AND non-register forms
+  })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
+  })
   desiredStartTime: Date;
 
   @Expose()
