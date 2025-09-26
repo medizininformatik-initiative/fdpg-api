@@ -9,6 +9,9 @@ import { Proposal } from '../schema/proposal.schema';
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
 
+const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
+  proposal.isRegister && user.roles.includes(Role.RegisteringMember) && user.userId === proposal.ownerId;
+
 const isFdpg = (user: IRequestUser) =>
   user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember;
 
@@ -24,13 +27,13 @@ export const validateStatusChange = (
   const map = {
     [ProposalStatus.Archived]: {},
     [ProposalStatus.Draft]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
     },
     [ProposalStatus.Rejected]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
     [ProposalStatus.Rework]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
     },
     [ProposalStatus.FdpgCheck]: {
       [ProposalStatus.Rework]: () => isFdpg(user),
