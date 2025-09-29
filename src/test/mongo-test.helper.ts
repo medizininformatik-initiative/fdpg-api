@@ -1,20 +1,16 @@
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
-import { DynamicModule, ForwardReference, INestApplication, Type } from '@nestjs/common';
+import { DynamicModule, ForwardReference, INestApplication, Provider, Type } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoDBContainer, StartedMongoDBContainer } from '@testcontainers/mongodb';
 import { ConfigModule } from '@nestjs/config';
 import { Wait } from 'testcontainers';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Define an interface for the context that will be passed to the tests
 export interface MongoTestContext {
   app: INestApplication;
   container: StartedMongoDBContainer;
   mongoUri: string;
-}
-
-export interface ProviderOverride {
-  token: any; // The injection token of the provider to override
-  value: any; // The mock value/object to use instead
 }
 
 /**
@@ -27,11 +23,25 @@ export interface ProviderOverride {
 export function describeWithMongo(
   suiteName: string,
   modules: (Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference<any>)[] = [],
-  overrides: ProviderOverride[] = [],
+  overrides: Provider[] = [],
   tests: (context: () => MongoTestContext) => void,
 ) {
   describe(suiteName, () => {
     const context = {} as MongoTestContext;
+
+    const tearDownContainer = async (context: MongoTestContext) => {
+      try {
+        await context.app?.close();
+      } catch (error) {
+        console.warn(`[${suiteName}] Error closing NestJS app:`, error);
+      }
+      try {
+        await context.container?.stop();
+        console.log(`[${suiteName}] Container stopped successfully.`);
+      } catch (error) {
+        console.error(`[${suiteName}] FAILED to stop the container:`, error);
+      }
+    };
 
     beforeAll(async () => {
       try {
@@ -51,6 +61,7 @@ export function describeWithMongo(
         let moduleBuilder: TestingModuleBuilder = Test.createTestingModule({
           imports: [
             ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env.test'] }),
+            ScheduleModule.forRoot(),
             MongooseModule.forRootAsync({
               useFactory: () => ({
                 uri: mongoUri,
@@ -62,10 +73,12 @@ export function describeWithMongo(
         });
 
         if (overrides && overrides.length > 0) {
-          moduleBuilder = overrides.reduce(
-            (builder, override) => builder.overrideProvider(override.token).useValue(override.value),
-            moduleBuilder,
-          );
+          moduleBuilder = overrides.reduce((builder, provider) => {
+            // A provider can be a class or an object with a `provide` property
+            const token = (provider as any).provide || provider;
+            const value = (provider as any).useValue;
+            return builder.overrideProvider(token).useValue(value);
+          }, moduleBuilder);
         }
 
         const moduleFixture = await moduleBuilder.compile();
@@ -75,18 +88,15 @@ export function describeWithMongo(
         Object.assign(context, { app, container, mongoUri });
       } catch (error) {
         console.error('FATAL ERROR DURING TEST SETUP:', error);
+
+        await tearDownContainer(context);
+
         throw error;
       }
     }, 450000);
 
     afterAll(async () => {
-      console.log(`[${suiteName}] Tearing down...`);
-      try {
-        await context.app?.close();
-      } catch (e) {
-        console.warn(e);
-      }
-      await context.container?.stop();
+      await tearDownContainer(context);
     });
 
     tests(() => context);
