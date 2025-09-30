@@ -11,6 +11,8 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
     PanelQuery.DizPending,
     PanelQuery.DizOngoing,
     PanelQuery.DizFinished,
+    PanelQuery.RegisterDraftProposals,
+    PanelQuery.RegisterSubmittedProposals,
     PanelQuery.Archived,
   ];
 
@@ -24,6 +26,10 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
         return getFilterForOngoing(user);
       case PanelQuery.DizFinished:
         return getFilterForFinished(user);
+      case PanelQuery.RegisterDraftProposals:
+        return { isRegister: true, status: ProposalStatus.Draft };
+      case PanelQuery.RegisterSubmittedProposals:
+        return { isRegister: true, status: ProposalStatus.FdpgCheck };
       case PanelQuery.Archived:
         return getFilterForArchived(user);
     }

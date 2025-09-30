@@ -11,6 +11,8 @@ export const getFilterForUac = (panelQuery: PanelQuery, user: IRequestUser): Fil
     PanelQuery.UacOngoing,
     PanelQuery.UacFinished,
     PanelQuery.UacRequested,
+    PanelQuery.RegisterDraftProposals,
+    PanelQuery.RegisterSubmittedProposals,
     PanelQuery.Archived,
   ];
 
@@ -24,6 +26,10 @@ export const getFilterForUac = (panelQuery: PanelQuery, user: IRequestUser): Fil
         return getFilterForOngoing(user);
       case PanelQuery.UacFinished:
         return getFilterForFinished(user);
+      case PanelQuery.RegisterDraftProposals:
+        return { isRegister: true, status: ProposalStatus.Draft };
+      case PanelQuery.RegisterSubmittedProposals:
+        return { isRegister: true, status: ProposalStatus.FdpgCheck };
       case PanelQuery.Archived:
         return getFilterForArchived(user);
     }

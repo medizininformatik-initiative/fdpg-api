@@ -30,5 +30,6 @@ export enum PanelQuery {
   FdpgFinished = 'FDPG_FINISHED',
 
   // Register Proposals
-  RegisterProposals = 'REGISTER_PROPOSALS',
+  RegisterDraftProposals = 'REGISTER_DRAFT_PROPOSALS',
+  RegisterSubmittedProposals = 'REGISTER_SUBMITTED_PROPOSALS',
 }

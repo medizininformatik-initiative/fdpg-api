@@ -14,6 +14,7 @@ import {
 import { ApiNoContentResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
+import { ProposalAccess } from '../decorators/proposal-access.decorator';
 import { MongoIdParamDto, MongoIdQueryDto } from 'src/shared/dto/mongo-id-param.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
@@ -40,15 +41,6 @@ export class ProposalCrudController {
   }
 
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
-  @Get(':id')
-  @ApiNotFoundResponse({ description: 'Item could not be found' })
-  @ApiOperation({ summary: 'Gets a Proposal by its id' })
-  @ProposalValidation()
-  async find(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest) {
-    return await this.proposalCrudService.find(id, user);
-  }
-
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Get()
   @ApiOperation({ summary: 'Gets all Proposals that are currently accessible for the user' })
   @UsePipes(ValidationPipe)
@@ -57,7 +49,30 @@ export class ProposalCrudController {
     @Query() { panelQuery }: ProposalFilterDto,
     @Request() { user }: FdpgRequest,
   ): Promise<ProposalGetListDto[]> {
-    return await this.proposalCrudService.findAll(sortOrder, panelQuery, user);
+    return await this.proposalCrudService.findAll(sortOrder, panelQuery, user, false);
+  }
+
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
+  @Get('isRegister')
+  @ApiOperation({
+    summary: 'Gets all registered Proposals that are currently accessible for the user',
+  })
+  @UsePipes(ValidationPipe)
+  async findAllRegistered(
+    @Query() sortOrder: SortOrderDto,
+    @Query() { panelQuery }: ProposalFilterDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<ProposalGetListDto[]> {
+    return await this.proposalCrudService.findAll(sortOrder, panelQuery, user, true);
+  }
+
+  @ProposalAccess()
+  @Get(':id')
+  @ApiNotFoundResponse({ description: 'Item could not be found' })
+  @ApiOperation({ summary: 'Gets a Proposal by its id' })
+  @ProposalValidation()
+  async find(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest) {
+    return await this.proposalCrudService.find(id, user);
   }
 
   @Auth(Role.Researcher, Role.RegisteringMember)

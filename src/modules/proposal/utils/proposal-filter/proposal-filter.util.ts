@@ -9,34 +9,46 @@ import { getFilterForFdpg } from './fdpg/fdpg-filter.util';
 import { getFilterForDiz } from './diz/diz-filter.util';
 import { getFilterForUac } from './uac/uac-filter.util';
 
-export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
-  // Special handling for register proposals when user has RegisteringMember role AND it's their selected role
-  if (
-    panelQuery === PanelQuery.RegisterProposals &&
-    user.roles.includes(Role.RegisteringMember) &&
-    user.singleKnownRole === Role.RegisteringMember
-  ) {
-    return getFilterForResearcher(panelQuery, user);
-  }
+export const getProposalFilter = (
+  panelQuery: PanelQuery,
+  user: IRequestUser,
+  isRegisterFilter?: boolean,
+): FilterQuery<Proposal> => {
+  let baseFilter: FilterQuery<Proposal>;
 
   switch (user.singleKnownRole) {
     case Role.Researcher:
-      return getFilterForResearcher(panelQuery, user);
+      baseFilter = getFilterForResearcher(panelQuery, user);
+      break;
     case Role.RegisteringMember:
-      return getFilterForResearcher(panelQuery, user);
+      baseFilter = getFilterForResearcher(panelQuery, user);
+      break;
     case Role.FdpgMember:
-      return getFilterForFdpg(panelQuery);
+      baseFilter = getFilterForFdpg(panelQuery);
+      break;
     case Role.DizMember:
-      return getFilterForDiz(panelQuery, user);
+      baseFilter = getFilterForDiz(panelQuery, user);
+      break;
     case Role.UacMember:
-      return getFilterForUac(panelQuery, user);
+      baseFilter = getFilterForUac(panelQuery, user);
+      break;
     case Role.DataSourceMember:
-      return {
+      baseFilter = {
         ...getFilterForFdpg(panelQuery),
         selectedDataSources: { $in: user.assignedDataSources },
       };
-
+      break;
     default:
       throw new ForbiddenException();
   }
+
+  // Apply isRegister filter if specified
+  if (isRegisterFilter !== undefined) {
+    baseFilter = {
+      ...baseFilter,
+      isRegister: isRegisterFilter,
+    };
+  }
+
+  return baseFilter;
 };

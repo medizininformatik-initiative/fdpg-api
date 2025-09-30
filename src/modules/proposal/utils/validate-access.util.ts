@@ -11,14 +11,16 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     throwForbiddenError('Proposal is currently locked to modifications');
   }
 
-  // Special handling for register proposals when user's selected role is RegisteringMember
-  if (
-    proposal.isRegister &&
-    user.roles.includes(Role.RegisteringMember) &&
-    user.singleKnownRole === Role.RegisteringMember
-  ) {
+  // Special handling for register proposals when user has RegisteringMember role
+  if (proposal.isRegister && user.roles.includes(Role.RegisteringMember)) {
     checkAccessForRegisteringMember(proposal, user);
     return; // Exit early for register proposals with RegisteringMember role
+  }
+
+  // Special handling for users who have RegisteringMember among their roles (not just primary role)
+  if (user.roles.includes(Role.RegisteringMember)) {
+    // If user has RegisteringMember role, they should have access regardless of primary role
+    return;
   }
 
   if (user.singleKnownRole === Role.Researcher) {
