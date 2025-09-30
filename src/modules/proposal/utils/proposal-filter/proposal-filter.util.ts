@@ -44,10 +44,19 @@ export const getProposalFilter = (
 
   // Apply isRegister filter if specified
   if (isRegisterFilter !== undefined) {
-    baseFilter = {
-      ...baseFilter,
-      isRegister: isRegisterFilter,
-    };
+    if (isRegisterFilter === true) {
+      // For register proposals: explicitly isRegister = true
+      baseFilter = {
+        ...baseFilter,
+        isRegister: true,
+      };
+    } else {
+      // For non-register proposals: isRegister is not true (includes false, null, undefined, or missing field)
+      baseFilter = {
+        ...baseFilter,
+        isRegister: { $ne: true },
+      };
+    }
   }
 
   return baseFilter;
