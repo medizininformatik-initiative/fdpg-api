@@ -65,7 +65,7 @@ describe('CommentAnswerEventService', () => {
     content: 'content',
     isDone: false,
     fdpgTaskId: 'taskId',
-    locations: [MiiLocation.VirtualAll],
+    locations: ['UKL', 'KUM'],
     versionOfItem: 1,
     owner: {
       id: 'ownerId',

@@ -268,6 +268,11 @@ describe('CommentService', () => {
 
       const proposal = {
         status: ProposalStatus.Rework,
+        userProject: {
+          addressees: {
+            desiredLocations: ['UKL'],
+          },
+        },
       } as unknown as ProposalDocument;
 
       CommentModel.find.mockResolvedValue([mainComment]);
@@ -285,7 +290,7 @@ describe('CommentService', () => {
         filter.type = { $in: [CommentType.ProposalMessageToOwner] };
       } else {
         filter.type = { $in: [CommentType.ProposalMessageToLocation, CommentType.ProposalTaskFdpg] };
-        filter.locations = { $in: [user.miiLocation, MiiLocation.VirtualAll] };
+        filter.locations = { $in: [user.miiLocation] };
       }
 
       expect(CommentModel.find).toHaveBeenCalledWith(filter);

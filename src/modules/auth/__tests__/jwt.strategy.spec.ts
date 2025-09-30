@@ -5,6 +5,7 @@ import { JwksProvider } from '../strategies/jwks.provider';
 import { JwtStrategy } from '../strategies/jwt.strategy';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
@@ -16,8 +17,16 @@ describe('JwtStrategy', () => {
     provide: jest.fn().mockReturnValue('MOCK'),
   };
 
+  let locationService = {
+    findAll: jest.fn().mockReturnValue([{ _id: 'KUM' }]),
+  };
+
   beforeEach(() => {
-    strategy = new JwtStrategy(configService as unknown as ConfigService, jwksProvider as unknown as JwksProvider);
+    strategy = new JwtStrategy(
+      configService as unknown as ConfigService,
+      jwksProvider as unknown as JwksProvider,
+      locationService as unknown as LocationService,
+    );
   });
 
   it('should be defined', () => {

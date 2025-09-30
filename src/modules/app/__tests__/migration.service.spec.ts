@@ -63,6 +63,10 @@ jest.mock('../migrations', () => ({
     up: jest.fn(),
     down: jest.fn(),
   })),
+  Migration019: jest.fn().mockImplementation(() => ({
+    up: jest.fn(),
+    down: jest.fn(),
+  })),
 }));
 
 describe('MigrationService', () => {
@@ -117,6 +121,10 @@ describe('MigrationService', () => {
           useValue: {
             getCurrentVersion: jest.fn(),
           },
+        },
+        {
+          provide: getModelToken('Location'),
+          useValue: {},
         },
       ],
       imports: [],
