@@ -1,16 +1,18 @@
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
 import { DynamicModule, ForwardReference, INestApplication, Provider, Type } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
 import { MongoDBContainer, StartedMongoDBContainer } from '@testcontainers/mongodb';
 import { ConfigModule } from '@nestjs/config';
-import { Wait } from 'testcontainers';
+import { Network, StartedNetwork, Wait } from 'testcontainers';
 import { ScheduleModule } from '@nestjs/schedule';
+import { Connection } from 'mongoose';
 
 // Define an interface for the context that will be passed to the tests
 export interface MongoTestContext {
   app: INestApplication;
   container: StartedMongoDBContainer;
   mongoUri: string;
+  network: StartedNetwork;
 }
 
 /**
@@ -31,32 +33,55 @@ export function describeWithMongo(
 
     const tearDownContainer = async (context: MongoTestContext) => {
       try {
+        if (context.app) {
+          const connection = context.app.get<Connection>(getConnectionToken());
+          await connection.db.dropDatabase();
+        }
+      } catch (error) {
+        console.warn(`[${suiteName}] Error dropping database:`, error);
+      }
+
+      try {
         await context.app?.close();
       } catch (error) {
         console.warn(`[${suiteName}] Error closing NestJS app:`, error);
       }
       try {
         await context.container?.stop();
-        console.log(`[${suiteName}] Container stopped successfully.`);
       } catch (error) {
         console.error(`[${suiteName}] FAILED to stop the container:`, error);
+      }
+
+      try {
+        await context.network?.stop();
+      } catch (error) {
+        console.error(`[${suiteName}] FAILED to stop the network:`, error);
       }
     };
 
     beforeAll(async () => {
       try {
+        const network = await new Network().start();
+
+        Object.assign(context, { network });
+
         const container = await new MongoDBContainer('mongo:7.0')
           .withCommand(['mongod', '--replSet', 'rs0', '--noauth'])
           .withWaitStrategy(Wait.forLogMessage('Waiting for connections'))
+          .withNetwork(network)
           .withAutoRemove(true)
-          .withName('fdpg-api-testcontainer')
+          .withName('fdpg-api-mongodb-testcontainer')
           .start();
+
+        Object.assign(context, { container });
 
         await container.exec(['mongosh', '--eval', 'rs.initiate()']);
 
         const host = 'localhost';
         const port = container.getMappedPort(27017);
-        const mongoUri = `mongodb://${host}:${port}/test?replicaSet=rs0&directConnection=true`;
+        const mongoUri = `mongodb://${host}:${port}/test_${encodeURI(suiteName)}?replicaSet=rs0&directConnection=true`;
+
+        Object.assign(context, { mongoUri });
 
         let moduleBuilder: TestingModuleBuilder = Test.createTestingModule({
           imports: [
@@ -85,7 +110,7 @@ export function describeWithMongo(
         const app = moduleFixture.createNestApplication();
         await app.init();
 
-        Object.assign(context, { app, container, mongoUri });
+        Object.assign(context, { app });
       } catch (error) {
         console.error('FATAL ERROR DURING TEST SETUP:', error);
 
@@ -93,12 +118,17 @@ export function describeWithMongo(
 
         throw error;
       }
-    }, 450000);
+    }, 45000);
+
+    it('should have a defined app context', () => {
+      expect(context).toBeDefined();
+      expect(context.app).toBeDefined();
+    });
+
+    tests(() => context);
 
     afterAll(async () => {
       await tearDownContainer(context);
     });
-
-    tests(() => context);
   });
 }
