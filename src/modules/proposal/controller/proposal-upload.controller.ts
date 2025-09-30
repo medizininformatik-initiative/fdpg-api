@@ -34,7 +34,7 @@ export class ProposalUploadController {
     private readonly proposalMiscService: ProposalMiscService,
   ) {}
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Post(':id/uploads/export')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Returns all proposal uploads as a zip file' })
