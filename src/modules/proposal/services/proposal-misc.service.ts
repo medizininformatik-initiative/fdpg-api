@@ -636,9 +636,11 @@ export class ProposalMiscService {
       }
 
       const newProjectResponsible = {
-        // Preserve existing projectResponsibility flags/settings
         projectResponsibility: proposal.projectResponsible?.projectResponsibility
-          ? JSON.parse(JSON.stringify(proposal.projectResponsible.projectResponsibility))
+          ? {
+              ...JSON.parse(JSON.stringify(proposal.projectResponsible.projectResponsibility)),
+              applicantIsProjectResponsible: false,
+            }
           : undefined,
         researcher: JSON.parse(JSON.stringify(responsible?.researcher)),
         institute: JSON.parse(JSON.stringify(responsible?.institute)),
