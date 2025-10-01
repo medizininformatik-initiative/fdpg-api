@@ -59,6 +59,7 @@ import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
 import { Types } from 'mongoose';
 import { convert } from 'html-to-text';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
+import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
 
 @Injectable()
 export class ProposalMiscService {
@@ -90,21 +91,33 @@ export class ProposalMiscService {
         ),
     );
     const responsibleResearcher = document.projectResponsible;
-    if (
-      responsibleResearcher &&
-      !responsibleResearcher.projectResponsibility?.applicantIsProjectResponsible &&
-      responsibleResearcher.researcher &&
-      responsibleResearcher.researcher.email
-    ) {
-      researchers.push(
-        new ResearcherIdentityDto(
-          responsibleResearcher.researcher,
-          responsibleResearcher.participantCategory,
-          responsibleResearcher.participantRole,
-          false,
-          new Types.ObjectId().toString(),
-        ),
-      );
+    if (responsibleResearcher) {
+      if (responsibleResearcher.researcher && responsibleResearcher.researcher.email) {
+        // Case: applicantIsProjectResponsible is false - projectResponsible has researcher data
+        researchers.push(
+          new ResearcherIdentityDto(
+            responsibleResearcher.researcher,
+            responsibleResearcher.participantCategory,
+            responsibleResearcher.participantRole,
+            false,
+            new Types.ObjectId().toString(),
+          ),
+        );
+      } else if (
+        responsibleResearcher.projectResponsibility?.applicantIsProjectResponsible &&
+        document.applicant?.researcher?.email
+      ) {
+        // Case: applicantIsProjectResponsible is true - use applicant data with RESPONSIBLE_SCIENTIST role
+        researchers.push(
+          new ResearcherIdentityDto(
+            document.applicant.researcher,
+            document.applicant.participantCategory,
+            { role: ParticipantRoleType.ResponsibleScientist } as ParticipantRole,
+            false,
+            new Types.ObjectId().toString(),
+          ),
+        );
+      }
     }
 
     const tasks = researchers.map((researcher) => {
