@@ -782,7 +782,19 @@ export class ProposalMiscService {
 
     const zip = new JSZip();
 
-    const downloadPromises = proposal.uploads.map(async (upload) => {
+    const excludedTypes: string[] = [
+      UseCaseUpload.ContractCondition,
+      UseCaseUpload.LocationContract,
+      UseCaseUpload.ResearcherContract,
+      UseCaseUpload.ContractDraft,
+    ];
+    const filteredUploads = proposal.uploads.filter((upload) => !excludedTypes.includes(upload.type));
+
+    if (filteredUploads.length === 0) {
+      throw new NotFoundException('No exportable uploads found for this proposal');
+    }
+
+    const downloadPromises = filteredUploads.map(async (upload) => {
       try {
         const fileBuffer = await this.proposalDownloadService.downloadFile(upload.blobName);
         const fileName = upload.fileName || `upload_${upload._id}`;
