@@ -18,7 +18,7 @@ export class LocationSyncService {
 
   async syncLocations(): Promise<void> {
     const allPersisted = await this.locationSevice.findAllDocuments();
-    const allApiDtos = await this.locationFetchService.fetchLocationsFromApi();
+    const allApiDtos = (await this.locationFetchService.fetchLocationsFromApi()).filter((apiLoc) => apiLoc.code);
 
     const locationDtoLookUpMap = this.getVersionChainMap(allApiDtos);
 

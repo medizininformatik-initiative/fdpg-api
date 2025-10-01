@@ -64,7 +64,6 @@ export class LocationSyncChangelogService {
     changelog: LocationSyncChangelogDto,
     user: IRequestUser,
   ): Promise<LocationSyncChangelog> {
-    console.log({ id });
     const doc = await this.findById(id);
 
     if (
@@ -75,8 +74,6 @@ export class LocationSyncChangelogService {
     ) {
       throw new ForbiddenException("Status can only be changed from 'PENDING' to 'ACCEPTED' or 'DECLINED'");
     }
-
-    console.log({ doc });
 
     doc.status = changelog.status;
     doc.statusSetBy = user.userId;
@@ -153,9 +150,26 @@ export class LocationSyncChangelogService {
   }
 
   private async processChangeLogs(changeLogs: LocationSyncChangelog[]) {
-    const operations = changeLogs.map((log) => ({
-      updateOne: { filter: { _id: log._id }, update: { $set: log }, upsert: true },
-    }));
+    const operations = [];
+
+    for (const log of changeLogs) {
+      if (log._id) {
+        operations.push({
+          updateOne: {
+            filter: { _id: log._id },
+            update: { $set: log },
+            upsert: true,
+          },
+        });
+      } else {
+        const { _id, ...docToInsert } = log;
+        operations.push({
+          insertOne: {
+            document: docToInsert,
+          },
+        });
+      }
+    }
 
     try {
       if (operations.length === 0) {
@@ -164,7 +178,6 @@ export class LocationSyncChangelogService {
       }
 
       const result = await this.locationSyncChangelogModel.bulkWrite(operations);
-      console.log('Bulk write successful:', result);
       return result;
     } catch (error) {
       console.error('Error during bulk write:', error);
