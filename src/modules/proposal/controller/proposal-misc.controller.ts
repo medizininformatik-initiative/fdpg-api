@@ -57,7 +57,7 @@ import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 export class ProposalMiscController {
   constructor(private readonly proposalMiscService: ProposalMiscService) {}
 
-  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Get(':id/researcherInfo')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiOperation({ summary: 'Gets participating researcher info by proposal id' })
