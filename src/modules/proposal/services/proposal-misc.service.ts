@@ -100,7 +100,7 @@ export class ProposalMiscService {
             responsibleResearcher.participantCategory,
             responsibleResearcher.participantRole,
             false,
-            new Types.ObjectId().toString(),
+            'responsibleResearcherId', // dummy id to keep api design consistent
           ),
         );
       } else if (
@@ -114,7 +114,7 @@ export class ProposalMiscService {
             document.applicant.participantCategory,
             { role: ParticipantRoleType.ResponsibleScientist } as ParticipantRole,
             false,
-            new Types.ObjectId().toString(),
+            'responsibleResearcherId', // dummy id to keep api design consistent
           ),
         );
       }
