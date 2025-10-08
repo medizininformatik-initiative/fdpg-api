@@ -1,4 +1,4 @@
-import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { PlatformIdentifier } from '../../modules/admin/enums/platform-identifier.enum';
 import { MiiLocation } from '../constants/mii-locations';
 import { Role } from '../enums/role.enum';
 

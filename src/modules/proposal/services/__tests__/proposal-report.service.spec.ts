@@ -141,7 +141,7 @@ describe('ProposalReportService', () => {
 
       const result = await proposalReportService.createReport(proposalId, reportCreateDto, files, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
         { projectAbbreviation: 1, reports: 1, owner: 1 },
@@ -150,19 +150,19 @@ describe('ProposalReportService', () => {
 
       expect(result.title).toBe('title');
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
-      expect(getBlobName).toBeCalledWith(proposalId, UseCaseUpload.ReportUpload, result._id);
-      expect(storageService.uploadFile).toBeCalledWith('blobName', file, request.user);
-      expect(addReportUpload).toBeCalledWith(
+      expect(getBlobName).toHaveBeenCalledWith(proposalId, UseCaseUpload.ReportUpload, result._id);
+      expect(storageService.uploadFile).toHaveBeenCalledWith('blobName', file, request.user);
+      expect(addReportUpload).toHaveBeenCalledWith(
         expect.objectContaining({ title: 'title' }),
         expect.objectContaining({ blobName: 'blobName' }),
       );
-      expect(addReport).toBeCalledWith(proposalDocument, expect.objectContaining({ title: 'title' }));
-      expect(proposalDocument.save).toBeCalledTimes(1);
-      expect(eventEngineService.handleProposalReportCreate).toBeCalledWith(
+      expect(addReport).toHaveBeenCalledWith(proposalDocument, expect.objectContaining({ title: 'title' }));
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
+      expect(eventEngineService.handleProposalReportCreate).toHaveBeenCalledWith(
         proposalDocument,
         expect.objectContaining({ title: 'title' }),
       );
-      expect(storageService.getSasUrl).toBeCalledWith('blobName', true);
+      expect(storageService.getSasUrl).toHaveBeenCalledWith('blobName', true);
     });
   });
 
@@ -195,12 +195,12 @@ describe('ProposalReportService', () => {
 
       const result = await proposalReportService.getAllReports(proposalId, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, false);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, false);
 
       expect(result[0].title).toBe('title');
       expect(result[0].uploads[0].downloadUrl).toBe('downloadUrl');
 
-      expect(storageService.getSasUrl).toBeCalledWith('blobName', true);
+      expect(storageService.getSasUrl).toHaveBeenCalledWith('blobName', true);
     });
   });
 
@@ -235,7 +235,7 @@ describe('ProposalReportService', () => {
 
       const result = await proposalReportService.getReportContent(proposalId, reportId, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, false);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, false);
 
       expect(result).toBe('content');
     });
@@ -273,7 +273,7 @@ describe('ProposalReportService', () => {
       const error = await getError(async () => await call);
 
       expect(error).toBeInstanceOf(NotFoundException);
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, false);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, false);
     });
   });
 
@@ -324,9 +324,9 @@ describe('ProposalReportService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, true);
-      expect(proposalDocument.save).toBeCalledTimes(1);
-      expect(eventEngineService.handleProposalReportUpdate).toBeCalledWith(
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
+      expect(eventEngineService.handleProposalReportUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ _id: proposalId }),
         expect.objectContaining({ content: 'content' }),
       );
@@ -385,9 +385,9 @@ describe('ProposalReportService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, true);
-      expect(proposalDocument.save).toBeCalledTimes(1);
-      expect(eventEngineService.handleProposalReportUpdate).toBeCalledWith(
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
+      expect(eventEngineService.handleProposalReportUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ _id: proposalId }),
         expect.objectContaining({ content: 'content' }),
       );
@@ -396,7 +396,7 @@ describe('ProposalReportService', () => {
       expect(result.uploads[1].downloadUrl).toBe('downloadUrl');
       expect(result.title).toBe(updatedTitle);
 
-      expect(storageService.deleteManyBlobs).toBeCalledWith(['removeMe']);
+      expect(storageService.deleteManyBlobs).toHaveBeenCalledWith(['removeMe']);
     });
 
     it('should throw an error if report does not exist', async () => {
@@ -446,7 +446,7 @@ describe('ProposalReportService', () => {
       const error = await getError(async () => await call);
 
       expect(error).toBeInstanceOf(NotFoundException);
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
     });
   });
 
@@ -474,13 +474,13 @@ describe('ProposalReportService', () => {
 
       await proposalReportService.deleteReport(proposalId, reportId, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, true);
-      expect(proposalDocument.save).toBeCalledTimes(1);
-      expect(eventEngineService.handleProposalReportDelete).toBeCalledWith(
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
+      expect(eventEngineService.handleProposalReportDelete).toHaveBeenCalledWith(
         expect.objectContaining({ _id: proposalId }),
         expect.objectContaining({ content: 'content' }),
       );
-      expect(storageService.deleteManyBlobs).toBeCalledWith(['blobName']);
+      expect(storageService.deleteManyBlobs).toHaveBeenCalledWith(['blobName']);
     });
 
     it('should do nothing if report does not exist', async () => {
@@ -506,11 +506,11 @@ describe('ProposalReportService', () => {
 
       await proposalReportService.deleteReport(proposalId, notFoundReportId, request.user);
 
-      expect(proposalCrudService.findDocument).toBeCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
 
-      expect(proposalDocument.save).not.toBeCalled();
-      expect(eventEngineService.handleProposalReportDelete).not.toBeCalled();
-      expect(storageService.deleteManyBlobs).not.toBeCalled();
+      expect(proposalDocument.save).not.toHaveBeenCalled();
+      expect(eventEngineService.handleProposalReportDelete).not.toHaveBeenCalled();
+      expect(storageService.deleteManyBlobs).not.toHaveBeenCalled();
     });
   });
 });

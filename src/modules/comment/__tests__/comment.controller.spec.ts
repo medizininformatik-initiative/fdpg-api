@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { CommentController } from '../comment.controller';
@@ -8,8 +7,6 @@ import { AnswerCreateDto, AnswerUpdateDto } from '../dto/answer.dto';
 import { CommentCreateReferenceDto, CommentReferenceDto } from '../dto/comment-query.dto';
 import { CommentCreateDto, CommentGetDto, CommentUpdateDto } from '../dto/comment.dto';
 import { MarkAsDoneDto } from '../dto/mark-as-done.dto';
-
-const moduleMocker = new ModuleMocker(global);
 
 describe('CommentController', () => {
   let commentController: CommentController;
@@ -37,9 +34,11 @@ describe('CommentController', () => {
     })
       .useMocker((token) => {
         if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
+          return Object.fromEntries(
+            Object.getOwnPropertyNames(token.prototype)
+              .filter((key) => key !== 'constructor')
+              .map((key) => [key, jest.fn()]),
+          );
         }
       })
       .compile();

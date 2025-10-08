@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
 import { KeycloakClient } from '../keycloak.client';
 import { KeycloakService } from '../keycloak.service';
 import { Cache } from 'cache-manager';
@@ -32,7 +31,6 @@ jest.mock('uuid', () => {
     validate: jest.fn(),
   };
 });
-const moduleMocker = new ModuleMocker(global);
 describe('KeycloakService', () => {
   let service: KeycloakService;
   let keycloakClient: KeycloakClient;
@@ -66,9 +64,11 @@ describe('KeycloakService', () => {
     })
       .useMocker((token) => {
         if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
+          return Object.fromEntries(
+            Object.getOwnPropertyNames(token.prototype)
+              .filter((key) => key !== 'constructor')
+              .map((key) => [key, jest.fn()]),
+          );
         }
       })
       .compile();
@@ -346,8 +346,8 @@ describe('KeycloakService', () => {
 
       await service.updateProfile(userId, updateUserDto, user);
 
-      expect(updateUserDto.getMergedUser).toBeCalledWith(keycloakUser);
-      expect(apiClient.put).toBeCalledWith(`/users/${userId}`, mergedUser);
+      expect(updateUserDto.getMergedUser).toHaveBeenCalledWith(keycloakUser);
+      expect(apiClient.put).toHaveBeenCalledWith(`/users/${userId}`, mergedUser);
     });
   });
 
@@ -391,7 +391,7 @@ describe('KeycloakService', () => {
 
       const call = service.registerUser({} as ICreateKeycloakUser);
       await getError(async () => await call);
-      expect(errorSpy).toBeCalledWith(someError);
+      expect(errorSpy).toHaveBeenCalledWith(someError);
     });
   });
 
@@ -544,7 +544,7 @@ describe('KeycloakService', () => {
       jest.spyOn(apiClient, 'put').mockRejectedValueOnce(error);
 
       await service.executeActionsEmailForInvitation(userId, clientId, redirectUri);
-      expect(spyHandleError).toBeCalledWith(error);
+      expect(spyHandleError).toHaveBeenCalledWith(error);
     });
   });
 
