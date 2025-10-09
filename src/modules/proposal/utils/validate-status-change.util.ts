@@ -39,6 +39,8 @@ export const validateStatusChange = (
       [ProposalStatus.Rework]: () => isFdpg(user),
       [ProposalStatus.Rejected]: () => isFdpg(user),
       [ProposalStatus.LocationCheck]: () => isFdpg(user),
+      // Only allow ReadyToPublish for register proposals
+      [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.isRegister,
     },
     [ProposalStatus.LocationCheck]: {
       // Contracting is supposed to be started by uploading the contract draft
@@ -68,6 +70,10 @@ export const validateStatusChange = (
     [ProposalStatus.ReadyToArchive]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
+    [ProposalStatus.ReadyToPublish]: {
+      [ProposalStatus.Published]: () => !forceThrow, // API to Web Page (automated)
+    },
+    [ProposalStatus.Published]: {},
   };
 
   const canSwitch: boolean = map[toBeUpdated.status][newStatus] ? map[toBeUpdated.status][newStatus]() : false;
