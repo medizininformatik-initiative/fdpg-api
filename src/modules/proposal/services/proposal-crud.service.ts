@@ -131,13 +131,8 @@ export class ProposalCrudService {
     return result;
   }
 
-  async findAll(
-    sortOrder: SortOrderDto,
-    panelQuery: PanelQuery,
-    user: IRequestUser,
-    isRegisterFilter?: boolean,
-  ): Promise<ProposalGetListDto[]> {
-    const filter = getProposalFilter(panelQuery, user, isRegisterFilter);
+  async findAll(sortOrder: SortOrderDto, panelQuery: PanelQuery, user: IRequestUser): Promise<ProposalGetListDto[]> {
+    const filter = getProposalFilter(panelQuery, user);
     const results = await this.proposalModel.find(filter, null, {
       sort: {
         [sortOrder.sortBy ?? '_id']: sortOrder.order ?? 1,

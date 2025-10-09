@@ -32,4 +32,14 @@ export enum PanelQuery {
   // Register Proposals
   RegisterDraftProposals = 'REGISTER_DRAFT_PROPOSALS',
   RegisterSubmittedProposals = 'REGISTER_SUBMITTED_PROPOSALS',
+
+  // Published Page Panels
+  PublishedDraft = 'PUBLISHED_DRAFT',
+  PublishedPending = 'PUBLISHED_PENDING',
+  PublishedCompleted = 'PUBLISHED_COMPLETED',
+
+  // FDPG Published Page Panels
+  FdpgPublishedRequested = 'FDPG_PUBLISHED_REQUESTED',
+  FdpgPublishedReady = 'FDPG_PUBLISHED_READY',
+  FdpgPublishedPublished = 'FDPG_PUBLISHED_PUBLISHED',
 }

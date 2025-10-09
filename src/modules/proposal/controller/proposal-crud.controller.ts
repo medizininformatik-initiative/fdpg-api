@@ -49,21 +49,7 @@ export class ProposalCrudController {
     @Query() { panelQuery }: ProposalFilterDto,
     @Request() { user }: FdpgRequest,
   ): Promise<ProposalGetListDto[]> {
-    return await this.proposalCrudService.findAll(sortOrder, panelQuery, user, false);
-  }
-
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
-  @Get('isRegister')
-  @ApiOperation({
-    summary: 'Gets all registered Proposals that are currently accessible for the user',
-  })
-  @UsePipes(ValidationPipe)
-  async findAllRegistered(
-    @Query() sortOrder: SortOrderDto,
-    @Query() { panelQuery }: ProposalFilterDto,
-    @Request() { user }: FdpgRequest,
-  ): Promise<ProposalGetListDto[]> {
-    return await this.proposalCrudService.findAll(sortOrder, panelQuery, user, true);
+    return await this.proposalCrudService.findAll(sortOrder, panelQuery, user);
   }
 
   @ProposalAccess()

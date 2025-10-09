@@ -21,8 +21,22 @@ const ONGOING_TO_CHECK = { status: { $in: [ProposalStatus.FinishedProject, Propo
 const ONGOING_IN_WORK = { status: { $in: [ProposalStatus.ExpectDataDelivery, ProposalStatus.DataResearch] } };
 const FINISHED = { status: { $in: [ProposalStatus.Rejected, ProposalStatus.ReadyToArchive] } };
 const ARCHIVED = { status: ProposalStatus.Archived };
-const REGISTER_DRAFT_PROPOSALS = { isRegister: true, status: ProposalStatus.Draft };
-const REGISTER_SUBMITTED_PROPOSALS = { isRegister: true, status: ProposalStatus.FdpgCheck };
+
+// Published page panels
+const PUBLISHED_DRAFT = { isRegister: true, status: ProposalStatus.Draft };
+const PUBLISHED_PENDING = {
+  isRegister: true,
+  status: { $in: [ProposalStatus.Rework, ProposalStatus.FdpgCheck, ProposalStatus.ReadyToPublish] },
+};
+const PUBLISHED_COMPLETED = {
+  isRegister: true,
+  status: { $in: [ProposalStatus.Published, ProposalStatus.Rejected] },
+};
+
+// FDPG Published page panels
+const FDPG_PUBLISHED_REQUESTED = { isRegister: true, status: ProposalStatus.FdpgCheck };
+const FDPG_PUBLISHED_READY = { isRegister: true, status: ProposalStatus.ReadyToPublish };
+const FDPG_PUBLISHED_PUBLISHED = { isRegister: true, status: ProposalStatus.Published };
 
 export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgRequestedToCheck]: REQUESTED_TO_CHECK,
@@ -32,7 +46,12 @@ export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgOngoingToCheck]: ONGOING_TO_CHECK,
   [PanelQuery.FdpgOngoingInWork]: ONGOING_IN_WORK,
   [PanelQuery.FdpgFinished]: FINISHED,
-  [PanelQuery.RegisterDraftProposals]: REGISTER_DRAFT_PROPOSALS,
-  [PanelQuery.RegisterSubmittedProposals]: REGISTER_SUBMITTED_PROPOSALS,
+
+  [PanelQuery.PublishedDraft]: PUBLISHED_DRAFT,
+  [PanelQuery.PublishedPending]: PUBLISHED_PENDING,
+  [PanelQuery.PublishedCompleted]: PUBLISHED_COMPLETED,
+  [PanelQuery.FdpgPublishedRequested]: FDPG_PUBLISHED_REQUESTED,
+  [PanelQuery.FdpgPublishedReady]: FDPG_PUBLISHED_READY,
+  [PanelQuery.FdpgPublishedPublished]: FDPG_PUBLISHED_PUBLISHED,
   [PanelQuery.Archived]: ARCHIVED,
 };

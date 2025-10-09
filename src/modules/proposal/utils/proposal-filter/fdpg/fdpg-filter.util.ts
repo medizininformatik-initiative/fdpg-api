@@ -13,8 +13,12 @@ export const getFilterForFdpg = (panelQuery: PanelQuery): FilterQuery<Proposal> 
     PanelQuery.FdpgOngoingToCheck,
     PanelQuery.FdpgOngoingInWork,
     PanelQuery.FdpgFinished,
-    PanelQuery.RegisterDraftProposals,
-    PanelQuery.RegisterSubmittedProposals,
+    PanelQuery.PublishedDraft,
+    PanelQuery.PublishedPending,
+    PanelQuery.PublishedCompleted,
+    PanelQuery.FdpgPublishedRequested,
+    PanelQuery.FdpgPublishedReady,
+    PanelQuery.FdpgPublishedPublished,
     PanelQuery.Archived,
   ];
 

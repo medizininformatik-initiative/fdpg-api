@@ -8,12 +8,23 @@ import { getFilterForResearcher } from './researcher/researcher-filter.util';
 import { getFilterForFdpg } from './fdpg/fdpg-filter.util';
 import { getFilterForDiz } from './diz/diz-filter.util';
 import { getFilterForUac } from './uac/uac-filter.util';
+import { ProposalStatus } from '../../enums/proposal-status.enum';
 
-export const getProposalFilter = (
-  panelQuery: PanelQuery,
+// Filter for register proposals that belong to a specific user
+export const getRegisterProposalsForUser = (
   user: IRequestUser,
-  isRegisterFilter?: boolean,
-): FilterQuery<Proposal> => {
+  status: ProposalStatus | ProposalStatus[],
+): FilterQuery<Proposal> => ({
+  $or: [
+    { ownerId: user.userId },
+    { participants: { $elemMatch: { 'researcher.email': user.email } } },
+    { 'projectResponsible.researcher.email': user.email },
+  ],
+  isRegister: true,
+  status: Array.isArray(status) ? { $in: status } : status,
+});
+
+export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
   let baseFilter: FilterQuery<Proposal>;
 
   switch (user.singleKnownRole) {
@@ -40,23 +51,6 @@ export const getProposalFilter = (
       break;
     default:
       throw new ForbiddenException();
-  }
-
-  // Apply isRegister filter if specified
-  if (isRegisterFilter !== undefined) {
-    if (isRegisterFilter === true) {
-      // For register proposals: explicitly isRegister = true
-      baseFilter = {
-        ...baseFilter,
-        isRegister: true,
-      };
-    } else {
-      // For non-register proposals: isRegister is not true (includes false, null, undefined, or missing field)
-      baseFilter = {
-        ...baseFilter,
-        isRegister: { $ne: true },
-      };
-    }
   }
 
   return baseFilter;
