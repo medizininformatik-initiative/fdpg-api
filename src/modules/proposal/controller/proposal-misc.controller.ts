@@ -52,6 +52,7 @@ import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
+import { ApplicantDto } from '../dto/proposal/applicant.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -326,5 +327,34 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<DizDetailsGetDto> {
     return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
+  }
+
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Put(':id/applicant/participant-role')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Updates the applicant participant role of a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  @ApiNoContentResponse({ description: 'Applicant participant role successfully updated' })
+  @HttpCode(204)
+  async updateApplicantParticipantRole(
+    @Param() { id }: MongoIdParamDto,
+    @Body() updateDto: ApplicantDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<void> {
+    await this.proposalMiscService.updateApplicantParticipantRole(id, updateDto, user);
+  }
+
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Put(':id/participants/:participantId/make-responsible')
+  @ApiOperation({ summary: 'Makes a participant the responsible scientist of a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal or participant could not be found' })
+  @ApiNoContentResponse({ description: 'Participant successfully made responsible scientist' })
+  @HttpCode(204)
+  async makeParticipantResponsible(
+    @Param() { id }: MongoIdParamDto,
+    @Param('participantId') participantId: string,
+    @Request() { user }: FdpgRequest,
+  ): Promise<void> {
+    await this.proposalMiscService.makeParticipantResponsible(id, participantId, user);
   }
 }
