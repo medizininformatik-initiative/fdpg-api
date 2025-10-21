@@ -45,7 +45,7 @@ export const revertLocationVote = async (
     removeFdpgTask(proposal, conditionalApprovalFdpgTaskId);
   }
 
-  const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+  const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData?.desiredDataAmount ?? 0);
   if (!isDataAmountReached) {
     removeFdpgTaskByType(proposal, FdpgTaskType.DataAmountReached);
   }
