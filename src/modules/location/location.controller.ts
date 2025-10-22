@@ -1,5 +1,4 @@
 import { Body, Get, Param, Post, Request } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { LocationSyncService } from './service/location-sync.service';
 import { LocationService } from './service/location.service';
@@ -19,12 +18,6 @@ export class LocationController {
     private locationSyncChangelogService: LocationSyncChangelogService,
   ) {}
 
-  @Get('/test')
-  @ApiOperation({ summary: 'TEST ENDPOINT' })
-  async getQueriesByUser(): Promise<void> {
-    await this.locationSyncService.syncLocations();
-  }
-
   @Get()
   @Auth(...Object.values(Role))
   async getAll(): Promise<LocationDto[]> {
@@ -35,6 +28,13 @@ export class LocationController {
   @Auth(Role.FdpgMember)
   async updateLocation(@Param() { id }: MongoIdParamDto, @Body() locationDto: LocationDto): Promise<void> {
     await this.locationService.update(id, locationDto);
+  }
+
+  @Get('/sync')
+  @Auth(Role.FdpgMember, Role.Admin)
+  async syncLocations(): Promise<LocationSyncChangelogDto[]> {
+    await this.locationSyncService.syncLocations();
+    return await this.locationSyncChangelogService.findAll();
   }
 
   @Get('/changelogs')

@@ -87,6 +87,14 @@ export class LocationSyncChangelogService {
     return plainToClass(LocationSyncChangelogDto, changelogDoc);
   }
 
+  private stringComparision(old?: string, updated?: string) {
+    if (!old && !updated) {
+      return true;
+    }
+
+    return old == updated;
+  }
+
   private buildChangelog(
     persistedLookUpMap,
     initialCode: string,
@@ -98,13 +106,13 @@ export class LocationSyncChangelogService {
 
     const doEqual =
       !!persisted &&
-      persisted.externalCode === finalEntry.code &&
-      persisted.display === finalEntry.display &&
-      persisted.definition === finalEntry.definition &&
-      persisted.consortium === finalEntry.consortium &&
-      persisted.contract === finalEntry.contract &&
-      persisted.abbreviation === finalEntry.abbreviation &&
-      persisted.uri === finalEntry.uri &&
+      this.stringComparision(persisted.externalCode, finalEntry.code) &&
+      this.stringComparision(persisted.display, finalEntry.display) &&
+      this.stringComparision(persisted.definition, finalEntry.definition) &&
+      this.stringComparision(persisted.consortium, finalEntry.consortium) &&
+      this.stringComparision(persisted.contract, finalEntry.contract) &&
+      this.stringComparision(persisted.abbreviation, finalEntry.abbreviation) &&
+      this.stringComparision(persisted.uri, finalEntry.uri) &&
       persisted.dataIntegrationCenter === finalEntry.dic &&
       persisted.dataManagementCenter === finalEntry.dataManagement &&
       persisted.deprecated === isDeprecated;
@@ -162,7 +170,7 @@ export class LocationSyncChangelogService {
           },
         });
       } else {
-        const { _id, ...docToInsert } = log;
+        const { ...docToInsert } = log;
         operations.push({
           insertOne: {
             document: docToInsert,
