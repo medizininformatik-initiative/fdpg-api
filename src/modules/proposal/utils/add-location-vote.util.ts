@@ -12,6 +12,11 @@ import { UacApproval } from '../schema/sub-schema/uac-approval.schema';
 import { addFdpgTaskAndReturnId, removeFdpgTask } from './add-fdpg-task.util';
 import { clearLocationsVotes } from './location-flow.util';
 import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
+import {
+  setUacApprovalDelayStatus,
+  setConditionalApprovalDelayStatus,
+  setDeclineReasonDelayStatus,
+} from './uac-delay-tracking.util';
 
 export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: SetDizApprovalDto) => {
   clearLocationsVotes(proposal, user.miiLocation);
@@ -20,16 +25,18 @@ export const addDizApproval = (proposal: Proposal, user: IRequestUser, vote: Set
     proposal.dizApprovedLocations.push(user.miiLocation);
   } else {
     proposal.requestedButExcludedLocations.push(user.miiLocation);
-    proposal.declineReasons = [
-      ...proposal.declineReasons,
-      {
-        location: user.miiLocation,
-        reason: vote.declineReason,
-        type: DeclineType.DizApprove,
-        owner: getOwner(user),
-        createdAt: new Date(),
-      },
-    ];
+    const declineReason = {
+      location: user.miiLocation,
+      reason: vote.declineReason,
+      type: DeclineType.DizApprove,
+      owner: getOwner(user),
+      createdAt: new Date(),
+      isLate: false,
+    };
+
+    setDeclineReasonDelayStatus(declineReason as any, proposal);
+
+    proposal.declineReasons = [...proposal.declineReasons, declineReason];
   }
 };
 
@@ -47,7 +54,7 @@ export const addUacApprovalWithCondition = (
   if (vote.value === true) {
     const conditionalApproval: Omit<
       ConditionalApproval,
-      '_id' | 'createdAt' | 'reviewedAt' | 'reviewedByOwnerId' | 'signedAt' | 'signedByOwnerId'
+      '_id' | 'createdAt' | 'reviewedAt' | 'reviewedByOwnerId' | 'signedAt' | 'signedByOwnerId' | 'isLate'
     > = {
       location,
       isAccepted: false,
@@ -56,6 +63,9 @@ export const addUacApprovalWithCondition = (
       isContractSigned: false,
       conditionReasoning,
     };
+
+    (conditionalApproval as ConditionalApproval).createdAt = new Date();
+    setConditionalApprovalDelayStatus(conditionalApproval as ConditionalApproval, proposal);
 
     if (proposal.locationConditionDraft) {
       proposal.locationConditionDraft.push(conditionalApproval as ConditionalApproval);
@@ -66,16 +76,18 @@ export const addUacApprovalWithCondition = (
     proposal.openDizConditionChecks.push(location);
   } else {
     proposal.requestedButExcludedLocations.push(location);
-    proposal.declineReasons = [
-      ...proposal.declineReasons,
-      {
-        location: user.miiLocation,
-        reason: vote.declineReason,
-        type: DeclineType.UacApprove,
-        owner: getOwner(user),
-        createdAt: new Date(),
-      },
-    ];
+    const declineReason = {
+      location: user.miiLocation,
+      reason: vote.declineReason,
+      type: DeclineType.UacApprove,
+      owner: getOwner(user),
+      createdAt: new Date(),
+      isLate: false,
+    };
+
+    setDeclineReasonDelayStatus(declineReason as any, proposal);
+
+    proposal.declineReasons = [...proposal.declineReasons, declineReason];
   }
 };
 
@@ -90,11 +102,14 @@ export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, 
   );
 
   if (vote.value === true) {
-    const uacApproval: Omit<UacApproval, '_id' | 'createdAt' | 'signedAt' | 'signedByOwnerId'> = {
+    const uacApproval: Omit<UacApproval, '_id' | 'createdAt' | 'signedAt' | 'signedByOwnerId' | 'isLate'> = {
       location: user.miiLocation,
       dataAmount: vote.dataAmount,
       isContractSigned: false,
     };
+
+    (uacApproval as UacApproval).createdAt = new Date();
+    setUacApprovalDelayStatus(uacApproval as UacApproval, proposal);
 
     // Flow:
     proposal.uacApprovedLocations.push(user.miiLocation);
@@ -102,23 +117,25 @@ export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, 
     proposal.uacApprovals.push(uacApproval as UacApproval);
     proposal.totalPromisedDataAmount = calculateDataAmount(proposal);
 
-    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData?.desiredDataAmount ?? 0);
 
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
     }
   } else {
     proposal.requestedButExcludedLocations.push(user.miiLocation);
-    proposal.declineReasons = [
-      ...proposal.declineReasons,
-      {
-        location: user.miiLocation,
-        reason: vote.declineReason,
-        type: DeclineType.UacApprove,
-        owner: getOwner(user),
-        createdAt: new Date(),
-      },
-    ];
+    const declineReason = {
+      location: user.miiLocation,
+      reason: vote.declineReason,
+      type: DeclineType.UacApprove,
+      owner: getOwner(user),
+      createdAt: new Date(),
+      isLate: false,
+    };
+
+    setDeclineReasonDelayStatus(declineReason as any, proposal);
+
+    proposal.declineReasons = [...proposal.declineReasons, declineReason];
   }
 
   const isUacApprovalComplete =
@@ -141,7 +158,7 @@ export const addDizApprovalWithCondition = (
 
   const conditionalApproval: Omit<
     ConditionalApproval,
-    '_id' | 'createdAt' | 'reviewedAt' | 'reviewedByOwnerId' | 'signedAt' | 'signedByOwnerId'
+    '_id' | 'createdAt' | 'reviewedAt' | 'reviewedByOwnerId' | 'signedAt' | 'signedByOwnerId' | 'isLate'
   > = {
     location: location,
     isAccepted: false,
@@ -150,6 +167,9 @@ export const addDizApprovalWithCondition = (
     conditionReasoning: conditionReasoning,
     fdpgTaskId,
   };
+
+  (conditionalApproval as ConditionalApproval).createdAt = new Date();
+  setConditionalApprovalDelayStatus(conditionalApproval as ConditionalApproval, proposal);
 
   if (vote.value === true) {
     if (proposal.locationConditionDraft) {
@@ -209,7 +229,7 @@ export const addDizConditionReview = (
 
     proposal.totalPromisedDataAmount = calculateDataAmount(proposal);
 
-    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData.desiredDataAmount ?? 0);
+    const isDataAmountReached = proposal.totalPromisedDataAmount >= (proposal.requestedData?.desiredDataAmount ?? 0);
     if (isDataAmountReached) {
       addFdpgTaskAndReturnId(proposal, FdpgTaskType.DataAmountReached);
     }

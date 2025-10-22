@@ -11,10 +11,7 @@ import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { plainToClass } from 'class-transformer';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { ProposalValidation } from '../enums/porposal-validation.enum';
-import { SupportedLanguages } from 'src/shared/constants/global.constants';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
-import { flattenToLanguage } from '../utils/flatten-to-language.util';
-import { DataPrivacyTextSingleLanguage } from 'src/modules/admin/dto/data-privacy/data-privacy-texts.dto';
 import { PdfEngineService } from 'src/modules/pdf-engine/pdf-engine.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -150,19 +147,15 @@ export class ProposalPdfService {
   }
 
   async createPrivacyTextForUsage(proposal: Proposal): Promise<any[]> {
-    const pdfLanguage: SupportedLanguages = 'de';
     let dataPrivacyTextForUsage = [];
     if (proposal.userProject.typeOfUse.usage.length !== 0) {
-      const dataPrivacyText = await this.adminConfigService.getDataPrivacyConfig(
-        proposal.platform ?? PlatformIdentifier.Mii,
-      );
+      const MiiDataPrivacyText = await this.adminConfigService.getDataPrivacyConfig(PlatformIdentifier.Mii);
 
-      const dataPrivacyTextForLanguage = flattenToLanguage<DataPrivacyTextSingleLanguage>(
-        dataPrivacyText.messages,
-        pdfLanguage,
-      );
-
-      dataPrivacyTextForUsage = proposal.userProject.typeOfUse.usage.map((usage) => dataPrivacyTextForLanguage[usage]);
+      dataPrivacyTextForUsage = proposal.userProject.typeOfUse.usage.map((usage) => MiiDataPrivacyText.messages[usage]);
+    }
+    if (proposal.userProject.typeOfUse.difeUsage.length !== 0) {
+      const DifeDataPrivacyText = await this.adminConfigService.getDataPrivacyConfig(PlatformIdentifier.DIFE);
+      dataPrivacyTextForUsage.push(DifeDataPrivacyText.messages.all);
     }
     return dataPrivacyTextForUsage;
   }

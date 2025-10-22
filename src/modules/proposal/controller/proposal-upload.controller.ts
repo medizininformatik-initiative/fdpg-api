@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Request,
+  Res,
   UploadedFile,
   UseInterceptors,
   UsePipes,
@@ -13,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiNoContentResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
+import { Response } from 'express';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
 import { MongoIdParamDto, MongoTwoIdsParamDto } from 'src/shared/dto/mongo-id-param.dto';
@@ -23,10 +25,45 @@ import { UploadTypeDto } from '../dto/upload-type.dto';
 import { UploadGetDto } from '../dto/upload.dto';
 import { DirectUpload } from '../enums/upload-type.enum';
 import { ProposalUploadService } from '../services/proposal-upload.service';
+import { ProposalMiscService } from '../services/proposal-misc.service';
 
 @ApiController('proposals', undefined, 'upload')
 export class ProposalUploadController {
-  constructor(private readonly proposalUploadService: ProposalUploadService) {}
+  constructor(
+    private readonly proposalUploadService: ProposalUploadService,
+    private readonly proposalMiscService: ProposalMiscService,
+  ) {}
+
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Post(':id/uploads/export')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Returns all proposal uploads as a zip file' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  async exportAllUploadsAsZip(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+    @Res() res: Response,
+  ) {
+    const { zipBuffer, projectAbbreviation } = await this.proposalMiscService.exportAllUploadsAsZip(id, user);
+
+    if (zipBuffer && Buffer.isBuffer(zipBuffer)) {
+      const filename = `${projectAbbreviation}.zip`;
+
+      const encodedFilename = encodeURIComponent(filename);
+      const contentDisposition = `attachment; filename*=UTF-8''${encodedFilename}`;
+
+      res.set({
+        'Content-Type': 'application/zip',
+        'Content-Disposition': contentDisposition,
+        'Content-Length': zipBuffer.length,
+        'Access-Control-Expose-Headers': 'Content-Disposition, X-Filename',
+        'X-Filename': filename,
+      });
+      return res.status(200).send(zipBuffer);
+    } else {
+      return res.status(204).send();
+    }
+  }
 
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Post(':id/upload')

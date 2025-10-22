@@ -1,4 +1,3 @@
-import { RevertLocationVoteDto } from './../dto/revert-location-vote.dto';
 import { Expose, plainToClass, Transform } from 'class-transformer';
 import { parseGroupToUser } from 'src/shared/utils/user-group.utils';
 import { HistoryEventGetDto } from '../dto/proposal/history-event.dto';
@@ -13,10 +12,20 @@ export const ExposeHistory = () => (target: object, propertyKey: string) => {
 
     const filteredEvents = params.obj[propertyKey].filter((event: HistoryEvent) => {
       const isRevertEvent = event.type === HistoryEventType.FdpgLocationVoteReverted;
+      const isParticipantEvent = [
+        HistoryEventType.ParticipantAdded,
+        HistoryEventType.ParticipantRemoved,
+        HistoryEventType.ParticipantUpdated,
+      ].includes(event.type);
 
       if (isRevertEvent && isFdpgMember) {
         return true;
       }
+
+      if (isParticipantEvent) {
+        return true;
+      }
+
       return event.location ? event.location === user.miiLocation : true;
     });
 

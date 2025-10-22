@@ -35,6 +35,11 @@ export class UacApproval {
   // Could be also the system
   @Prop()
   signedByOwnerId: string;
+
+  @Prop({
+    type: Boolean,
+  })
+  isLate?: boolean;
 }
 
 export const UacApprovalSchema = SchemaFactory.createForClass(UacApproval);

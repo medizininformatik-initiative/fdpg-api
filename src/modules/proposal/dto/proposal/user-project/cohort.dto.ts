@@ -20,5 +20,5 @@ export class CohortDto extends WithIdForObjectDto {
   @Expose()
   @IsBoolean()
   @IsOptional()
-  isDone?: boolean;
+  declare isDone?: boolean;
 }

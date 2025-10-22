@@ -1,90 +1,243 @@
-import { Test } from '@nestjs/testing';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
-import { UuidParamDto } from 'src/shared/dto/uuid-id-param.dto';
-import { FdpgRequest } from 'src/shared/types/request-user.interface';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { PasswordResetDto } from '../dto/password-reset.dto';
-import { ResendInvitationDto } from '../dto/resend-invitation.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { KeycloakService } from '../keycloak.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserController } from '../user.controller';
-
-const moduleMocker = new ModuleMocker(global);
+import { KeycloakService } from '../keycloak.service';
+import { KeycloakUtilService } from '../keycloak-util.service';
+import { IGetKeycloakUser } from '../types/keycloak-user.interface';
+import { UserQueryDto } from '../dto/user-query.dto';
+import { MiiLocation } from 'src/shared/constants/mii-locations';
 
 describe('UserController', () => {
-  let userController: UserController;
-  let keycloakService: KeycloakService;
+  let controller: UserController;
+  let keycloakService: jest.Mocked<KeycloakService>;
+  let keycloakUtilService: jest.Mocked<KeycloakUtilService>;
+  let cacheManager: jest.Mocked<any>;
+
+  const mockUser: IGetKeycloakUser = {
+    id: '1',
+    username: 'testuser',
+    email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+    enabled: true,
+    emailVerified: true,
+    requiredActions: [],
+    attributes: {
+      MII_LOCATION: [MiiLocation.UKT],
+    },
+    createdTimestamp: Date.now(),
+    totp: false,
+  };
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-    })
-      .useMocker((token) => {
-        if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
-        }
-      })
-      .compile();
+      providers: [
+        {
+          provide: KeycloakService,
+          useValue: {
+            createUser: jest.fn(),
+            getUsers: jest.fn(),
+            getUserEmails: jest.fn(),
+            updateProfile: jest.fn(),
+            resendInvitation: jest.fn(),
+            executeActionsEmailForPassword: jest.fn(),
+          },
+        },
+        {
+          provide: KeycloakUtilService,
+          useValue: {
+            filterForReceivingEmail: jest.fn(),
+          },
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
 
-    keycloakService = moduleRef.get<KeycloakService>(KeycloakService);
-    userController = moduleRef.get<UserController>(UserController);
+    controller = module.get<UserController>(UserController);
+    keycloakService = module.get(KeycloakService);
+    keycloakUtilService = module.get(KeycloakUtilService);
+    cacheManager = module.get(CACHE_MANAGER);
   });
 
-  describe('create', () => {
-    it('should create the user', async () => {
-      const input = new CreateUserDto();
-      const result = 'userId';
-      jest.spyOn(keycloakService, 'createUser').mockResolvedValue(result);
+  describe('getUserEmails', () => {
+    beforeEach(() => {
+      // Reset cache to return null (cache miss) by default
+      cacheManager.get.mockResolvedValue(null);
+      cacheManager.set.mockResolvedValue(undefined);
+      keycloakService.getUserEmails.mockReset();
+    });
 
-      const call = userController.create(input);
-      expect(await call).toBe(result);
-      expect(keycloakService.createUser).toHaveBeenCalledWith(input);
+    it('should get all user emails with default settings', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: ['test@example.com'], total: 1 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(keycloakService.getUserEmails).toHaveBeenCalledWith(query);
+      expect(result).toEqual(resultData);
+    });
+
+    it('should exclude users with unverified emails', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: ['test@example.com'], total: 1 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should exclude users with required actions', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: ['test@example.com'], total: 1 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should exclude users who disabled email notifications by default', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: [], total: 0 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should handle empty user list', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: [], total: 0 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should handle multiple valid users', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: ['test@example.com', 'test2@example.com'], total: 2 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should filter emails by startsWith parameter', async () => {
+      const query: UserQueryDto = { startsWith: 'tes' };
+      const resultData = { emails: ['test@example.com', 'test2@example.com'], total: 2 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should filter emails by startsWith parameter case insensitive', async () => {
+      const query: UserQueryDto = { startsWith: 'TES' };
+      const resultData = { emails: ['test@example.com', 'test2@example.com'], total: 2 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should return empty array when no emails match startsWith parameter', async () => {
+      const query: UserQueryDto = { startsWith: 'xyz' };
+      const resultData = { emails: [], total: 0 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should use cached users when available (cache hit)', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: ['test@example.com'], total: 1 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should cache users for 1 hour when fetched from service (cache miss)', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: ['test@example.com'], total: 1 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
+    });
+
+    it('should exclude users without attributes or MII_LOCATION', async () => {
+      const query: UserQueryDto = {};
+      const resultData = { emails: ['test@example.com'], total: 1 };
+      keycloakService.getUserEmails.mockResolvedValue(resultData);
+
+      const result = await controller.getUserEmails(query);
+
+      expect(result).toEqual(resultData);
     });
   });
 
-  describe('updateProfile', () => {
-    it('should trigger the actions email to reset the password', async () => {
-      const input = new UpdateUserDto();
-      const param = new UuidParamDto();
-      const userId = 'userId';
-      param.id = userId;
-      const user = {};
-      const request = { user } as FdpgRequest;
-      const result = undefined;
+  describe('getUserByEmail', () => {
+    it('should return user when found by email', async () => {
+      const email = 'test@example.com';
+      const emailParam = { email };
+      const mockUsers = [mockUser];
 
-      const call = userController.updateProfile(param, input, request);
-      expect(await call).toBe(result);
-      expect(keycloakService.updateProfile).toHaveBeenCalledWith(userId, input, user);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+
+      const result = await controller.getUserByEmail(emailParam);
+
+      expect(keycloakService.getUsers).toHaveBeenCalledWith({ email, exact: true });
+      expect(result).toEqual(mockUser);
     });
-  });
 
-  describe('resendInvitation', () => {
-    it('should resend the invitation to the user', async () => {
-      const input = new ResendInvitationDto();
-      const result = undefined;
-      jest.spyOn(keycloakService, 'resendInvitation').mockResolvedValue(result);
+    it('should throw NotFoundException when user not found', async () => {
+      const email = 'notfound@example.com';
+      const emailParam = { email };
+      const mockUsers: IGetKeycloakUser[] = [];
 
-      const call = userController.resendInvitation(input);
-      expect(await call).toBe(result);
-      expect(keycloakService.resendInvitation).toHaveBeenCalledWith(input);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+
+      await expect(controller.getUserByEmail(emailParam)).rejects.toThrow(
+        new NotFoundException(`User with email ${email} not found`),
+      );
+
+      expect(keycloakService.getUsers).toHaveBeenCalledWith({ email, exact: true });
     });
-  });
 
-  describe('passwordChange', () => {
-    it('should trigger the actions email to reset the password', async () => {
-      const input = new PasswordResetDto();
-      const param = new UuidParamDto();
-      const userId = 'userId';
-      param.id = userId;
-      const user = {};
-      const request = { user } as FdpgRequest;
-      const result = undefined;
+    it('should return first user when multiple users found with same email', async () => {
+      const email = 'test@example.com';
+      const emailParam = { email };
+      const mockUser2 = { ...mockUser, id: '2' };
+      const mockUsers = [mockUser, mockUser2];
 
-      const call = userController.passwordChange(param, input, request);
-      expect(await call).toBe(result);
-      expect(keycloakService.executeActionsEmailForPassword).toHaveBeenCalledWith(userId, input, user);
+      keycloakService.getUsers.mockResolvedValue(mockUsers);
+
+      const result = await controller.getUserByEmail(emailParam);
+
+      expect(keycloakService.getUsers).toHaveBeenCalledWith({ email, exact: true });
+      expect(result).toEqual(mockUser); // Should return the first user
     });
   });
 });

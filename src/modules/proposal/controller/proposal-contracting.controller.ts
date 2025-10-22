@@ -26,7 +26,7 @@ import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { SetUacApprovalDto, SetUacApprovalWithFileDto } from '../dto/set-uac-approval.dto';
 import { RevertLocationVoteDto } from '../dto/revert-location-vote.dto';
 import { SignContractDto, SignContractWithFileDto } from '../dto/sign-contract.dto';
-import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
+import { InitContractingDto, UpdateContractingDto } from '../dto/proposal/init-contracting.dto';
 import { ProposalContractingService } from '../services/proposal-contracting.service';
 import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
 
@@ -117,6 +117,25 @@ export class ProposalContractingController {
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     return await this.proposalContractingService.initContracting(id, file, locations, user);
+  }
+
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Post(':id/update-contracting')
+  @UsePipes(ValidationPipe)
+  @UseInterceptors(FileInterceptor('file', createMulterOptions()))
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  @ApiOperation({ summary: 'Initiates contracting status and provides the contract draft' })
+  @ApiNoContentResponse({ description: 'Contracting successfully initiated. No content returns.' })
+  @HttpCode(204)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: ContractingUploadDto })
+  async updateContracting(
+    @Param() { id }: MongoIdParamDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() uploadId: UpdateContractingDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<void> {
+    return await this.proposalContractingService.updateContractDraft(id, file, uploadId.uploadId, user);
   }
 
   @Auth(Role.DizMember, Role.Researcher)

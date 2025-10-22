@@ -21,4 +21,7 @@ export class UacApprovalGetDto {
 
   @Expose()
   signedAt?: Date;
+
+  @Expose()
+  isLate?: boolean;
 }

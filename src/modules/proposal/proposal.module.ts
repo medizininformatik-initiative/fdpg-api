@@ -21,10 +21,12 @@ import { ProposalMiscService } from './services/proposal-misc.service';
 import { ProposalPublicationService } from './services/proposal-publication.service';
 import { ProposalReportService } from './services/proposal-report.service';
 import { ProposalUploadService } from './services/proposal-upload.service';
+import { ProposalDownloadService } from './services/proposal-download.service';
 import { StatusChangeService } from './services/status-change.service';
 import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviation.validator';
 import { ProposalPdfService } from './services/proposal-pdf.service';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
+import { MiiLocationModule } from '../mii-location/mii-location.module';
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { ProposalFormModule } from '../proposal-form/proposal-form.module';
     SchedulerModule,
     AdminModule,
     ProposalFormModule,
+    MiiLocationModule,
   ],
   controllers: [
     ProposalCrudController,
@@ -56,6 +59,7 @@ import { ProposalFormModule } from '../proposal-form/proposal-form.module';
     ProposalCrudService,
     ProposalMiscService,
     ProposalUploadService,
+    ProposalDownloadService,
     ProposalPublicationService,
     ProposalReportService,
     ProposalContractingService,

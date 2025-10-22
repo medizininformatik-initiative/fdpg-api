@@ -36,4 +36,7 @@ export class ConditionalApprovalGetDto {
 
   @Expose()
   signedAt?: Date;
+
+  @Expose()
+  isLate?: boolean;
 }

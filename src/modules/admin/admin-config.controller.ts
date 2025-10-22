@@ -1,5 +1,16 @@
-import { Body, Get, HttpCode, Param, Put } from '@nestjs/common';
-import { ApiNoContentResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  Body,
+  Get,
+  HttpCode,
+  Param,
+  Put,
+  UploadedFile,
+  UseInterceptors,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiNoContentResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
 import { Role } from 'src/shared/enums/role.enum';
@@ -9,6 +20,8 @@ import { PlatformParamDto } from './dto/platform-param.dto';
 import { TermsConfigCreateDto, TermsConfigGetDto } from './dto/terms/terms-config.dto';
 import { DataPrivacyConfigCreateDto, DataPrivacyConfigGetDto } from './dto/data-privacy/data-privacy-config.dto';
 import { DataSourceDto } from './dto/data-source.dto';
+import { AlertConfigCreateDto, AlertConfigGetDto } from './dto/alert/alert-config.dto';
+import { createMulterOptions } from 'src/shared/utils/multer-options.util';
 
 @ApiController('config')
 export class AdminConfigController {
@@ -61,5 +74,39 @@ export class AdminConfigController {
   @ApiOperation({ summary: 'Gets available data sources for proposals' })
   async getDataSources(): Promise<DataSourceDto> {
     return this.adminConfigService.getDataSources();
+  }
+
+  @Auth(Role.Admin, Role.Researcher)
+  @Get('alert')
+  @AdminValidation()
+  @ApiOperation({ summary: 'Returns the configuration for the Alert banner' })
+  getAlertConfig(): Promise<AlertConfigGetDto> {
+    return this.adminConfigService.getAlertConfig();
+  }
+
+  @Auth(Role.Admin)
+  @Put('alert')
+  @UsePipes(ValidationPipe)
+  @UseInterceptors(FileInterceptor('logo', createMulterOptions()))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        logo: { type: 'string', format: 'binary' },
+        message: { type: 'string' },
+        isVisible: { type: 'boolean' },
+      },
+      required: ['message', 'isVisible'],
+    },
+  })
+  @ApiNoContentResponse({ description: 'An alert banner successfully updated or created.' })
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Updates or creates the config for the Alert banner' })
+  async updateAlertConfig(
+    @UploadedFile() logo: Express.Multer.File,
+    @Body() alertConfig: AlertConfigCreateDto,
+  ): Promise<void> {
+    return this.adminConfigService.updateAlertConfig(alertConfig, logo);
   }
 }

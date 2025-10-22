@@ -16,6 +16,7 @@ import { addContractSign } from '../../utils/add-contract-sign.util';
 import { addDizApproval, addUacApprovalWithCondition } from '../../utils/add-location-vote.util';
 import {
   addHistoryItemForContractSign,
+  addHistoryItemForContractUpdate,
   addHistoryItemForDizApproval,
   addHistoryItemForRevertLocationVote,
   addHistoryItemForStatus,
@@ -30,6 +31,7 @@ import { ProposalContractingService } from '../proposal-contracting.service';
 import { ProposalCrudService } from '../proposal-crud.service';
 import { ProposalUploadService } from '../proposal-upload.service';
 import { StatusChangeService } from '../status-change.service';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -62,6 +64,7 @@ jest.mock('../../utils/proposal-history.util', () => ({
   addHistoryItemForUacApproval: jest.fn(),
   addHistoryItemForUacCondition: jest.fn(),
   addHistoryItemForRevertLocationVote: jest.fn(),
+  addHistoryItemForContractUpdate: jest.fn(),
 }));
 
 jest.mock('../../utils/proposal.utils', () => ({
@@ -164,6 +167,7 @@ describe('ProposalContractingService', () => {
           provide: ProposalUploadService,
           useValue: {
             handleEffects: jest.fn(),
+            deleteUpload: jest.fn(),
           },
         },
       ],
@@ -320,7 +324,7 @@ describe('ProposalContractingService', () => {
       await proposalContractingService.signContract(proposalId, vote, file, request.user);
 
       expect(validateContractSign).toHaveBeenCalledWith(proposalDocument, request.user, vote, file);
-      expect(addContractSign).toBeCalledWith(proposalDocument, vote, request.user);
+      expect(addContractSign).toHaveBeenCalledWith(proposalDocument, vote, request.user);
 
       expect(addHistoryItemForContractSign).toHaveBeenCalledWith(proposalDocument, request.user, vote.value);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
@@ -391,6 +395,47 @@ describe('ProposalContractingService', () => {
         await proposalContractingService.markUacConditionAsAccepted(proposalId, conditionId, isAccepted, request.user);
         expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       }
+    });
+  });
+
+  describe('updateContract', () => {
+    it('should update the contract', async () => {
+      const proposalDocument = {
+        ...getProposalDocument(),
+        status: ProposalStatus.Contracting,
+      } as any as ProposalDocument;
+      const contractDraftReplaceId = 'contractDraftReplaceId';
+
+      const file = { buffer: 'buffer' } as any as Express.Multer.File;
+
+      jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
+
+      await proposalContractingService.updateContractDraft(proposalId, file, contractDraftReplaceId, request.user);
+
+      expect(proposalUploadService.deleteUpload).toHaveBeenCalledWith(
+        proposalDocument,
+        contractDraftReplaceId,
+        request.user,
+      );
+      expect(addUpload).toHaveBeenCalledTimes(1);
+      expect(addHistoryItemForContractUpdate).toHaveBeenCalledTimes(1);
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw', async () => {
+      const proposalDocument = {
+        ...getProposalDocument(),
+        status: ProposalStatus.FdpgCheck,
+      } as any as ProposalDocument;
+      const contractDraftReplaceId = 'contractDraftReplaceId';
+
+      const file = { buffer: 'buffer' } as any as Express.Multer.File;
+
+      jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
+
+      await expect(
+        proposalContractingService.updateContractDraft(proposalId, file, contractDraftReplaceId, request.user),
+      ).rejects.toThrow(ValidationException);
     });
   });
 });

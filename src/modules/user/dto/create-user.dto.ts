@@ -1,5 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional } from 'class-validator';
+import { IsBoolean, isBoolean, IsEmail, IsEnum, IsOptional } from 'class-validator';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -40,4 +40,8 @@ export class CreateUserDto {
   @IsNotEmptyString()
   @IsOptional()
   redirectUri?: string;
+
+  @Expose()
+  @IsBoolean()
+  receiveProposalEmails: boolean;
 }
