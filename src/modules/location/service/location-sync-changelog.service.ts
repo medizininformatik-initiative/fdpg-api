@@ -87,12 +87,12 @@ export class LocationSyncChangelogService {
     return plainToClass(LocationSyncChangelogDto, changelogDoc);
   }
 
-  private stringComparision(old?: string, updated?: string) {
+  private stringEquals(old?: string, updated?: string) {
     if (!old && !updated) {
       return true;
     }
 
-    return old == updated;
+    return old === updated;
   }
 
   private buildChangelog(
@@ -106,13 +106,13 @@ export class LocationSyncChangelogService {
 
     const doEqual =
       !!persisted &&
-      this.stringComparision(persisted.externalCode, finalEntry.code) &&
-      this.stringComparision(persisted.display, finalEntry.display) &&
-      this.stringComparision(persisted.definition, finalEntry.definition) &&
-      this.stringComparision(persisted.consortium, finalEntry.consortium) &&
-      this.stringComparision(persisted.contract, finalEntry.contract) &&
-      this.stringComparision(persisted.abbreviation, finalEntry.abbreviation) &&
-      this.stringComparision(persisted.uri, finalEntry.uri) &&
+      this.stringEquals(persisted.externalCode, finalEntry.code) &&
+      this.stringEquals(persisted.display, finalEntry.display) &&
+      this.stringEquals(persisted.definition, finalEntry.definition) &&
+      this.stringEquals(persisted.consortium, finalEntry.consortium) &&
+      this.stringEquals(persisted.contract, finalEntry.contract) &&
+      this.stringEquals(persisted.abbreviation, finalEntry.abbreviation) &&
+      this.stringEquals(persisted.uri, finalEntry.uri) &&
       persisted.dataIntegrationCenter === finalEntry.dic &&
       persisted.dataManagementCenter === finalEntry.dataManagement &&
       persisted.deprecated === isDeprecated;
