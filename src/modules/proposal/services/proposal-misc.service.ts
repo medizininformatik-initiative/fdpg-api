@@ -54,6 +54,8 @@ import { MiiLocationService } from 'src/modules/mii-location/mii-location.servic
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
+import { ProposalDocument } from '../schema/proposal.schema';
+import { ProjectResponsible } from '../schema/sub-schema/project-responsible.schema';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { ConflictException } from '@nestjs/common';
 import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
@@ -898,26 +900,7 @@ export class ProposalMiscService {
         };
 
         // If there was a former responsible scientist, move them to participants array
-        if (formerResponsibleScientist && formerResponsibleScientist.researcher?.email) {
-          const alreadyExists = proposal.participants.some(
-            (p) => p.researcher?.email?.toLowerCase() === formerResponsibleScientist.researcher.email.toLowerCase(),
-          );
-
-          if (!alreadyExists) {
-            proposal.participants.push({
-              _id: new Types.ObjectId().toString(),
-              researcher: formerResponsibleScientist.researcher,
-              institute: formerResponsibleScientist.institute,
-              participantCategory: formerResponsibleScientist.participantCategory,
-              participantRole: {
-                _id: new Types.ObjectId().toString(),
-                role: ParticipantRoleType.ParticipatingScientist,
-                isDone: false,
-              },
-              addedByFdpg: formerResponsibleScientist.addedByFdpg,
-            });
-          }
-        }
+        this.addFormerResponsibleToParticipants(proposal, formerResponsibleScientist);
 
         if (proposal.participants) {
           proposal.participants.forEach((participant) => {
@@ -999,26 +982,7 @@ export class ProposalMiscService {
     proposal.participants.splice(participantIndex, 1);
 
     // If there was a former responsible scientist (not applicant), add them to participants
-    if (formerResponsibleScientist && formerResponsibleScientist.researcher?.email) {
-      const alreadyExists = proposal.participants.some(
-        (p) => p.researcher?.email?.toLowerCase() === formerResponsibleScientist.researcher.email.toLowerCase(),
-      );
-
-      if (!alreadyExists) {
-        proposal.participants.push({
-          _id: new Types.ObjectId().toString(),
-          researcher: formerResponsibleScientist.researcher,
-          institute: formerResponsibleScientist.institute,
-          participantCategory: formerResponsibleScientist.participantCategory,
-          participantRole: {
-            _id: new Types.ObjectId().toString(),
-            role: ParticipantRoleType.ParticipatingScientist,
-            isDone: false,
-          },
-          addedByFdpg: formerResponsibleScientist.addedByFdpg,
-        });
-      }
-    }
+    this.addFormerResponsibleToParticipants(proposal, formerResponsibleScientist);
 
     // If applicant was the responsible scientist, change their role to RESEARCHER (editor)
     if (applicantWasResponsible && proposal.applicant?.participantRole) {
@@ -1053,5 +1017,34 @@ export class ProposalMiscService {
     }
 
     return false;
+  }
+
+  private addFormerResponsibleToParticipants(
+    proposal: ProposalDocument,
+    formerResponsibleScientist: Pick<
+      ProjectResponsible,
+      'researcher' | 'institute' | 'participantCategory' | 'addedByFdpg'
+    > | null,
+  ): void {
+    if (formerResponsibleScientist && formerResponsibleScientist.researcher?.email) {
+      const alreadyExists = proposal.participants.some(
+        (p) => p.researcher?.email?.toLowerCase() === formerResponsibleScientist.researcher.email.toLowerCase(),
+      );
+
+      if (!alreadyExists) {
+        proposal.participants.push({
+          _id: undefined,
+          researcher: formerResponsibleScientist.researcher,
+          institute: formerResponsibleScientist.institute,
+          participantCategory: formerResponsibleScientist.participantCategory,
+          participantRole: {
+            _id: undefined,
+            role: ParticipantRoleType.ParticipatingScientist,
+            isDone: false,
+          },
+          addedByFdpg: formerResponsibleScientist.addedByFdpg,
+        });
+      }
+    }
   }
 }
