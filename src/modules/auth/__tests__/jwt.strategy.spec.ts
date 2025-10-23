@@ -3,7 +3,6 @@ import { Role } from 'src/shared/enums/role.enum';
 
 import { JwksProvider } from '../strategies/jwks.provider';
 import { JwtStrategy } from '../strategies/jwt.strategy';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 
@@ -97,13 +96,13 @@ describe('JwtStrategy', () => {
       expect(result.isFromLocation).toEqual(expected);
     });
 
-    test.each([MiiLocation.KUM, 'nope'])('should detect if the location is known', async (location: string) => {
+    test.each(['KUM', 'nope'])('should detect if the location is known', async (location: string) => {
       let req = { headers: {} } as unknown as Request;
       req.headers['x-selected-role'] = Role.Researcher;
       const payload = {
         MII_LOCATION: location,
       };
-      const expected = location === MiiLocation.KUM ? true : false;
+      const expected = location === 'KUM' ? true : false;
       const result = await strategy.validate(req, payload);
       expect(result.isKnownLocation).toEqual(expected);
     });

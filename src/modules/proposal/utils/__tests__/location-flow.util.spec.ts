@@ -1,5 +1,4 @@
 import { SYSTEM_OWNER_ID } from 'src/shared/constants/global.constants';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
@@ -16,22 +15,22 @@ const proposalId = 'proposalId';
 const conditionalApproval = {
   reviewedAt: undefined,
   signedAt: undefined,
-  location: MiiLocation.UKMR,
+  location: 'UKMR',
 };
 const uacApproval = {
   signedAt: undefined,
-  location: MiiLocation.UKMR,
+  location: 'UKMR',
 };
 const proposalContent = {
   _id: proposalId,
   projectAbbreviation: 'projectAbbreviation',
   status: ProposalStatus.Draft,
-  openDizChecks: [MiiLocation.UKL],
-  dizApprovedLocations: [MiiLocation.UKM],
-  uacApprovedLocations: [MiiLocation.UKMR],
-  openDizConditionChecks: [MiiLocation.Charité],
-  signedContracts: [MiiLocation.UKR],
-  requestedButExcludedLocations: [MiiLocation.UKD],
+  openDizChecks: ['UKL'],
+  dizApprovedLocations: ['UKM'],
+  uacApprovedLocations: ['UKMR'],
+  openDizConditionChecks: ['Charité'],
+  signedContracts: ['UKR'],
+  requestedButExcludedLocations: ['UKD'],
   conditionalApprovals: [conditionalApproval],
   uacApprovals: [uacApproval],
   history: [],
@@ -55,7 +54,7 @@ const requestContent = {
     email_verified: true,
     roles: [Role.Researcher],
     singleKnownRole: Role.Researcher,
-    miiLocation: MiiLocation.UKL,
+    miiLocation: 'UKL',
     isFromLocation: false,
     isKnownLocation: true,
   },
@@ -67,7 +66,7 @@ describe('location-flow.util', () => {
   describe('clearLocationsVotes', () => {
     it('should clear the locations votes', () => {
       const proposal = getProposalDocument();
-      clearLocationsVotes(proposal, MiiLocation.UKL);
+      clearLocationsVotes(proposal, 'UKL');
       expect(proposal.openDizChecks.length).toEqual(0);
       expect(proposal.dizApprovedLocations.length).toEqual(1);
       expect(proposal.uacApprovedLocations.length).toEqual(1);
@@ -108,7 +107,7 @@ describe('location-flow.util', () => {
   describe('declineUnselectedLocations', () => {
     it('should decline unanswered conditions', () => {
       const proposal = getProposalDocument();
-      declineUnselectedLocations(proposal, requestContent.user, [MiiLocation.Charité]);
+      declineUnselectedLocations(proposal, requestContent.user, ['Charité']);
       expect(proposal.uacApprovedLocations.length).toEqual(1);
       expect(proposal.uacApprovals[0].isContractSigned).toEqual(false);
 

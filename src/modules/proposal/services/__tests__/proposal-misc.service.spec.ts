@@ -5,7 +5,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProposalMiscService } from '../proposal-misc.service';
 import { KeycloakService } from 'src/modules/user/keycloak.service';
 import { Role } from 'src/shared/enums/role.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
@@ -107,7 +106,7 @@ describe('ProposalMiscService', () => {
       email_verified: true,
       roles: [Role.Researcher],
       singleKnownRole: Role.Researcher,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
     },
@@ -124,7 +123,7 @@ describe('ProposalMiscService', () => {
       email_verified: true,
       roles: [Role.FdpgMember],
       singleKnownRole: Role.FdpgMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
     },
@@ -775,18 +774,18 @@ describe('ProposalMiscService', () => {
       const proposal = {
         _id: 'proposal-id',
         projectAbbreviation: 'TEST_PROJECT',
-        openDizChecks: [MiiLocation.Charité, MiiLocation.UKT],
-        uacApprovedLocations: [MiiLocation.Charité],
-        requestedButExcludedLocations: [MiiLocation.UKT],
+        openDizChecks: ['Charité', 'UKT'],
+        uacApprovedLocations: ['Charité'],
+        requestedButExcludedLocations: ['UKT'],
         conditionalApprovals: [
           {
-            location: MiiLocation.Charité,
+            location: 'Charité',
             conditionReasoning: 'Special conditions apply',
           },
         ],
         additionalLocationInformation: [
           {
-            location: MiiLocation.Charité,
+            location: 'Charité',
             locationPublicationName: 'Charité Publication',
             legalBasis: true,
           },
@@ -795,8 +794,8 @@ describe('ProposalMiscService', () => {
 
       // Mock MII location data
       const mockMiiLocationMap = new Map([
-        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
-        [MiiLocation.UKT, { code: 'UKT', display: 'Universitätsklinikum Tübingen' }],
+        ['Charité', { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
+        ['UKT', { code: 'UKT', display: 'Universitätsklinikum Tübingen' }],
       ]);
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
@@ -866,7 +865,7 @@ describe('ProposalMiscService', () => {
       const proposal = {
         _id: 'proposal-id',
         projectAbbreviation: 'TEST_PROJECT',
-        openDizChecks: [MiiLocation.Charité],
+        openDizChecks: ['Charité'],
         uacApprovedLocations: [],
         requestedButExcludedLocations: [],
         conditionalApprovals: [],
@@ -875,7 +874,7 @@ describe('ProposalMiscService', () => {
 
       // Mock MII location data
       const mockMiiLocationMap = new Map([
-        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
+        ['Charité', { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
       ]);
 
       const mockDownloadUrl =

@@ -6,7 +6,6 @@ import { KeycloakService } from '../keycloak.service';
 import { KeycloakUtilService } from '../keycloak-util.service';
 import { IGetKeycloakUser } from '../types/keycloak-user.interface';
 import { UserQueryDto } from '../dto/user-query.dto';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 
 describe('UserController', () => {
   let controller: UserController;
@@ -24,7 +23,7 @@ describe('UserController', () => {
     emailVerified: true,
     requiredActions: [],
     attributes: {
-      MII_LOCATION: [MiiLocation.UKT],
+      MII_LOCATION: ['UKT'],
     },
     createdTimestamp: Date.now(),
     totp: false,

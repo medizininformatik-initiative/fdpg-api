@@ -4,7 +4,6 @@ import { EmailService } from 'src/modules/email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { CommentType } from 'src/modules/comment/enums/comment-type.enum';
 import { Comment } from 'src/modules/comment/schema/comment.schema';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
@@ -44,7 +43,7 @@ describe('CommentAnswerEventService', () => {
     owner: {
       id: 'ownerId',
     },
-    dizApprovedLocations: [MiiLocation.UKL],
+    dizApprovedLocations: ['UKL'],
   } as any as Proposal;
 
   const proposalUrl = 'proposalUrl';
@@ -56,7 +55,7 @@ describe('CommentAnswerEventService', () => {
     owner: {
       id: 'ownerId',
       role: Role.FdpgMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
     },
   } as any as Comment;
 
@@ -70,26 +69,26 @@ describe('CommentAnswerEventService', () => {
     owner: {
       id: 'ownerId',
       role: Role.FdpgMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
     },
   } as any as Answer;
 
   const validOwnerContacts = [{ email: 'unit@test.de', id: 'ownerId' }];
   const dizMembers = [
-    { email: 'diz1@test.de', id: 'diz1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.DizMember },
-    { email: 'diz2@test.de', id: 'diz2', miiLocation: MiiLocation.UMG, singleKnownRole: Role.DizMember },
+    { email: 'diz1@test.de', id: 'diz1', miiLocation: 'UKL', singleKnownRole: Role.DizMember },
+    { email: 'diz2@test.de', id: 'diz2', miiLocation: 'UMG', singleKnownRole: Role.DizMember },
   ];
   const uacMembers = [
-    { email: 'uac1@test.de', id: 'uac1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.UacMember },
-    { email: 'uac2@test.de', id: 'uac2', miiLocation: MiiLocation.UMG, singleKnownRole: Role.UacMember },
+    { email: 'uac1@test.de', id: 'uac1', miiLocation: 'UKL', singleKnownRole: Role.UacMember },
+    { email: 'uac2@test.de', id: 'uac2', miiLocation: 'UMG', singleKnownRole: Role.UacMember },
   ];
   const fdpgMembers = [
     { email: 'fdpg1@test.de', id: 'fdpg1' },
     { email: 'fdpg2@test.de', id: 'fdpg2' },
   ];
   const locationContacts = [
-    { email: 'diz1@test.de', id: 'diz1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.DizMember },
-    { email: 'uac1@test.de', id: 'uac1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.UacMember },
+    { email: 'diz1@test.de', id: 'diz1', miiLocation: 'UKL', singleKnownRole: Role.DizMember },
+    { email: 'uac1@test.de', id: 'uac1', miiLocation: 'UKL', singleKnownRole: Role.UacMember },
   ];
 
   beforeEach(async () => {
