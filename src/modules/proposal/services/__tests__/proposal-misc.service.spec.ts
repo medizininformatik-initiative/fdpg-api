@@ -150,7 +150,7 @@ describe('ProposalMiscService', () => {
       email_verified: true,
       roles: [Role.UacMember],
       singleKnownRole: Role.UacMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: true,
       isKnownLocation: true,
     },
@@ -1299,7 +1299,7 @@ describe('ProposalMiscService', () => {
       const proposalDocument = getProposalDocument();
       proposalDocument.additionalLocationInformation = [
         {
-          location: MiiLocation.UKL,
+          location: 'UKL',
           legalBasis: false,
           locationPublicationName: 'Old Publication',
         } as any,
@@ -1710,7 +1710,7 @@ describe('ProposalMiscService', () => {
         email_verified: true,
         roles: [Role.DizMember],
         singleKnownRole: Role.DizMember,
-        miiLocation: MiiLocation.UKL,
+        miiLocation: 'UKL',
         isFromLocation: true,
         isKnownLocation: true,
       },
@@ -1721,8 +1721,8 @@ describe('ProposalMiscService', () => {
       const proposal = {
         ...proposalDocument,
         dizDetails: [],
-        dizApprovedLocations: [MiiLocation.UKL],
-        uacApprovedLocations: [MiiLocation.UKL],
+        dizApprovedLocations: ['UKL'],
+        uacApprovedLocations: ['UKL'],
       } as any;
 
       const createDto = {
@@ -1768,7 +1768,7 @@ describe('ProposalMiscService', () => {
         email_verified: true,
         roles: [Role.DizMember],
         singleKnownRole: Role.DizMember,
-        miiLocation: MiiLocation.UKL,
+        miiLocation: 'UKL',
         isFromLocation: true,
         isKnownLocation: true,
       },
@@ -1782,13 +1782,13 @@ describe('ProposalMiscService', () => {
         dizDetails: [
           {
             _id: dizDetailsId,
-            location: MiiLocation.UKL,
+            location: 'UKL',
             localProjectIdentifier: 'OLD-123',
             documentationLinks: '',
           },
         ],
-        dizApprovedLocations: [MiiLocation.UKL],
-        uacApprovedLocations: [MiiLocation.UKL],
+        dizApprovedLocations: ['UKL'],
+        uacApprovedLocations: ['UKL'],
       } as any;
 
       const updateDto = {
