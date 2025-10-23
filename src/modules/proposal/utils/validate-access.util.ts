@@ -12,7 +12,7 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
   }
 
   // Special handling for register proposals when user has RegisteringMember role
-  if (proposal.isRegister && user.roles.includes(Role.RegisteringMember)) {
+  if (proposal.isRegisteringForm && user.roles.includes(Role.RegisteringMember)) {
     checkAccessForRegisteringMember(proposal, user);
     return; // Exit early for register proposals with RegisteringMember role
   }
@@ -75,7 +75,7 @@ const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser
 
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
   // Allow modification of register proposals even in Draft status
-  if (proposal.status === ProposalStatus.Draft && willBeModified && !proposal.isRegister) {
+  if (proposal.status === ProposalStatus.Draft && willBeModified && !proposal.isRegisteringForm) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
   }
 };

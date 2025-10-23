@@ -84,7 +84,7 @@ export class Proposal {
     type: Boolean,
     default: false,
   })
-  isRegister: boolean;
+  isRegisteringForm: boolean;
 
   @Prop({
     type: Number,

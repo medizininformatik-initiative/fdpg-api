@@ -20,7 +20,7 @@ export const getRegisterProposalsForUser = (
     { participants: { $elemMatch: { 'researcher.email': user.email } } },
     { 'projectResponsible.researcher.email': user.email },
   ],
-  isRegister: true,
+  isRegisteringForm: true,
   status: Array.isArray(status) ? { $in: status } : status,
 });
 

@@ -143,7 +143,7 @@ export class ProposalBaseDto {
 
   @Expose()
   @IsOptional()
-  isRegister?: boolean;
+  isRegisteringForm?: boolean;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -511,7 +511,7 @@ export class ProposalGetListDto {
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
     this.selectedDataSources = dbProjection.selectedDataSources;
-    this.isRegister = dbProjection.isRegister;
+    this.isRegisteringForm = dbProjection.isRegisteringForm;
 
     if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -561,7 +561,7 @@ export class ProposalGetListDto {
 
   _id: string;
   selectedDataSources: PlatformIdentifier[];
-  isRegister?: boolean;
+  isRegisteringForm?: boolean;
 }
 
 @Exclude()
