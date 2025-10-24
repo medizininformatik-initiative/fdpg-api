@@ -42,4 +42,5 @@ export enum PanelQuery {
   FdpgPublishedRequested = 'FDPG_PUBLISHED_REQUESTED',
   FdpgPublishedReady = 'FDPG_PUBLISHED_READY',
   FdpgPublishedPublished = 'FDPG_PUBLISHED_PUBLISHED',
+  FdpgPublishedDraft = 'FDPG_PUBLISHED_DRAFT',
 }

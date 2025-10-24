@@ -4,6 +4,7 @@ import { ConditionalApproval } from '../schema/sub-schema/conditional-approval.s
 import { FdpgTask } from '../schema/sub-schema/fdpg-task.schema';
 import { RequestedData } from '../schema/sub-schema/requested-data.schema';
 import { UserProject } from '../schema/sub-schema/user-project.schema';
+import { RegisterInfo } from '../schema/sub-schema/register-info.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 export interface IProposalGetListSchema {
   userProject: Partial<UserProject>;
@@ -33,8 +34,7 @@ export interface IProposalGetListSchema {
   contractAcceptedByResearcher: boolean;
   contractRejectedByResearcher: boolean;
   selectedDataSources: PlatformIdentifier[];
-  isRegisteringForm?: boolean;
-  isInternalRegistration?: boolean;
+  register?: RegisterInfo;
 
   openFdpgTasks: FdpgTask[];
 

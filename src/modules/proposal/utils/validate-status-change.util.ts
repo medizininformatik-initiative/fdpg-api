@@ -10,7 +10,9 @@ const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
 
 const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
-  proposal.isRegisteringForm && user.roles.includes(Role.RegisteringMember) && user.userId === proposal.ownerId;
+  proposal.register?.isRegisteringForm &&
+  user.roles.includes(Role.RegisteringMember) &&
+  user.userId === proposal.ownerId;
 
 const isFdpg = (user: IRequestUser) =>
   user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember;
@@ -40,7 +42,7 @@ export const validateStatusChange = (
       [ProposalStatus.Rejected]: () => isFdpg(user),
       [ProposalStatus.LocationCheck]: () => isFdpg(user),
       // Only allow ReadyToPublish for register proposals
-      [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.isRegisteringForm,
+      [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.register?.isRegisteringForm,
     },
     [ProposalStatus.LocationCheck]: {
       // Contracting is supposed to be started by uploading the contract draft

@@ -23,24 +23,29 @@ const FINISHED = { status: { $in: [ProposalStatus.Rejected, ProposalStatus.Ready
 const ARCHIVED = { status: ProposalStatus.Archived };
 
 // Register proposals
-const REGISTER_DRAFT_PROPOSALS = { isRegisteringForm: true, status: ProposalStatus.Draft };
-const REGISTER_SUBMITTED_PROPOSALS = { isRegisteringForm: true, status: ProposalStatus.FdpgCheck };
+const REGISTER_DRAFT_PROPOSALS = { 'register.isRegisteringForm': true, status: ProposalStatus.Draft };
+const REGISTER_SUBMITTED_PROPOSALS = { 'register.isRegisteringForm': true, status: ProposalStatus.FdpgCheck };
 
 // Published page panels
-const PUBLISHED_DRAFT = { isRegisteringForm: true, status: ProposalStatus.Draft };
+const PUBLISHED_DRAFT = { 'register.isRegisteringForm': true, status: ProposalStatus.Draft };
 const PUBLISHED_PENDING = {
-  isRegisteringForm: true,
+  'register.isRegisteringForm': true,
   status: { $in: [ProposalStatus.Rework, ProposalStatus.FdpgCheck, ProposalStatus.ReadyToPublish] },
 };
 const PUBLISHED_COMPLETED = {
-  isRegisteringForm: true,
+  'register.isRegisteringForm': true,
   status: { $in: [ProposalStatus.Published, ProposalStatus.Rejected] },
 };
 
 // FDPG Published page panels
-const FDPG_PUBLISHED_REQUESTED = { isRegisteringForm: true, status: ProposalStatus.FdpgCheck };
-const FDPG_PUBLISHED_READY = { isRegisteringForm: true, status: ProposalStatus.ReadyToPublish };
-const FDPG_PUBLISHED_PUBLISHED = { isRegisteringForm: true, status: ProposalStatus.Published };
+const FDPG_PUBLISHED_REQUESTED = { 'register.isRegisteringForm': true, status: ProposalStatus.FdpgCheck };
+const FDPG_PUBLISHED_READY = { 'register.isRegisteringForm': true, status: ProposalStatus.ReadyToPublish };
+const FDPG_PUBLISHED_PUBLISHED = { 'register.isRegisteringForm': true, status: ProposalStatus.Published };
+const FDPG_PUBLISHED_DRAFT = {
+  'register.isRegisteringForm': true,
+  'register.isInternalRegistration': true,
+  status: ProposalStatus.Draft,
+};
 
 export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgRequestedToCheck]: REQUESTED_TO_CHECK,
@@ -60,5 +65,6 @@ export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgPublishedRequested]: FDPG_PUBLISHED_REQUESTED,
   [PanelQuery.FdpgPublishedReady]: FDPG_PUBLISHED_READY,
   [PanelQuery.FdpgPublishedPublished]: FDPG_PUBLISHED_PUBLISHED,
+  [PanelQuery.FdpgPublishedDraft]: FDPG_PUBLISHED_DRAFT,
   [PanelQuery.Archived]: ARCHIVED,
 };

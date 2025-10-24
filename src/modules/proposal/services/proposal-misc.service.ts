@@ -872,8 +872,11 @@ export class ProposalMiscService {
       _id: undefined,
       projectAbbreviation: newAbbreviation,
       dataSourceLocaleId: undefined, // Clear DIFE ID - not needed for registration and must be unique
-      isRegisteringForm: true,
-      isInternalRegistration: true,
+      register: {
+        isRegisteringForm: true,
+        isInternalRegistration: true,
+        originalProposalId: original._id.toString(),
+      },
       status: ProposalStatus.Draft,
       // Preserve original owner and applicant
       owner: originalObj.owner,
