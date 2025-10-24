@@ -1,4 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import * as JSZip from 'jszip';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
@@ -56,14 +58,16 @@ import { mergeDeep } from '../utils/merge-proposal.util';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { ConflictException } from '@nestjs/common';
 import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
-import { Types } from 'mongoose';
 import { convert } from 'html-to-text';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
+import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 
 @Injectable()
 export class ProposalMiscService {
   constructor(
+    @InjectModel(Proposal.name)
+    private proposalModel: Model<ProposalDocument>,
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
     private statusChangeService: StatusChangeService,
@@ -834,5 +838,73 @@ export class ProposalMiscService {
 
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     return { zipBuffer, projectAbbreviation: proposal.projectAbbreviation };
+  }
+
+  async copyAsInternalRegistration(proposalId: string, user: IRequestUser): Promise<string> {
+    const original = await this.proposalCrudService.findDocument(proposalId, user);
+
+    const validStatuses = [
+      ProposalStatus.Contracting,
+      ProposalStatus.ExpectDataDelivery,
+      ProposalStatus.DataResearch,
+      ProposalStatus.DataCorrupt,
+      ProposalStatus.FinishedProject,
+    ];
+
+    if (!validStatuses.includes(original.status)) {
+      throw new BadRequestException('Proposal must be in Contracting or later status to register');
+    }
+
+    const originalObj = original.toObject();
+
+    // Generate unique project abbreviation for the copy
+    let newAbbreviation = `${original.projectAbbreviation}-REG`;
+    let suffix = 1;
+
+    // Check if abbreviation already exists, increment suffix if needed
+    while (await this.proposalModel.findOne({ projectAbbreviation: newAbbreviation })) {
+      newAbbreviation = `${original.projectAbbreviation}-REG${suffix}`;
+      suffix++;
+    }
+
+    const copyData = {
+      ...originalObj,
+      _id: undefined,
+      projectAbbreviation: newAbbreviation,
+      dataSourceLocaleId: undefined, // Clear DIFE ID - not needed for registration and must be unique
+      isRegisteringForm: true,
+      isInternalRegistration: true,
+      status: ProposalStatus.Draft,
+      // Preserve original owner and applicant
+      owner: originalObj.owner,
+      ownerId: originalObj.ownerId,
+      ownerName: originalObj.ownerName,
+      applicant: originalObj.applicant,
+      projectResponsible: originalObj.projectResponsible,
+      participants: originalObj.participants,
+      history: [
+        {
+          status: ProposalStatus.Draft,
+          timestamp: new Date(),
+          user: {
+            id: user.userId,
+            name: user.username,
+          },
+          comment: `Copied from proposal ${original.projectAbbreviation} for internal registration by FDPG`,
+        },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: { mayor: 0, minor: 0 },
+    };
+
+    const newProposal = new this.proposalModel(copyData);
+    const formVersion = await this.proposalFormService.getCurrentVersion();
+    newProposal.formVersion = formVersion;
+
+    await this.statusChangeService.handleEffects(newProposal, null, user);
+    const saveResult = await newProposal.save();
+
+    return saveResult._id.toString();
   }
 }

@@ -33,4 +33,5 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   selectedDataSources: 1,
   dizDetails: 1,
   isRegisteringForm: 1,
+  isInternalRegistration: 1,
 };

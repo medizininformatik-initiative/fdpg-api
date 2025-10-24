@@ -87,6 +87,12 @@ export class Proposal {
   isRegisteringForm: boolean;
 
   @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isInternalRegistration: boolean;
+
+  @Prop({
     type: Number,
     default: 0,
   })

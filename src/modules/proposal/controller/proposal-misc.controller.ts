@@ -19,6 +19,7 @@ import {
 import {
   ApiBody,
   ApiConsumes,
+  ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -326,5 +327,19 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<DizDetailsGetDto> {
     return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
+  }
+
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Post(':id/copy-for-registration')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Copy proposal as internal registration for publication' })
+  @ApiCreatedResponse({ description: 'Copy created, returns new proposal ID' })
+  @HttpCode(201)
+  async copyForRegistration(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<{ id: string }> {
+    const newProposalId = await this.proposalMiscService.copyAsInternalRegistration(id, user);
+    return { id: newProposalId };
   }
 }
