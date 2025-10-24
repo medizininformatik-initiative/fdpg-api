@@ -20,7 +20,8 @@ export class LocationController {
 
   @Get('/key-label')
   async getAllForKeyLabels(): Promise<LocationKeyLabelDto[]> {
-    return await this.locationService.findAllKeyLabel();
+    const result = await this.locationService.findAllKeyLabel();
+    return result;
   }
 
   @Get()

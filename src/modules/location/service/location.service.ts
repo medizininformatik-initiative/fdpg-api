@@ -37,8 +37,8 @@ export class LocationService {
     return await this.getOrCreateCached(CacheKey.MiiLocationsKeyLabel, async () =>
       (await this.findAll()).map((loc) => {
         const dto = new LocationKeyLabelDto();
-        dto.locationKey = loc._id;
-        dto.locationLabel = loc.display;
+        dto._id = loc._id;
+        dto.display = loc.display;
         return dto;
       }),
     );

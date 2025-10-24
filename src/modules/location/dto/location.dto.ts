@@ -15,6 +15,6 @@ export class LocationDto {
 }
 
 export class LocationKeyLabelDto {
-  locationKey: string;
-  locationLabel: string;
+  _id: string;
+  display: string;
 }
