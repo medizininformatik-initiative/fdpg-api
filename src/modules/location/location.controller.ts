@@ -5,7 +5,7 @@ import { LocationService } from './service/location.service';
 import { LocationSyncChangelogService } from './service/location-sync-changelog.service';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { MongoIdParamDto } from 'src/shared/dto/mongo-id-param.dto';
-import { LocationDto } from './dto/location.dto';
+import { LocationDto, LocationKeyLabelDto } from './dto/location.dto';
 import { LocationSyncChangelogDto } from './dto/location-sync-changelog.dto';
 import { Auth } from 'src/shared/decorators/auth.decorator';
 import { Role } from 'src/shared/enums/role.enum';
@@ -17,6 +17,11 @@ export class LocationController {
     private locationService: LocationService,
     private locationSyncChangelogService: LocationSyncChangelogService,
   ) {}
+
+  @Get('/key-label')
+  async getAllForKeyLabels(): Promise<LocationKeyLabelDto[]> {
+    return await this.locationService.findAllKeyLabel();
+  }
 
   @Get()
   @Auth(...Object.values(Role))

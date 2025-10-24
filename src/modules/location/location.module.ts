@@ -8,6 +8,7 @@ import { LocationController } from './location.controller';
 import { LocationService } from './service/location.service';
 import { LocationSyncChangelog, LocationSyncChangelogSchema } from './schema/location-sync-changelog.schema';
 import { LocationSyncChangelogService } from './service/location-sync-changelog.service';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { LocationSyncChangelogService } from './service/location-sync-changelog.
       { name: Location.name, schema: LocationSchema },
       { name: LocationSyncChangelog.name, schema: LocationSyncChangelogSchema },
     ]),
+    CacheModule.register(),
   ],
   providers: [
     MiiCodesystemClient,

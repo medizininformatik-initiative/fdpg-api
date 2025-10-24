@@ -13,3 +13,8 @@ export class LocationDto {
   deprecationDate?: Date;
   deprecated: boolean;
 }
+
+export class LocationKeyLabelDto {
+  locationKey: string;
+  locationLabel: string;
+}
