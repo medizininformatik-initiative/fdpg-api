@@ -57,6 +57,9 @@ export class LocationService {
       }
     })();
 
+    await this.cacheManager.del(CacheKey.MiiLocations);
+    await this.cacheManager.del(CacheKey.MiiLocationsKeyLabel);
+
     const locModel = saved.toObject() as Location;
     return this.modelToDto(locModel);
   }
