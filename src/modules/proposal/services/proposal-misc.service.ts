@@ -49,7 +49,6 @@ import { ProposalUploadService } from './proposal-upload.service';
 import { AutomaticSelectedCohortUploadDto, SelectedCohortUploadDto } from '../dto/cohort-upload.dto';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { ProposalGetDto } from '../dto/proposal/proposal.dto';
-import { MiiLocationService } from 'src/modules/mii-location/mii-location.service';
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
@@ -62,6 +61,7 @@ import { convert } from 'html-to-text';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 @Injectable()
 export class ProposalMiscService {
@@ -77,7 +77,7 @@ export class ProposalMiscService {
     private proposalDownloadService: ProposalDownloadService,
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
-    private miiLocationService: MiiLocationService,
+    private locationService: LocationService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -530,7 +530,7 @@ export class ProposalMiscService {
 
     proposal.additionalLocationInformation?.forEach((info) => allLocations.add(info.location));
 
-    const miiLocationMap = await this.miiLocationService.getAllLocationInfo();
+    const locations = await this.locationService.findAll();
 
     const headers = [
       'Rubrum',
@@ -548,7 +548,7 @@ export class ProposalMiscService {
 
         const additionalInfo = proposal.additionalLocationInformation?.find((info) => info.location === location);
 
-        const miiLocationInfo = miiLocationMap.get(location);
+        const persistedLocation = locations.find((loc) => loc._id === location);
 
         // Determine approval status
         let approvalStatus = '';
@@ -570,9 +570,9 @@ export class ProposalMiscService {
         const consent = additionalInfo?.legalBasis ? 'true' : 'false';
 
         return [
-          '', // Rubrum
+          persistedLocation?.rubrum ?? '', // Rubrum
           location, // Location Code
-          miiLocationInfo?.display || location, // Location Display Name (fallback to code if not found)
+          persistedLocation?.display ?? '',
           conditions, // Conditions
           approvalStatus, // Approval Status
           publicationName, // Publication Name
