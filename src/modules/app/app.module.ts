@@ -19,7 +19,6 @@ import { FeasibilityModule } from '../feasibility/feasibility.module';
 import { MigrationService } from './migration.service';
 import { Migration, MigrationSchema } from './schema/migration.schema';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
-import { MiiLocationModule } from '../mii-location/mii-location.module';
 import { LocationModule } from '../location/location.module';
 import { Location, LocationSchema } from '../location/schema/location.schema';
 
@@ -51,7 +50,6 @@ import { Location, LocationSchema } from '../location/schema/location.schema';
     PdfEngineModule,
     FeasibilityModule,
     ProposalFormModule,
-    MiiLocationModule,
   ],
   controllers: [AppController],
   providers: [AppService, MigrationService, { provide: APP_INTERCEPTOR, useClass: GlobalHeadersInterceptor }],
