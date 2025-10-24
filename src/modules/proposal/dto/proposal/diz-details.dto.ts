@@ -1,6 +1,5 @@
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 
 export class DizDetailsCreateDto {
@@ -33,7 +32,7 @@ export class DizDetailsUpdateDto extends WithIdForObjectDto {
 
 export class DizDetailsGetDto extends WithIdForObjectDto {
   @Expose()
-  location: MiiLocation;
+  location: string;
 
   @Expose()
   localProjectIdentifier?: string;

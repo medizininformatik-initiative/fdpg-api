@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getOwner } from 'src/shared/utils/get-owner.util';
@@ -19,6 +18,7 @@ export const addContractSign = (proposal: Proposal, vote: SignContractDto, user:
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const addContractSignForResearcher = (proposal: Proposal, vote: SignContractDto, _user: IRequestUser) => {
   proposal.researcherSignedAt = new Date();
   if (vote.value === true) {
@@ -36,7 +36,7 @@ const addContractSignForResearcher = (proposal: Proposal, vote: SignContractDto,
 
 const addContractSignForLocation = (
   proposal: Proposal,
-  location: MiiLocation,
+  location: string,
   vote: SignContractDto,
   user: IRequestUser,
 ) => {

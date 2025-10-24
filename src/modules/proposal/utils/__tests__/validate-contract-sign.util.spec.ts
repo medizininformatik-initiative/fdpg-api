@@ -3,7 +3,6 @@ import { Proposal } from '../../schema/proposal.schema';
 import { SignContractDto } from '../../dto/sign-contract.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { validateContractSign } from '../validate-contract-sign.util';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
@@ -39,7 +38,7 @@ describe('validateContractSign', () => {
       singleKnownRole: Role.DizMember,
       userId: 'd1',
       email: 'diz@example.com',
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
     } as IRequestUser;
 
     otherUser = {
@@ -145,15 +144,15 @@ describe('validateContractSign', () => {
     });
 
     it('throws if location already in signedContracts', () => {
-      baseProposal.uacApprovedLocations = [MiiLocation.BHC];
-      baseProposal.signedContracts = [MiiLocation.BHC];
+      baseProposal.uacApprovedLocations = ['BHC'];
+      baseProposal.signedContracts = ['BHC'];
       expect(() => validateContractSign(baseProposal, dizUser, voteFalse, undefined)).toThrow(
         'The contract could not be signed. The location might be not valid to sign or already did',
       );
     });
 
     it('allows if location in uacApprovedLocations and not yet signed', () => {
-      baseProposal.uacApprovedLocations = [MiiLocation.UKL];
+      baseProposal.uacApprovedLocations = ['UKL'];
       baseProposal.signedContracts = [];
       expect(() => validateContractSign(baseProposal, dizUser, voteTrue, validFile)).not.toThrow();
     });

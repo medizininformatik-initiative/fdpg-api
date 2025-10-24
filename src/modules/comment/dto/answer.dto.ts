@@ -1,6 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { ArrayUnique, IsEnum } from 'class-validator';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { ArrayUnique } from 'class-validator';
 import { ExposeId } from 'src/shared/decorators/transform/expose-id.decorator';
 import { VersionDto } from 'src/shared/dto/version.dto';
 import { Role } from 'src/shared/enums/role.enum';
@@ -17,17 +16,15 @@ export class AnswerBaseDto {
 @Exclude()
 export class AnswerCreateDto extends AnswerBaseDto {
   @Expose()
-  @IsEnum(MiiLocation, { each: true })
   @ArrayUnique()
-  locations?: MiiLocation[];
+  locations?: string[];
 }
 
 @Exclude()
 export class AnswerUpdateDto extends AnswerBaseDto {
   @Expose()
-  @IsEnum(MiiLocation, { each: true })
   @ArrayUnique()
-  locations?: MiiLocation[];
+  locations?: string[];
 }
 
 @Exclude()
@@ -50,7 +47,7 @@ export class AnswerGetDto extends AnswerBaseDto {
   owner: CommentOwnerDto;
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
-  locations?: MiiLocation[];
+  locations?: string[];
 
   @Expose()
   isDone: boolean;

@@ -5,7 +5,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProposalMiscService } from '../proposal-misc.service';
 import { KeycloakService } from 'src/modules/user/keycloak.service';
 import { Role } from 'src/shared/enums/role.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
@@ -38,7 +37,8 @@ import { ValidationException } from 'src/exceptions/validation/validation.except
 import { SupportedMimetype } from '../../enums/supported-mime-type.enum';
 import { addUpload, getBlobName } from '../../utils/proposal.utils';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
-import { MiiLocationService } from 'src/modules/mii-location/mii-location.service';
+import { LocationService } from 'src/modules/location/service/location.service';
+import { LocationDto } from 'src/modules/location/dto/location.dto';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -121,7 +121,7 @@ describe('ProposalMiscService', () => {
   let storageService: jest.Mocked<StorageService>;
   let proposalDownloadService: jest.Mocked<ProposalDownloadService>;
   let feasibilityService: jest.Mocked<FeasibilityService>;
-  let miiLocationService: jest.Mocked<MiiLocationService>;
+  let locationService: jest.Mocked<LocationService>;
 
   const request = {
     user: {
@@ -134,7 +134,7 @@ describe('ProposalMiscService', () => {
       email_verified: true,
       roles: [Role.Researcher],
       singleKnownRole: Role.Researcher,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
     },
@@ -151,7 +151,7 @@ describe('ProposalMiscService', () => {
       email_verified: true,
       roles: [Role.UacMember],
       singleKnownRole: Role.UacMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: true,
       isKnownLocation: true,
     },
@@ -168,7 +168,7 @@ describe('ProposalMiscService', () => {
       email_verified: true,
       roles: [Role.FdpgMember],
       singleKnownRole: Role.FdpgMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
     },
@@ -310,10 +310,9 @@ describe('ProposalMiscService', () => {
           },
         },
         {
-          provide: MiiLocationService,
+          provide: LocationService,
           useValue: {
-            getAllLocationInfo: jest.fn(),
-            getLocationInfo: jest.fn(),
+            findAll: jest.fn(),
           },
         },
       ],
@@ -334,7 +333,7 @@ describe('ProposalMiscService', () => {
       ProposalDownloadService,
     ) as jest.Mocked<ProposalDownloadService>;
     feasibilityService = module.get<FeasibilityService>(FeasibilityService) as jest.Mocked<FeasibilityService>;
-    miiLocationService = module.get<MiiLocationService>(MiiLocationService) as jest.Mocked<MiiLocationService>;
+    locationService = module.get<LocationService>(LocationService) as jest.Mocked<LocationService>;
   });
 
   it('should be defined', () => {
@@ -1113,18 +1112,18 @@ describe('ProposalMiscService', () => {
       const proposal = {
         _id: 'proposal-id',
         projectAbbreviation: 'TEST_PROJECT',
-        openDizChecks: [MiiLocation.Charité, MiiLocation.UKT],
-        uacApprovedLocations: [MiiLocation.Charité],
-        requestedButExcludedLocations: [MiiLocation.UKT],
+        openDizChecks: ['Charité', 'UKT'],
+        uacApprovedLocations: ['Charité'],
+        requestedButExcludedLocations: ['UKT'],
         conditionalApprovals: [
           {
-            location: MiiLocation.Charité,
+            location: 'Charité',
             conditionReasoning: 'Special conditions apply',
           },
         ],
         additionalLocationInformation: [
           {
-            location: MiiLocation.Charité,
+            location: 'Charité',
             locationPublicationName: 'Charité Publication',
             legalBasis: true,
           },
@@ -1132,13 +1131,13 @@ describe('ProposalMiscService', () => {
       } as any;
 
       // Mock MII location data
-      const mockMiiLocationMap = new Map([
-        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
-        [MiiLocation.UKT, { code: 'UKT', display: 'Universitätsklinikum Tübingen' }],
-      ]);
+      const locations = [
+        { _id: 'Charité', display: 'Charité - Universitätsmedizin Berlin', rubrum: 'rubrum Charité' },
+        { _id: 'UKT', display: 'Universitätsklinikum Tübingen', rubrum: 'rubrum Tübingen' },
+      ] as any as LocationDto[];
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
-      miiLocationService.getAllLocationInfo.mockResolvedValueOnce(mockMiiLocationMap);
+      locationService.findAll.mockResolvedValueOnce(locations);
 
       const result = await proposalMiscService.generateLocationCsv('proposal-id', request.user);
 
@@ -1181,10 +1180,10 @@ describe('ProposalMiscService', () => {
       } as any;
 
       // Mock empty MII location data
-      const mockMiiLocationMap = new Map();
+      const locations = [];
 
       proposalCrudService.findDocument.mockResolvedValueOnce(proposal);
-      miiLocationService.getAllLocationInfo.mockResolvedValueOnce(mockMiiLocationMap);
+      locationService.findAll.mockResolvedValueOnce(locations);
 
       const result = await proposalMiscService.generateLocationCsv('proposal-id', request.user);
 
@@ -1204,7 +1203,7 @@ describe('ProposalMiscService', () => {
       const proposal = {
         _id: 'proposal-id',
         projectAbbreviation: 'TEST_PROJECT',
-        openDizChecks: [MiiLocation.Charité],
+        openDizChecks: ['Charité'],
         uacApprovedLocations: [],
         requestedButExcludedLocations: [],
         conditionalApprovals: [],
@@ -1212,9 +1211,9 @@ describe('ProposalMiscService', () => {
       } as any;
 
       // Mock MII location data
-      const mockMiiLocationMap = new Map([
-        [MiiLocation.Charité, { code: 'Charité', display: 'Charité - Universitätsmedizin Berlin' }],
-      ]);
+      const locations = [
+        { _id: 'Charité', display: 'Charité - Universitätsmedizin Berlin', rubrum: 'rubrum Charité' },
+      ] as any as LocationDto[];
 
       const mockDownloadUrl =
         'https://storage.example.com/temp/csv-downloads/proposal-id/1234567890-location-contracting-info.csv';
@@ -1224,7 +1223,7 @@ describe('ProposalMiscService', () => {
         .mockResolvedValueOnce(proposal) // First call in generateLocationCsvDownloadLink
         .mockResolvedValueOnce(proposal); // Second call in generateLocationCsv (called internally)
 
-      miiLocationService.getAllLocationInfo.mockResolvedValueOnce(mockMiiLocationMap);
+      locationService.findAll.mockResolvedValueOnce(locations);
       storageService.uploadFile.mockResolvedValueOnce(undefined);
       storageService.getSasUrl.mockResolvedValueOnce(mockDownloadUrl);
 
@@ -1300,7 +1299,7 @@ describe('ProposalMiscService', () => {
       const proposalDocument = getProposalDocument();
       proposalDocument.additionalLocationInformation = [
         {
-          location: MiiLocation.UKL,
+          location: 'UKL',
           legalBasis: false,
           locationPublicationName: 'Old Publication',
         } as any,
@@ -1711,7 +1710,7 @@ describe('ProposalMiscService', () => {
         email_verified: true,
         roles: [Role.DizMember],
         singleKnownRole: Role.DizMember,
-        miiLocation: MiiLocation.UKL,
+        miiLocation: 'UKL',
         isFromLocation: true,
         isKnownLocation: true,
       },
@@ -1722,8 +1721,8 @@ describe('ProposalMiscService', () => {
       const proposal = {
         ...proposalDocument,
         dizDetails: [],
-        dizApprovedLocations: [MiiLocation.UKL],
-        uacApprovedLocations: [MiiLocation.UKL],
+        dizApprovedLocations: ['UKL'],
+        uacApprovedLocations: ['UKL'],
       } as any;
 
       const createDto = {
@@ -1769,7 +1768,7 @@ describe('ProposalMiscService', () => {
         email_verified: true,
         roles: [Role.DizMember],
         singleKnownRole: Role.DizMember,
-        miiLocation: MiiLocation.UKL,
+        miiLocation: 'UKL',
         isFromLocation: true,
         isKnownLocation: true,
       },
@@ -1783,13 +1782,13 @@ describe('ProposalMiscService', () => {
         dizDetails: [
           {
             _id: dizDetailsId,
-            location: MiiLocation.UKL,
+            location: 'UKL',
             localProjectIdentifier: 'OLD-123',
             documentationLinks: '',
           },
         ],
-        dizApprovedLocations: [MiiLocation.UKL],
-        uacApprovedLocations: [MiiLocation.UKL],
+        dizApprovedLocations: ['UKL'],
+        uacApprovedLocations: ['UKL'],
       } as any;
 
       const updateDto = {

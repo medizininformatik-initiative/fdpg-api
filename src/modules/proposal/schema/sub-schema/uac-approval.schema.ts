@@ -1,45 +1,36 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type UacApprovalDocument = UacApproval & Document;
 
 @Schema({ _id: true })
 export class UacApproval {
-  @Prop(String)
-  location: MiiLocation;
+  @Prop({ type: String, ref: () => Location })
+  location: string;
 
   @Prop()
   dataAmount: number;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   isContractSigned: boolean;
 
   _id: string;
 
-  @Prop({
-    type: Date,
-    default: Date.now,
-    immutable: true,
-  })
+  @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   signedAt: Date;
 
   // Could be also the system
   @Prop()
   signedByOwnerId: string;
 
-  @Prop({
-    type: Boolean,
-  })
+  @Prop({ type: Boolean })
   isLate?: boolean;
 }
 
-export const UacApprovalSchema = SchemaFactory.createForClass(UacApproval);
+const UacApprovalSchema = SchemaFactory.createForClass(UacApproval);
+
+export { UacApprovalSchema };

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type AdditionalLocationInformationDocument = AdditionalLocationInformation & Document;
 
@@ -8,8 +8,8 @@ export type AdditionalLocationInformationDocument = AdditionalLocationInformatio
 export class AdditionalLocationInformation {
   _id?: string;
 
-  @Prop(String)
-  location: MiiLocation;
+  @Prop({ type: String, ref: () => Location })
+  location: string;
 
   @Prop()
   legalBasis: boolean;
@@ -17,19 +17,13 @@ export class AdditionalLocationInformation {
   @Prop()
   locationPublicationName: string;
 
-  @Prop({
-    type: Date,
-    default: Date.now,
-    immutable: true,
-  })
+  @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;
 
-  @Prop({
-    type: Date,
-    default: Date.now,
-    immutable: false,
-  })
+  @Prop({ type: Date, default: Date.now, immutable: false })
   updatedAt: Date;
 }
 
-export const AdditionalLocationInformationSchema = SchemaFactory.createForClass(AdditionalLocationInformation);
+const AdditionalLocationInformationSchema = SchemaFactory.createForClass(AdditionalLocationInformation);
+
+export { AdditionalLocationInformationSchema };

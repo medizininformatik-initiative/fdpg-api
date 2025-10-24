@@ -1,21 +1,20 @@
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type AddresseesDocument = Addressees & Document;
 
 @Schema({ _id: true })
 export class Addressees {
-  @Prop([String])
-  desiredLocations: MiiLocation[];
+  @Prop({ type: [String], ref: () => Location })
+  desiredLocations: string[];
 
   _id: string;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   isDone: boolean;
 }
 
-export const AddresseesSchema = SchemaFactory.createForClass(Addressees);
+const AddresseesSchema = SchemaFactory.createForClass(Addressees);
+
+export { AddresseesSchema };

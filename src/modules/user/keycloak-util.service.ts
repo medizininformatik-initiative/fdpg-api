@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { KeycloakService } from './keycloak.service';
@@ -55,16 +54,14 @@ export class KeycloakUtilService {
    * @returns A subset of the users based on their locations
    */
   getLocationContacts(
-    locations: MiiLocation[],
+    locations: string[],
     members: Pick<IGetKeycloakUser, 'attributes' | 'email'>[],
     withFilterForReceivingMails = true,
   ): string[] {
-    const filtered = locations.includes(MiiLocation.VirtualAll)
-      ? members
-      : members.filter((member) => {
-          const memberLocation = member.attributes?.MII_LOCATION?.[0];
-          return memberLocation ? locations.includes(memberLocation) : false;
-        });
+    const filtered = members.filter((member) => {
+      const memberLocation = member.attributes?.MII_LOCATION?.[0];
+      return memberLocation ? locations.includes(memberLocation) : false;
+    });
 
     return filtered
       .filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true))

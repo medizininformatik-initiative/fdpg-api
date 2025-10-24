@@ -1,5 +1,4 @@
 import { PlatformIdentifier } from '../../modules/admin/enums/platform-identifier.enum';
-import { MiiLocation } from '../constants/mii-locations';
 import { Role } from '../enums/role.enum';
 
 export interface IRequestUser {
@@ -15,7 +14,7 @@ export interface IRequestUser {
   /** Just one role that is relevant for the domain (not including the admin) */
   singleKnownRole?: Role;
 
-  miiLocation?: MiiLocation;
+  miiLocation?: string;
 
   /** If UAC OR DIZ Member */
   isFromLocation: boolean;
@@ -29,6 +28,4 @@ export interface IRequestUser {
   assignedDataSources: PlatformIdentifier[];
 }
 
-export type FdpgRequest = Request & {
-  user: IRequestUser;
-};
+export type FdpgRequest = Request & { user: IRequestUser };

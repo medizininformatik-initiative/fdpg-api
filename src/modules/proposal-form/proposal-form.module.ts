@@ -4,15 +4,8 @@ import { ProposalForm, ProposalFormSchema } from './schema/proposal-form.schema'
 import { ProposalFormService } from './proposal-form.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      {
-        name: ProposalForm.name,
-        schema: ProposalFormSchema,
-      },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: ProposalForm.name, schema: ProposalFormSchema }])],
   providers: [ProposalFormService],
-  exports: [ProposalFormService],
+  exports: [ProposalFormService, MongooseModule],
 })
 export class ProposalFormModule {}

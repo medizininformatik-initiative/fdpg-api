@@ -4,7 +4,6 @@ import { CommentType } from 'src/modules/comment/enums/comment-type.enum';
 import { Comment } from 'src/modules/comment/schema/comment.schema';
 import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
-import { ALL_ACTIVE_LOCATIONS, MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
@@ -83,11 +82,12 @@ export class CommentAnswerEventService {
     answer: Answer,
     proposalUrl: string,
   ) {
-    const commentLocation = answer.locations.includes(MiiLocation.VirtualAll)
-      ? ALL_ACTIVE_LOCATIONS
-      : (answer.locations ?? []);
+    const commentLocation = answer.locations;
 
     const locations = reduceParticipatingLocations(proposal, commentLocation);
+
+    console.log({ locations });
+    console.log(this.PREVENT_MESSAGE_TO_LOCATION_ANSWER);
 
     if (!this.PREVENT_MESSAGE_TO_LOCATION_ANSWER) {
       const emailTasks: Promise<void>[] = [];
@@ -126,6 +126,8 @@ export class CommentAnswerEventService {
       }
 
       await Promise.allSettled(emailTasks);
+    } else {
+      console.info('prevented sending mails');
     }
   }
 

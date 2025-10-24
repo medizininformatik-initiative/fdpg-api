@@ -10,7 +10,6 @@ import {
   IsString,
   ValidateIf,
 } from 'class-validator';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PROPOSAL_SHORTCUT_REGEX } from 'src/shared/constants/regex.constants';
 import { ExposeId } from 'src/shared/decorators/transform/expose-id.decorator';
 import { OwnerDto } from 'src/shared/dto/owner.dto';
@@ -257,7 +256,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((miiLoc: MiiLocation) => {
+    return value.filter((miiLoc: string) => {
       if (role === Role.DizMember || role === Role.UacMember) {
         return miiLoc === location;
       }
@@ -265,13 +264,13 @@ export class ProposalGetDto extends ProposalBaseDto {
       return true;
     });
   })
-  openDizChecks: MiiLocation[];
+  openDizChecks: string[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((miiLoc: MiiLocation) => {
+    return value.filter((miiLoc: string) => {
       if (role === Role.DizMember || role === Role.UacMember) {
         return miiLoc === location;
       }
@@ -279,13 +278,13 @@ export class ProposalGetDto extends ProposalBaseDto {
       return true;
     });
   })
-  dizApprovedLocations: MiiLocation[];
+  dizApprovedLocations: string[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((miiLoc: MiiLocation) => {
+    return value.filter((miiLoc: string) => {
       if (role === Role.DizMember || role === Role.UacMember) {
         return miiLoc === location;
       }
@@ -293,13 +292,13 @@ export class ProposalGetDto extends ProposalBaseDto {
       return true;
     });
   })
-  openDizConditionChecks: MiiLocation[];
+  openDizConditionChecks: string[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((miiLoc: MiiLocation) => {
+    return value.filter((miiLoc: string) => {
       if (role === Role.DizMember || role === Role.UacMember) {
         return miiLoc === location;
       }
@@ -307,7 +306,7 @@ export class ProposalGetDto extends ProposalBaseDto {
       return true;
     });
   })
-  uacApprovedLocations: MiiLocation[];
+  uacApprovedLocations: string[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
@@ -320,7 +319,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((miiLoc: MiiLocation) => {
+    return value.filter((miiLoc: string) => {
       if (role === Role.DizMember || role === Role.UacMember) {
         return miiLoc === location;
       }
@@ -328,7 +327,7 @@ export class ProposalGetDto extends ProposalBaseDto {
       return true;
     });
   })
-  requestedButExcludedLocations: MiiLocation[];
+  requestedButExcludedLocations: string[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(({ obj }) => obj.requestedButExcludedLocations?.length ?? 0)
@@ -338,7 +337,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   @Transform(({ value, options }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((miiLoc: MiiLocation) => {
+    return value.filter((miiLoc: string) => {
       if (role === Role.DizMember || role === Role.UacMember) {
         return miiLoc === location;
       }
@@ -346,7 +345,7 @@ export class ProposalGetDto extends ProposalBaseDto {
       return true;
     });
   })
-  signedContracts: MiiLocation[];
+  signedContracts: string[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher] })
   @Transform(
@@ -573,19 +572,19 @@ export class ProposalMarkConditionAcceptedReturnDto {
   totalPromisedDataAmount?: number;
 
   @Expose()
-  openDizChecks: MiiLocation[];
+  openDizChecks: string[];
 
   @Expose()
-  openDizConditionChecks: MiiLocation[];
+  openDizConditionChecks: string[];
 
   @Expose()
-  dizApprovedLocations: MiiLocation[];
+  dizApprovedLocations: string[];
 
   @Expose()
-  uacApprovedLocations: MiiLocation[];
+  uacApprovedLocations: string[];
 
   @Expose()
-  requestedButExcludedLocations: MiiLocation[];
+  requestedButExcludedLocations: string[];
 
   @Expose()
   @Type(() => ConditionalApprovalGetDto)

@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { HistoryEventType } from '../enums/history-event.enum';
@@ -13,7 +12,7 @@ const pushHistoryItem = <T extends HistoryEventType>(
   proposalAfterChanges: Proposal,
   user: IRequestUser,
   type: T,
-  location?: MiiLocation,
+  location?: string,
   data?: HistoryEventDataMap<T>,
 ) => {
   const event: HistoryEvent = {
@@ -140,7 +139,7 @@ export const addHistoryItemForUacCondition = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
   vote: boolean,
-  location: MiiLocation,
+  location: string,
 ): void => {
   const type = vote ? HistoryEventType.UacConditionAccept : HistoryEventType.UacConditionDecline;
 
@@ -150,7 +149,7 @@ export const addHistoryItemForUacCondition = (
 export const addHistoryItemForUnselectedLocation = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
-  location: MiiLocation,
+  location: string,
 ): void => {
   const type = HistoryEventType.FdpgApprovedLocationRemoved;
 
@@ -160,7 +159,7 @@ export const addHistoryItemForUnselectedLocation = (
 export const addHistoryItemForRevertLocationVote = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
-  location: MiiLocation,
+  location: string,
 ): void => {
   const type = HistoryEventType.FdpgLocationVoteReverted;
 
@@ -185,7 +184,7 @@ export const addHistoryItemForContractSign = (
 export const addHistoryItemForContractSystemReject = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
-  location: MiiLocation,
+  location: string,
 ): void => {
   const type = HistoryEventType.ContractSystemRejected;
   pushHistoryItem(proposalAfterChanges, user, type, location);

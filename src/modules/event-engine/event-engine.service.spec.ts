@@ -13,7 +13,6 @@ import { PublicationsService } from './events/publications/publications.service'
 import { ReportsService } from './events/reports/reports.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 
@@ -187,14 +186,14 @@ describe('EventEngineService', () => {
 
   it('should handleProposalDizApproval', async () => {
     const vote = true;
-    const location = MiiLocation.UKL;
+    const location = 'UKL';
     await eventEngineService.handleProposalDizApproval(proposal as any, vote, location);
     expect(locationVoteService.handleDizApproval).toHaveBeenCalledWith(proposal, vote, location, expectedUrl);
   });
 
   it('should handleProposalUacApproval', async () => {
     const vote = true;
-    const location = MiiLocation.UKL;
+    const location = 'UKL';
     await eventEngineService.handleProposalUacApproval(proposal as any, vote, location);
     expect(locationVoteService.handleUacApproval).toHaveBeenCalledWith(proposal, vote, location, expectedUrl);
   });

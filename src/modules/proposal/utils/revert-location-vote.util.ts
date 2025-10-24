@@ -1,7 +1,6 @@
 import { getLocationState } from './validate-access.util';
 import { ProposalUploadService } from '../services/proposal-upload.service';
 import { ProposalDocument } from '../schema/proposal.schema';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { removeFdpgTask, removeFdpgTaskByType } from './add-fdpg-task.util';
 import { FdpgTaskType } from '../enums/fdpg-task-type.enum';
@@ -9,7 +8,7 @@ import { clearLocationsVotes } from './location-flow.util';
 
 export const revertLocationVote = async (
   proposal: ProposalDocument,
-  location: MiiLocation,
+  location: string,
   user: IRequestUser,
   proposalUploadService: ProposalUploadService,
 ) => {

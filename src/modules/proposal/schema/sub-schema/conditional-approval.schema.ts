@@ -1,18 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type ConditionalApprovalDocument = ConditionalApproval & Document;
 
 @Schema({ _id: true })
 export class ConditionalApproval {
-  @Prop(String)
-  location: MiiLocation;
+  @Prop({ type: String, ref: () => Location })
+  location: string;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   isAccepted: boolean;
 
   @Prop()
@@ -32,16 +29,10 @@ export class ConditionalApproval {
 
   _id: string;
 
-  @Prop({
-    type: Date,
-    default: Date.now,
-    immutable: true,
-  })
+  @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   reviewedAt: Date;
 
   // Could be also the system
@@ -52,15 +43,13 @@ export class ConditionalApproval {
   @Prop()
   signedByOwnerId: string;
 
-  @Prop({
-    type: Date,
-  })
+  @Prop({ type: Date })
   signedAt: Date;
 
-  @Prop({
-    type: Boolean,
-  })
+  @Prop({ type: Boolean })
   isLate?: boolean;
 }
 
-export const ConditionalApprovalSchema = SchemaFactory.createForClass(ConditionalApproval);
+const ConditionalApprovalSchema = SchemaFactory.createForClass(ConditionalApproval);
+
+export { ConditionalApprovalSchema };

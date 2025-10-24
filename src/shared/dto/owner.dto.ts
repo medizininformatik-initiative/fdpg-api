@@ -1,6 +1,5 @@
 import { Expose } from 'class-transformer';
 import { IsString } from 'class-validator';
-import { MiiLocation } from '../constants/mii-locations';
 import { Role } from '../enums/role.enum';
 import { IsNotEmptyString } from '../validators/is-not-empty-string.validator';
 
@@ -25,7 +24,7 @@ export class OwnerDto {
   username?: string;
 
   @Expose()
-  miiLocation?: MiiLocation;
+  miiLocation?: string;
 
   @Expose()
   role?: Role;

@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
 import { StatusChangeService } from '../status-change.service';
 import { Role } from 'src/shared/enums/role.enum';
-import { ALL_ACTIVE_LOCATIONS, MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
@@ -46,7 +45,7 @@ const request = {
     email_verified: true,
     roles: [Role.Researcher],
     singleKnownRole: Role.Researcher,
-    miiLocation: MiiLocation.UKL,
+    miiLocation: 'UKL',
     isFromLocation: false,
     isKnownLocation: true,
   },
@@ -63,15 +62,15 @@ const proposalContent = {
   },
   userProject: {
     addressees: {
-      desiredLocations: [MiiLocation.UKL],
+      desiredLocations: ['UKL'],
     },
   },
   requestedButExcludedLocations: [],
-  openDizChecks: [MiiLocation.Charité, MiiLocation.KC],
-  dizApprovedLocations: [MiiLocation.KUM, MiiLocation.MHH],
-  openDizConditionChecks: [MiiLocation.CTK],
-  signedContracts: [MiiLocation.MRI, MiiLocation.UKA],
-  uacApprovedLocations: [MiiLocation.UKAU, MiiLocation.UKB],
+  openDizChecks: ['Charité', 'KC'],
+  dizApprovedLocations: ['KUM', 'MHH'],
+  openDizConditionChecks: ['CTK'],
+  signedContracts: ['MRI', 'UKA'],
+  uacApprovedLocations: ['UKAU', 'UKB'],
   uacApprovals: [{}] as UacApproval[],
 };
 
@@ -181,7 +180,7 @@ describe('StatusChangeService', () => {
           const oldStatus = ProposalStatus.FdpgCheck;
           const proposalDocument = getProposalDocument();
           proposalDocument.status = ProposalStatus.LocationCheck;
-          const locationsRequested = allLocations ? ALL_ACTIVE_LOCATIONS : [MiiLocation.UKL];
+          const locationsRequested = allLocations ? [] : ['UKL'];
           proposalContent.userProject.addressees.desiredLocations = [...locationsRequested];
 
           await statusChangeService.handleEffects(proposalDocument, oldStatus, request.user);
@@ -217,7 +216,7 @@ describe('StatusChangeService', () => {
         const proposalDocument = getProposalDocument();
         proposalDocument.status = ProposalStatus.Contracting;
 
-        await statusChangeService.handleEffects(proposalDocument, oldStatus, request.user, [MiiLocation.UKAU]);
+        await statusChangeService.handleEffects(proposalDocument, oldStatus, request.user, ['UKAU']);
 
         expect(setDueDate).toHaveBeenCalledWith(proposalDocument);
 
@@ -225,15 +224,15 @@ describe('StatusChangeService', () => {
         expect(proposalDocument.dizApprovedLocations).toEqual([]);
         expect(proposalDocument.signedContracts).toEqual([]);
 
-        expect(proposalDocument.uacApprovedLocations).toEqual([MiiLocation.UKAU, MiiLocation.UKB]);
+        expect(proposalDocument.uacApprovedLocations).toEqual(['UKAU', 'UKB']);
         expect(proposalDocument.requestedButExcludedLocations).toEqual([
-          MiiLocation.Charité,
-          MiiLocation.KC,
-          MiiLocation.KUM,
-          MiiLocation.MHH,
-          MiiLocation.MRI,
-          MiiLocation.UKA,
-          MiiLocation.CTK,
+          'Charité',
+          'KC',
+          'KUM',
+          'MHH',
+          'MRI',
+          'UKA',
+          'CTK',
         ]);
 
         expect(proposalDocument.numberOfApprovedLocations).toBe(proposalDocument.uacApprovedLocations.length);
@@ -255,7 +254,7 @@ describe('StatusChangeService', () => {
         expect(declineUnselectedLocations).toHaveBeenCalledWith(
           expect.objectContaining({ _id: proposalId }),
           request.user,
-          [MiiLocation.UKAU],
+          ['UKAU'],
         );
         expect(removeFdpgTasksForContracting).toHaveBeenCalledWith(expect.objectContaining({ _id: proposalId }));
       });
@@ -285,15 +284,15 @@ describe('StatusChangeService', () => {
         expect(proposalDocument.openDizChecks).toEqual([]);
         expect(proposalDocument.dizApprovedLocations).toEqual([]);
         expect(proposalDocument.uacApprovedLocations).toEqual([]);
-        expect(proposalDocument.signedContracts).toEqual([MiiLocation.MRI, MiiLocation.UKA]);
+        expect(proposalDocument.signedContracts).toEqual(['MRI', 'UKA']);
         expect(proposalDocument.requestedButExcludedLocations).toEqual([
-          MiiLocation.Charité,
-          MiiLocation.KC,
-          MiiLocation.KUM,
-          MiiLocation.MHH,
-          MiiLocation.UKAU,
-          MiiLocation.UKB,
-          MiiLocation.CTK,
+          'Charité',
+          'KC',
+          'KUM',
+          'MHH',
+          'UKAU',
+          'UKB',
+          'CTK',
         ]);
 
         expect(proposalDocument.numberOfSignedLocations).toBe(proposalDocument.signedContracts.length);

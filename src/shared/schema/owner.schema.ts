@@ -1,16 +1,13 @@
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { MiiLocation } from '../constants/mii-locations';
 import { Role } from '../enums/role.enum';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type OwnerDocument = Owner & Document;
 
 @Schema({ _id: false })
 export class Owner {
-  @Prop({
-    type: String,
-    immutable: true,
-  })
+  @Prop({ type: String, immutable: true })
   id: string;
 
   @Prop()
@@ -28,8 +25,10 @@ export class Owner {
   @Prop({ type: String, enum: Role })
   role?: Role;
 
-  @Prop()
-  miiLocation?: MiiLocation;
+  @Prop({ type: String, ref: () => Location })
+  miiLocation?: string;
 }
 
-export const OwnerSchema = SchemaFactory.createForClass(Owner);
+const OwnerSchema = SchemaFactory.createForClass(Owner);
+
+export { OwnerSchema };

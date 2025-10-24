@@ -34,6 +34,6 @@ export class Migration {
 }
 
 const MigrationSchema = SchemaFactory.createForClass(Migration);
-MigrationSchema.index({ id: 1 });
+// MigrationSchema.index({ id: 1 });
 
 export { MigrationSchema };

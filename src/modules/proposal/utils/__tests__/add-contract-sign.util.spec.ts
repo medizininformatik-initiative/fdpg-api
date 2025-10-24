@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
@@ -30,7 +29,7 @@ const requestContent = {
     email_verified: true,
     roles: [Role.Researcher],
     singleKnownRole: Role.Researcher,
-    miiLocation: MiiLocation.UKL,
+    miiLocation: 'UKL',
     isFromLocation: false,
     isKnownLocation: true,
   },
@@ -112,7 +111,7 @@ describe('AddContractSignUtil', () => {
       const uacApproval = { location: request.user.miiLocation, dataAmount: 100 } as any as UacApproval;
       proposal.uacApprovals = [uacApproval];
       proposal.conditionalApprovals = [];
-      proposal.uacApprovedLocations = [MiiLocation.UKL];
+      proposal.uacApprovedLocations = ['UKL'];
       const vote = new SignContractDto();
       vote.value = true;
 
@@ -149,7 +148,7 @@ describe('AddContractSignUtil', () => {
       const uacApproval = { location: request.user.miiLocation, dataAmount: 100 } as any as ConditionalApproval;
       proposal.uacApprovals = [];
       proposal.conditionalApprovals = [uacApproval];
-      proposal.uacApprovedLocations = [MiiLocation.UKL];
+      proposal.uacApprovedLocations = ['UKL'];
       const vote = new SignContractDto();
       vote.value = true;
 
@@ -167,7 +166,7 @@ describe('AddContractSignUtil', () => {
       const uacApproval = { location: request.user.miiLocation, dataAmount: 100 } as any as UacApproval;
       proposal.uacApprovals = [uacApproval];
       proposal.conditionalApprovals = [];
-      proposal.uacApprovedLocations = [MiiLocation.UKL];
+      proposal.uacApprovedLocations = ['UKL'];
       proposal.totalContractedDataAmount = 0;
       const vote = new SignContractDto();
       vote.value = false;

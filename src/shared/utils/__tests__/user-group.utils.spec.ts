@@ -2,7 +2,6 @@ import { Role } from 'src/shared/enums/role.enum';
 import { convertUserToGroups, parseGroupToUser, PartialUser } from '../user-group.utils';
 import { SharedValidationGroup } from 'src/shared/enums/validation-group.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
 describe('convertUserToGroups', () => {
@@ -22,7 +21,7 @@ describe('convertUserToGroups', () => {
     const user = {
       userId: 'user-456',
       singleKnownRole: Role.DizMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
     } as any as IRequestUser;
 
     const groups = convertUserToGroups(user);
@@ -51,7 +50,7 @@ describe('convertUserToGroups', () => {
     const user = {
       userId: 'user-000',
       singleKnownRole: Role.UacMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       assignedDataSources: [PlatformIdentifier.DIFE, PlatformIdentifier.Mii],
     } as any as IRequestUser;
 

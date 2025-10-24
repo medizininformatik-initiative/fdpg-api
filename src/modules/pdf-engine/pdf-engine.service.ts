@@ -4,9 +4,13 @@ import { ProposalGetDto } from '../proposal/dto/proposal/proposal.dto';
 import { PdfEngineClient } from './pdf-engine.client';
 import { DataPrivacyTextsContentKeys } from '../admin/dto/data-privacy/data-privacy-texts.dto';
 import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
+import { LocationService } from '../location/service/location.service';
 @Injectable()
 export class PdfEngineService {
-  constructor(private pdfEngineClient: PdfEngineClient) {
+  constructor(
+    private pdfEngineClient: PdfEngineClient,
+    private locationService: LocationService,
+  ) {
     this.apiClient = this.pdfEngineClient.client;
   }
   private readonly basePath = 'api';
@@ -18,10 +22,14 @@ export class PdfEngineService {
     dataSources: PlatformIdentifier[],
   ): Promise<Buffer> {
     try {
+      const keyLabels = await this.locationService.findAllKeyLabel();
+      const locationLookupMap = Object.fromEntries(keyLabels.map((l) => [l._id, l]));
+
       const response = await this.apiClient.post<{ data: Uint8Array }>(`${this.basePath}/proposal/buffer`, {
         data: proposal,
         dataPrivacyTexts,
         dataSources,
+        locationLookupMap,
       });
 
       const buffer = Buffer.from(response.data.data);

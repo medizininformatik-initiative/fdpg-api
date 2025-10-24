@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getOwner } from 'src/shared/utils/get-owner.util';
 import { DeclineType } from '../enums/decline-type.enum';
@@ -26,7 +25,7 @@ export const excludeUnselectedLocations = (
 export const addRejectionReasonForUnselectedLocation = (
   proposal: Proposal,
   user: IRequestUser,
-  unselectedLocation: MiiLocation,
+  unselectedLocation: string,
 ) => {
   proposal.declineReasons = [
     ...proposal.declineReasons,

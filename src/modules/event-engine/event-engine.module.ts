@@ -1,8 +1,6 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { MongooseModule } from '@nestjs/mongoose';
 import { EmailModule } from '../email/email.module';
-import { Proposal, ProposalSchema } from '../proposal/schema/proposal.schema';
 import { UserModule } from '../user/user.module';
 import { EventEngineService } from './event-engine.service';
 import { CommentEventService } from './events/comments/comment-event.service';
@@ -16,6 +14,7 @@ import { PublicationsService } from './events/publications/publications.service'
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
+import { ProposalModule } from '../proposal/proposal.module';
 
 @Module({
   providers: [
@@ -32,17 +31,7 @@ import { ParticipantEmailSummaryService } from './events/summary/participant-ema
     DeadlineEventService,
     ParticipantEmailSummaryService,
   ],
-  imports: [
-    MongooseModule.forFeature([
-      {
-        name: Proposal.name,
-        schema: ProposalSchema,
-      },
-    ]),
-    UserModule,
-    EmailModule,
-    CacheModule.register(),
-  ],
+  imports: [forwardRef(() => ProposalModule), UserModule, EmailModule, CacheModule.register()],
   exports: [EventEngineService],
 })
 export class EventEngineModule {}

@@ -2,7 +2,6 @@ import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { HistoryEventType } from '../../enums/history-event.enum';
 import {
   addHistoryItemForStatus,
@@ -43,7 +42,7 @@ const requestContent = {
     email_verified: true,
     roles: [Role.Researcher],
     singleKnownRole: Role.Researcher,
-    miiLocation: MiiLocation.UKL,
+    miiLocation: 'UKL',
     isFromLocation: false,
     isKnownLocation: true,
   },
@@ -196,7 +195,7 @@ describe('ProposalHistoryUtil', () => {
     it('should add history item for reverted location vote', () => {
       const request = getRequest();
       const proposal = getProposalDocument();
-      const location = MiiLocation.UKL;
+      const location = 'UKL';
 
       addHistoryItemForRevertLocationVote(proposal, request.user, location);
       expect(proposal.history.length).toBe(1);

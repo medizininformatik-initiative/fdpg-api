@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getOwner } from 'src/shared/utils/get-owner.util';
 import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
@@ -148,7 +147,7 @@ export const addDizConditionApproval = (proposal: Proposal, user: IRequestUser, 
 
 export const addDizApprovalWithCondition = (
   proposal: Proposal,
-  location: MiiLocation,
+  location: string,
   vote: SetDizConditionApprovalDto,
   conditionReasoning: string,
 ) => {

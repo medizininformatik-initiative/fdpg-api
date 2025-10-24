@@ -19,7 +19,6 @@ import { ResendInvitationDto } from '../dto/resend-invitation.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { KeycloakLocale } from '../enums/keycloak-locale.enum';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import * as uuid from 'uuid';
 import { CacheKey } from 'src/shared/enums/cache-key.enum';
 import { IKeycloakRole } from '../types/keycloak-role-assignment.interface';
@@ -264,11 +263,11 @@ describe('KeycloakService', () => {
       'should add MII_LOCATION attribute to keycloak user if role is DizMember or UacMember and location is provided',
       async (role) => {
         user.role = role;
-        user.location = MiiLocation.Charité;
+        user.location = 'Charité';
 
         const expectedUser = {
           attributes: {
-            ['MII_LOCATION']: [MiiLocation.Charité],
+            ['MII_LOCATION']: ['Charité'],
             locale: [KeycloakLocale.De],
           },
         };
@@ -290,7 +289,7 @@ describe('KeycloakService', () => {
       const emailSpy = jest.spyOn(service, 'executeActionsEmailForInvitation').mockResolvedValueOnce();
 
       user.role = Role.UacMember;
-      user.location = MiiLocation.Charité;
+      user.location = 'Charité';
 
       const result = await service.createUser(user as CreateUserDto);
 

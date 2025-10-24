@@ -5,7 +5,6 @@ import { Comment } from 'src/modules/comment/schema/comment.schema';
 import { EmailService } from 'src/modules/email/email.service';
 import { IEmail } from 'src/modules/email/types/email.interface';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
-import { ALL_ACTIVE_LOCATIONS, MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
@@ -132,9 +131,7 @@ export class CommentEventService {
   }
 
   private async handleProposalMessageToLocationCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
-    const commentLocation = comment.locations.includes(MiiLocation.VirtualAll)
-      ? ALL_ACTIVE_LOCATIONS
-      : (comment.locations ?? []);
+    const commentLocation = comment.locations ?? [];
 
     const locations = reduceParticipatingLocations(proposal, commentLocation);
 

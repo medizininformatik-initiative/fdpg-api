@@ -1,21 +1,33 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { StorageModule } from 'src/modules/storage/storage.module';
-import { Comment, CommentSchema } from 'src/modules/comment/schema/comment.schema';
-import { Proposal, ProposalSchema } from 'src/modules/proposal/schema/proposal.schema';
 import { SchedulerModule } from 'src/modules/scheduler/scheduler.module';
 import { SharedService } from './shared.service';
+import { LocationModule } from 'src/modules/location/location.module';
+import { getProposalSchemaFactory, Proposal } from 'src/modules/proposal/schema/proposal.schema';
+import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
+import { Comment, getCommentSchemaFactory } from 'src/modules/comment/schema/comment.schema';
+import { Connection } from 'mongoose';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
+    LocationModule,
+    MongooseModule.forFeatureAsync([
       {
         name: Proposal.name,
-        schema: ProposalSchema,
+        inject: [getConnectionToken()],
+        useFactory: (connection: Connection) => {
+          const LocationModel = connection.model<Location>(Location.name);
+          return getProposalSchemaFactory(LocationModel);
+        },
       },
       {
         name: Comment.name,
-        schema: CommentSchema,
+        inject: [getConnectionToken()],
+        useFactory: (connection: Connection) => {
+          const LocationModel = connection.model<Location>(Location.name);
+          return getCommentSchemaFactory(LocationModel);
+        },
       },
     ]),
     StorageModule,

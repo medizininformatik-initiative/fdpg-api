@@ -1,7 +1,6 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional, MaxLength, ValidateIf, isEnum } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, MaxLength, ValidateIf } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { CountryCode } from 'src/shared/enums/country-code.enum';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -10,15 +9,14 @@ import { IsPostalCodeOf } from 'src/shared/validators/is-postal-code-of.validato
 export default class InstituteDto extends WithIdForObjectDto {
   @Expose()
   @IsOptional()
-  @IsEnum(MiiLocation)
-  miiLocation?: MiiLocation;
+  miiLocation?: string;
 
   @Expose()
   @MaxLength(1000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   // ↓ There should be MiiLocation or all other fields filled
-  @ValidateIf((o) => !o.miiLocation || isEnum(MiiLocation, o.miiLocation))
+  @ValidateIf((o) => !o.miiLocation)
   @Transform(({ obj, value }) => (obj.miiLocation ? undefined : value))
   // ↑ There should be MiiLocation or all other fields filled
   name?: string;
@@ -28,7 +26,7 @@ export default class InstituteDto extends WithIdForObjectDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   // ↓ There should be MiiLocation or all other fields filled
-  @ValidateIf((o) => !o.miiLocation || isEnum(MiiLocation, o.miiLocation))
+  @ValidateIf((o) => !o.miiLocation)
   @Transform(({ obj, value }) => (obj.miiLocation ? undefined : value))
   // ↑ There should be MiiLocation or all other fields filled
   streetAddress?: string;
@@ -38,7 +36,7 @@ export default class InstituteDto extends WithIdForObjectDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   // ↓ There should be MiiLocation or all other fields filled
-  @ValidateIf((o) => !o.miiLocation || isEnum(MiiLocation, o.miiLocation))
+  @ValidateIf((o) => !o.miiLocation)
   @Transform(({ obj, value }) => (obj.miiLocation ? undefined : value))
   // ↑ There should be MiiLocation or all other fields filled
   houseNumber?: string;
@@ -47,7 +45,7 @@ export default class InstituteDto extends WithIdForObjectDto {
   @IsPostalCodeOf('country')
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   // ↓ There should be MiiLocation or all other fields filled
-  @ValidateIf((o) => !o.miiLocation || isEnum(MiiLocation, o.miiLocation))
+  @ValidateIf((o) => !o.miiLocation)
   @Transform(({ obj, value }) => (obj.miiLocation ? undefined : value))
   // ↑ There should be MiiLocation or all other fields filled
   postalCode?: string;
@@ -57,7 +55,7 @@ export default class InstituteDto extends WithIdForObjectDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   // ↓ There should be MiiLocation or all other fields filled
-  @ValidateIf((o) => !o.miiLocation || isEnum(MiiLocation, o.miiLocation))
+  @ValidateIf((o) => !o.miiLocation)
   @Transform(({ obj, value }) => (obj.miiLocation ? undefined : value))
   // ↑ There should be MiiLocation or all other fields filled
   city?: string;
@@ -66,7 +64,7 @@ export default class InstituteDto extends WithIdForObjectDto {
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @IsEnum(CountryCode)
   // ↓ There should be MiiLocation or all other fields filled
-  @ValidateIf((o) => !o.miiLocation || isEnum(MiiLocation, o.miiLocation))
+  @ValidateIf((o) => !o.miiLocation)
   @Transform(({ obj, value }) => (obj.miiLocation ? undefined : value))
   // ↑ There should be MiiLocation or all other fields filled
   country?: CountryCode;
@@ -75,7 +73,7 @@ export default class InstituteDto extends WithIdForObjectDto {
   @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @IsEmail()
   // ↓ There should be MiiLocation or all other fields filled
-  @ValidateIf((o) => !o.miiLocation || isEnum(MiiLocation, o.miiLocation))
+  @ValidateIf((o) => !o.miiLocation)
   @Transform(({ obj, value }) => (obj.miiLocation ? undefined : value))
   // ↑ There should be MiiLocation or all other fields filled
   email?: string;
