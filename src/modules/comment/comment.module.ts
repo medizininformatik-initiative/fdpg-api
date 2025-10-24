@@ -27,5 +27,6 @@ import { Location } from '../location/schema/location.schema';
   ],
   controllers: [CommentController],
   providers: [CommentService],
+  exports: [MongooseModule],
 })
 export class CommentModule {}

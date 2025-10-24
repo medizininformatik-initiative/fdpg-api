@@ -12,3 +12,4 @@ export * from './016.migration';
 export * from './017.migration';
 export * from './018.migration';
 export * from './019.migration';
+export * from './020.migration';
