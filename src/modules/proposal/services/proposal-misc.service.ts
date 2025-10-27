@@ -857,11 +857,28 @@ export class ProposalMiscService {
 
     const originalObj = original.toObject();
 
-    // Generate unique project abbreviation for the copy
+    this.resetIsDoneFlags(originalObj);
+
+    // If applicant is also the responsible scientist, copy their data to projectResponsible
+    let projectResponsible = originalObj.projectResponsible;
+    if (originalObj.projectResponsible?.projectResponsibility?.applicantIsProjectResponsible && originalObj.applicant) {
+      // When applicantIsProjectResponsible is true, copy applicant data to projectResponsible
+      projectResponsible = {
+        ...originalObj.projectResponsible,
+        researcher: originalObj.applicant.researcher,
+        institute: originalObj.applicant.institute,
+        participantCategory: originalObj.applicant.participantCategory,
+        // Keep the projectResponsibility but set applicantIsProjectResponsible to false for the registration
+        projectResponsibility: {
+          ...originalObj.projectResponsible.projectResponsibility,
+          applicantIsProjectResponsible: false,
+        },
+      };
+    }
+
     let newAbbreviation = `${original.projectAbbreviation}-REG`;
     let suffix = 1;
 
-    // Check if abbreviation already exists, increment suffix if needed
     while (await this.proposalModel.findOne({ projectAbbreviation: newAbbreviation })) {
       newAbbreviation = `${original.projectAbbreviation}-REG${suffix}`;
       suffix++;
@@ -878,12 +895,11 @@ export class ProposalMiscService {
         originalProposalId: original._id.toString(),
       },
       status: ProposalStatus.Draft,
-      // Preserve original owner and applicant
       owner: originalObj.owner,
       ownerId: originalObj.ownerId,
       ownerName: originalObj.ownerName,
       applicant: originalObj.applicant,
-      projectResponsible: originalObj.projectResponsible,
+      projectResponsible: projectResponsible,
       participants: originalObj.participants,
       history: [
         {
@@ -909,5 +925,28 @@ export class ProposalMiscService {
     const saveResult = await newProposal.save();
 
     return saveResult._id.toString();
+  }
+
+  private resetIsDoneFlags(proposal: any): void {
+    const resetInObject = (obj: any) => {
+      if (!obj || typeof obj !== 'object') return;
+
+      if (Array.isArray(obj)) {
+        obj.forEach((item) => resetInObject(item));
+        return;
+      }
+
+      if ('isDone' in obj) {
+        obj.isDone = false;
+      }
+
+      Object.values(obj).forEach((value) => {
+        if (value && typeof value === 'object') {
+          resetInObject(value);
+        }
+      });
+    };
+
+    resetInObject(proposal);
   }
 }

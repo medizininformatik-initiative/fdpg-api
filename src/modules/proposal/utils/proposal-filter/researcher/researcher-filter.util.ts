@@ -54,6 +54,7 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
         },
       ],
       status: RESEARCHER_STATUS[panelQuery],
+      'register.isRegisteringForm': { $ne: true },
     };
   } else {
     throw new ForbiddenException();

@@ -23,6 +23,11 @@ const checkForResearcher = (proposal: ProposalDocument, user: IRequestUser) => {
 };
 
 const checkForFdpgMember = (proposal: ProposalDocument) => {
+  // Allow deletion of internal registrations at any status
+  if (proposal.register?.isInternalRegistration) {
+    return;
+  }
+
   if (proposal.status === ProposalStatus.Draft) {
     throwForbiddenError();
   }

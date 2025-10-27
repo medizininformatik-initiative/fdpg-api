@@ -11,6 +11,10 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     throwForbiddenError('Proposal is currently locked to modifications');
   }
 
+  if (user.singleKnownRole === Role.FdpgMember && proposal.register?.isInternalRegistration) {
+    return;
+  }
+
   // Special handling for register proposals when user has RegisteringMember role
   if (proposal.register?.isRegisteringForm && user.roles.includes(Role.RegisteringMember)) {
     checkAccessForRegisteringMember(proposal, user);
@@ -58,6 +62,10 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
 };
 
 const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequestUser) => {
+  if (proposal.register?.isInternalRegistration && user.singleKnownRole === Role.FdpgMember) {
+    return;
+  }
+
   const isOwner = proposal.owner.id === user.userId;
   if (!isOwner && !isParticipatingScientist(proposal, user)) {
     throwForbiddenError(

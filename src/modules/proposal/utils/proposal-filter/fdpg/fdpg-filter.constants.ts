@@ -3,23 +3,37 @@ import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum'
 import { FilterQuery } from 'mongoose';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 
-const REQUESTED_TO_CHECK: FilterQuery<Proposal> = { status: ProposalStatus.FdpgCheck };
+const REQUESTED_TO_CHECK: FilterQuery<Proposal> = {
+  status: ProposalStatus.FdpgCheck,
+  'register.isRegisteringForm': { $ne: true },
+};
 
-const REQUESTED_IN_WORK = { status: ProposalStatus.Rework };
+const REQUESTED_IN_WORK = { status: ProposalStatus.Rework, 'register.isRegisteringForm': { $ne: true } };
 
 const PENDING_TO_CHECK = {
   status: { $in: [ProposalStatus.LocationCheck, ProposalStatus.Contracting] },
   openFdpgTasksCount: { $gt: 0 },
+  'register.isRegisteringForm': { $ne: true },
 };
 
 const PENDING_IN_WORK = {
   status: { $in: [ProposalStatus.LocationCheck, ProposalStatus.Contracting] },
   openFdpgTasksCount: 0,
+  'register.isRegisteringForm': { $ne: true },
 };
 
-const ONGOING_TO_CHECK = { status: { $in: [ProposalStatus.FinishedProject, ProposalStatus.DataCorrupt] } };
-const ONGOING_IN_WORK = { status: { $in: [ProposalStatus.ExpectDataDelivery, ProposalStatus.DataResearch] } };
-const FINISHED = { status: { $in: [ProposalStatus.Rejected, ProposalStatus.ReadyToArchive] } };
+const ONGOING_TO_CHECK = {
+  status: { $in: [ProposalStatus.FinishedProject, ProposalStatus.DataCorrupt] },
+  'register.isRegisteringForm': { $ne: true },
+};
+const ONGOING_IN_WORK = {
+  status: { $in: [ProposalStatus.ExpectDataDelivery, ProposalStatus.DataResearch] },
+  'register.isRegisteringForm': { $ne: true },
+};
+const FINISHED = {
+  status: { $in: [ProposalStatus.Rejected, ProposalStatus.ReadyToArchive] },
+  'register.isRegisteringForm': { $ne: true },
+};
 const ARCHIVED = { status: ProposalStatus.Archived };
 
 // Published page panels (for non-FDPG users - exclude internal registrations)
