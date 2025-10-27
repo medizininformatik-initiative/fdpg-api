@@ -29,10 +29,6 @@ export enum PanelQuery {
   FdpgOngoingInWork = 'FDPG_ONGOING_IN_WORK',
   FdpgFinished = 'FDPG_FINISHED',
 
-  // Register Proposals
-  RegisterDraftProposals = 'REGISTER_DRAFT_PROPOSALS',
-  RegisterSubmittedProposals = 'REGISTER_SUBMITTED_PROPOSALS',
-
   // Published Page Panels
   PublishedDraft = 'PUBLISHED_DRAFT',
   PublishedPending = 'PUBLISHED_PENDING',

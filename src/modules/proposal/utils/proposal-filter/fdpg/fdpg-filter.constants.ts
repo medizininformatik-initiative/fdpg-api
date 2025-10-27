@@ -22,18 +22,20 @@ const ONGOING_IN_WORK = { status: { $in: [ProposalStatus.ExpectDataDelivery, Pro
 const FINISHED = { status: { $in: [ProposalStatus.Rejected, ProposalStatus.ReadyToArchive] } };
 const ARCHIVED = { status: ProposalStatus.Archived };
 
-// Register proposals
-const REGISTER_DRAFT_PROPOSALS = { 'register.isRegisteringForm': true, status: ProposalStatus.Draft };
-const REGISTER_SUBMITTED_PROPOSALS = { 'register.isRegisteringForm': true, status: ProposalStatus.FdpgCheck };
-
-// Published page panels
-const PUBLISHED_DRAFT = { 'register.isRegisteringForm': true, status: ProposalStatus.Draft };
+// Published page panels (for non-FDPG users - exclude internal registrations)
+const PUBLISHED_DRAFT = {
+  'register.isRegisteringForm': true,
+  'register.isInternalRegistration': { $ne: true },
+  status: ProposalStatus.Draft,
+};
 const PUBLISHED_PENDING = {
   'register.isRegisteringForm': true,
+  'register.isInternalRegistration': { $ne: true },
   status: { $in: [ProposalStatus.Rework, ProposalStatus.FdpgCheck, ProposalStatus.ReadyToPublish] },
 };
 const PUBLISHED_COMPLETED = {
   'register.isRegisteringForm': true,
+  'register.isInternalRegistration': { $ne: true },
   status: { $in: [ProposalStatus.Published, ProposalStatus.Rejected] },
 };
 
@@ -55,9 +57,6 @@ export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgOngoingToCheck]: ONGOING_TO_CHECK,
   [PanelQuery.FdpgOngoingInWork]: ONGOING_IN_WORK,
   [PanelQuery.FdpgFinished]: FINISHED,
-
-  [PanelQuery.RegisterDraftProposals]: REGISTER_DRAFT_PROPOSALS,
-  [PanelQuery.RegisterSubmittedProposals]: REGISTER_SUBMITTED_PROPOSALS,
 
   [PanelQuery.PublishedDraft]: PUBLISHED_DRAFT,
   [PanelQuery.PublishedPending]: PUBLISHED_PENDING,

@@ -12,8 +12,6 @@ export const getFilterForUac = (panelQuery: PanelQuery, user: IRequestUser): Fil
     PanelQuery.UacOngoing,
     PanelQuery.UacFinished,
     PanelQuery.UacRequested,
-    PanelQuery.RegisterDraftProposals,
-    PanelQuery.RegisterSubmittedProposals,
     PanelQuery.PublishedDraft,
     PanelQuery.PublishedPending,
     PanelQuery.PublishedCompleted,

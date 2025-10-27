@@ -21,6 +21,7 @@ export const getRegisterProposalsForUser = (
     { 'projectResponsible.researcher.email': user.email },
   ],
   'register.isRegisteringForm': true,
+  'register.isInternalRegistration': { $ne: true },
   status: Array.isArray(status) ? { $in: status } : status,
 });
 
