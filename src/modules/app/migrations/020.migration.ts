@@ -4,6 +4,7 @@ import { ClientSession, Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
 import { Proposal, ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { Comment, CommentDocument } from 'src/modules/comment/schema/comment.schema';
+import { ALL_LOCATIONS } from './constants/019.migration.constants';
 
 @Injectable()
 export class Migration020 implements IDbMigration {
@@ -98,48 +99,3 @@ export class Migration020 implements IDbMigration {
     }
   }
 }
-
-enum MigrationMiiLocation {
-  BHC = 'BHC',
-  MRI = 'MRI',
-  KUM = 'KUM',
-  UKT = 'UKT',
-  UKU = 'UKU',
-  UKR = 'UKR',
-  UKS = 'UKS',
-  UKAU = 'UKAU',
-  Charité = 'Charité',
-  UMG = 'UMG',
-  MHH = 'MHH',
-  UKHD = 'UKHD',
-  UKSH = 'UKSH',
-  UKK = 'UKK',
-  UKM = 'UKM',
-  UKW = 'UKW',
-  UKDD = 'UKDD',
-  UKEr = 'UKEr',
-  UKF = 'UKF',
-  UKFR = 'UKFR',
-  UKGI = 'UKGI',
-  UKMR = 'UKMR',
-  UKG = 'UKG',
-  UMMD = 'UMMD',
-  UM = 'UM',
-  UMM = 'UMM',
-  UKA = 'UKA',
-  UKB = 'UKB',
-  UME = 'UME',
-  UKH = 'UKH',
-  UKE = 'UKE',
-  UKJ = 'UKJ',
-  UKL = 'UKL',
-  UMR = 'UMR',
-  UKD = 'UKD',
-  UKRUB = 'UKRUB',
-  KC = 'KC',
-  CTK = 'CTK',
-  UKOWL = 'UKOWL',
-  UOL = 'UOL',
-  VIV = 'VIV',
-}
-const ALL_LOCATIONS = Object.values(MigrationMiiLocation);

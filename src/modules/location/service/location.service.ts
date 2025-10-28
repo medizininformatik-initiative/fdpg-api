@@ -8,6 +8,7 @@ import { mergeDeep } from 'src/modules/proposal/utils/merge-proposal.util';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { CacheKey } from 'src/shared/enums/cache-key.enum';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class LocationService {
@@ -15,9 +16,17 @@ export class LocationService {
     @InjectModel(Location.name)
     private locationModel: Model<LocationDocument>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.CACHE_DURATION_MS =
+      this.configService.get<number>('LOCATION_CACHE_DURATION_MS') ??
+      (() => {
+        console.log(`Can't load from config 'LOCATION_CACHE_DURATION_MS'. Applying default.`);
+        return 15 * 60 * 1000;
+      })();
+  }
 
-  private readonly CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+  private CACHE_DURATION_MS = 15 * 60 * 1000;
 
   async findById(id: string): Promise<LocationDocument> {
     return await this.locationModel.findById(id);

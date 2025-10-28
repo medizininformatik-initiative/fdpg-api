@@ -12,12 +12,12 @@ import { LocationSyncChangeLogStatus } from '../enum/location-sync-changelog-sta
 export class LocationSyncService {
   constructor(
     private locationFetchService: LocationFetchService,
-    private locationSevice: LocationService,
+    private locationService: LocationService,
     private locationSyncChangelogService: LocationSyncChangelogService,
   ) {}
 
   async syncLocations(): Promise<void> {
-    const allPersisted = await this.locationSevice.findAllDocuments();
+    const allPersisted = await this.locationService.findAllDocuments();
     const allApiDtos = (await this.locationFetchService.fetchLocationsFromApi()).filter((apiLoc) => apiLoc.code);
 
     const locationDtoLookUpMap = this.getVersionChainMap(allApiDtos);
@@ -36,7 +36,7 @@ export class LocationSyncService {
     const updatedChangelog = await this.locationSyncChangelogService.updateStatus(changelogId, changelog, user);
 
     if (updatedChangelog.status === LocationSyncChangeLogStatus.APPROVED) {
-      await this.locationSevice.update(updatedChangelog.forCode, changelog.newLocationData);
+      await this.locationService.update(updatedChangelog.forCode, changelog.newLocationData);
     }
 
     return this.locationSyncChangelogService.modelToDto(updatedChangelog);

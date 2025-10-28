@@ -1,4 +1,4 @@
-import { Body, Get, Param, Post, Request } from '@nestjs/common';
+import { Body, Get, Param, Patch, Put, Request } from '@nestjs/common';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { LocationSyncService } from './service/location-sync.service';
 import { LocationService } from './service/location.service';
@@ -30,7 +30,7 @@ export class LocationController {
     return await this.locationService.findAll();
   }
 
-  @Post('/:id')
+  @Put('/:id')
   @Auth(Role.FdpgMember)
   async updateLocation(@Param() { id }: MongoIdParamDto, @Body() locationDto: LocationDto): Promise<void> {
     await this.locationService.update(id, locationDto);
@@ -49,7 +49,7 @@ export class LocationController {
     return await this.locationSyncChangelogService.findAll();
   }
 
-  @Post('/changelogs/:id/status')
+  @Put('/changelogs/:id/status')
   @Auth(Role.FdpgMember)
   async setChangelogStatus(
     @Param() { id }: MongoIdParamDto,

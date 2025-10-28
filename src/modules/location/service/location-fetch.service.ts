@@ -41,7 +41,10 @@ export class LocationFetchService {
               replaces: this.getPropertyValue(apiDto, 'replaces', 'code'),
               replacedBy: this.getPropertyValue(apiDto, 'replacedBy', 'code'),
             }) as MiiCodesystemLocationDto,
-        ) || [];
+        ) ??
+      (() => {
+        throw new Error(`Invalid API response: ${JSON.stringify(response.data ?? 'empty response')}`);
+      })();
 
     return miiCodesystemLocationDtos;
   }
