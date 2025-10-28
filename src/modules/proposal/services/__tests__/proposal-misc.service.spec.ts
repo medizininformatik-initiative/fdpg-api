@@ -368,12 +368,18 @@ describe('ProposalMiscService', () => {
     it('should include projectResponsible with researcher data', async () => {
       const proposalDocument = {
         ...getProposalDocument(),
+        applicant: {
+          researcher: { email: 'applicant@test.com' },
+          participantCategory: ParticipantType.ProjectLeader,
+          participantRole: { role: 'RESEARCHER' },
+          institute: {} as any,
+        },
         projectResponsible: {
           researcher: { email: 'responsible@test.com' },
           participantCategory: ParticipantType.ProjectLeader,
           participantRole: { role: 'RESPONSIBLE_SCIENTIST' },
           institute: {} as any,
-          projectResponsibility: {} as any,
+          projectResponsibility: { applicantIsProjectResponsible: false } as any,
           addedByFdpg: false,
         },
       } as any;
@@ -392,6 +398,7 @@ describe('ProposalMiscService', () => {
 
       expect(result.length).toBeGreaterThan(1);
       expect(result.some((r) => r.email === 'responsible@test.com')).toBe(true);
+      expect(result.some((r) => r.email === 'applicant@test.com')).toBe(true);
     });
 
     it('should include applicant as projectResponsible when applicantIsProjectResponsible is true', async () => {

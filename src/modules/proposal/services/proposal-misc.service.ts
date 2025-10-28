@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as JSZip from 'jszip';
+import { Types } from 'mongoose';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
@@ -55,6 +56,7 @@ import { MiiLocationService } from 'src/modules/mii-location/mii-location.servic
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
+import { ProjectResponsible } from '../schema/sub-schema/project-responsible.schema';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { ConflictException } from '@nestjs/common';
 import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
@@ -62,6 +64,7 @@ import { convert } from 'html-to-text';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
+import { ApplicantDto } from '../dto/proposal/applicant.dto';
 
 @Injectable()
 export class ProposalMiscService {
@@ -107,6 +110,20 @@ export class ProposalMiscService {
             'responsibleResearcherId', // dummy id to keep api design consistent
           ),
         );
+        // applicant will be listed as editor (only if applicantIsProjectResponsible is false)
+        if (!responsibleResearcher.projectResponsibility?.applicantIsProjectResponsible) {
+          researchers.push(
+            new ResearcherIdentityDto(
+              document.applicant.researcher,
+              document.applicant.participantCategory,
+              {
+                role: ParticipantRoleType.Researcher,
+              } as ParticipantRole,
+              false,
+              'applicantId', // dummy id to keep api design consistent
+            ),
+          );
+        }
       } else if (
         responsibleResearcher.projectResponsibility?.applicantIsProjectResponsible &&
         document.applicant?.researcher?.email
@@ -116,9 +133,11 @@ export class ProposalMiscService {
           new ResearcherIdentityDto(
             document.applicant.researcher,
             document.applicant.participantCategory,
-            { role: ParticipantRoleType.ResponsibleScientist } as ParticipantRole,
+            {
+              role: ParticipantRoleType.ResponsibleScientist, // Applicant is responsible scientist
+            } as ParticipantRole,
             false,
-            'responsibleResearcherId', // dummy id to keep api design consistent
+            'applicantId', // Use applicantId since the applicant is the responsible scientist
           ),
         );
       }
@@ -948,5 +967,197 @@ export class ProposalMiscService {
     };
 
     resetInObject(proposal);
+  }
+  async updateApplicantParticipantRole(
+    proposalId: string,
+    updateDto: ApplicantDto,
+    user: IRequestUser,
+  ): Promise<ProposalGetDto> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    if (!this.canUpdateApplicantParticipantRole(proposal, user)) {
+      throw new ForbiddenException('You do not have permission to update applicant participant role');
+    }
+
+    const isBecomingResponsibleScientist = updateDto.participantRole?.role === ParticipantRoleType.ResponsibleScientist;
+
+    if (proposal.applicant && updateDto.participantRole) {
+      proposal.applicant.participantRole = {
+        role: updateDto.participantRole.role,
+        isDone: false,
+      } as ParticipantRole;
+
+      if (isBecomingResponsibleScientist) {
+        // Applicant is becoming responsible scientist
+        // Store former responsible scientist data
+        const formerResponsibleScientist = proposal.projectResponsible?.researcher
+          ? {
+              researcher: proposal.projectResponsible.researcher,
+              institute: proposal.projectResponsible.institute,
+              participantCategory: proposal.projectResponsible.participantCategory,
+              addedByFdpg: proposal.projectResponsible.addedByFdpg || false,
+            }
+          : null;
+
+        proposal.projectResponsible = {
+          researcher: null,
+          institute: null,
+          participantCategory: null,
+          participantRole: null,
+          projectResponsibility: {
+            _id: proposal.projectResponsible?.projectResponsibility?._id,
+            applicantIsProjectResponsible: true,
+            isDone: false,
+          },
+          addedByFdpg: false,
+        };
+
+        // If there was a former responsible scientist, move them to participants array
+        this.addFormerResponsibleToParticipants(proposal, formerResponsibleScientist);
+
+        if (proposal.participants) {
+          proposal.participants.forEach((participant) => {
+            if (participant.participantRole?.role === ParticipantRoleType.ResponsibleScientist) {
+              participant.participantRole.role = ParticipantRoleType.ParticipatingScientist;
+              participant.participantRole.isDone = false;
+            }
+          });
+        }
+      } else {
+        // Applicant is becoming editor (RESEARCHER) - someone else must be responsible
+        // Set applicantIsProjectResponsible to false
+        if (proposal.projectResponsible?.projectResponsibility) {
+          proposal.projectResponsible.projectResponsibility.applicantIsProjectResponsible = false;
+        }
+      }
+    }
+
+    // Add history item for the change
+    addHistoryItemForParticipantsUpdated(proposal, user, proposal.participants, proposal.participants);
+
+    const savedProposal = await proposal.save();
+    return plainToClass(ProposalGetDto, savedProposal.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  }
+
+  async makeParticipantResponsible(
+    proposalId: string,
+    participantId: string,
+    user: IRequestUser,
+  ): Promise<ProposalGetDto> {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+
+    if (!this.canUpdateApplicantParticipantRole(proposal, user)) {
+      throw new ForbiddenException('You do not have permission to change the responsible scientist');
+    }
+
+    const participantIndex = proposal.participants.findIndex((p) => p._id.toString() === participantId);
+
+    if (participantIndex === -1) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    const newResponsible = proposal.participants[participantIndex];
+
+    const applicantWasResponsible = proposal.projectResponsible?.projectResponsibility?.applicantIsProjectResponsible;
+
+    // Store former responsible scientist data if exists (and not applicant)
+    const formerResponsibleScientist =
+      proposal.projectResponsible?.researcher && !applicantWasResponsible
+        ? {
+            researcher: proposal.projectResponsible.researcher,
+            institute: proposal.projectResponsible.institute,
+            participantCategory: proposal.projectResponsible.participantCategory,
+            addedByFdpg: proposal.projectResponsible.addedByFdpg || false,
+          }
+        : null;
+
+    // Set the new responsible scientist in projectResponsible
+    proposal.projectResponsible = {
+      researcher: newResponsible.researcher,
+      institute: newResponsible.institute,
+      participantCategory: newResponsible.participantCategory,
+      participantRole: {
+        _id: newResponsible.participantRole._id || new Types.ObjectId().toString(),
+        role: ParticipantRoleType.ResponsibleScientist,
+        isDone: false,
+      },
+      projectResponsibility: {
+        _id: proposal.projectResponsible?.projectResponsibility?._id,
+        applicantIsProjectResponsible: false,
+        isDone: false,
+      },
+      addedByFdpg: newResponsible.addedByFdpg || false,
+    };
+
+    proposal.participants.splice(participantIndex, 1);
+
+    // If there was a former responsible scientist (not applicant), add them to participants
+    this.addFormerResponsibleToParticipants(proposal, formerResponsibleScientist);
+
+    // If applicant was the responsible scientist, change their role to RESEARCHER (editor)
+    if (applicantWasResponsible && proposal.applicant?.participantRole) {
+      proposal.applicant.participantRole.role = ParticipantRoleType.Researcher;
+      proposal.applicant.participantRole.isDone = false;
+    }
+
+    // Add history item for the change
+    addHistoryItemForParticipantsUpdated(proposal, user, proposal.participants, proposal.participants);
+
+    const savedProposal = await proposal.save();
+    return plainToClass(ProposalGetDto, savedProposal.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  }
+
+  private canUpdateApplicantParticipantRole(proposal: any, user: IRequestUser): boolean {
+    // Allow FDPG members and DataSource members to update applicant participant role
+    if ([Role.FdpgMember, Role.DataSourceMember].includes(user.singleKnownRole)) {
+      return true;
+    }
+
+    // Allow researchers to update their own proposal if it's in draft/FDPG_CHECK/Rework status
+    if (
+      user.singleKnownRole === Role.Researcher &&
+      (proposal.status === ProposalStatus.Draft ||
+        proposal.status === ProposalStatus.FdpgCheck ||
+        proposal.status === ProposalStatus.Rework)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private addFormerResponsibleToParticipants(
+    proposal: ProposalDocument,
+    formerResponsibleScientist: Pick<
+      ProjectResponsible,
+      'researcher' | 'institute' | 'participantCategory' | 'addedByFdpg'
+    > | null,
+  ): void {
+    if (formerResponsibleScientist && formerResponsibleScientist.researcher?.email) {
+      const alreadyExists = proposal.participants.some(
+        (p) => p.researcher?.email?.toLowerCase() === formerResponsibleScientist.researcher.email.toLowerCase(),
+      );
+
+      if (!alreadyExists) {
+        proposal.participants.push({
+          _id: undefined,
+          researcher: formerResponsibleScientist.researcher,
+          institute: formerResponsibleScientist.institute,
+          participantCategory: formerResponsibleScientist.participantCategory,
+          participantRole: {
+            _id: undefined,
+            role: ParticipantRoleType.ParticipatingScientist,
+            isDone: false,
+          },
+          addedByFdpg: formerResponsibleScientist.addedByFdpg,
+        });
+      }
+    }
   }
 }
