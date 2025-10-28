@@ -8,7 +8,8 @@ import { Role } from 'src/shared/enums/role.enum';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
-import { ProposalDocument } from '../../schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../../schema/proposal.schema';
+import { getModelToken } from '@nestjs/mongoose';
 import { ParticipantType } from '../../enums/participant-type.enum';
 import { IGetKeycloakUser } from 'src/modules/user/types/keycloak-user.interface';
 import {
@@ -239,6 +240,15 @@ describe('ProposalMiscService', () => {
       providers: [
         ProposalMiscService,
         {
+          provide: getModelToken(Proposal.name),
+          useValue: {
+            findOne: jest.fn(),
+            findById: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
           provide: ProposalCrudService,
           useValue: {
             findDocument: jest.fn(),
@@ -280,6 +290,7 @@ describe('ProposalMiscService', () => {
           provide: ProposalFormService,
           useValue: {
             findAll: jest.fn(),
+            getCurrentVersion: jest.fn(),
           },
         },
         {
@@ -1845,6 +1856,153 @@ describe('ProposalMiscService', () => {
       await expect(
         proposalMiscService.updateDizDetails(proposalId, dizDetailsId, updateDto, request.user),
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('copyAsInternalRegistration', () => {
+    const proposalId = 'proposal-id';
+    let originalProposal: any;
+    let fdpgRequest: FdpgRequest;
+
+    beforeEach(() => {
+      originalProposal = {
+        _id: proposalId,
+        projectAbbreviation: 'ORIGINAL-PROJECT',
+        dataSourceLocaleId: 'DIFE-12345',
+        status: ProposalStatus.Contracting,
+        owner: { id: 'owner-id', name: 'Owner Name' },
+        ownerId: 'owner-id',
+        ownerName: 'Owner Name',
+        applicant: {
+          researcher: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
+          institute: { name: 'Institute A' },
+          participantCategory: 'Category A',
+        },
+        projectResponsible: {
+          researcher: { firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com' },
+          institute: { name: 'Institute B' },
+          participantCategory: 'Category B',
+          projectResponsibility: {
+            applicantIsProjectResponsible: false,
+          },
+        },
+        participants: [{ researcher: { email: 'participant@example.com' } }],
+        userProject: {
+          projectDetails: {
+            isDone: true,
+          },
+          typeOfUse: {
+            isDone: true,
+            usage: [ProposalTypeOfUse.Distributed],
+          },
+        },
+        toObject: jest.fn().mockReturnThis(),
+        save: jest.fn().mockResolvedValue({ _id: 'new-proposal-id' }),
+      };
+
+      fdpgRequest = {
+        user: {
+          userId: 'fdpg-user-id',
+          username: 'FDPG User',
+          singleKnownRole: Role.FdpgMember,
+          roles: [Role.FdpgMember],
+        },
+      } as FdpgRequest;
+
+      // Mock the findDocument to return the original proposal
+      proposalCrudService.findDocument.mockResolvedValue(originalProposal);
+
+      // Mock the proposalModel constructor to return a mock with save method
+      const mockProposalModel = jest.fn().mockImplementation((data) => {
+        // Spread the data into originalProposal to simulate new model creation
+        Object.assign(originalProposal, data);
+        return originalProposal;
+      });
+
+      // Replace proposalModel in the service
+      (proposalMiscService as any).proposalModel = mockProposalModel;
+      (proposalMiscService as any).proposalModel.findOne = jest.fn().mockResolvedValue(null);
+
+      (statusChangeService.handleEffects as jest.Mock).mockResolvedValue(undefined);
+      (proposalFormService.getCurrentVersion as jest.Mock).mockResolvedValue({ mayor: 1, minor: 0 });
+    });
+
+    it('should create internal registration copy with correct flags', async () => {
+      const result = await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(result).toBe('new-proposal-id');
+      expect(originalProposal.save).toHaveBeenCalled();
+      // Verify register flags are set correctly
+      expect(originalProposal.register).toEqual({
+        isRegisteringForm: true,
+        isInternalRegistration: true,
+        originalProposalId: proposalId,
+      });
+    });
+
+    it('should reset all isDone flags in copied proposal', async () => {
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      // Verify isDone flags are reset
+      expect(originalProposal.userProject.projectDetails.isDone).toBe(false);
+      expect(originalProposal.userProject.typeOfUse.isDone).toBe(false);
+    });
+
+    it('should preserve original owner information', async () => {
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(originalProposal.owner).toEqual({ id: 'owner-id', name: 'Owner Name' });
+      expect(originalProposal.ownerId).toBe('owner-id');
+      expect(originalProposal.ownerName).toBe('Owner Name');
+    });
+
+    it('should clear dataSourceLocaleId', async () => {
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(originalProposal.dataSourceLocaleId).toBeUndefined();
+    });
+
+    it('should set status to Draft', async () => {
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(originalProposal.status).toBe(ProposalStatus.Draft);
+    });
+
+    it('should generate unique project abbreviation', async () => {
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(originalProposal.projectAbbreviation).toBe('ORIGINAL-PROJECT-REG');
+    });
+
+    it('should copy applicant data to projectResponsible when applicantIsProjectResponsible is true', async () => {
+      originalProposal.projectResponsible.projectResponsibility.applicantIsProjectResponsible = true;
+
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(originalProposal.projectResponsible.researcher).toEqual(originalProposal.applicant.researcher);
+      expect(originalProposal.projectResponsible.institute).toEqual(originalProposal.applicant.institute);
+      expect(originalProposal.projectResponsible.participantCategory).toBe(
+        originalProposal.applicant.participantCategory,
+      );
+      // Should set applicantIsProjectResponsible to false in the copy
+      expect(originalProposal.projectResponsible.projectResponsibility.applicantIsProjectResponsible).toBe(false);
+    });
+
+    it('should not copy applicant data when applicantIsProjectResponsible is false', async () => {
+      const originalResponsible = { ...originalProposal.projectResponsible.researcher };
+
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(originalProposal.projectResponsible.researcher).toEqual(originalResponsible);
+    });
+
+    it('should add history entry for internal registration', async () => {
+      await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+
+      expect(originalProposal.history).toHaveLength(1);
+      expect(originalProposal.history[0].status).toBe(ProposalStatus.Draft);
+      expect(originalProposal.history[0].user.id).toBe('fdpg-user-id');
+      expect(originalProposal.history[0].comment).toContain('internal registration by FDPG');
     });
   });
 });

@@ -6,7 +6,7 @@ import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 
 export class ParticipantCategoryDto extends WithIdForObjectDto {
   @Expose()
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   @IsEnum(ParticipantType)
   category: ParticipantType;
 }

@@ -109,9 +109,25 @@ export class StatusChangeService {
         return await this.handleProposalLocationCheck(proposal, proposalUrl);
       case ProposalStatus.Contracting:
         return await this.handleProposalContracting(proposal, proposalUrl);
+      case ProposalStatus.ReadyToPublish:
+        return await this.handleProposalReadyToPublish(proposal, proposalUrl);
+      case ProposalStatus.Published:
+        return await this.handleProposalPublished(proposal, proposalUrl);
 
       default:
         break;
     }
+  }
+
+  private async handleProposalReadyToPublish(proposal: Proposal, proposalUrl: string) {
+    // Handle ready to publish status - could send notifications to web team
+    // For now, this is a placeholder for future implementation
+    console.log(`Proposal ${proposal.projectAbbreviation} is ready to publish`);
+  }
+
+  private async handleProposalPublished(proposal: Proposal, proposalUrl: string) {
+    // Handle published status - could send notifications to stakeholders
+    // For now, this is a placeholder for future implementation
+    console.log(`Proposal ${proposal.projectAbbreviation} has been published`);
   }
 }

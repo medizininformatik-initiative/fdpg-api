@@ -1,5 +1,5 @@
-import { Expose, Transform, Type } from 'class-transformer';
-import { IsArray, IsDate, IsNumber, IsOptional, MaxLength, ValidateIf } from 'class-validator';
+import { Expose, Transform } from 'class-transformer';
+import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, MaxLength, ValidateIf } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -21,8 +21,13 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
     return value ? new Date(value) : value;
   })
   @IsDate()
-  @IsAfterToday({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
+  @IsAfterToday({
+    groups: [ProposalValidation.IsNotDraftAndNotRegister],
+    // This validation only runs for non-draft AND non-register forms
+  })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
+  })
   desiredStartTime: Date;
 
   @Expose()
@@ -51,4 +56,33 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsNotDraft] })
   keywords: string[];
+
+  @Expose()
+  @MaxLength(500)
+  @IsOptional()
+  @IsNotEmptyString({ groups: [ProposalValidation.IsRegister] })
+  projectUrl: string;
+
+  @Expose()
+  @IsBoolean()
+  @IsOptional()
+  legalBasis: boolean;
+
+  @Expose()
+  @MaxLength(200)
+  @IsOptional()
+  @IsNotEmptyString({ groups: [ProposalValidation.IsRegister] })
+  projectCategory: string;
+
+  @Expose()
+  @IsArray()
+  @IsOptional()
+  @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsRegister] })
+  diagnoses: string[];
+
+  @Expose()
+  @IsArray()
+  @IsOptional()
+  @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsRegister] })
+  procedures: string[];
 }

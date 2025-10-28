@@ -26,6 +26,7 @@ import {
   AdditionalLocationInformationSchema,
 } from './sub-schema/additional-location-information.schema';
 import { DizDetails, DizDetailsSchema } from './sub-schema/diz-details.schema';
+import { RegisterInfo, RegisterInfoSchema } from './sub-schema/register-info.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 
 export type ProposalDocument = Proposal & Document;
@@ -79,6 +80,12 @@ export class Proposal {
     default: false,
   })
   isLocked: boolean;
+
+  @Prop({
+    type: RegisterInfoSchema,
+    default: () => ({}),
+  })
+  register: RegisterInfo;
 
   @Prop({
     type: Number,

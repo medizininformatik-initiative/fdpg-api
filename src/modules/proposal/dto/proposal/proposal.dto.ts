@@ -37,6 +37,7 @@ import { DeclineReasonDto } from './decline-reason.dto';
 import { FdpgChecklistGetDto, initChecklist } from './fdpg-checklist.dto';
 import { FdpgTaskGetDto } from './fdpg-task.dto';
 import { HistoryEventGetDto } from './history-event.dto';
+import { RegisterInfoDto } from './register-info.dto';
 import { ParticipantDto } from './participant.dto';
 import { ProjectResponsibleDto } from './project-responsible.dto';
 import { ProjectUserDto } from './project-user.dto';
@@ -140,6 +141,11 @@ export class ProposalBaseDto {
   @IsString()
   @IsOptional()
   dataSourceLocaleId: string;
+
+  @Expose()
+  @Type(() => RegisterInfoDto)
+  @IsOptional()
+  register?: RegisterInfoDto;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -507,6 +513,7 @@ export class ProposalGetListDto {
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
     this.selectedDataSources = dbProjection.selectedDataSources;
+    this.register = dbProjection.register;
 
     if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -556,6 +563,7 @@ export class ProposalGetListDto {
 
   _id: string;
   selectedDataSources: PlatformIdentifier[];
+  register?: RegisterInfoDto;
 }
 
 @Exclude()

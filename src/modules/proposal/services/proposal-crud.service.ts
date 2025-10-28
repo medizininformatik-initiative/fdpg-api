@@ -181,7 +181,12 @@ export class ProposalCrudService {
   }
 
   async delete(proposalId: string, user: IRequestUser): Promise<void> {
-    const document = await this.findDocument(proposalId, user, { uploads: 1, reports: 1, owner: 1, status: 1 }, true);
+    const document = await this.findDocument(
+      proposalId,
+      user,
+      { uploads: 1, reports: 1, owner: 1, status: 1, register: 1 },
+      true,
+    );
     await this.sharedService.deleteProposalWithDependencies(document, user);
   }
 

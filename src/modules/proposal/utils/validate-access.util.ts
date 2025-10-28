@@ -11,8 +11,28 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     throwForbiddenError('Proposal is currently locked to modifications');
   }
 
+  if (user.singleKnownRole === Role.FdpgMember && proposal.register?.isInternalRegistration) {
+    return;
+  }
+
+  // Special handling for register proposals when user has RegisteringMember role
+  if (proposal.register?.isRegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
+    checkAccessForRegisteringMember(proposal, user);
+    return; // Exit early for register proposals with RegisteringMember role
+  }
+
+  // Special handling for users who have RegisteringMember among their roles (not just primary role)
+  if (user.roles?.includes(Role.RegisteringMember)) {
+    // If user has RegisteringMember role, they should have access regardless of primary role
+    return;
+  }
+
   if (user.singleKnownRole === Role.Researcher) {
     checkAccessForResearcher(proposal, user);
+  }
+
+  if (user.singleKnownRole === Role.RegisteringMember) {
+    checkAccessForRegisteringMember(proposal, user);
   }
 
   if (user.singleKnownRole === Role.FdpgMember) {
@@ -41,6 +61,19 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
   }
 };
 
+const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequestUser) => {
+  if (proposal.register?.isInternalRegistration && user.singleKnownRole === Role.FdpgMember) {
+    return;
+  }
+
+  const isOwner = proposal.owner.id === user.userId;
+  if (!isOwner && !isParticipatingScientist(proposal, user)) {
+    throwForbiddenError(
+      `Proposal has a different owner than this registering member and is not in the list of participating researchers`,
+    );
+  }
+};
+
 const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser) => {
   return (
     proposal.participants.filter((participant) => participant.researcher.email === user.email).length > 0 ||
@@ -49,7 +82,8 @@ const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser
 };
 
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
-  if (proposal.status === ProposalStatus.Draft && willBeModified) {
+  // Allow modification of register proposals even in Draft status
+  if (proposal.status === ProposalStatus.Draft && willBeModified && !proposal.register?.isRegisteringForm) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
   }
 };
@@ -200,7 +234,7 @@ export const validateModifyingCohortAccess = (proposal: ProposalDocument, user: 
   }
 
   if (
-    user.singleKnownRole === Role.Researcher &&
+    (user.singleKnownRole === Role.Researcher || user.singleKnownRole === Role.RegisteringMember) &&
     ![ProposalStatus.Draft, ProposalStatus.Rework].includes(proposal.status)
   ) {
     throwForbiddenError('Cohorts cannot be changed at this step');

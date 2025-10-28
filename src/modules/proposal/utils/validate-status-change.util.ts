@@ -9,6 +9,11 @@ import { Proposal } from '../schema/proposal.schema';
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
 
+const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
+  proposal.register?.isRegisteringForm &&
+  user.roles.includes(Role.RegisteringMember) &&
+  user.userId === proposal.ownerId;
+
 const isFdpg = (user: IRequestUser) =>
   user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember;
 
@@ -24,18 +29,20 @@ export const validateStatusChange = (
   const map = {
     [ProposalStatus.Archived]: {},
     [ProposalStatus.Draft]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
     },
     [ProposalStatus.Rejected]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
     [ProposalStatus.Rework]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
     },
     [ProposalStatus.FdpgCheck]: {
       [ProposalStatus.Rework]: () => isFdpg(user),
       [ProposalStatus.Rejected]: () => isFdpg(user),
       [ProposalStatus.LocationCheck]: () => isFdpg(user),
+      // Only allow ReadyToPublish for register proposals
+      [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.register?.isRegisteringForm,
     },
     [ProposalStatus.LocationCheck]: {
       // Contracting is supposed to be started by uploading the contract draft
@@ -65,6 +72,10 @@ export const validateStatusChange = (
     [ProposalStatus.ReadyToArchive]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
+    [ProposalStatus.ReadyToPublish]: {
+      [ProposalStatus.Published]: () => !forceThrow, // API to Web Page (automated)
+    },
+    [ProposalStatus.Published]: {},
   };
 
   const canSwitch: boolean = map[toBeUpdated.status][newStatus] ? map[toBeUpdated.status][newStatus]() : false;

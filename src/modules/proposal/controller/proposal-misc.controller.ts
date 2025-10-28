@@ -19,6 +19,7 @@ import {
 import {
   ApiBody,
   ApiConsumes,
+  ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -70,7 +71,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getResearcherInfo(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Put(':id/status')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -197,7 +198,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getAllProposalFormVersions();
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Put(':id/cohort/manual')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a manual upload cohort on a proposal' })
@@ -215,7 +216,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.addManualUploadCohort(id, newCohort, file, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Put(':id/cohort/automatic')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a cohort on a proposal' })
@@ -229,7 +230,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.automaticCohortAdd(id, newCohort, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Delete(':mainId/cohort/:subId')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Deletes the upload and cohort on a proposal' })
@@ -241,7 +242,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.deleteCohort(mainId, subId, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Post('query/csv')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: "Returns a queries zipped csv's" })
@@ -279,7 +280,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.generateLocationCsvDownloadLink(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Patch(':id/participants')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Updates the participants of a proposal' })
@@ -329,6 +330,19 @@ export class ProposalMiscController {
     return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
   }
 
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Post(':id/copy-for-registration')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Copy proposal as internal registration for publication' })
+  @ApiCreatedResponse({ description: 'Copy created, returns new proposal ID' })
+  @HttpCode(201)
+  async copyForRegistration(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<{ id: string }> {
+    const newProposalId = await this.proposalMiscService.copyAsInternalRegistration(id, user);
+    return { id: newProposalId };
+  }
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/applicant/participant-role')
   @UsePipes(ValidationPipe)
