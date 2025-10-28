@@ -12,6 +12,7 @@ describe('validateStatusChange', () => {
   let fdpgMember: IRequestUser;
   let dataSourceMember: IRequestUser;
   let dizUser: IRequestUser;
+  let registeringMemberUser: IRequestUser;
 
   beforeEach(() => {
     // Minimal proposal object; additional fields are not used by validateStatusChange
@@ -23,26 +24,37 @@ describe('validateStatusChange', () => {
     ownerUser = {
       singleKnownRole: Role.Researcher,
       userId: 'owner-123',
+      roles: [Role.Researcher],
     } as IRequestUser;
 
     otherResearcher = {
       singleKnownRole: Role.Researcher,
       userId: 'someone-else',
+      roles: [Role.Researcher],
     } as IRequestUser;
 
     fdpgMember = {
       singleKnownRole: Role.FdpgMember,
       userId: 'fdpg-1',
+      roles: [Role.FdpgMember],
     } as IRequestUser;
 
     dataSourceMember = {
       singleKnownRole: Role.DataSourceMember,
       userId: 'ds-1',
+      roles: [Role.DataSourceMember],
     } as IRequestUser;
 
     dizUser = {
       singleKnownRole: Role.DizMember,
       userId: 'diz-1',
+      roles: [Role.DizMember],
+    } as IRequestUser;
+
+    registeringMemberUser = {
+      singleKnownRole: Role.RegisteringMember,
+      userId: 'register-1',
+      roles: [Role.RegisteringMember],
     } as IRequestUser;
   });
 
@@ -322,6 +334,164 @@ describe('validateStatusChange', () => {
       expect(() => validateStatusChange(baseProposal, ProposalStatus.Archived, otherResearcher)).toThrow(
         ValidationException,
       );
+    });
+  });
+
+  describe('Registering Form Status Transitions', () => {
+    describe('Draft -> FdpgCheck (Registering Form)', () => {
+      beforeEach(() => {
+        baseProposal.status = ProposalStatus.Draft;
+        baseProposal.register = {
+          isRegisteringForm: true,
+          isInternalRegistration: false,
+        };
+        registeringMemberUser.userId = 'owner-123';
+        baseProposal.ownerId = 'owner-123';
+      });
+
+      it('allows RegisteringMember owner to submit registering form', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, registeringMemberUser)).not.toThrow();
+      });
+
+      it('throws when RegisteringMember is not the owner', () => {
+        registeringMemberUser.userId = 'different-user';
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, registeringMemberUser)).toThrow(
+          ValidationException,
+        );
+      });
+
+      it('allows regular researcher owner to submit (isOwner check)', () => {
+        // Even for registering forms, if the researcher is the owner, they can submit
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, ownerUser)).not.toThrow();
+      });
+
+      it('throws when regular researcher (not owner) tries to submit registering form', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, otherResearcher)).toThrow(
+          ValidationException,
+        );
+      });
+    });
+
+    describe('FdpgCheck -> ReadyToPublish (Registering Form Only)', () => {
+      beforeEach(() => {
+        baseProposal.status = ProposalStatus.FdpgCheck;
+        baseProposal.register = {
+          isRegisteringForm: true,
+          isInternalRegistration: false,
+        };
+      });
+
+      it('allows FdpgMember to approve registering form', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.ReadyToPublish, fdpgMember)).not.toThrow();
+      });
+
+      it('allows DataSourceMember to approve registering form', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.ReadyToPublish, dataSourceMember)).not.toThrow();
+      });
+
+      it('throws when proposal is not a registering form', () => {
+        baseProposal.register = undefined;
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.ReadyToPublish, fdpgMember)).toThrow(
+          ValidationException,
+        );
+      });
+
+      it('throws when owner tries to approve', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.ReadyToPublish, ownerUser)).toThrow(
+          ValidationException,
+        );
+      });
+
+      it('throws for regular proposals (not registering forms)', () => {
+        baseProposal.register = { isRegisteringForm: false, isInternalRegistration: false };
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.ReadyToPublish, fdpgMember)).toThrow(
+          ValidationException,
+        );
+      });
+    });
+
+    describe('FdpgCheck -> Rework (Registering Form)', () => {
+      beforeEach(() => {
+        baseProposal.status = ProposalStatus.FdpgCheck;
+        baseProposal.register = {
+          isRegisteringForm: true,
+          isInternalRegistration: false,
+        };
+      });
+
+      it('allows FdpgMember to send back for rework', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.Rework, fdpgMember)).not.toThrow();
+      });
+
+      it('allows DataSourceMember to send back for rework', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.Rework, dataSourceMember)).not.toThrow();
+      });
+    });
+
+    describe('Rework -> FdpgCheck (Registering Form)', () => {
+      beforeEach(() => {
+        baseProposal.status = ProposalStatus.Rework;
+        baseProposal.register = {
+          isRegisteringForm: true,
+          isInternalRegistration: false,
+        };
+        registeringMemberUser.userId = 'owner-123';
+        baseProposal.ownerId = 'owner-123';
+      });
+
+      it('allows RegisteringMember owner to resubmit', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, registeringMemberUser)).not.toThrow();
+      });
+
+      it('throws when RegisteringMember is not the owner', () => {
+        registeringMemberUser.userId = 'different-user';
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, registeringMemberUser)).toThrow(
+          ValidationException,
+        );
+      });
+    });
+
+    describe('ReadyToPublish -> Published (Automated)', () => {
+      beforeEach(() => {
+        baseProposal.status = ProposalStatus.ReadyToPublish;
+        baseProposal.register = {
+          isRegisteringForm: true,
+          isInternalRegistration: false,
+        };
+      });
+
+      it('allows automated transition (forceThrow=false)', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.Published, fdpgMember, false)).not.toThrow();
+      });
+
+      it('throws for manual transition (forceThrow=true)', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.Published, fdpgMember, true)).toThrow(
+          ValidationException,
+        );
+      });
+    });
+
+    describe('Internal Registration Workflow', () => {
+      beforeEach(() => {
+        baseProposal.status = ProposalStatus.Draft;
+        baseProposal.register = {
+          isRegisteringForm: true,
+          isInternalRegistration: true,
+        };
+        // Internal registrations keep the original owner, so FDPG creates them but owner submits
+        baseProposal.ownerId = 'owner-123';
+      });
+
+      it('allows original owner to submit internal registration', () => {
+        // Internal registrations are created by FDPG but submitted by the original owner
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, ownerUser)).not.toThrow();
+      });
+
+      it('throws when non-owner tries to submit internal registration', () => {
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, otherResearcher)).toThrow(
+          ValidationException,
+        );
+      });
     });
   });
 });

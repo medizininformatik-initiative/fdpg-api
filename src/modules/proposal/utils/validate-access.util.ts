@@ -16,13 +16,13 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
   }
 
   // Special handling for register proposals when user has RegisteringMember role
-  if (proposal.register?.isRegisteringForm && user.roles.includes(Role.RegisteringMember)) {
+  if (proposal.register?.isRegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
     checkAccessForRegisteringMember(proposal, user);
     return; // Exit early for register proposals with RegisteringMember role
   }
 
   // Special handling for users who have RegisteringMember among their roles (not just primary role)
-  if (user.roles.includes(Role.RegisteringMember)) {
+  if (user.roles?.includes(Role.RegisteringMember)) {
     // If user has RegisteringMember role, they should have access regardless of primary role
     return;
   }
