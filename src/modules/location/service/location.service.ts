@@ -18,12 +18,8 @@ export class LocationService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private configService: ConfigService,
   ) {
-    this.CACHE_DURATION_MS =
-      this.configService.get<number>('LOCATION_CACHE_DURATION_MS') ??
-      (() => {
-        console.log(`Can't load from config 'LOCATION_CACHE_DURATION_MS'. Applying default.`);
-        return 15 * 60 * 1000;
-      })();
+    const cacheDurationMinutes = this.configService.get<number>('LOCATION_CACHE_DURATION_MS', 15);
+    this.CACHE_DURATION_MS = cacheDurationMinutes * 60 * 1000;
   }
 
   private CACHE_DURATION_MS = 15 * 60 * 1000;
