@@ -3,7 +3,6 @@ import { DeclineReason } from '../../schema/sub-schema/decline-reason.schema';
 import { UacApproval } from '../../schema/sub-schema/uac-approval.schema';
 import { revertLocationVote } from '../revert-location-vote.util';
 import { ProposalUploadService } from '../../services/proposal-upload.service';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
@@ -44,7 +43,7 @@ describe('revertLocationVoteUtil', () => {
       email_verified: true,
       roles: [Role.Researcher],
       singleKnownRole: Role.Researcher,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
     },
@@ -92,7 +91,7 @@ describe('revertLocationVoteUtil', () => {
 
     it('should delete the declineReason object', async () => {
       const declineReason = new DeclineReason();
-      declineReason.location = MiiLocation.UKRUB;
+      declineReason.location = 'UKRUB';
       const proposal = getProposalDocument();
       proposal.declineReasons = [declineReason];
       proposal.openDizChecks = [];
@@ -116,7 +115,7 @@ describe('revertLocationVoteUtil', () => {
 
     it('should delete the uac approval object', async () => {
       const uacApproval = new UacApproval();
-      uacApproval.location = MiiLocation.UKRUB;
+      uacApproval.location = 'UKRUB';
       const proposal = getProposalDocument();
       proposal.uacApprovals = [uacApproval];
       proposal.openDizChecks = [];
@@ -154,10 +153,10 @@ describe('revertLocationVoteUtil', () => {
 
       test.each(testCases)('%s', async ({ dataAmount, expectedDataAmountReached }) => {
         const approval = new UacApproval();
-        approval.location = MiiLocation.UKRUB;
+        approval.location = 'UKRUB';
         approval.dataAmount = dataAmount;
         const condition = new ConditionalApproval();
-        condition.location = MiiLocation.UKRUB;
+        condition.location = 'UKRUB';
         condition.fdpgTaskId = FdpgTaskType.ConditionApproval;
         condition.dataAmount = 10;
         const proposal = getProposalDocument();
@@ -190,15 +189,15 @@ describe('revertLocationVoteUtil', () => {
 
     it('should remove Fdpg Task with type UacApprovalComplete', async () => {
       const approval = new UacApproval();
-      approval.location = MiiLocation.UKRUB;
+      approval.location = 'UKRUB';
       const condition = new ConditionalApproval();
-      condition.location = MiiLocation.UKRUB;
+      condition.location = 'UKRUB';
       const proposal = getProposalDocument();
-      proposal.uacApprovedLocations = [MiiLocation.UKRUB];
+      proposal.uacApprovedLocations = ['UKRUB'];
       proposal.conditionalApprovals = [condition];
       proposal.uacApprovals = [approval];
       proposal.openDizChecks = [];
-      proposal.requestedButExcludedLocations = [MiiLocation.UMG, MiiLocation.UKL];
+      proposal.requestedButExcludedLocations = ['UMG', 'UKL'];
 
       const request = getRequest();
 
@@ -232,9 +231,9 @@ describe('revertLocationVoteUtil', () => {
 
       test.each(testCases)('%s', async ({ dataAmount, expectedDataAmountReached }) => {
         const approval = new UacApproval();
-        approval.location = MiiLocation.UKRUB;
+        approval.location = 'UKRUB';
         const condition = new ConditionalApproval();
-        condition.location = MiiLocation.UKRUB;
+        condition.location = 'UKRUB';
         condition.dataAmount = dataAmount;
         const proposal = getProposalDocument();
         proposal.conditionalApprovals = [condition];
@@ -266,7 +265,7 @@ describe('revertLocationVoteUtil', () => {
 
     it('should delete conditional approval object and fdpg task', async () => {
       const condition = new ConditionalApproval();
-      condition.location = MiiLocation.UKRUB;
+      condition.location = 'UKRUB';
       condition.fdpgTaskId = 'string';
       condition.dataAmount = 10;
       const proposal = getProposalDocument();
@@ -292,7 +291,7 @@ describe('revertLocationVoteUtil', () => {
 
     it('should delete the upload blob', async () => {
       const condition = new ConditionalApproval();
-      condition.location = MiiLocation.UKRUB;
+      condition.location = 'UKRUB';
       condition.uploadId = 'uploadId';
       const proposal = getProposalDocument();
       proposal.conditionalApprovals = [condition];

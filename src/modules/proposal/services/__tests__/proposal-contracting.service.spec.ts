@@ -2,7 +2,6 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { StorageService } from 'src/modules/storage/storage.service';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { NoErrorThrownError, getError } from 'test/get-error';
@@ -109,7 +108,7 @@ describe('ProposalContractingService', () => {
       email_verified: true,
       roles: [Role.Researcher],
       singleKnownRole: Role.Researcher,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
     },
@@ -258,7 +257,7 @@ describe('ProposalContractingService', () => {
   describe('revertLocationVote', () => {
     it('should revert the location vote', async () => {
       const proposalDocument = getProposalDocument();
-      const location = MiiLocation.UKL;
+      const location = 'UKL';
       jest.spyOn(proposalCrudService, 'findDocument').mockResolvedValueOnce(proposalDocument);
 
       await proposalContractingService.revertLocationVote(proposalId, request.user.miiLocation, request.user);

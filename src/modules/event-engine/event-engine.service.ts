@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
 import { Comment } from 'src/modules/comment/schema/comment.schema';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../proposal/enums/proposal-status.enum';
 import { Proposal, ProposalDocument } from '../proposal/schema/proposal.schema';
@@ -88,14 +87,14 @@ export class EventEngineService {
     }
   }
 
-  async handleProposalDizApproval(proposal: Proposal, vote: boolean, location: MiiLocation) {
+  async handleProposalDizApproval(proposal: Proposal, vote: boolean, location: string) {
     if (proposal) {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.locationVoteService.handleDizApproval(proposal, vote, location, proposalUrl);
     }
   }
 
-  async handleProposalUacApproval(proposal: Proposal, vote: boolean, location: MiiLocation) {
+  async handleProposalUacApproval(proposal: Proposal, vote: boolean, location: string) {
     if (proposal) {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.locationVoteService.handleUacApproval(proposal, vote, location, proposalUrl);

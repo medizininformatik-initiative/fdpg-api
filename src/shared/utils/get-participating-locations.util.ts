@@ -1,7 +1,6 @@
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
-import { MiiLocation } from '../constants/mii-locations';
 
-export const reduceParticipatingLocations = (proposal: Proposal, locations: MiiLocation[]) => {
+export const reduceParticipatingLocations = (proposal: Proposal, locations: string[]) => {
   return locations.reduce(
     (acc, location) => {
       const isSigned = () => proposal.signedContracts?.includes(location);

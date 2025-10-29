@@ -9,7 +9,6 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { AdminConfigService } from 'src/modules/admin/admin-config.service';
 import { Role } from 'src/shared/enums/role.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { getBlobName } from '../../utils/proposal.utils';
 import { UseCaseUpload } from '../../enums/upload-type.enum';
@@ -57,7 +56,7 @@ describe('ProposalPdfService', () => {
       email_verified: true,
       roles: [Role.Researcher],
       singleKnownRole: Role.Researcher,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
       assignedDataSources: [PlatformIdentifier.Mii],

@@ -5,7 +5,6 @@ import { EmailService } from 'src/modules/email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { CommentType } from 'src/modules/comment/enums/comment-type.enum';
 import { Comment } from 'src/modules/comment/schema/comment.schema';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
@@ -60,7 +59,7 @@ describe('CommentEventService', () => {
     owner: {
       id: 'ownerId',
     },
-    dizApprovedLocations: [MiiLocation.UKL],
+    dizApprovedLocations: ['UKL'],
   } as any as Proposal;
 
   const proposalUrl = 'proposalUrl';
@@ -72,26 +71,26 @@ describe('CommentEventService', () => {
     owner: {
       id: 'ownerId',
       role: Role.FdpgMember,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
     },
   } as any as Comment;
 
   const validOwnerContacts = [{ email: 'unit@test.de', id: 'ownerId' }];
   const dizMembers = [
-    { email: 'diz1@test.de', id: 'diz1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.DizMember },
-    { email: 'diz2@test.de', id: 'diz2', miiLocation: MiiLocation.UMG, singleKnownRole: Role.DizMember },
+    { email: 'diz1@test.de', id: 'diz1', miiLocation: 'UKL', singleKnownRole: Role.DizMember },
+    { email: 'diz2@test.de', id: 'diz2', miiLocation: 'UMG', singleKnownRole: Role.DizMember },
   ];
   const uacMembers = [
-    { email: 'uac1@test.de', id: 'uac1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.UacMember },
-    { email: 'uac2@test.de', id: 'uac2', miiLocation: MiiLocation.UMG, singleKnownRole: Role.UacMember },
+    { email: 'uac1@test.de', id: 'uac1', miiLocation: 'UKL', singleKnownRole: Role.UacMember },
+    { email: 'uac2@test.de', id: 'uac2', miiLocation: 'UMG', singleKnownRole: Role.UacMember },
   ];
   const fdpgMembers = [
     { email: 'fdpg1@test.de', id: 'fdpg1' },
     { email: 'fdpg2@test.de', id: 'fdpg2' },
   ];
   const locationContacts = [
-    { email: 'diz1@test.de', id: 'diz1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.DizMember },
-    { email: 'uac1@test.de', id: 'uac1', miiLocation: MiiLocation.UKL, singleKnownRole: Role.UacMember },
+    { email: 'diz1@test.de', id: 'diz1', miiLocation: 'UKL', singleKnownRole: Role.DizMember },
+    { email: 'uac1@test.de', id: 'uac1', miiLocation: 'UKL', singleKnownRole: Role.UacMember },
   ];
 
   beforeEach(async () => {
@@ -202,7 +201,7 @@ describe('CommentEventService', () => {
         'should send email for message to location creation (prevent: %s)',
         async (prevent: boolean) => {
           comment.type = CommentType.ProposalMessageToLocation;
-          comment.locations = [MiiLocation.UKL];
+          comment.locations = ['UKL'];
           commentEventService['PREVENT_MESSAGE_TO_LOCATION_CREATION'] = prevent;
 
           const user = {
@@ -234,7 +233,7 @@ describe('CommentEventService', () => {
         'should send email for message to location creation (prevent: %s)',
         async (prevent: boolean) => {
           comment.type = CommentType.ProposalMessageToLocation;
-          comment.locations = [MiiLocation.UKL];
+          comment.locations = ['UKL'];
           commentEventService['PREVENT_MESSAGE_TO_FDPG_CREATION'] = prevent;
 
           const user = {
@@ -359,7 +358,7 @@ describe('CommentEventService', () => {
         } as any as IRequestUser;
 
         comment.owner.role = Role.DizMember;
-        comment.owner.miiLocation = MiiLocation.UKL;
+        comment.owner.miiLocation = 'UKL';
 
         await commentEventService.handleTaskCompletion(proposal, comment, user, proposalUrl);
 
@@ -367,7 +366,7 @@ describe('CommentEventService', () => {
           expect(emailService.send).not.toHaveBeenCalled();
         } else {
           expect(keycloakUtilService.getDizMembers).toHaveBeenCalledTimes(1);
-          expect(keycloakUtilService.getLocationContacts).toHaveBeenCalledWith([MiiLocation.UKL], dizMembers);
+          expect(keycloakUtilService.getLocationContacts).toHaveBeenCalledWith(['UKL'], dizMembers);
           expect(emailService.send).toHaveBeenCalledWith({ content: 'getProposalTaskCompletionEmailForDiz' });
         }
       });
@@ -381,7 +380,7 @@ describe('CommentEventService', () => {
         } as any as IRequestUser;
 
         comment.owner.role = Role.UacMember;
-        comment.owner.miiLocation = MiiLocation.UKL;
+        comment.owner.miiLocation = 'UKL';
 
         await commentEventService.handleTaskCompletion(proposal, comment, user, proposalUrl);
 
@@ -389,7 +388,7 @@ describe('CommentEventService', () => {
           expect(emailService.send).not.toHaveBeenCalled();
         } else {
           expect(keycloakUtilService.getUacMembers).toHaveBeenCalledTimes(1);
-          expect(keycloakUtilService.getLocationContacts).toHaveBeenCalledWith([MiiLocation.UKL], uacMembers);
+          expect(keycloakUtilService.getLocationContacts).toHaveBeenCalledWith(['UKL'], uacMembers);
           expect(emailService.send).toHaveBeenCalledWith({ content: 'getProposalTaskCompletionEmailForUac' });
         }
       });

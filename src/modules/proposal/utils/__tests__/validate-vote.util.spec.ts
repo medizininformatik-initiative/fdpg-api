@@ -1,6 +1,5 @@
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../schema/proposal.schema';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import {
@@ -19,7 +18,7 @@ import { ForbiddenException } from '@nestjs/common';
 describe('validateDizApproval', () => {
   let baseProposal: Proposal;
   let dizUser: IRequestUser;
-  const loc: MiiLocation = MiiLocation.UKL;
+  const loc: string = 'UKL';
 
   beforeEach(() => {
     baseProposal = {
@@ -77,7 +76,7 @@ describe('validateDizApproval', () => {
 describe('validateDizConditionApproval', () => {
   let baseProposal: Proposal;
   let dizUser: IRequestUser;
-  const loc: MiiLocation = MiiLocation.UKL;
+  const loc: string = 'UKL';
 
   beforeEach(() => {
     baseProposal = {
@@ -147,7 +146,7 @@ describe('validateDizConditionApproval', () => {
 describe('validateUacApproval', () => {
   let baseProposal: Proposal;
   let uacUser: IRequestUser;
-  const loc: MiiLocation = MiiLocation.UKL;
+  const loc: string = 'UKL';
 
   beforeEach(() => {
     baseProposal = {
@@ -189,7 +188,7 @@ describe('validateRevertLocationVote', () => {
   let baseProposal: Proposal;
   let fdpgUser: IRequestUser;
   let regularUser: IRequestUser;
-  const loc: MiiLocation = MiiLocation.UKL;
+  const loc: string = 'UKL';
 
   beforeEach(() => {
     baseProposal = {

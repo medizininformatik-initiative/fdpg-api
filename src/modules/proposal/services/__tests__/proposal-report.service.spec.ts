@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ReportCreateDto, ReportUpdateDto } from '../../dto/proposal/report.dto';
@@ -44,7 +43,7 @@ const request = {
     email_verified: true,
     roles: [Role.Researcher],
     singleKnownRole: Role.Researcher,
-    miiLocation: MiiLocation.UKL,
+    miiLocation: 'UKL',
     isFromLocation: false,
     isKnownLocation: true,
   },

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventEngineModule } from '../event-engine/event-engine.module';
 import { ScheduleEventHandlerService } from './schedule-event-handler.service';
@@ -8,13 +8,8 @@ import { Schedule, ScheduleSchema } from './schema/schedule.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      {
-        name: Schedule.name,
-        schema: ScheduleSchema,
-      },
-    ]),
-    EventEngineModule,
+    MongooseModule.forFeature([{ name: Schedule.name, schema: ScheduleSchema }]),
+    forwardRef(() => EventEngineModule),
   ],
   providers: [ScheduleProcessorService, SchedulerService, ScheduleEventHandlerService],
   exports: [SchedulerService],

@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { SetDizApprovalDto } from '../../dto/set-diz-approval.dto';
@@ -42,7 +41,7 @@ describe('addLocationVoteUtil', () => {
       email_verified: true,
       roles: [Role.Researcher],
       singleKnownRole: Role.Researcher,
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       isFromLocation: false,
       isKnownLocation: true,
     },
@@ -235,7 +234,7 @@ describe('addLocationVoteUtil', () => {
       const vote = true;
 
       const condition = new ConditionalApproval();
-      condition.location = MiiLocation.UKRUB;
+      condition.location = 'UKRUB';
       condition.fdpgTaskId = 'taskId';
       condition.dataAmount = 100;
 
@@ -258,7 +257,7 @@ describe('addLocationVoteUtil', () => {
       const vote = false;
 
       const condition = new ConditionalApproval();
-      condition.location = MiiLocation.UKRUB;
+      condition.location = 'UKRUB';
       condition.fdpgTaskId = 'taskId';
       condition.dataAmount = 100;
 

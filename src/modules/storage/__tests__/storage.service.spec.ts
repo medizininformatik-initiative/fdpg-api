@@ -2,7 +2,6 @@ import { ConfigService } from '@nestjs/config';
 import { StorageService } from '../storage.service';
 import * as minio from 'minio';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { SupportedMimetype } from 'src/modules/proposal/enums/supported-mime-type.enum';
 import { getError } from 'test/get-error';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
@@ -37,7 +36,7 @@ describe('StorageService', () => {
   describe('uploadFile', () => {
     const user = {
       userId: 'userId',
-      miiLocation: MiiLocation.Charité,
+      miiLocation: 'Charité',
     } as unknown as IRequestUser;
 
     const file = {

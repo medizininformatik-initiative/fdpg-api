@@ -1,17 +1,14 @@
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { CountryCode } from 'src/shared/enums/country-code.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type InstituteDocument = Institute & Document;
 
 @Schema({ _id: true })
 export class Institute {
-  @Prop({
-    type: String,
-    enum: MiiLocation,
-  })
-  miiLocation: MiiLocation;
+  @Prop({ type: String, ref: () => Location })
+  miiLocation: string;
 
   @Prop()
   name: string;
@@ -28,10 +25,7 @@ export class Institute {
   @Prop()
   city: string;
 
-  @Prop({
-    type: String,
-    enum: CountryCode,
-  })
+  @Prop({ type: String, enum: CountryCode })
   country?: CountryCode;
 
   @Prop()
@@ -39,11 +33,10 @@ export class Institute {
 
   _id: string;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
+  @Prop({ type: Boolean, default: false })
   isDone: boolean;
 }
 
-export const InstituteSchema = SchemaFactory.createForClass(Institute);
+const InstituteSchema = SchemaFactory.createForClass(Institute);
+
+export { InstituteSchema };

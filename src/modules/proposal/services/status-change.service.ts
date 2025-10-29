@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ALL_ACTIVE_LOCATIONS, INACTIVE_LOCATIONS, MiiLocation } from 'src/shared/constants/mii-locations';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ScheduleType } from '../../scheduler/enums/schedule-type.enum';
 import { SchedulerService } from '../../scheduler/scheduler.service';
@@ -27,7 +26,7 @@ export class StatusChangeService {
     proposalAfterChanges: Proposal,
     oldStatus: ProposalStatus,
     user: IRequestUser,
-    locationList?: MiiLocation[],
+    locationList?: string[],
   ): Promise<void> {
     if (proposalAfterChanges.status === oldStatus) {
       return;
@@ -44,9 +43,7 @@ export class StatusChangeService {
       case ProposalStatus.FdpgCheck:
         proposalAfterChanges.version.mayor++;
         proposalAfterChanges.version.minor = 0;
-        proposalAfterChanges.fdpgChecklist = initChecklist({
-          isRegistrationLinkSent: false,
-        });
+        proposalAfterChanges.fdpgChecklist = initChecklist({ isRegistrationLinkSent: false });
 
         proposalAfterChanges.submittedAt = new Date();
 
@@ -62,17 +59,7 @@ export class StatusChangeService {
         proposalAfterChanges.uacApprovedLocations = [];
         proposalAfterChanges.requestedButExcludedLocations = [];
 
-        const wantsAllLocationsOrNothing =
-          proposalAfterChanges.userProject.addressees?.desiredLocations.includes(MiiLocation.VirtualAll) ||
-          !proposalAfterChanges.userProject.addressees?.desiredLocations.length;
-
-        const requestedLocations = wantsAllLocationsOrNothing
-          ? [...ALL_ACTIVE_LOCATIONS]
-          : [
-              ...proposalAfterChanges.userProject.addressees?.desiredLocations.filter(
-                (desiredLocation) => !INACTIVE_LOCATIONS.includes(desiredLocation),
-              ),
-            ];
+        const requestedLocations = [...proposalAfterChanges.userProject.addressees?.desiredLocations];
 
         proposalAfterChanges.openDizChecks = requestedLocations;
         proposalAfterChanges.numberOfRequestedLocations = proposalAfterChanges.openDizChecks.length;
