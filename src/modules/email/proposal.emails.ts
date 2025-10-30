@@ -20,7 +20,7 @@ export const buildParticipatingEmailSummary = (
     projectLink: proposalUrl,
     projectResearchers: [proposal.ownerName],
     conditionProposalRejected: changes.includes(HistoryEventType.ProposalRejected),
-    conditionProposalRework: !!changes[HistoryEventType.ProposalRework],
+    conditionProposalRework: changes.includes(HistoryEventType.ProposalRework),
     conditionProposalFdpgCheck: changes.includes(HistoryEventType.ProposalFdpgCheck),
     conditionProposalLocationCheck: changes.includes(HistoryEventType.ProposalLocationCheck),
     conditionProposalContracting: changes.includes(HistoryEventType.ProposalContracting),
@@ -28,7 +28,7 @@ export const buildParticipatingEmailSummary = (
     conditionProposalDataResearch: changes.includes(HistoryEventType.ProposalDataResearch),
     conditionProposalFinished: changes.includes(HistoryEventType.ProposalFinished),
     conditionProposalConcluded: false, // changes.includes(HistoryEventType.Concluded),
-    conditionProposalArchived: !!changes.includes(HistoryEventType.ProposalArchived),
+    conditionProposalArchived: changes.includes(HistoryEventType.ProposalArchived),
   },
 });
 
