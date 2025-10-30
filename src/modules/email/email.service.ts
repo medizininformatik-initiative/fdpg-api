@@ -16,6 +16,7 @@ export class EmailService {
     this.preventEmailSending =
       (this.configService.get<string>('EMAIL_SERVICE_PREVENT_ALL') ?? '').toLowerCase() === 'true';
     this.environment = this.configService.get<string>('ENV');
+    this.forwardAllMailsTo = this.configService.get<string>('FORWARD_ALL_MAILS_TO');
   }
 
   private senderInformation = {
@@ -24,8 +25,12 @@ export class EmailService {
   };
   private preventEmailSending: boolean;
   private environment: string;
+  private forwardAllMailsTo?: string;
 
   async send(email: IEmail | ITemplateEmail): Promise<void> {
+    if (!!this.forwardAllMailsTo && this.forwardAllMailsTo.length > 0 && this.environment === 'local') {
+      email.to = [this.forwardAllMailsTo];
+    }
     if (this.preventEmailSending && this.environment === 'local') {
       console.log('Prevent sending emails to: ', email.to);
     }

@@ -2,11 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
-import {
-  getDizApprovalEmailForUacMembers,
-  getUacApprovalEmailForDizConditionCheck,
-  getVotingCompleteEmailForFdpgMember,
-} from './location-approval.emails';
+import { dizEmail, fdpgEmail, uacEmail } from 'src/modules/email/proposal.emails';
+import { EmailCategory } from 'src/modules/email/types/email-category.enum';
 
 @Injectable()
 export class LocationVoteService {
@@ -27,7 +24,11 @@ export class LocationVoteService {
         const validUacContacts = await this.keycloakUtilService
           .getUacMembers()
           .then((members) => this.keycloakUtilService.getLocationContacts([location], members));
-        const mail = getDizApprovalEmailForUacMembers(validUacContacts, proposal, proposalUrl);
+
+        const mail = uacEmail(validUacContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
+          conditionProposalLocationCheckDizForward: true,
+        });
+
         return await this.emailService.send(mail);
       };
       emailTasks.push(uacTask());
@@ -38,7 +39,11 @@ export class LocationVoteService {
         const validFdpgContacts = await this.keycloakUtilService
           .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
-        const mail = getVotingCompleteEmailForFdpgMember(validFdpgContacts, proposal, proposalUrl);
+
+        const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
+          conditionProposalUacCheck: true,
+        });
+
         return await this.emailService.send(mail);
       };
 
@@ -56,7 +61,11 @@ export class LocationVoteService {
         const validDizContacts = await this.keycloakUtilService
           .getDizMembers()
           .then((members) => this.keycloakUtilService.getLocationContacts([location], members));
-        const mail = getUacApprovalEmailForDizConditionCheck(validDizContacts, proposal);
+
+        const mail = dizEmail(validDizContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
+          conditionProposalLocalUacCheck: true,
+        });
+
         return await this.emailService.send(mail);
       };
       emailTasks.push(dizTask());
@@ -67,7 +76,11 @@ export class LocationVoteService {
         const validFdpgContacts = await this.keycloakUtilService
           .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
-        const mail = getVotingCompleteEmailForFdpgMember(validFdpgContacts, proposal, proposalUrl);
+
+        const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
+          conditionProposalUacCheck: true,
+        });
+
         return await this.emailService.send(mail);
       };
 
