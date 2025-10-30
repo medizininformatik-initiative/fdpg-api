@@ -35,6 +35,7 @@ export class UpdateUserDto {
     const mergedUser = {
       firstName: this.firstName,
       lastName: this.lastName,
+      email: keycloakUser.email,
       attributes: {
         ...keycloakUser.attributes,
         salutation: [this.salutation],
