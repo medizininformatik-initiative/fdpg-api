@@ -55,4 +55,5 @@ export interface ICachedKeycloakUser extends Pick<IGetKeycloakUser, 'id' | 'emai
 
 // All existing attributes must be merged to the update. Otherwise only updated will be persisted
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface IUpdateKeycloakProfile extends Pick<IBaseKeycloakUser, 'firstName' | 'lastName' | 'attributes'> {}
+export interface IUpdateKeycloakProfile
+  extends Pick<IBaseKeycloakUser, 'firstName' | 'lastName' | 'attributes' | 'email'> {}
