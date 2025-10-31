@@ -6,7 +6,9 @@ import { RequestedData } from '../schema/sub-schema/requested-data.schema';
 import { UserProject } from '../schema/sub-schema/user-project.schema';
 import { RegisterInfo } from '../schema/sub-schema/register-info.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 export interface IProposalGetListSchema {
+  type: ProposalType;
   userProject: Partial<UserProject>;
   projectAbbreviation: string;
   ownerName: string;
@@ -17,7 +19,7 @@ export interface IProposalGetListSchema {
   isLocked: boolean;
   submittedAt?: Date;
   dueDateForStatus?: Date;
-
+  registerInfo?: Partial<RegisterInfo>;
   numberOfRequestedLocations?: number;
   numberOfApprovedLocations?: number;
   openDizChecks: MiiLocation[];

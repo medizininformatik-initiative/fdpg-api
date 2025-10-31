@@ -28,6 +28,7 @@ import {
 import { DizDetails, DizDetailsSchema } from './sub-schema/diz-details.schema';
 import { RegisterInfo, RegisterInfoSchema } from './sub-schema/register-info.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 
 export type ProposalDocument = Proposal & Document;
 
@@ -82,10 +83,17 @@ export class Proposal {
   isLocked: boolean;
 
   @Prop({
+    type: String,
+    enum: ProposalType,
+    default: ProposalType.ApplicationForm,
+  })
+  type: ProposalType;
+
+  @Prop({
     type: RegisterInfoSchema,
     default: () => ({}),
   })
-  register: RegisterInfo;
+  registerInfo: RegisterInfo;
 
   @Prop({
     type: Number,
@@ -287,6 +295,8 @@ export class Proposal {
     default: () => ({ ...defaultDueDateValues }),
   })
   deadlines: Record<DueDateEnum, Date | null>;
+  baseProposal: { isInternalRegistration: false };
+  register: any;
 }
 
 const ProposalSchema = SchemaFactory.createForClass(Proposal);

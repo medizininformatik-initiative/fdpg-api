@@ -1,6 +1,7 @@
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalType } from '../../enums/proposal-type.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
@@ -89,8 +90,8 @@ describe('validateProposalAccess', () => {
 
       registeringProposal = {
         ...baseProposal,
-        register: {
-          isRegisteringForm: true,
+        type: ProposalType.RegisteringForm,
+        registerInfo: {
           isInternalRegistration: false,
         },
       } as ProposalDocument;
@@ -130,8 +131,8 @@ describe('validateProposalAccess', () => {
     beforeEach(() => {
       internalRegistrationProposal = {
         ...baseProposal,
-        register: {
-          isRegisteringForm: true,
+        type: ProposalType.RegisteringForm,
+        registerInfo: {
           isInternalRegistration: true,
         },
         status: ProposalStatus.Draft,

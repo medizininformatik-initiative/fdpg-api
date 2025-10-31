@@ -3,6 +3,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { LocationState } from '../enums/location-state.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 
@@ -11,12 +12,16 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     throwForbiddenError('Proposal is currently locked to modifications');
   }
 
-  if (user.singleKnownRole === Role.FdpgMember && proposal.register?.isInternalRegistration) {
+  if (
+    user.singleKnownRole === Role.FdpgMember &&
+    proposal.type === ProposalType.RegisteringForm &&
+    proposal.registerInfo?.isInternalRegistration
+  ) {
     return;
   }
 
   // Special handling for register proposals when user has RegisteringMember role
-  if (proposal.register?.isRegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
+  if (proposal.type === ProposalType.RegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
     checkAccessForRegisteringMember(proposal, user);
     return; // Exit early for register proposals with RegisteringMember role
   }
@@ -62,7 +67,11 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
 };
 
 const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequestUser) => {
-  if (proposal.register?.isInternalRegistration && user.singleKnownRole === Role.FdpgMember) {
+  if (
+    proposal.type === ProposalType.RegisteringForm &&
+    proposal.registerInfo?.isInternalRegistration &&
+    user.singleKnownRole === Role.FdpgMember
+  ) {
     return;
   }
 
@@ -83,7 +92,7 @@ const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser
 
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
   // Allow modification of register proposals even in Draft status
-  if (proposal.status === ProposalStatus.Draft && willBeModified && !proposal.register?.isRegisteringForm) {
+  if (proposal.status === ProposalStatus.Draft && willBeModified && proposal.type !== ProposalType.RegisteringForm) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
   }
 };

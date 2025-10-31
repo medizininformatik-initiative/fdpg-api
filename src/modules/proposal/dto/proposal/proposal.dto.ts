@@ -25,6 +25,7 @@ import { ExposeLocationStatus } from '../../decorators/expose-location-status.de
 import { ExposeUpload } from '../../decorators/expose-uploads.decorator';
 import { LocationState } from '../../enums/location-state.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalType } from '../../enums/proposal-type.enum';
 import { IProposalGetListSchema } from '../../types/proposal-get-list-schema.interface';
 import { getIsDoneOverview } from '../../utils/is-done-overview.util';
 import { getMostAdvancedState } from '../../utils/validate-access.util';
@@ -128,6 +129,11 @@ export class ProposalBaseDto {
   status: ProposalStatus;
 
   @Expose()
+  @IsEnum(ProposalType)
+  @IsOptional()
+  type: ProposalType;
+
+  @Expose()
   @IsEnum(PlatformIdentifier)
   @IsOptional()
   platform: PlatformIdentifier;
@@ -145,7 +151,7 @@ export class ProposalBaseDto {
   @Expose()
   @Type(() => RegisterInfoDto)
   @IsOptional()
-  register?: RegisterInfoDto;
+  registerInfo?: RegisterInfoDto;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -513,7 +519,8 @@ export class ProposalGetListDto {
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
     this.selectedDataSources = dbProjection.selectedDataSources;
-    this.register = dbProjection.register;
+    this.type = dbProjection.type;
+    this.registerInfo = dbProjection.registerInfo;
 
     if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -563,7 +570,8 @@ export class ProposalGetListDto {
 
   _id: string;
   selectedDataSources: PlatformIdentifier[];
-  register?: RegisterInfoDto;
+  type: ProposalType;
+  registerInfo?: RegisterInfoDto;
 }
 
 @Exclude()

@@ -1,6 +1,7 @@
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../schema/proposal.schema';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalType } from '../../enums/proposal-type.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { validateStatusChange } from '../validate-status-change.util';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
@@ -341,9 +342,15 @@ describe('validateStatusChange', () => {
     describe('Draft -> FdpgCheck (Registering Form)', () => {
       beforeEach(() => {
         baseProposal.status = ProposalStatus.Draft;
-        baseProposal.register = {
-          isRegisteringForm: true,
+        baseProposal.type = ProposalType.RegisteringForm;
+        baseProposal.registerInfo = {
           isInternalRegistration: false,
+          legalBasis: true,
+          diagnoses: ['D1234'],
+          procedures: ['P5678'],
+          projectCategory: 'Some Category',
+          isDone: false,
+          _id: 'internal-registration-123',
         };
         registeringMemberUser.userId = 'owner-123';
         baseProposal.ownerId = 'owner-123';
@@ -375,9 +382,15 @@ describe('validateStatusChange', () => {
     describe('FdpgCheck -> ReadyToPublish (Registering Form Only)', () => {
       beforeEach(() => {
         baseProposal.status = ProposalStatus.FdpgCheck;
-        baseProposal.register = {
-          isRegisteringForm: true,
+        baseProposal.type = ProposalType.RegisteringForm;
+        baseProposal.registerInfo = {
           isInternalRegistration: false,
+          legalBasis: true,
+          diagnoses: ['D1234'],
+          procedures: ['P5678'],
+          projectCategory: 'Some Category',
+          isDone: false,
+          _id: 'internal-registration-123',
         };
       });
 
@@ -390,7 +403,8 @@ describe('validateStatusChange', () => {
       });
 
       it('throws when proposal is not a registering form', () => {
-        baseProposal.register = undefined;
+        delete baseProposal.type;
+        delete baseProposal.registerInfo;
         expect(() => validateStatusChange(baseProposal, ProposalStatus.ReadyToPublish, fdpgMember)).toThrow(
           ValidationException,
         );
@@ -403,7 +417,7 @@ describe('validateStatusChange', () => {
       });
 
       it('throws for regular proposals (not registering forms)', () => {
-        baseProposal.register = { isRegisteringForm: false, isInternalRegistration: false };
+        baseProposal.type = ProposalType.ApplicationForm;
         expect(() => validateStatusChange(baseProposal, ProposalStatus.ReadyToPublish, fdpgMember)).toThrow(
           ValidationException,
         );
@@ -413,9 +427,15 @@ describe('validateStatusChange', () => {
     describe('FdpgCheck -> Rework (Registering Form)', () => {
       beforeEach(() => {
         baseProposal.status = ProposalStatus.FdpgCheck;
-        baseProposal.register = {
-          isRegisteringForm: true,
+        baseProposal.type = ProposalType.RegisteringForm;
+        baseProposal.registerInfo = {
           isInternalRegistration: false,
+          legalBasis: true,
+          diagnoses: ['D1234'],
+          procedures: ['P5678'],
+          projectCategory: 'Some Category',
+          isDone: false,
+          _id: 'internal-registration-123',
         };
       });
 
@@ -431,9 +451,15 @@ describe('validateStatusChange', () => {
     describe('Rework -> FdpgCheck (Registering Form)', () => {
       beforeEach(() => {
         baseProposal.status = ProposalStatus.Rework;
-        baseProposal.register = {
-          isRegisteringForm: true,
+        baseProposal.type = ProposalType.RegisteringForm;
+        baseProposal.registerInfo = {
           isInternalRegistration: false,
+          legalBasis: true,
+          diagnoses: ['D1234'],
+          procedures: ['P5678'],
+          projectCategory: 'Some Category',
+          isDone: false,
+          _id: 'internal-registration-123',
         };
         registeringMemberUser.userId = 'owner-123';
         baseProposal.ownerId = 'owner-123';
@@ -454,9 +480,15 @@ describe('validateStatusChange', () => {
     describe('ReadyToPublish -> Published (Automated)', () => {
       beforeEach(() => {
         baseProposal.status = ProposalStatus.ReadyToPublish;
-        baseProposal.register = {
-          isRegisteringForm: true,
+        baseProposal.type = ProposalType.RegisteringForm;
+        baseProposal.registerInfo = {
           isInternalRegistration: false,
+          legalBasis: true,
+          diagnoses: ['D1234'],
+          procedures: ['P5678'],
+          projectCategory: 'Some Category',
+          isDone: false,
+          _id: 'internal-registration-123',
         };
       });
 
@@ -474,9 +506,15 @@ describe('validateStatusChange', () => {
     describe('Internal Registration Workflow', () => {
       beforeEach(() => {
         baseProposal.status = ProposalStatus.Draft;
-        baseProposal.register = {
-          isRegisteringForm: true,
+        baseProposal.type = ProposalType.RegisteringForm;
+        baseProposal.registerInfo = {
           isInternalRegistration: true,
+          legalBasis: true,
+          diagnoses: ['D1234'],
+          procedures: ['P5678'],
+          projectCategory: 'Some Category',
+          isDone: false,
+          _id: 'internal-registration-123',
         };
         // Internal registrations keep the original owner, so FDPG creates them but owner submits
         baseProposal.ownerId = 'owner-123';

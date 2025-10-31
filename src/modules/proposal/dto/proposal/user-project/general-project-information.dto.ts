@@ -56,33 +56,4 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsNotDraft] })
   keywords: string[];
-
-  @Expose()
-  @MaxLength(500)
-  @IsOptional()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsRegister] })
-  projectUrl: string;
-
-  @Expose()
-  @IsBoolean()
-  @IsOptional()
-  legalBasis: boolean;
-
-  @Expose()
-  @MaxLength(200)
-  @IsOptional()
-  @IsNotEmptyString({ groups: [ProposalValidation.IsRegister] })
-  projectCategory: string;
-
-  @Expose()
-  @IsArray()
-  @IsOptional()
-  @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsRegister] })
-  diagnoses: string[];
-
-  @Expose()
-  @IsArray()
-  @IsOptional()
-  @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsRegister] })
-  procedures: string[];
 }

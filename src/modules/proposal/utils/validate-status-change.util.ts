@@ -4,13 +4,14 @@ import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../enums/proposal-status.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 import { Proposal } from '../schema/proposal.schema';
 
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
 
 const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
-  proposal.register?.isRegisteringForm &&
+  proposal.type === ProposalType.RegisteringForm &&
   user.roles.includes(Role.RegisteringMember) &&
   user.userId === proposal.ownerId;
 
@@ -42,7 +43,7 @@ export const validateStatusChange = (
       [ProposalStatus.Rejected]: () => isFdpg(user),
       [ProposalStatus.LocationCheck]: () => isFdpg(user),
       // Only allow ReadyToPublish for register proposals
-      [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.register?.isRegisteringForm,
+      [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.type === ProposalType.RegisteringForm,
     },
     [ProposalStatus.LocationCheck]: {
       // Contracting is supposed to be started by uploading the contract draft

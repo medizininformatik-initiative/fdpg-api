@@ -29,30 +29,6 @@ export class GeneralProjectInformation {
   })
   keywords: string[];
 
-  @Prop()
-  projectUrl: string;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  legalBasis: boolean;
-
-  @Prop()
-  projectCategory: string;
-
-  @Prop({
-    type: [String],
-    default: [],
-  })
-  diagnoses: string[];
-
-  @Prop({
-    type: [String],
-    default: [],
-  })
-  procedures: string[];
-
   _id: string;
 
   @Prop({

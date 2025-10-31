@@ -8,6 +8,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalType } from '../../enums/proposal-type.enum';
 import { Proposal, ProposalDocument } from '../../schema/proposal.schema';
 import { getModelToken } from '@nestjs/mongoose';
 import { ParticipantType } from '../../enums/participant-type.enum';
@@ -1932,9 +1933,9 @@ describe('ProposalMiscService', () => {
 
       expect(result).toBe('new-proposal-id');
       expect(originalProposal.save).toHaveBeenCalled();
-      // Verify register flags are set correctly
-      expect(originalProposal.register).toEqual({
-        isRegisteringForm: true,
+      // Verify type and registerInfo are set correctly
+      expect(originalProposal.type).toBe(ProposalType.RegisteringForm);
+      expect(originalProposal.registerInfo).toEqual({
         isInternalRegistration: true,
         originalProposalId: proposalId,
       });

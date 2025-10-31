@@ -17,6 +17,7 @@ import {
   Migration016,
   Migration017,
   Migration018,
+  Migration021,
 } from './migrations';
 import { Migration, MigrationDocument } from './schema/migration.schema';
 import { IDbMigration } from './types/db-migration.interface';
@@ -63,10 +64,11 @@ export class MigrationService implements OnModuleInit {
       16: new Migration016(this.proposalModel),
       17: new Migration017(this.proposalModel),
       18: new Migration018(this.dataPrivacyConfigModel),
+      21: new Migration021(this.proposalModel),
     };
   }
 
-  private readonly desiredDbVersion = 18;
+  private readonly desiredDbVersion = 21;
 
   // Migration downgrades are not supported while downgrading the software version. So it's disabled by default.
   private readonly preventDowngrade = true;

@@ -11,6 +11,7 @@ import { KeycloakService } from '../../user/keycloak.service';
 import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { ProposalStatus } from '../enums/proposal-status.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
 import {
   addHistoryItemForChangedDeadline,
@@ -908,8 +909,8 @@ export class ProposalMiscService {
       _id: undefined,
       projectAbbreviation: newAbbreviation,
       dataSourceLocaleId: undefined, // Clear DIFE ID - not needed for registration and must be unique
-      register: {
-        isRegisteringForm: true,
+      type: ProposalType.RegisteringForm,
+      registerInfo: {
         isInternalRegistration: true,
         originalProposalId: original._id.toString(),
       },

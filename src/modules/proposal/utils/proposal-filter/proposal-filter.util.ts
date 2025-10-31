@@ -9,6 +9,7 @@ import { getFilterForFdpg } from './fdpg/fdpg-filter.util';
 import { getFilterForDiz } from './diz/diz-filter.util';
 import { getFilterForUac } from './uac/uac-filter.util';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalType } from '../../enums/proposal-type.enum';
 
 // Filter for register proposals that belong to a specific user
 export const getRegisterProposalsForUser = (
@@ -20,8 +21,8 @@ export const getRegisterProposalsForUser = (
     { participants: { $elemMatch: { 'researcher.email': user.email } } },
     { 'projectResponsible.researcher.email': user.email },
   ],
-  'register.isRegisteringForm': true,
-  'register.isInternalRegistration': { $ne: true },
+  type: ProposalType.RegisteringForm,
+  'registerInfo.isInternalRegistration': { $ne: true },
   status: Array.isArray(status) ? { $in: status } : status,
 });
 
