@@ -39,7 +39,14 @@ export class ProposalCrudController {
     return await this.proposalCrudService.create(createProposalDto, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(
+    Role.Researcher,
+    Role.FdpgMember,
+    Role.DataSourceMember,
+    Role.DizMember,
+    Role.UacMember,
+    Role.DataManagementOffice,
+  )
   @Get(':id')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiOperation({ summary: 'Gets a Proposal by its id' })
@@ -48,7 +55,14 @@ export class ProposalCrudController {
     return await this.proposalCrudService.find(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(
+    Role.Researcher,
+    Role.FdpgMember,
+    Role.DataSourceMember,
+    Role.DizMember,
+    Role.UacMember,
+    Role.DataManagementOffice,
+  )
   @Get()
   @ApiOperation({ summary: 'Gets all Proposals that are currently accessible for the user' })
   @UsePipes(ValidationPipe)

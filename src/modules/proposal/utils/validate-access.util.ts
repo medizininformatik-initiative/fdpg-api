@@ -30,6 +30,10 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
   if (user.singleKnownRole === Role.UacMember) {
     checkAccessForUacMember(proposal, user);
   }
+
+  if (user.singleKnownRole === Role.DataManagementOffice) {
+    checkAccessForDmoMember(proposal, user);
+  }
 };
 
 const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser) => {
@@ -65,6 +69,10 @@ const checkAccessForDataSourceMember = (proposal: ProposalDocument, user: IReque
   if (!hasOverlap) {
     throwForbiddenError(`User does not have a data source matching the proposals selected data sources`);
   }
+};
+
+const checkAccessForDmoMember = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
+  console.warn('TODO implement DMO user access validation');
 };
 
 type ProposalPick = Pick<

@@ -28,4 +28,8 @@ export enum PanelQuery {
   FdpgOngoingToCheck = 'FDPG_ONGOING_TO_CHECK',
   FdpgOngoingInWork = 'FDPG_ONGOING_IN_WORK',
   FdpgFinished = 'FDPG_FINISHED',
+
+  // DataManagementOffice
+  DmoPending = 'DMO_PENDING',
+  DmoApproved = 'DMO_APPROVED',
 }
