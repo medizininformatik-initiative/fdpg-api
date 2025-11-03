@@ -5,7 +5,7 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
-import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistSetDto, FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
@@ -28,7 +28,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verification.util';
 import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
-import { IChecklistItem } from '../dto/proposal/checklist.types';
+import { IChecklist, IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
@@ -62,6 +62,7 @@ import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { LocationService } from 'src/modules/location/service/location.service';
+import { FdpgChecklist } from '../schema/sub-schema/fdpg-checklist.schema';
 
 @Injectable()
 export class ProposalMiscService {
@@ -240,6 +241,27 @@ export class ProposalMiscService {
       return {
         _id: 'isRegistrationLinkSent',
         isRegistrationLinkSent: toBeUpdated.fdpgChecklist.isRegistrationLinkSent,
+      } as any;
+    }
+
+    if (checklistUpdate.initialViewing !== undefined) {
+      return {
+        _id: 'initialViewing',
+        initialViewing: toBeUpdated.fdpgChecklist.initialViewing,
+      } as any;
+    }
+
+    if (checklistUpdate.depthCheck !== undefined) {
+      return {
+        _id: 'depthCheck',
+        depthCheck: toBeUpdated.fdpgChecklist.depthCheck,
+      } as any;
+    }
+
+    if (checklistUpdate.ethicsCheck !== undefined) {
+      return {
+        _id: 'ethicsCheck',
+        ethicsCheck: toBeUpdated.fdpgChecklist.ethicsCheck,
       } as any;
     }
 

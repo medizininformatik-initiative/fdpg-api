@@ -58,6 +58,18 @@ export class FdpgChecklistGetDto implements IChecklist {
   isRegistrationLinkSent: boolean;
 
   @Expose()
+  @Transform((params) => (params.value === undefined ? false : params.value))
+  initialViewing: boolean;
+
+  @Expose()
+  @Transform((params) => (params.value === undefined ? false : params.value))
+  depthCheck: boolean;
+
+  @Expose()
+  @Transform((params) => (params.value === undefined ? false : params.value))
+  ethicsCheck: boolean;
+
+  @Expose()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ChecklistItem)
@@ -80,6 +92,21 @@ export class FdpgChecklistUpdateDto implements Partial<IChecklist> {
   @IsOptional()
   @IsBoolean()
   isRegistrationLinkSent?: boolean;
+
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  initialViewing?: boolean;
+
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  depthCheck?: boolean;
+
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  ethicsCheck?: boolean;
 
   @Expose()
   @IsOptional()
@@ -139,6 +166,18 @@ export class FdpgChecklistSetDto implements IChecklist {
   @Expose()
   @IsBoolean()
   isRegistrationLinkSent: boolean;
+
+  @Expose()
+  @IsBoolean()
+  initialViewing: boolean;
+
+  @Expose()
+  @IsBoolean()
+  depthCheck: boolean;
+
+  @Expose()
+  @IsBoolean()
+  ethicsCheck: boolean;
 
   @Expose()
   @IsArray()
