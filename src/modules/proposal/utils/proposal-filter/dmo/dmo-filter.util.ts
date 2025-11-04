@@ -5,15 +5,15 @@ import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 
 export const getFilterForDmo = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
-  const allowedQuery = [PanelQuery.DmoPending, PanelQuery.DmoApproved];
+  const allowedQuery = [PanelQuery.DmsPending, PanelQuery.DmsApproved];
 
   console.warn('TODO Adjust filter query with actual entries');
 
   if (allowedQuery.includes(panelQuery)) {
     switch (panelQuery) {
-      case PanelQuery.DmoPending:
+      case PanelQuery.DmsPending:
         return getFilterForPending(user);
-      case PanelQuery.DmoApproved:
+      case PanelQuery.DmsApproved:
         return getFilterForApproved(user);
     }
   } else {
