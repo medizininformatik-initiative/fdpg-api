@@ -50,6 +50,7 @@ import { DizDetailsGetDto } from './diz-details.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
+import { DataDeliveryGetDto } from './data-delivery/data-delivery.dto';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -486,6 +487,11 @@ export class ProposalGetDto extends ProposalBaseDto {
     return obj.deadlines; // Ensure object is returned as-is
   })
   deadlines: SetDeadlinesDto;
+
+  @Expose()
+  @Type(() => DataDeliveryGetDto)
+  @IsOptional()
+  dataDelivery?: DataDeliveryGetDto | null;
 }
 
 export class ProposalGetListDto {
