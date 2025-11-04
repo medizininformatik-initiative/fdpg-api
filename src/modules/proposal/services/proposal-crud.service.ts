@@ -115,7 +115,7 @@ export class ProposalCrudService {
 
     if (proposal) {
       const userLocationDoc = await this.locationService.findById(user.miiLocation);
-      const userLocation = userLocationDoc.toObject() as Location;
+      const userLocation = userLocationDoc?.toObject() as Location;
       validateProposalAccess(proposal, user, userLocation, willBeModified);
       return proposal;
     } else {

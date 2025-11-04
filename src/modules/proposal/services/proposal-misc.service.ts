@@ -723,7 +723,7 @@ export class ProposalMiscService {
     }
 
     const userLocationDoc = await this.locationService.findById(user.miiLocation);
-    const userLocation = userLocationDoc.toObject() as Location;
+    const userLocation = userLocationDoc?.toObject() as Location;
 
     validateProposalAccess(proposal, user, userLocation, true);
 
@@ -769,7 +769,7 @@ export class ProposalMiscService {
     }
 
     const userLocationDoc = await this.locationService.findById(user.miiLocation);
-    const userLocation = userLocationDoc.toObject() as Location;
+    const userLocation = userLocationDoc?.toObject() as Location;
 
     validateProposalAccess(proposal, user, userLocation, true);
 
