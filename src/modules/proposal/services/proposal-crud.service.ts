@@ -27,6 +27,8 @@ import { Role } from 'src/shared/enums/role.enum';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
 import { generateDataSourceLocaleId } from '../utils/generate-data-source-locale-id.util';
+import { LocationService } from 'src/modules/location/service/location.service';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 @Injectable()
 export class ProposalCrudService {
@@ -37,6 +39,7 @@ export class ProposalCrudService {
     private sharedService: SharedService,
     private statusChangeService: StatusChangeService,
     private proposalFormService: ProposalFormService,
+    private locationService: LocationService,
   ) {}
 
   async create(createProposalDto: ProposalCreateDto, user: IRequestUser): Promise<ProposalGetDto> {
@@ -106,11 +109,14 @@ export class ProposalCrudService {
       dbProjection.participants = 1;
       dbProjection.deadlines = 1;
       dbProjection.selectedDataSources = 1;
+      dbProjection.dataDelivery = 1;
     }
     const proposal = await this.proposalModel.findById(proposalId, dbProjection);
 
     if (proposal) {
-      validateProposalAccess(proposal, user, willBeModified);
+      const userLocationDoc = await this.locationService.findById(user.miiLocation);
+      const userLocation = userLocationDoc.toObject() as Location;
+      validateProposalAccess(proposal, user, userLocation, willBeModified);
       return proposal;
     } else {
       throw new NotFoundException();

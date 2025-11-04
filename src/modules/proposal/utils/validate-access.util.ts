@@ -5,8 +5,14 @@ import { LocationState } from '../enums/location-state.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { Location } from 'src/modules/location/schema/location.schema';
 
-export const validateProposalAccess = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
+export const validateProposalAccess = (
+  proposal: ProposalDocument,
+  user: IRequestUser,
+  userLocation?: Location,
+  willBeModified?: boolean,
+) => {
   if (willBeModified && proposal.isLocked) {
     throwForbiddenError('Proposal is currently locked to modifications');
   }
@@ -32,7 +38,7 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
   }
 
   if (user.singleKnownRole === Role.DataManagementOffice) {
-    checkAccessForDmoMember(proposal, user);
+    checkAccessForDmoMember(proposal, user, userLocation);
   }
 };
 
@@ -71,8 +77,14 @@ const checkAccessForDataSourceMember = (proposal: ProposalDocument, user: IReque
   }
 };
 
-const checkAccessForDmoMember = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
-  console.warn('TODO implement DMO user access validation');
+const checkAccessForDmoMember = (proposal: ProposalDocument, user: IRequestUser, userLocation?: Location) => {
+  if (!userLocation || !userLocation.dataManagementCenter) {
+    throwForbiddenError(`User Location '${userLocation?.dataManagementCenter}' is not a DMS`);
+  }
+
+  if (proposal.dataDelivery?.dataManagementSite !== user.miiLocation) {
+    throwForbiddenError('User location does not match data delivery location');
+  }
 };
 
 type ProposalPick = Pick<
