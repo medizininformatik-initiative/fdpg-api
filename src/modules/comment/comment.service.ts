@@ -43,7 +43,8 @@ export class CommentService {
     const isFdpgMember = this.hasFdpgLevelPermissions(user.singleKnownRole);
     const isMessage =
       createCommentDto.type === CommentType.ProposalMessageToOwner ||
-      createCommentDto.type === CommentType.ProposalMessageToLocation;
+      createCommentDto.type === CommentType.ProposalMessageToLocation ||
+      createCommentDto.type === CommentType.ProposalMessageToDmst;
 
     const isTaskOrMessageForFdpg =
       (isMessage && !isFdpgMember) || createCommentDto.type === CommentType.ProposalTaskFdpg;

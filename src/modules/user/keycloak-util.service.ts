@@ -70,17 +70,7 @@ export class KeycloakUtilService {
 
   /** Returns all users with role FdpgMember */
   async getFdpgMembers(): Promise<ICachedKeycloakUser[]> {
-    let fdpgMember: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(CacheKey.AllFdpgMember);
-
-    if (fdpgMember && fdpgMember.length > 0) {
-      return fdpgMember;
-    }
-
-    const fdpgMemberFullModel = await this.keycloakService.getUsersByRole(Role.FdpgMember);
-    fdpgMember = fdpgMemberFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
-
-    await this.cacheManager.set(CacheKey.AllFdpgMember, fdpgMember, this.ROLE_CACHE_TIME);
-    return fdpgMember;
+    return await this.getMembers(Role.FdpgMember, CacheKey.AllFdpgMember, false);
   }
 
   /** Returns all users with role DataSourceMember and specific data source */
@@ -137,32 +127,34 @@ export class KeycloakUtilService {
 
   /** Returns all users with role DizMember */
   async getDizMembers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
-    let dizMember: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(CacheKey.AllDizMember);
-
-    if (dizMember && dizMember.length > 0) {
-      return dizMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
-    }
-
-    const dizMemberFullModel = await this.keycloakService.getUsersByRole(Role.DizMember);
-    dizMember = dizMemberFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
-
-    await this.cacheManager.set(CacheKey.AllDizMember, dizMember, this.ROLE_CACHE_TIME);
-    return dizMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
+    return await this.getMembers(Role.DizMember, CacheKey.AllDizMember, withFilterForReceivingMails);
   }
 
   /** Returns all users with role UacMember */
   async getUacMembers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
-    let uacMember: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(CacheKey.AllUacMember);
+    return await this.getMembers(Role.UacMember, CacheKey.AllUacMember, withFilterForReceivingMails);
+  }
 
-    if (uacMember && uacMember.length > 0) {
-      return uacMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
+  async getDmoMembers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
+    return this.getMembers(Role.DataManagementOffice, CacheKey.AllDmoUsers, withFilterForReceivingMails);
+  }
+
+  private async getMembers(
+    role: Role,
+    cacheKey: CacheKey,
+    withFilterForReceivingMails = true,
+  ): Promise<ICachedKeycloakUser[]> {
+    let members: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(cacheKey);
+
+    if (members && members.length > 0) {
+      return members.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
     }
 
-    const uacMemberFullModel = await this.keycloakService.getUsersByRole(Role.UacMember);
-    uacMember = uacMemberFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
+    const memberFullModel = await this.keycloakService.getUsersByRole(role);
+    members = memberFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
 
-    await this.cacheManager.set(CacheKey.AllUacMember, uacMember, this.ROLE_CACHE_TIME);
-    return uacMember.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
+    await this.cacheManager.set(cacheKey, members, this.ROLE_CACHE_TIME);
+    return members.filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true));
   }
 
   filterForReceivingEmail(user: Pick<IGetKeycloakUser, 'attributes'>): boolean {
