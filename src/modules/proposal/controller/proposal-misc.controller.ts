@@ -54,7 +54,6 @@ import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../d
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
-import { ParseOptionalBodyPipe } from 'src/shared/utils/optional-body-pipe.util';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
