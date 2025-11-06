@@ -155,7 +155,11 @@ export class ProposalMiscService {
     results.forEach((result) => {
       if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
         researchers.map((researcher) => {
-          if (researcher.email.toLocaleLowerCase() === result.value[0].email.toLocaleLowerCase()) {
+          if (
+            researcher.email &&
+            result.value[0].email &&
+            researcher.email.toLocaleLowerCase() === result.value[0].email.toLocaleLowerCase()
+          ) {
             const isEmailVerified = !result.value.some((user) => !user.emailVerified);
             const hasRequiredActions = result.value.some((user) => user.requiredActions.length > 0);
             researcher.isExisting = true;

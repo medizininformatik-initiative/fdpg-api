@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
 import { Model } from 'mongoose';
@@ -16,6 +16,7 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { GetListProjection } from '../schema/constants/get-list.projection';
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { StatusChangeService } from './status-change.service';
+import { ProposalSyncService } from './proposal-sync.service';
 import { IProposalGetListSchema } from '../types/proposal-get-list-schema.interface';
 import { mergeProposal } from '../utils/merge-proposal.util';
 import { getProposalFilter } from '../utils/proposal-filter/proposal-filter.util';
@@ -27,9 +28,13 @@ import { Role } from 'src/shared/enums/role.enum';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
 import { generateDataSourceLocaleId } from '../utils/generate-data-source-locale-id.util';
+import { ProposalType } from '../enums/proposal-type.enum';
+import { SyncStatus } from '../enums/sync-status.enum';
 
 @Injectable()
 export class ProposalCrudService {
+  private readonly logger = new Logger(ProposalCrudService.name);
+
   constructor(
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
@@ -37,6 +42,8 @@ export class ProposalCrudService {
     private sharedService: SharedService,
     private statusChangeService: StatusChangeService,
     private proposalFormService: ProposalFormService,
+    @Inject(forwardRef(() => ProposalSyncService))
+    private proposalSyncService: ProposalSyncService,
   ) {}
 
   async create(createProposalDto: ProposalCreateDto, user: IRequestUser): Promise<ProposalGetDto> {
@@ -165,6 +172,37 @@ export class ProposalCrudService {
       toBeUpdated.dataSourceLocaleId = undefined;
     }
 
+    // If FDPG edits a Published registering form that was Synced, mark it as OutOfSync
+    const isFdpg = user.roles.includes(Role.FdpgMember) || user.roles.includes(Role.DataSourceMember);
+    if (
+      isFdpg &&
+      !isStatusChange &&
+      toBeUpdated.type === ProposalType.RegisteringForm &&
+      toBeUpdated.status === ProposalStatus.Published &&
+      toBeUpdated.registerInfo?.syncStatus === SyncStatus.Synced
+    ) {
+      toBeUpdated.registerInfo.syncStatus = SyncStatus.OutOfSync;
+    }
+
+    // Auto-sync when approving registering form (FdpgCheck -> Published)
+    const isApprovalToPublished =
+      isStatusChange &&
+      oldStatus === ProposalStatus.FdpgCheck &&
+      toBeUpdated.status === ProposalStatus.Published &&
+      toBeUpdated.type === ProposalType.RegisteringForm;
+
+    if (isApprovalToPublished) {
+      try {
+        this.logger.log(`Auto-syncing registering form ${proposalId} on approval`);
+        if (!toBeUpdated.registerInfo) {
+          toBeUpdated.registerInfo = {} as any;
+        }
+        toBeUpdated.registerInfo.syncStatus = SyncStatus.Syncing;
+      } catch (error) {
+        this.logger.error(`Failed to initialize sync status: ${error.message}`);
+      }
+    }
+
     await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
 
@@ -172,6 +210,30 @@ export class ProposalCrudService {
 
     if (isStatusChange) {
       await this.eventEngineService.handleProposalStatusChange(saveResult);
+    }
+
+    if (isApprovalToPublished) {
+      if (!this.proposalSyncService) {
+        this.logger.error(`ProposalSyncService is not available! Cannot auto-sync proposal ${proposalId}`);
+        await this.proposalModel.updateOne(
+          { _id: proposalId },
+          {
+            $set: {
+              'registerInfo.syncStatus': SyncStatus.SyncFailed,
+              'registerInfo.lastSyncError': 'Sync service not available',
+            },
+          },
+        );
+      } else {
+        this.proposalSyncService
+          .syncProposal(proposalId, user)
+          .then(() => {
+            this.logger.log(`Auto-sync completed for proposal ${proposalId}`);
+          })
+          .catch((error) => {
+            this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
+          });
+      }
     }
 
     const plain = saveResult.toObject();

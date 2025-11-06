@@ -14,6 +14,7 @@ import { ProposalMiscController } from './controller/proposal-misc.controller';
 import { ProposalPublicationController } from './controller/proposal-publication.controller';
 import { ProposalReportController } from './controller/proposal-reports.controller';
 import { ProposalUploadController } from './controller/proposal-upload.controller';
+import { ProposalSyncController } from './controller/proposal-sync.controller';
 import { Proposal, ProposalSchema } from './schema/proposal.schema';
 import { ProposalContractingService } from './services/proposal-contracting.service';
 import { ProposalCrudService } from './services/proposal-crud.service';
@@ -25,6 +26,8 @@ import { ProposalDownloadService } from './services/proposal-download.service';
 import { StatusChangeService } from './services/status-change.service';
 import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviation.validator';
 import { ProposalPdfService } from './services/proposal-pdf.service';
+import { ProposalSyncService } from './services/proposal-sync.service';
+import { AcptPluginClient } from '../app/acpt-plugin/acpt-plugin.client';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { MiiLocationModule } from '../mii-location/mii-location.module';
 
@@ -54,6 +57,7 @@ import { MiiLocationModule } from '../mii-location/mii-location.module';
     ProposalPublicationController,
     ProposalReportController,
     ProposalContractingController,
+    ProposalSyncController,
   ],
   providers: [
     ProposalCrudService,
@@ -66,7 +70,9 @@ import { MiiLocationModule } from '../mii-location/mii-location.module';
     IsUniqueAbbreviationConstraint,
     StatusChangeService,
     ProposalPdfService,
+    ProposalSyncService,
+    AcptPluginClient,
   ],
-  exports: [ProposalCrudService],
+  exports: [ProposalCrudService, ProposalSyncService],
 })
 export class ProposalModule {}

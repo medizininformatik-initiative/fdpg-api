@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { SyncStatus } from '../../enums/sync-status.enum';
 
 @Schema({ _id: false })
 export class RegisterInfo {
@@ -12,9 +13,8 @@ export class RegisterInfo {
     type: String,
     required: false,
   })
-  originalProposalId?: string; // Reference to the original proposal if this is a copy
+  originalProposalId?: string;
 
-  // Register-specific fields (moved from generalProjectInformation)
   @Prop({
     type: String,
     required: false,
@@ -44,6 +44,38 @@ export class RegisterInfo {
     default: [],
   })
   procedures: string[];
+
+  // Sync fields for ACPT-Plugin integration
+  @Prop({
+    type: String,
+    enum: SyncStatus,
+    default: SyncStatus.NotSynced,
+  })
+  syncStatus: SyncStatus;
+
+  @Prop({
+    type: Date,
+    required: false,
+  })
+  lastSyncedAt?: Date;
+
+  @Prop({
+    type: String,
+    required: false,
+  })
+  lastSyncError?: string;
+
+  @Prop({
+    type: Number,
+    default: 0,
+  })
+  syncRetryCount: number;
+
+  @Prop({
+    type: String,
+    required: false,
+  })
+  acptPluginId?: string;
 
   _id: string;
 

@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { AcptProjectDto, AcptProjectResponseDto } from '../dto/acpt-plugin/acpt-project.dto';
+import { AcptProjectDto, AcptProjectResponseDto } from '../../proposal/dto/acpt-plugin/acpt-project.dto';
+import { DEFAULT_CIPHERS } from 'tls';
+import * as https from 'https';
 
 /**
  * Client for interacting with the ACPT WordPress Plugin API
@@ -16,41 +18,45 @@ import { AcptProjectDto, AcptProjectResponseDto } from '../dto/acpt-plugin/acpt-
 export class AcptPluginClient {
   private readonly apiClient: AxiosInstance;
   private readonly logger = new Logger(AcptPluginClient.name);
-  private readonly isMockMode: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const baseURL = this.configService.get<string>('ACPT_PLUGIN_BASE_URL');
     const username = this.configService.get<string>('ACPT_PLUGIN_USERNAME');
     const password = this.configService.get<string>('ACPT_PLUGIN_PASSWORD');
 
-    // Enable mock mode if ACPT_PLUGIN_MOCK_MODE is set to 'true'
-    this.isMockMode = this.configService.get<string>('ACPT_PLUGIN_MOCK_MODE') === 'true';
-
-    if (this.isMockMode) {
-      this.logger.warn('🧪 ACPT Plugin is running in MOCK MODE - API calls will be simulated');
-    }
-
-    if (!baseURL && !this.isMockMode) {
+    if (!baseURL) {
       this.logger.warn('ACPT_PLUGIN_BASE_URL is not configured. Sync functionality will not work.');
     }
 
-    if ((!username || !password) && !this.isMockMode) {
+    if (!username || !password) {
       this.logger.warn('ACPT_PLUGIN credentials are not configured. Sync functionality will not work.');
     }
+
+    const defaultCiphers = DEFAULT_CIPHERS.split(':');
+    const shuffledCiphers = [
+      defaultCiphers[0],
+      // Swap the 2nd & 3rd ciphers:
+      defaultCiphers[2],
+      defaultCiphers[1],
+      ...defaultCiphers.slice(3),
+    ].join(':');
+
+    const httpsAgent = new https.Agent({
+      ciphers: shuffledCiphers,
+      minVersion: 'TLSv1.3',
+    });
 
     this.apiClient = axios.create({
       baseURL,
       auth: username && password ? { username, password } : undefined,
       timeout: 60000, // 60 seconds for WordPress API
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9,de;q=0.8',
+        'User-Agent': 'FDPG-API-Client/1.0',
+        Accept: '*/*',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
       },
+      httpsAgent,
     });
   }
 
@@ -60,23 +66,6 @@ export class AcptPluginClient {
    * @returns The created project with WordPress post ID
    */
   async createProject(projectData: AcptProjectDto): Promise<AcptProjectResponseDto> {
-    // Mock mode: simulate successful API call
-    if (this.isMockMode) {
-      const mockId = `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      this.logger.log(`🧪 MOCK: Creating project "${projectData.title}" - Generated ID: ${mockId}`);
-      this.logger.log('📤 MOCK PAYLOAD THAT WOULD BE SENT:');
-      this.logger.log(JSON.stringify(projectData, null, 2));
-
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      return {
-        id: mockId,
-        status: 'publish',
-        message: 'Mock project created successfully',
-      };
-    }
-
     try {
       this.logger.log(`Creating project in ACPT Plugin: ${projectData.title}`);
       this.logger.log('📤 SENDING PAYLOAD TO ACPT PLUGIN API:');
@@ -105,22 +94,6 @@ export class AcptPluginClient {
    * @returns The updated project
    */
   async updateProject(projectId: string, projectData: AcptProjectDto): Promise<AcptProjectResponseDto> {
-    // Mock mode: simulate successful API call
-    if (this.isMockMode) {
-      this.logger.log(`🧪 MOCK: Updating project "${projectData.title}" with ID: ${projectId}`);
-      this.logger.log('📤 MOCK PAYLOAD THAT WOULD BE SENT:');
-      this.logger.log(JSON.stringify(projectData, null, 2));
-
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      return {
-        id: projectId,
-        status: 'publish',
-        message: 'Mock project updated successfully',
-      };
-    }
-
     try {
       this.logger.log(`Updating project in ACPT Plugin: ${projectId}`);
       this.logger.log('📤 SENDING PAYLOAD TO ACPT PLUGIN API:');
@@ -147,12 +120,6 @@ export class AcptPluginClient {
    * @returns true if the plugin is accessible
    */
   async healthCheck(): Promise<boolean> {
-    // Mock mode: always return true
-    if (this.isMockMode) {
-      this.logger.log('🧪 MOCK: Health check passed');
-      return true;
-    }
-
     try {
       const baseURL = this.configService.get<string>('ACPT_PLUGIN_BASE_URL');
       if (!baseURL) {

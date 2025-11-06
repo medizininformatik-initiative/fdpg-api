@@ -42,8 +42,10 @@ export const validateStatusChange = (
       [ProposalStatus.Rework]: () => isFdpg(user),
       [ProposalStatus.Rejected]: () => isFdpg(user),
       [ProposalStatus.LocationCheck]: () => isFdpg(user),
-      // Only allow ReadyToPublish for register proposals
+      // Only allow ReadyToPublish for register proposals (deprecated - keeping for backwards compatibility)
       [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.type === ProposalType.RegisteringForm,
+      // Allow direct approval to Published for registering forms (auto-sync)
+      [ProposalStatus.Published]: () => isFdpg(user) && toBeUpdated.type === ProposalType.RegisteringForm,
     },
     [ProposalStatus.LocationCheck]: {
       // Contracting is supposed to be started by uploading the contract draft

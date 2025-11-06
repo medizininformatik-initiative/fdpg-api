@@ -12,11 +12,8 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
     throwForbiddenError('Proposal is currently locked to modifications');
   }
 
-  if (
-    user.singleKnownRole === Role.FdpgMember &&
-    proposal.type === ProposalType.RegisteringForm &&
-    proposal.registerInfo?.isInternalRegistration
-  ) {
+  if (user.singleKnownRole === Role.FdpgMember) {
+    checkAccessForFdpgMember(proposal, willBeModified);
     return;
   }
 
@@ -38,10 +35,6 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
 
   if (user.singleKnownRole === Role.RegisteringMember) {
     checkAccessForRegisteringMember(proposal, user);
-  }
-
-  if (user.singleKnownRole === Role.FdpgMember) {
-    checkAccessForFdpgMember(proposal, willBeModified);
   }
 
   if (user.singleKnownRole === Role.DataSourceMember) {
@@ -79,6 +72,14 @@ const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequ
   if (!isOwner && !isParticipatingScientist(proposal, user)) {
     throwForbiddenError(
       `Proposal has a different owner than this registering member and is not in the list of participating researchers`,
+    );
+  }
+
+  // ZARS-29: RegisteringMembers cannot edit Published forms
+  // Only FDPG members can edit Published forms (via the sync functionality)
+  if (proposal.type === ProposalType.RegisteringForm && proposal.status === ProposalStatus.Published) {
+    throwForbiddenError(
+      'Published registering forms can only be edited by FDPG members. Changes will be synced to the website.',
     );
   }
 };

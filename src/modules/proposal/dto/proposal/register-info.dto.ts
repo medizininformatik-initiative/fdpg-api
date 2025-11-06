@@ -1,8 +1,9 @@
 import { Expose } from 'class-transformer';
-import { IsArray, IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
+import { SyncStatus } from '../../enums/sync-status.enum';
 
 export class RegisterInfoDto extends WithIdForObjectDto {
   @Expose()
@@ -43,4 +44,29 @@ export class RegisterInfoDto extends WithIdForObjectDto {
   @IsOptional()
   @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsRegister] })
   procedures?: string[];
+
+  // Sync fields (managed by system, not user input)
+  @Expose()
+  @IsEnum(SyncStatus)
+  @IsOptional()
+  syncStatus?: SyncStatus;
+
+  @Expose()
+  @IsOptional()
+  lastSyncedAt?: Date;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  lastSyncError?: string;
+
+  @Expose()
+  @IsNumber()
+  @IsOptional()
+  syncRetryCount?: number;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  acptPluginId?: string;
 }

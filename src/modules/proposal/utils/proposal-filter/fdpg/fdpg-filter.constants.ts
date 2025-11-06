@@ -1,6 +1,7 @@
 import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
 import { ProposalType } from 'src/modules/proposal/enums/proposal-type.enum';
+import { SyncStatus } from 'src/modules/proposal/enums/sync-status.enum';
 import { FilterQuery } from 'mongoose';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 
@@ -46,7 +47,7 @@ const PUBLISHED_DRAFT = {
 const PUBLISHED_PENDING = {
   type: ProposalType.RegisteringForm,
   'registerInfo.isInternalRegistration': { $ne: true },
-  status: { $in: [ProposalStatus.Rework, ProposalStatus.FdpgCheck, ProposalStatus.ReadyToPublish] },
+  status: { $in: [ProposalStatus.Rework, ProposalStatus.FdpgCheck] },
 };
 const PUBLISHED_COMPLETED = {
   type: ProposalType.RegisteringForm,
@@ -56,8 +57,18 @@ const PUBLISHED_COMPLETED = {
 
 // FDPG Published page panels
 const FDPG_PUBLISHED_REQUESTED = { type: ProposalType.RegisteringForm, status: ProposalStatus.FdpgCheck };
-const FDPG_PUBLISHED_READY = { type: ProposalType.RegisteringForm, status: ProposalStatus.ReadyToPublish };
-const FDPG_PUBLISHED_PUBLISHED = { type: ProposalType.RegisteringForm, status: ProposalStatus.Published };
+const FDPG_PUBLISHED_READY: FilterQuery<Proposal> = {
+  type: ProposalType.RegisteringForm,
+  status: ProposalStatus.Published,
+  'registerInfo.syncStatus': {
+    $in: [SyncStatus.OutOfSync, SyncStatus.SyncFailed, SyncStatus.Syncing],
+  },
+};
+const FDPG_PUBLISHED_PUBLISHED = {
+  type: ProposalType.RegisteringForm,
+  status: ProposalStatus.Published,
+  'registerInfo.syncStatus': SyncStatus.Synced,
+};
 const FDPG_PUBLISHED_DRAFT = {
   type: ProposalType.RegisteringForm,
   'registerInfo.isInternalRegistration': true,
