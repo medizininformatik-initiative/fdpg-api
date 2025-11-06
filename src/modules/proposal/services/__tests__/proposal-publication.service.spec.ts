@@ -3,7 +3,6 @@ import { ProposalCrudService } from '../proposal-crud.service';
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProposalPublicationService } from '../proposal-publication.service';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { Role } from 'src/shared/enums/role.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
@@ -33,7 +32,7 @@ const request = {
     email_verified: true,
     roles: [Role.Researcher],
     singleKnownRole: Role.Researcher,
-    miiLocation: MiiLocation.UKL,
+    miiLocation: 'UKL',
     isFromLocation: false,
     isKnownLocation: true,
   },

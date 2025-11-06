@@ -151,6 +151,8 @@ export class KeycloakService {
     } catch (error) {
       if (error instanceof AxiosError && error.response.status === 404) {
         throw new NotFoundException('Could not find user with userId: ' + userId);
+      } else {
+        console.error(error);
       }
     }
   }

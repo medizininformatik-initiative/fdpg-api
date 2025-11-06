@@ -1,6 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { Role } from 'src/shared/enums/role.enum';
@@ -42,7 +41,7 @@ export const filterAllowedAnswers = (user: IRequestUser, comment: CommentDocumen
   if (user.isFromLocation) {
     return comment.answers.filter((answer) =>
       answer.locations.some((location) => {
-        return location === user.miiLocation || location === MiiLocation.VirtualAll;
+        return location === user.miiLocation;
       }),
     );
   } else {
@@ -55,7 +54,7 @@ export const filterAllowedAnswers = (user: IRequestUser, comment: CommentDocumen
  * @param mainComment Main CommentDocument
  * @returns MiiLocations of all comments
  */
-export const getAnswersLocations = (mainComment: CommentDocument): MiiLocation[] => {
+export const getAnswersLocations = (mainComment: CommentDocument): string[] => {
   const answersLocations = mainComment.answers.reduce((locSet, answer) => {
     answer.locations.forEach((location) => {
       if (location) {
@@ -63,9 +62,9 @@ export const getAnswersLocations = (mainComment: CommentDocument): MiiLocation[]
       }
     });
     return locSet;
-  }, new Set<MiiLocation>(mainComment.locations));
+  }, new Set<string>(mainComment.locations));
 
-  return answersLocations.has(MiiLocation.VirtualAll) ? [MiiLocation.VirtualAll] : [...answersLocations];
+  return [...answersLocations];
 };
 
 interface IGetAnswer {

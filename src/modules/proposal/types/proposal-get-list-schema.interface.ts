@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { ConditionalApproval } from '../schema/sub-schema/conditional-approval.schema';
 import { FdpgTask } from '../schema/sub-schema/fdpg-task.schema';
@@ -22,12 +21,12 @@ export interface IProposalGetListSchema {
   registerInfo?: Partial<RegisterInfo>;
   numberOfRequestedLocations?: number;
   numberOfApprovedLocations?: number;
-  openDizChecks: MiiLocation[];
-  dizApprovedLocations: MiiLocation[];
-  openDizConditionChecks: MiiLocation[];
-  uacApprovedLocations: MiiLocation[];
-  signedContracts: MiiLocation[];
-  requestedButExcludedLocations: MiiLocation[];
+  openDizChecks: string[];
+  dizApprovedLocations: string[];
+  openDizConditionChecks: string[];
+  uacApprovedLocations: string[];
+  signedContracts: string[];
+  requestedButExcludedLocations: string[];
   requestedData: Pick<RequestedData, 'desiredDataAmount'>;
   totalPromisedDataAmount?: number;
   totalContractedDataAmount?: number;

@@ -17,6 +17,8 @@ import {
   Migration016,
   Migration017,
   Migration018,
+  Migration019,
+  Migration020,
   Migration021,
 } from './migrations';
 import { Migration, MigrationDocument } from './schema/migration.schema';
@@ -25,6 +27,8 @@ import { DataPrivacyConfig, DataPrivacyConfigDocument } from '../admin/schema/da
 import { Proposal, ProposalDocument } from '../proposal/schema/proposal.schema';
 import { ProposalForm } from '../proposal-form/schema/proposal-form.schema';
 import { ProposalFormService } from '../proposal-form/proposal-form.service';
+import { Location, LocationDocument } from '../location/schema/location.schema';
+import { Comment, CommentDocument } from '../comment/schema/comment.schema';
 
 @Injectable()
 export class MigrationService implements OnModuleInit {
@@ -43,6 +47,10 @@ export class MigrationService implements OnModuleInit {
     @InjectModel(ProposalForm.name)
     private proposalFormModel: Model<ProposalForm>,
     private proposalFormService: ProposalFormService,
+    @InjectModel(Location.name)
+    private locationModel: Model<LocationDocument>,
+    @InjectModel(Comment.name)
+    private commentModel: Model<CommentDocument>,
   ) {
     this.migrations = {
       0: new Migration000(this.migrationModel, this.termsConfigModel, this.dataPrivacyConfigModel),
@@ -64,6 +72,8 @@ export class MigrationService implements OnModuleInit {
       16: new Migration016(this.proposalModel),
       17: new Migration017(this.proposalModel),
       18: new Migration018(this.dataPrivacyConfigModel),
+      19: new Migration019(this.locationModel),
+      20: new Migration020(this.proposalModel, this.commentModel),
       21: new Migration021(this.proposalModel),
     };
   }
@@ -73,10 +83,7 @@ export class MigrationService implements OnModuleInit {
   // Migration downgrades are not supported while downgrading the software version. So it's disabled by default.
   private readonly preventDowngrade = true;
 
-  private readonly dummyMigration: IDbMigration = {
-    up: async () => {},
-    down: async () => {},
-  };
+  private readonly dummyMigration: IDbMigration = { up: async () => {}, down: async () => {} };
 
   private async runMigration(currentVersion?: number) {
     if (currentVersion === undefined) {

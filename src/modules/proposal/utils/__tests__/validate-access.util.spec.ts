@@ -4,7 +4,6 @@ import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalType } from '../../enums/proposal-type.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { Role } from 'src/shared/enums/role.enum';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import {
   checkAccessForDizMember,
   checkAccessForUacMember,
@@ -64,14 +63,14 @@ describe('validateProposalAccess', () => {
     dizUser = {
       singleKnownRole: Role.DizMember,
       userId: 'diz-id',
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       email: 'diz@example.com',
     } as IRequestUser;
 
     uacUser = {
       singleKnownRole: Role.UacMember,
       userId: 'uac-id',
-      miiLocation: MiiLocation.UKL,
+      miiLocation: 'UKL',
       email: 'uac@example.com',
     } as IRequestUser;
   });
@@ -228,7 +227,7 @@ describe('validateProposalAccess', () => {
 
     it('throws if location not assigned in any valid state', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      // no openDizChecks, openDizConditionChecks, dizApprovedLocations, uacApprovedLocations, signedContracts, requestedButExcludedLocations include MiiLocation.UKL
+      // no openDizChecks, openDizConditionChecks, dizApprovedLocations, uacApprovedLocations, signedContracts, requestedButExcludedLocations include 'UKL'
       baseProposal.openDizChecks = [];
       baseProposal.openDizConditionChecks = [];
       baseProposal.dizApprovedLocations = [];
@@ -240,37 +239,37 @@ describe('validateProposalAccess', () => {
 
     it('allows if isDizCheck', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.openDizChecks = [MiiLocation.UKL];
+      baseProposal.openDizChecks = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, dizUser)).not.toThrow();
     });
 
     it('allows if openDizConditionChecks', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.openDizConditionChecks = [MiiLocation.UKL];
+      baseProposal.openDizConditionChecks = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, dizUser)).not.toThrow();
     });
 
     it('allows if dizApprovedLocations', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.dizApprovedLocations = [MiiLocation.UKL];
+      baseProposal.dizApprovedLocations = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, dizUser)).not.toThrow();
     });
 
     it('allows if uacApprovedLocations', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.uacApprovedLocations = [MiiLocation.UKL];
+      baseProposal.uacApprovedLocations = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, dizUser)).not.toThrow();
     });
 
     it('allows if signedContracts', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.signedContracts = [MiiLocation.UKL];
+      baseProposal.signedContracts = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, dizUser)).not.toThrow();
     });
 
     it('allows if requestedButExcludedLocations', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.requestedButExcludedLocations = [MiiLocation.UKL];
+      baseProposal.requestedButExcludedLocations = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, dizUser)).not.toThrow();
     });
   });
@@ -294,37 +293,37 @@ describe('validateProposalAccess', () => {
 
     it('allows if isDizCheck', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.openDizChecks = [MiiLocation.UKL];
+      baseProposal.openDizChecks = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, uacUser)).not.toThrow();
     });
 
     it('allows if openDizConditionChecks', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.openDizConditionChecks = [MiiLocation.UKL];
+      baseProposal.openDizConditionChecks = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, uacUser)).not.toThrow();
     });
 
     it('allows if dizApprovedLocations', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.dizApprovedLocations = [MiiLocation.UKL];
+      baseProposal.dizApprovedLocations = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, uacUser)).not.toThrow();
     });
 
     it('allows if uacApprovedLocations', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.uacApprovedLocations = [MiiLocation.UKL];
+      baseProposal.uacApprovedLocations = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, uacUser)).not.toThrow();
     });
 
     it('allows if signedContracts', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.signedContracts = [MiiLocation.UKL];
+      baseProposal.signedContracts = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, uacUser)).not.toThrow();
     });
 
     it('allows if requestedButExcludedLocations', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      baseProposal.requestedButExcludedLocations = [MiiLocation.UKL];
+      baseProposal.requestedButExcludedLocations = ['UKL'];
       expect(() => validateProposalAccess(baseProposal, uacUser)).not.toThrow();
     });
   });

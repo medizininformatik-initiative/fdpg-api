@@ -2,7 +2,6 @@ import { ForbiddenException } from '@nestjs/common';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { Proposal } from '../schema/proposal.schema';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
@@ -57,7 +56,7 @@ export const validateUacApproval = (proposal: Proposal, user: IRequestUser) => {
   }
 };
 
-export const validateRevertLocationVote = (proposal: Proposal, location: MiiLocation, user: IRequestUser) => {
+export const validateRevertLocationVote = (proposal: Proposal, location: string, user: IRequestUser) => {
   const isOpenDizCheck = proposal.openDizChecks.includes(location);
 
   if (isOpenDizCheck) {

@@ -1,4 +1,3 @@
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { CountryCode } from 'src/shared/enums/country-code.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { KeycloakLocale } from '../enums/keycloak-locale.enum';
@@ -14,7 +13,7 @@ export interface IBaseKeycloakUser {
   email: string;
   attributes?: {
     locale?: KeycloakLocale[];
-    MII_LOCATION?: MiiLocation[];
+    MII_LOCATION?: string[];
     terms_and_conditions?: string[];
     affiliation?: string[];
     assignedDataSources?: any;
@@ -48,9 +47,13 @@ export interface IGetKeycloakUser extends IBaseKeycloakUser {
   totp: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ICreateKeycloakUser extends IBaseKeycloakUser {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ICachedKeycloakUser extends Pick<IGetKeycloakUser, 'id' | 'email' | 'attributes'> {}
 
 // All existing attributes must be merged to the update. Otherwise only updated will be persisted
-export interface IUpdateKeycloakProfile extends Pick<IBaseKeycloakUser, 'firstName' | 'lastName' | 'attributes'> {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface IUpdateKeycloakProfile
+  extends Pick<IBaseKeycloakUser, 'firstName' | 'lastName' | 'attributes' | 'email'> {}

@@ -2,17 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ALL_LOCATIONS, INACTIVE_LOCATIONS } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { JwksProvider } from './jwks.provider';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     protected readonly configService: ConfigService,
     protected readonly jwksProvider: JwksProvider,
+    protected readonly locationService: LocationService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -27,11 +28,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(req: Request, payload: any): Promise<IRequestUser> {
     // Validation is performed in jwt-auth.guard.ts
 
+    const locations = await this.locationService.findAll();
+
+    const locationSet = new Set(locations.map((loc) => loc._id));
+    const deprecatedLocations = new Set(locations.filter((loc) => loc.deprecated).map((loc) => loc._id));
+
     const roles = payload.realm_access?.roles ?? [];
     const singleKnownRole = roles.find((role) => role === req.headers['x-selected-role']);
     const isFromLocation = singleKnownRole === Role.DizMember || singleKnownRole === Role.UacMember;
-    const isKnownLocation = ALL_LOCATIONS.includes(payload.MII_LOCATION);
-    const isInactiveLocation = INACTIVE_LOCATIONS.includes(payload.MII_LOCATION);
+    const isKnownLocation = locationSet.has(payload.MII_LOCATION);
+    const isInactiveLocation = deprecatedLocations.has(payload.MII_LOCATION);
 
     const assignedDataSources: PlatformIdentifier[] = (payload.assignedDataSources?.split(';') ?? [])
       .map((raw) => raw.trim()) // strip whitespace

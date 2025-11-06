@@ -1,7 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { Role } from 'src/shared/enums/role.enum';
@@ -119,7 +118,7 @@ export class ProposalContractingService {
     await toBeUpdated.save();
   }
 
-  async revertLocationVote(proposalId: string, location: MiiLocation, user: IRequestUser): Promise<void> {
+  async revertLocationVote(proposalId: string, location: string, user: IRequestUser): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     validateRevertLocationVote(toBeUpdated, location, user);
 
