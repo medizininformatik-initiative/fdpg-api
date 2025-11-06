@@ -8,6 +8,7 @@ import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
 import { Comment, getCommentSchemaFactory } from 'src/modules/comment/schema/comment.schema';
 import { Connection } from 'mongoose';
 import { Location } from 'src/modules/location/schema/location.schema';
+import { ParseOptionalBodyPipe } from './utils/optional-body-pipe.util';
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { Location } from 'src/modules/location/schema/location.schema';
     SchedulerModule,
   ],
   controllers: [],
-  providers: [SharedService],
-  exports: [SharedService],
+  providers: [SharedService, ParseOptionalBodyPipe],
+  exports: [SharedService, ParseOptionalBodyPipe],
 })
 export class SharedModule {}

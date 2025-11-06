@@ -63,6 +63,7 @@ import { ParticipantRole } from '../schema/sub-schema/participants/participant-r
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { FdpgChecklist } from '../schema/sub-schema/fdpg-checklist.schema';
+import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
 
 @Injectable()
 export class ProposalMiscService {
@@ -1060,5 +1061,19 @@ export class ProposalMiscService {
         });
       }
     }
+  }
+
+  async updateProjectAssignee(
+    proposalId: string,
+    user: IRequestUser,
+    projectAssigneeDto?: ProjectAssigneeDto,
+  ): Promise<void> {
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+
+    proposalDoc.set({
+      projectAssignee: projectAssigneeDto,
+    });
+
+    await proposalDoc.save();
   }
 }

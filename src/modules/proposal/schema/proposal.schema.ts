@@ -29,6 +29,7 @@ import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { addLocationPreSaveHook, Location } from 'src/modules/location/schema/location.schema';
 import { InstituteSchema } from './sub-schema/participants/institute.schema';
 import { AddresseesSchema } from './sub-schema/user-project/addressees.schema';
+import { ProjectAssignee, ProjectAssigneeSchema } from './sub-schema/project-assignee.schema';
 
 export type ProposalDocument = Proposal & Document;
 @Schema()
@@ -218,6 +219,9 @@ export class Proposal {
 
   @Prop({ type: Object, default: () => ({ ...defaultDueDateValues }) })
   deadlines: Record<DueDateEnum, Date | null>;
+
+  @Prop({ type: ProjectAssigneeSchema })
+  projectAssignee?: ProjectAssignee;
 }
 
 let ProposalSchema: MongooseSchema = undefined;
