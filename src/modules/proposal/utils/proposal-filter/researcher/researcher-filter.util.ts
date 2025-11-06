@@ -1,6 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
+import { ProposalType } from 'src/modules/proposal/enums/proposal-type.enum';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { FilterQuery } from 'mongoose';
@@ -54,7 +55,7 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
         },
       ],
       status: RESEARCHER_STATUS[panelQuery],
-      'register.isRegisteringForm': { $ne: true },
+      type: { $eq: ProposalType.ApplicationForm as ProposalType },
     };
   } else {
     throw new ForbiddenException();
