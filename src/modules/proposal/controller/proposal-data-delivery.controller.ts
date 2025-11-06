@@ -30,11 +30,6 @@ export class ProposalDataDeliveryController {
     @Param() { id }: MongoIdParamDto,
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto | null> {
-    console.log(
-      '%cthis.proposalDataDeliveryService.getDataDelivery():',
-      'color: #d83',
-      await this.proposalDataDeliveryService.getDataDelivery(id, user),
-    );
     return this.proposalDataDeliveryService.getDataDelivery(id, user);
   }
 
