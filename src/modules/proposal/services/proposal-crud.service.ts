@@ -246,7 +246,7 @@ export class ProposalCrudService {
     const document = await this.findDocument(
       proposalId,
       user,
-      { uploads: 1, reports: 1, owner: 1, status: 1, register: 1 },
+      { uploads: 1, reports: 1, owner: 1, status: 1, registerInfo: 1, type: 1 },
       true,
     );
     await this.sharedService.deleteProposalWithDependencies(document, user);
