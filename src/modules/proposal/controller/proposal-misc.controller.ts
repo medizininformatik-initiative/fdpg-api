@@ -369,7 +369,7 @@ export class ProposalMiscController {
   async updateProjectAssignee(
     @Param() { id }: MongoIdParamDto,
     @Request() { user }: FdpgRequest,
-    @Body(ParseOptionalBodyPipe) { projectAssignee }: { projectAssignee?: ProjectAssigneeDto },
+    @Body() { projectAssignee }: { projectAssignee?: ProjectAssigneeDto },
   ): Promise<void> {
     await this.proposalMiscService.updateProjectAssignee(id, user, projectAssignee);
   }
