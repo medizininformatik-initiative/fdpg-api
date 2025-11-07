@@ -36,7 +36,6 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
 };
 
 const getFilterQueryForComingUp = (user: IRequestUser): FilterQuery<Proposal> => {
-  console.log('COMING UP REQ');
   return {
     status: ProposalStatus.FdpgCheck,
     'userProject.addressees.desiredLocations': user.miiLocation,
