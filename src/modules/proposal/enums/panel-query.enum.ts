@@ -9,6 +9,7 @@ export enum PanelQuery {
   ResearcherFinished = 'RESEARCHER_FINISHED',
 
   // DIZ
+  DizComingUp = 'DIZ_COMING_UP',
   DizPending = 'DIZ_PENDING',
   DizOngoing = 'DIZ_ONGOING',
   DizFinished = 'DIZ_FINISHED',
