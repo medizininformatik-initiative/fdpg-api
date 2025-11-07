@@ -628,7 +628,7 @@ export class ProposalMiscService {
     const isEditableStatus = [ProposalStatus.Draft, ProposalStatus.Rework, ProposalStatus.FdpgCheck].includes(
       proposal.status,
     );
-    const isFdpgMember = [Role.FdpgMember, Role.DataSourceMember].includes(user.singleKnownRole);
+    const isFdpgMember = user.singleKnownRole === Role.FdpgMember;
 
     return isEditableStatus || isFdpgMember;
   }
