@@ -233,8 +233,6 @@ export class Proposal {
 
   @Prop({ type: Object, default: () => ({ ...defaultDueDateValues }) })
   deadlines: Record<DueDateEnum, Date | null>;
-  baseProposal: { isInternalRegistration: false };
-  register: any;
 }
 
 let ProposalSchema: MongooseSchema = undefined;

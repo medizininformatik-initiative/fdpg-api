@@ -120,13 +120,13 @@ export class StatusChangeService {
   }
 
   private async handleProposalReadyToPublish(proposal: Proposal, proposalUrl: string) {
-    // Handle ready to publish status - could send notifications to web team
+    // Handle ready to publish status - could send notifications
     // For now, this is a placeholder for future implementation
     console.log(`Proposal ${proposal.projectAbbreviation} is ready to publish`);
   }
 
   private async handleProposalPublished(proposal: Proposal, proposalUrl: string) {
-    // Handle published status - could send notifications to stakeholders
+    // Handle published status - could send notifications
     // For now, this is a placeholder for future implementation
     console.log(`Proposal ${proposal.projectAbbreviation} has been published`);
   }

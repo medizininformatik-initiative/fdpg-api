@@ -12,7 +12,7 @@ export class ProposalSyncController {
   constructor(private readonly proposalSyncService: ProposalSyncService) {}
 
   @Post('/:id/sync')
-  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.FdpgMember)
   @HttpCode(200)
   @ApiOperation({
     summary: 'Sync a single registering form to ACPT-Plugin (WordPress)',
@@ -30,7 +30,7 @@ export class ProposalSyncController {
   }
 
   @Post('/:id/retry-sync')
-  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.FdpgMember)
   @HttpCode(200)
   @ApiOperation({
     summary: 'Retry a failed sync',
@@ -44,7 +44,7 @@ export class ProposalSyncController {
   }
 
   @Post('/sync-all')
-  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.FdpgMember)
   @HttpCode(200)
   @ApiOperation({
     summary: 'Sync all registering forms that need syncing',
