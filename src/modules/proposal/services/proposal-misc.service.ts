@@ -5,7 +5,7 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { findByKeyNested } from 'src/shared/utils/find-by-key-nested.util';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { KeycloakService } from '../../user/keycloak.service';
-import { FdpgChecklistSetDto, FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
+import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
@@ -28,7 +28,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { isDateChangeValid, isDateOrderValid } from '../utils/due-date-verification.util';
 import { getDueDateChangeList, setDueDate } from '../utils/due-date.util';
 import { SchedulerService } from 'src/modules/scheduler/scheduler.service';
-import { IChecklist, IChecklistItem } from '../dto/proposal/checklist.types';
+import { IChecklistItem } from '../dto/proposal/checklist.types';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
@@ -63,7 +63,9 @@ import { ParticipantRole } from '../schema/sub-schema/participants/participant-r
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { Location } from 'src/modules/location/schema/location.schema';
-import { FdpgChecklist } from '../schema/sub-schema/fdpg-checklist.schema';
+import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
+import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
+import { HistoryEventType } from '../enums/history-event.enum';
 
 @Injectable()
 export class ProposalMiscService {
@@ -1051,5 +1053,26 @@ export class ProposalMiscService {
         });
       }
     }
+  }
+
+  async updateProjectAssignee(
+    proposalId: string,
+    user: IRequestUser,
+    projectAssigneeDto?: ProjectAssigneeDto,
+  ): Promise<void> {
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+
+    proposalDoc.set({
+      projectAssignee: projectAssigneeDto,
+    });
+
+    proposalDoc.history.push({
+      type: HistoryEventType.ProjectAssigneChange,
+      data: { newAssigneeMail: projectAssigneeDto ? projectAssigneeDto.email : '(removed)' },
+      proposalVersion: proposalDoc.version,
+      createdAt: new Date(),
+    });
+
+    await proposalDoc.save();
   }
 }

@@ -38,7 +38,6 @@ describe('UserController', () => {
           useValue: {
             createUser: jest.fn(),
             getUsers: jest.fn(),
-            getUserEmails: jest.fn(),
             updateProfile: jest.fn(),
             resendInvitation: jest.fn(),
             executeActionsEmailForPassword: jest.fn(),
@@ -48,6 +47,7 @@ describe('UserController', () => {
           provide: KeycloakUtilService,
           useValue: {
             filterForReceivingEmail: jest.fn(),
+            getUserEmails: jest.fn(),
           },
         },
         {
@@ -71,25 +71,25 @@ describe('UserController', () => {
       // Reset cache to return null (cache miss) by default
       cacheManager.get.mockResolvedValue(null);
       cacheManager.set.mockResolvedValue(undefined);
-      keycloakService.getUserEmails.mockReset();
+      keycloakUtilService.getUserEmails.mockReset();
     });
 
     it('should get all user emails with default settings', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: ['test@example.com'], total: 1 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
       keycloakUtilService.filterForReceivingEmail.mockReturnValue(true);
 
       const result = await controller.getUserEmails(query);
 
-      expect(keycloakService.getUserEmails).toHaveBeenCalledWith(query);
+      expect(keycloakUtilService.getUserEmails).toHaveBeenCalledWith(query);
       expect(result).toEqual(resultData);
     });
 
     it('should exclude users with unverified emails', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: ['test@example.com'], total: 1 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -99,7 +99,7 @@ describe('UserController', () => {
     it('should exclude users with required actions', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: ['test@example.com'], total: 1 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -109,7 +109,7 @@ describe('UserController', () => {
     it('should exclude users who disabled email notifications by default', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: [], total: 0 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -119,7 +119,7 @@ describe('UserController', () => {
     it('should handle empty user list', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: [], total: 0 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -129,7 +129,7 @@ describe('UserController', () => {
     it('should handle multiple valid users', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: ['test@example.com', 'test2@example.com'], total: 2 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -139,7 +139,7 @@ describe('UserController', () => {
     it('should filter emails by startsWith parameter', async () => {
       const query: UserQueryDto = { startsWith: 'tes' };
       const resultData = { emails: ['test@example.com', 'test2@example.com'], total: 2 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -149,7 +149,7 @@ describe('UserController', () => {
     it('should filter emails by startsWith parameter case insensitive', async () => {
       const query: UserQueryDto = { startsWith: 'TES' };
       const resultData = { emails: ['test@example.com', 'test2@example.com'], total: 2 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -159,7 +159,7 @@ describe('UserController', () => {
     it('should return empty array when no emails match startsWith parameter', async () => {
       const query: UserQueryDto = { startsWith: 'xyz' };
       const resultData = { emails: [], total: 0 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -169,7 +169,7 @@ describe('UserController', () => {
     it('should use cached users when available (cache hit)', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: ['test@example.com'], total: 1 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -179,7 +179,7 @@ describe('UserController', () => {
     it('should cache users for 1 hour when fetched from service (cache miss)', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: ['test@example.com'], total: 1 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
@@ -189,7 +189,7 @@ describe('UserController', () => {
     it('should exclude users without attributes or MII_LOCATION', async () => {
       const query: UserQueryDto = {};
       const resultData = { emails: ['test@example.com'], total: 1 };
-      keycloakService.getUserEmails.mockResolvedValue(resultData);
+      keycloakUtilService.getUserEmails.mockResolvedValue(resultData);
 
       const result = await controller.getUserEmails(query);
 
