@@ -4,6 +4,7 @@ export enum CacheKey {
   AllDizMember = 'CACHE_KEY_ALL_DIZ_MEMBER',
   AllUacMember = 'CACHE_KEY_ALL_UAC_MEMBER',
   AllDataSourceMembers = 'CACHE_KEY_ALL_DATA_SOURCE_MEMBER',
+  AllResearchers = 'CACHE_KEY_ALL_RESEARCHERS',
   AllUsers = 'CACHE_KEY_ALL_USERS',
   MiiLocations = 'CACHE_KEY_MII_LOCATIONS',
   MiiLocationsKeyLabel = 'CACHE_KEY_MII_LOCATIONS_KEY_LABEL',

@@ -8,6 +8,8 @@ import { ICachedKeycloakUser, IGetKeycloakUser } from './types/keycloak-user.int
 import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
 import { Proposal } from '../proposal/schema/proposal.schema';
 import { ProposalWithoutContent } from '../event-engine/types/proposal-without-content.type';
+import { UserQueryDto } from './dto/user-query.dto';
+import { UserEmailResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class KeycloakUtilService {
@@ -135,8 +137,8 @@ export class KeycloakUtilService {
     return await this.getMembers(Role.UacMember, CacheKey.AllUacMember, withFilterForReceivingMails);
   }
 
-  async getDmoMembers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
-    return this.getMembers(Role.DataManagementOffice, CacheKey.AllDmoUsers, withFilterForReceivingMails);
+  async getResearchers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
+    return await this.getMembers(Role.Researcher, CacheKey.AllResearchers, withFilterForReceivingMails);
   }
 
   private async getMembers(
@@ -160,5 +162,76 @@ export class KeycloakUtilService {
   filterForReceivingEmail(user: Pick<IGetKeycloakUser, 'attributes'>): boolean {
     const receiveEmailAttribute = user?.attributes?.receiveProposalEmails?.[0] ?? true;
     return typeof receiveEmailAttribute === 'string' ? receiveEmailAttribute === 'true' : receiveEmailAttribute;
+  }
+
+  private async getUsersForSearchQuerySearch(query: UserQueryDto): Promise<ICachedKeycloakUser[]> {
+    if (query.roles && query.roles.length > 0) {
+      const memberArray = await Promise.all(
+        query.roles.map(async (role) => {
+          switch (role) {
+            case Role.DataSourceMember:
+              if (!query.dataSources || query.dataSources.length === 0) {
+                console.error('No data sources attached for search query');
+                return [];
+              }
+              return (
+                await Promise.all(query.dataSources.map(async (ds) => await this.getDataSourceMembers(ds)))
+              ).flat();
+            case Role.FdpgMember:
+              return await this.getFdpgMembers();
+            case Role.Researcher:
+              return await this.getResearchers(false);
+            case Role.DizMember:
+              return await this.getDizMembers(false);
+            case Role.UacMember:
+              return await this.getUacMembers(false);
+            default:
+              console.error(`Couldn't map role '${role}' on search query`);
+              return [];
+          }
+        }),
+      );
+
+      const allMembers = memberArray.flat();
+
+      const uniqueMemberMap = new Map();
+      allMembers.forEach((member) => {
+        uniqueMemberMap.set(member.email, member);
+      });
+
+      return [...uniqueMemberMap.values()];
+    } else {
+      let allUsers: ICachedKeycloakUser[] = await this.cacheManager.get<IGetKeycloakUser[]>(CacheKey.AllUsers);
+
+      if (!allUsers) {
+        // cache for 1 hour
+        allUsers = await this.keycloakService.getUsers();
+        const oneHourInMs = 60 * 60 * 1000;
+        await this.cacheManager.set(CacheKey.AllUsers, allUsers, oneHourInMs);
+      }
+
+      return allUsers;
+    }
+  }
+
+  async getUserEmails(query: UserQueryDto): Promise<UserEmailResponseDto> {
+    const users = await this.getUsersForSearchQuerySearch(query);
+
+    const lowerCasedSearch = query.startsWith?.toLowerCase();
+    const emails = users.reduce<string[]>((acc, user) => {
+      if (!user.attributes?.MII_LOCATION) {
+        return acc;
+      }
+      if (lowerCasedSearch && !user.email.toLowerCase().startsWith(lowerCasedSearch)) {
+        return acc;
+      }
+      acc.push(user.email);
+
+      return acc;
+    }, []);
+    return {
+      emails,
+      total: emails.length,
+    };
   }
 }
