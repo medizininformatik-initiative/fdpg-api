@@ -29,6 +29,8 @@ import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { addLocationPreSaveHook, Location } from 'src/modules/location/schema/location.schema';
 import { InstituteSchema } from './sub-schema/participants/institute.schema';
 import { AddresseesSchema } from './sub-schema/user-project/addressees.schema';
+import { DataDelivery, DataDeliverySchema } from './sub-schema/data-delivery/data-delivery.schema';
+import { SubDeliverySchema } from './sub-schema/data-delivery/sub-delivery.schema';
 
 export type ProposalDocument = Proposal & Document;
 @Schema()
@@ -218,6 +220,9 @@ export class Proposal {
 
   @Prop({ type: Object, default: () => ({ ...defaultDueDateValues }) })
   deadlines: Record<DueDateEnum, Date | null>;
+
+  @Prop({ type: DataDeliverySchema, default: null })
+  dataDelivery?: DataDelivery | null;
 }
 
 let ProposalSchema: MongooseSchema = undefined;
@@ -308,6 +313,8 @@ const getProposalSchemaFactory = (LocationModel: Model<Location>) => {
   addLocationPreSaveHook(ConditionalApprovalSchema, ['location'], LocationModel);
   addLocationPreSaveHook(UacApprovalSchema, ['location'], LocationModel);
   addLocationPreSaveHook(AdditionalLocationInformationSchema, ['location'], LocationModel);
+  addLocationPreSaveHook(DataDeliverySchema, ['dataManagementSite'], LocationModel);
+  addLocationPreSaveHook(SubDeliverySchema, ['location'], LocationModel);
 
   return ProposalSchema;
 };
