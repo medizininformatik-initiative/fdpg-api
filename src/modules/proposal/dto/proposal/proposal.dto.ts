@@ -151,6 +151,11 @@ export class ProposalBaseDto {
   @Type(() => RegisterInfoDto)
   @IsOptional()
   registerInfo?: RegisterInfoDto;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  registerFormId?: string;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -520,6 +525,7 @@ export class ProposalGetListDto {
     this.selectedDataSources = dbProjection.selectedDataSources;
     this.type = dbProjection.type;
     this.registerInfo = dbProjection.registerInfo;
+    this.registerFormId = dbProjection.registerFormId;
 
     if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -571,6 +577,7 @@ export class ProposalGetListDto {
   selectedDataSources: PlatformIdentifier[];
   type: ProposalType;
   registerInfo?: RegisterInfoDto;
+  registerFormId?: string;
 }
 
 @Exclude()

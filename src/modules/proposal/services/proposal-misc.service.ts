@@ -961,7 +961,8 @@ export class ProposalMiscService {
 
     await this.statusChangeService.handleEffects(newProposal, null, user);
     const saveResult = await newProposal.save();
-
+    original.registerFormId = saveResult._id.toString();
+    await original.save();
     return saveResult._id.toString();
   }
 

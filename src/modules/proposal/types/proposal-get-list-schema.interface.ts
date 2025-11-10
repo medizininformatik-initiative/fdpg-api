@@ -19,6 +19,7 @@ export interface IProposalGetListSchema {
   submittedAt?: Date;
   dueDateForStatus?: Date;
   registerInfo?: Partial<RegisterInfo>;
+  registerFormId?: string;
   numberOfRequestedLocations?: number;
   numberOfApprovedLocations?: number;
   openDizChecks: string[];

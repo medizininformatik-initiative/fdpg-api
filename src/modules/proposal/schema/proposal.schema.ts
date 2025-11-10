@@ -84,6 +84,9 @@ export class Proposal {
   })
   registerInfo: RegisterInfo;
 
+  @Prop({ type: String })
+  registerFormId: string;
+
   @Prop({ type: Number, default: 0 })
   formVersion: number;
 
