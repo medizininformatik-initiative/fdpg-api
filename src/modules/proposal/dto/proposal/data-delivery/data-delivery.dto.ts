@@ -16,7 +16,7 @@ export class DataDeliveryUpdateDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => DeliveryInfoUpdateDto)
-  delivery?: DeliveryInfoUpdateDto | null;
+  delivery?: DeliveryInfoUpdateDto[] | null;
 }
 
 export class DataDeliveryGetDto {
@@ -29,7 +29,7 @@ export class DataDeliveryGetDto {
   @Expose()
   @Type(() => DeliveryInfoGetDto)
   @IsOptional()
-  delivery?: DeliveryInfoGetDto | null;
+  delivery?: DeliveryInfoGetDto[] | null;
 
   @Expose()
   @IsOptional()
