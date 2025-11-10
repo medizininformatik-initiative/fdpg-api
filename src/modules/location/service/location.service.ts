@@ -24,7 +24,7 @@ export class LocationService {
 
   private CACHE_DURATION_MS = 15 * 60 * 1000;
 
-  async findById(id: string): Promise<LocationDocument> {
+  async findById(id: string): Promise<LocationDocument | null> {
     return await this.locationModel.findById(id);
   }
 

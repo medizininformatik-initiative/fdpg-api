@@ -30,6 +30,6 @@ export enum PanelQuery {
   FdpgFinished = 'FDPG_FINISHED',
 
   // DataManagementOffice
-  DmoPending = 'DMO_PENDING',
-  DmoApproved = 'DMO_APPROVED',
+  DmsPending = 'DMS_PENDING',
+  DmsApproved = 'DMS_APPROVED',
 }

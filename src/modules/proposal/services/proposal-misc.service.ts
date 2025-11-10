@@ -62,6 +62,7 @@ import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { LocationService } from 'src/modules/location/service/location.service';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 @Injectable()
 export class ProposalMiscService {
@@ -721,7 +722,10 @@ export class ProposalMiscService {
       throw new NotFoundException('Proposal not found');
     }
 
-    validateProposalAccess(proposal, user, true);
+    const userLocationDoc = await this.locationService.findById(user.miiLocation);
+    const userLocation = userLocationDoc?.toObject() as Location;
+
+    validateProposalAccess(proposal, user, userLocation, true);
 
     // Only DIZ members can create DIZ details
     if (user.singleKnownRole !== Role.DizMember) {
@@ -764,7 +768,10 @@ export class ProposalMiscService {
       throw new NotFoundException('Proposal not found');
     }
 
-    validateProposalAccess(proposal, user, true);
+    const userLocationDoc = await this.locationService.findById(user.miiLocation);
+    const userLocation = userLocationDoc?.toObject() as Location;
+
+    validateProposalAccess(proposal, user, userLocation, true);
 
     // Only DIZ members can update DIZ details
     if (user.singleKnownRole !== Role.DizMember) {
