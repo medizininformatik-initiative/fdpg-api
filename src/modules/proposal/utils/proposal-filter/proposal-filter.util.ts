@@ -8,6 +8,7 @@ import { getFilterForResearcher } from './researcher/researcher-filter.util';
 import { getFilterForFdpg } from './fdpg/fdpg-filter.util';
 import { getFilterForDiz } from './diz/diz-filter.util';
 import { getFilterForUac } from './uac/uac-filter.util';
+import { getFilterForDmo } from './dmo/dmo-filter.util';
 
 export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
   switch (user.singleKnownRole) {
@@ -24,6 +25,8 @@ export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): F
         ...getFilterForFdpg(panelQuery),
         selectedDataSources: { $in: user.assignedDataSources },
       };
+    case Role.DataManagementOffice:
+      return getFilterForDmo(panelQuery, user);
 
     default:
       throw new ForbiddenException();

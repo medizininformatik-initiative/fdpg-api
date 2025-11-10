@@ -313,6 +313,7 @@ describe('ProposalMiscService', () => {
           provide: LocationService,
           useValue: {
             findAll: jest.fn(),
+            findById: jest.fn().mockImplementation(() => undefined),
           },
         },
       ],
