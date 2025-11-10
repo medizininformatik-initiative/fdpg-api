@@ -25,6 +25,15 @@ export class FdpgChecklist {
   @Prop({ type: Boolean, default: false })
   isRegistrationLinkSent: boolean = false;
 
+  @Prop({ type: Boolean, default: false })
+  initialViewing: boolean = false;
+
+  @Prop({ type: Boolean, default: false })
+  depthCheck: boolean = false;
+
+  @Prop({ type: Boolean, default: false })
+  ethicsCheck: boolean = false;
+
   @Prop({
     type: [{ ...checklistItemSchema, sublist: [checklistItemSchema] }],
     default: DEFAULT_CHECKLIST_ITEMS,
