@@ -138,8 +138,8 @@ export class CommentEventService {
         throw Error(`DMS Location of proposal ${proposal._id} is undefined`);
       }
 
-      const validFdpgContacts = await this.keycloakUtilService
-        .getDmoMembers()
+      const validDmsContacts = await this.keycloakUtilService
+        .getDmsMembers()
         .then((members) => this.keycloakUtilService.getLocationContacts([dmsLocation], members));
 
       console.log('TODO implement e-mail for dms on comment');
