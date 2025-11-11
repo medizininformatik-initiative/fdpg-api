@@ -97,39 +97,39 @@ describe('validateProposalAccess', () => {
   describe('FdpgMember branch', () => {
     it('throws if status is Draft and willBeModified=true', () => {
       baseProposal.status = ProposalStatus.Draft;
-      expect(() => validateProposalAccess(baseProposal, fdpgUser, true)).toThrow(ForbiddenException);
+      expect(() => validateProposalAccess(baseProposal, fdpgUser, null, true)).toThrow(ForbiddenException);
     });
 
     it('allows if status is Draft but willBeModified=false', () => {
       baseProposal.status = ProposalStatus.Draft;
-      expect(() => validateProposalAccess(baseProposal, fdpgUser, false)).not.toThrow();
+      expect(() => validateProposalAccess(baseProposal, fdpgUser, null, false)).not.toThrow();
     });
 
     it('allows non-draft regardless of willBeModified', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
-      expect(() => validateProposalAccess(baseProposal, fdpgUser, true)).not.toThrow();
-      expect(() => validateProposalAccess(baseProposal, fdpgUser, false)).not.toThrow();
+      expect(() => validateProposalAccess(baseProposal, fdpgUser, null, true)).not.toThrow();
+      expect(() => validateProposalAccess(baseProposal, fdpgUser, null, false)).not.toThrow();
     });
   });
 
   describe('DataSourceMember branch', () => {
     it('throws if status is Draft and willBeModified=true', () => {
       baseProposal.status = ProposalStatus.Draft;
-      expect(() => validateProposalAccess(baseProposal, dataSourceUser, true)).toThrow(ForbiddenException);
+      expect(() => validateProposalAccess(baseProposal, dataSourceUser, null, true)).toThrow(ForbiddenException);
     });
 
     it('throws if no data source overlap', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
       baseProposal.selectedDataSources = [PlatformIdentifier.DIFE];
       dataSourceUser.assignedDataSources = [PlatformIdentifier.Mii];
-      expect(() => validateProposalAccess(baseProposal, dataSourceUser, false)).toThrow(ForbiddenException);
+      expect(() => validateProposalAccess(baseProposal, dataSourceUser, null, false)).toThrow(ForbiddenException);
     });
 
     it('allows if has data source overlap', () => {
       baseProposal.status = ProposalStatus.LocationCheck;
       baseProposal.selectedDataSources = [PlatformIdentifier.Mii];
       dataSourceUser.assignedDataSources = [PlatformIdentifier.Mii];
-      expect(() => validateProposalAccess(baseProposal, dataSourceUser, true)).not.toThrow();
+      expect(() => validateProposalAccess(baseProposal, dataSourceUser, null, true)).not.toThrow();
     });
   });
 

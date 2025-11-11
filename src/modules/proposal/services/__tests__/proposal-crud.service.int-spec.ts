@@ -312,6 +312,9 @@ const getDummyProposal = (): Proposal => {
     },
     fdpgChecklist: {
       isRegistrationLinkSent: true,
+      initialViewing: true,
+      depthCheck: true,
+      ethicsCheck: true,
       checkListVerification: [],
       fdpgInternalCheckNotes: null,
       projectProperties: [],

@@ -62,6 +62,10 @@ import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { LocationService } from 'src/modules/location/service/location.service';
+import { Location } from 'src/modules/location/schema/location.schema';
+import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
+import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
+import { HistoryEventType } from '../enums/history-event.enum';
 
 @Injectable()
 export class ProposalMiscService {
@@ -240,6 +244,27 @@ export class ProposalMiscService {
       return {
         _id: 'isRegistrationLinkSent',
         isRegistrationLinkSent: toBeUpdated.fdpgChecklist.isRegistrationLinkSent,
+      } as any;
+    }
+
+    if (checklistUpdate.initialViewing !== undefined) {
+      return {
+        _id: 'initialViewing',
+        initialViewing: toBeUpdated.fdpgChecklist.initialViewing,
+      } as any;
+    }
+
+    if (checklistUpdate.depthCheck !== undefined) {
+      return {
+        _id: 'depthCheck',
+        depthCheck: toBeUpdated.fdpgChecklist.depthCheck,
+      } as any;
+    }
+
+    if (checklistUpdate.ethicsCheck !== undefined) {
+      return {
+        _id: 'ethicsCheck',
+        ethicsCheck: toBeUpdated.fdpgChecklist.ethicsCheck,
       } as any;
     }
 
@@ -617,16 +642,19 @@ export class ProposalMiscService {
   }
 
   private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
-    const isEditableStatus = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.FdpgCheck;
+    const isEditableStatus = [ProposalStatus.Draft, ProposalStatus.Rework, ProposalStatus.FdpgCheck].includes(
+      proposal.status,
+    );
     const isFdpgMember = user.singleKnownRole === Role.FdpgMember;
 
     return isEditableStatus || isFdpgMember;
   }
+
   async updateParticipants(id: string, participants: Participant[], user: IRequestUser) {
     const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
 
     if (!this.canUpdateParticipants(proposal, user)) {
-      throw new ForbiddenException('Only FDPG members can update participants after draft/FDPG_CHECK status');
+      throw new ForbiddenException('Only FDPG members can update participants after DRAFT/REWORK/FDPG_CHECK status');
     }
 
     const oldParticipants = [...proposal.participants];
@@ -721,7 +749,10 @@ export class ProposalMiscService {
       throw new NotFoundException('Proposal not found');
     }
 
-    validateProposalAccess(proposal, user, true);
+    const userLocationDoc = await this.locationService.findById(user.miiLocation);
+    const userLocation = userLocationDoc?.toObject() as Location;
+
+    validateProposalAccess(proposal, user, userLocation, true);
 
     // Only DIZ members can create DIZ details
     if (user.singleKnownRole !== Role.DizMember) {
@@ -764,7 +795,10 @@ export class ProposalMiscService {
       throw new NotFoundException('Proposal not found');
     }
 
-    validateProposalAccess(proposal, user, true);
+    const userLocationDoc = await this.locationService.findById(user.miiLocation);
+    const userLocation = userLocationDoc?.toObject() as Location;
+
+    validateProposalAccess(proposal, user, userLocation, true);
 
     // Only DIZ members can update DIZ details
     if (user.singleKnownRole !== Role.DizMember) {
@@ -854,8 +888,8 @@ export class ProposalMiscService {
   ): Promise<ProposalGetDto> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
-    if (!this.canUpdateApplicantParticipantRole(proposal, user)) {
-      throw new ForbiddenException('You do not have permission to update applicant participant role');
+    if (!this.canUpdateParticipants(proposal, user)) {
+      throw new ForbiddenException('Only FDPG members can update participants after DRAFT/REWORK/FDPG_CHECK status');
     }
 
     const isBecomingResponsibleScientist = updateDto.participantRole?.role === ParticipantRoleType.ResponsibleScientist;
@@ -928,8 +962,8 @@ export class ProposalMiscService {
   ): Promise<ProposalGetDto> {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
-    if (!this.canUpdateApplicantParticipantRole(proposal, user)) {
-      throw new ForbiddenException('You do not have permission to change the responsible scientist');
+    if (!this.canUpdateParticipants(proposal, user)) {
+      throw new ForbiddenException('Only FDPG members can update participants after DRAFT/REWORK/FDPG_CHECK status');
     }
 
     const participantIndex = proposal.participants.findIndex((p) => p._id.toString() === participantId);
@@ -992,25 +1026,6 @@ export class ProposalMiscService {
     });
   }
 
-  private canUpdateApplicantParticipantRole(proposal: any, user: IRequestUser): boolean {
-    // Allow FDPG members and DataSource members to update applicant participant role
-    if ([Role.FdpgMember, Role.DataSourceMember].includes(user.singleKnownRole)) {
-      return true;
-    }
-
-    // Allow researchers to update their own proposal if it's in draft/FDPG_CHECK/Rework status
-    if (
-      user.singleKnownRole === Role.Researcher &&
-      (proposal.status === ProposalStatus.Draft ||
-        proposal.status === ProposalStatus.FdpgCheck ||
-        proposal.status === ProposalStatus.Rework)
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
   private addFormerResponsibleToParticipants(
     proposal: ProposalDocument,
     formerResponsibleScientist: Pick<
@@ -1038,5 +1053,26 @@ export class ProposalMiscService {
         });
       }
     }
+  }
+
+  async updateProjectAssignee(
+    proposalId: string,
+    user: IRequestUser,
+    projectAssigneeDto?: ProjectAssigneeDto,
+  ): Promise<void> {
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+
+    proposalDoc.set({
+      projectAssignee: projectAssigneeDto,
+    });
+
+    proposalDoc.history.push({
+      type: HistoryEventType.ProjectAssigneChange,
+      data: { newAssigneeMail: projectAssigneeDto ? projectAssigneeDto.email : '(removed)' },
+      proposalVersion: proposalDoc.version,
+      createdAt: new Date(),
+    });
+
+    await proposalDoc.save();
   }
 }
