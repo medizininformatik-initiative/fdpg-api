@@ -51,7 +51,13 @@ const mergeDeep = (target, ...sources) => {
       if (isObject<any>(source[key]) && typeof source[key].getMonth !== 'function') {
         if (!target[key]) Object.assign(target, { [key]: {} });
 
+        // Preserve the _id from target if it exists and source doesn't have it
+        // This prevents MongoDB from generating new _ids for nested objects
+        const targetId = target[key]?._id;
         mergeDeep(target[key], source[key]);
+        if (targetId && !source[key]._id) {
+          target[key]._id = targetId;
+        }
       } else {
         const isSourceArray = Array.isArray(source[key]);
         const isSourceArrayWithId = isSourceArray && source[key][0] && source[key][0]._id;
