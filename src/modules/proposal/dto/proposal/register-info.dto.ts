@@ -4,6 +4,7 @@ import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.vali
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { SyncStatus } from '../../enums/sync-status.enum';
+import { ProposalStatus } from '../../enums/proposal-status.enum';
 
 export class RegisterInfoDto extends WithIdForObjectDto {
   @Expose()
@@ -15,6 +16,11 @@ export class RegisterInfoDto extends WithIdForObjectDto {
   @IsString()
   @IsOptional()
   originalProposalId?: string;
+
+  @Expose()
+  @IsEnum(ProposalStatus)
+  @IsOptional()
+  originalProposalStatus?: ProposalStatus;
 
   @Expose()
   @MaxLength(500)

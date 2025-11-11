@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SyncStatus } from '../../enums/sync-status.enum';
+import { ProposalStatus } from '../../enums/proposal-status.enum';
 
 @Schema({ _id: false })
 export class RegisterInfo {
@@ -14,6 +15,12 @@ export class RegisterInfo {
     required: false,
   })
   originalProposalId?: string;
+
+  @Prop({
+    type: ProposalStatus,
+    required: false,
+  })
+  originalProposalStatus?: ProposalStatus;
 
   @Prop({
     type: String,

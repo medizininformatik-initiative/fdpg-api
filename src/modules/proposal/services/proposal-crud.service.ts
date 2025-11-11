@@ -210,6 +210,27 @@ export class ProposalCrudService {
 
     if (isStatusChange) {
       await this.eventEngineService.handleProposalStatusChange(saveResult);
+
+      if (saveResult.type === ProposalType.ApplicationForm && saveResult.registerFormId) {
+        try {
+          this.logger.log(
+            `Updating registering form ${saveResult.registerFormId} originalProposalStatus to ${saveResult.status}`,
+          );
+          await this.proposalModel.updateOne(
+            { _id: saveResult.registerFormId },
+            {
+              $set: {
+                'registerInfo.originalProposalStatus': saveResult.status,
+                'registerInfo.syncStatus': SyncStatus.OutOfSync,
+              },
+            },
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to update registering form originalProposalStatus for ${saveResult.registerFormId}: ${error.message}`,
+          );
+        }
+      }
     }
 
     if (isApprovalToPublished) {

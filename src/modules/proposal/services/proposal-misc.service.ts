@@ -931,6 +931,7 @@ export class ProposalMiscService {
       registerInfo: {
         isInternalRegistration: true,
         originalProposalId: original._id.toString(),
+        originalProposalStatus: original.status,
       },
       status: ProposalStatus.Draft,
       owner: originalObj.owner,
