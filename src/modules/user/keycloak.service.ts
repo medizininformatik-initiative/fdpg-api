@@ -15,9 +15,6 @@ import { validate as isValidUuid } from 'uuid';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PasswordResetDto } from './dto/password-reset.dto';
 import { ResendInvitationDto } from './dto/resend-invitation.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserQueryDto } from './dto/user-query.dto';
-import { UserEmailResponseDto } from './dto/user-response.dto';
 import { KeycloakLocale } from './enums/keycloak-locale.enum';
 import { KeycloakRequiredAction } from './enums/keycloak-required-action.enum';
 import { handleRegisterErrors, throwInvalidLocation } from './error-handling/create-user.errors';
@@ -27,6 +24,7 @@ import { IKeycloakActionsEmail } from './types/keycloak-actions-email.interface'
 import { IKeycloakRole } from './types/keycloak-role-assignment.interface';
 import { IKeycloakUserQuery } from './types/keycloak-user-query.interface';
 import { ICreateKeycloakUser, IGetKeycloakUser } from './types/keycloak-user.interface';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class KeycloakService {
@@ -267,37 +265,5 @@ export class KeycloakService {
     } catch (error) {
       handleActionsEmailError(error);
     }
-  }
-
-  async getUserEmails(query: UserQueryDto): Promise<UserEmailResponseDto> {
-    let allUsers: IGetKeycloakUser[] = await this.cacheManager.get<IGetKeycloakUser[]>(CacheKey.AllUsers);
-
-    if (!allUsers) {
-      // cache for 1 hour
-      allUsers = await this.getUsers();
-      const oneHourInMs = 60 * 60 * 1000;
-      await this.cacheManager.set(CacheKey.AllUsers, allUsers, oneHourInMs);
-    }
-
-    const lowerCasedSearch = query.startsWith?.toLowerCase();
-    const emails = allUsers.reduce<string[]>((acc, user) => {
-      if (!user.emailVerified || user.requiredActions.length > 0) {
-        return acc;
-      }
-      if (!user.attributes?.MII_LOCATION) {
-        return acc;
-      }
-      if (lowerCasedSearch && !user.email.toLowerCase().startsWith(lowerCasedSearch)) {
-        return acc;
-      }
-      acc.push(user.email);
-
-      return acc;
-    }, []);
-
-    return {
-      emails,
-      total: emails.length,
-    };
   }
 }
