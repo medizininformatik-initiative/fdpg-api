@@ -141,6 +141,10 @@ export class KeycloakUtilService {
     return await this.getMembers(Role.Researcher, CacheKey.AllResearchers, withFilterForReceivingMails);
   }
 
+  async getDmsMembers(withFilterForReceivingMails = true): Promise<ICachedKeycloakUser[]> {
+    return await this.getMembers(Role.DataManagementOffice, CacheKey.AllDmoUsers, withFilterForReceivingMails);
+  }
+
   private async getMembers(
     role: Role,
     cacheKey: CacheKey,
@@ -185,6 +189,8 @@ export class KeycloakUtilService {
               return await this.getDizMembers(false);
             case Role.UacMember:
               return await this.getUacMembers(false);
+            case Role.DataManagementOffice:
+              return await this.getDmsMembers(false);
             default:
               console.error(`Couldn't map role '${role}' on search query`);
               return [];
