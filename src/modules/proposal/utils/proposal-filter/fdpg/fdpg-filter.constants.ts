@@ -61,7 +61,7 @@ const FDPG_PUBLISHED_READY: FilterQuery<Proposal> = {
   type: ProposalType.RegisteringForm,
   status: ProposalStatus.Published,
   'registerInfo.syncStatus': {
-    $in: [SyncStatus.OutOfSync, SyncStatus.SyncFailed, SyncStatus.Syncing],
+    $in: [SyncStatus.OutOfSync, SyncStatus.SyncFailed, SyncStatus.Syncing, SyncStatus.NotSynced],
   },
 };
 const FDPG_PUBLISHED_PUBLISHED = {

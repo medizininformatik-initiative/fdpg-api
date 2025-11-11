@@ -18,11 +18,14 @@ import * as https from 'https';
 export class AcptPluginClient {
   private readonly apiClient: AxiosInstance;
   private readonly logger = new Logger(AcptPluginClient.name);
+  private readonly isConfigured: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const baseURL = this.configService.get<string>('ACPT_PLUGIN_BASE_URL');
     const username = this.configService.get<string>('ACPT_PLUGIN_USERNAME');
     const password = this.configService.get<string>('ACPT_PLUGIN_PASSWORD');
+
+    this.isConfigured = !!(baseURL && username && password);
 
     if (!baseURL) {
       this.logger.warn('ACPT_PLUGIN_BASE_URL is not configured. Sync functionality will not work.');
@@ -61,11 +64,25 @@ export class AcptPluginClient {
   }
 
   /**
+   * Validates that the ACPT Plugin is properly configured
+   * @throws Error if configuration is missing
+   */
+  private validateConfiguration(): void {
+    if (!this.isConfigured) {
+      throw new Error(
+        'ACPT Plugin is not configured. Please set ACPT_PLUGIN_BASE_URL, ACPT_PLUGIN_USERNAME, and ACPT_PLUGIN_PASSWORD in environment variables.',
+      );
+    }
+  }
+
+  /**
    * Create a new project in the ACPT Plugin
    * @param projectData The project data with meta fields
    * @returns The created project with WordPress post ID
    */
   async createProject(projectData: AcptProjectDto): Promise<AcptProjectResponseDto> {
+    this.validateConfiguration();
+
     try {
       this.logger.log(`Creating project in ACPT Plugin: ${projectData.title}`);
       this.logger.log('📤 SENDING PAYLOAD TO ACPT PLUGIN API:');
@@ -94,6 +111,8 @@ export class AcptPluginClient {
    * @returns The updated project
    */
   async updateProject(projectId: string, projectData: AcptProjectDto): Promise<AcptProjectResponseDto> {
+    this.validateConfiguration();
+
     try {
       this.logger.log(`Updating project in ACPT Plugin: ${projectId}`);
       this.logger.log('📤 SENDING PAYLOAD TO ACPT PLUGIN API:');
@@ -121,8 +140,7 @@ export class AcptPluginClient {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const baseURL = this.configService.get<string>('ACPT_PLUGIN_BASE_URL');
-      if (!baseURL) {
+      if (!this.isConfigured) {
         return false;
       }
 

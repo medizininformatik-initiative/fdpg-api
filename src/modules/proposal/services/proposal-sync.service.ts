@@ -103,7 +103,7 @@ export class ProposalSyncService {
       type: ProposalType.RegisteringForm,
       status: ProposalStatus.Published,
       'registerInfo.isInternalRegistration': { $ne: true },
-      'registerInfo.syncStatus': { $in: [SyncStatus.OutOfSync, SyncStatus.SyncFailed] },
+      'registerInfo.syncStatus': { $in: [SyncStatus.OutOfSync, SyncStatus.SyncFailed, SyncStatus.NotSynced] },
     });
 
     if (proposals.length === 0) {
