@@ -4,7 +4,7 @@ import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { getLocaleDateString } from 'src/shared/utils/date.utils';
 import { ProposalWithoutContent } from '../event-engine/types/proposal-without-content.type';
 import { HistoryEventType } from '../proposal/enums/history-event.enum';
-import { TemplateProposalEmailConditionKeys } from './types/template-email-param-keys.types';
+import { EmailParameterMap } from './types/template-email-param-keys.types';
 
 export const buildParticipatingEmailSummary = (
   validContacts: string[],
@@ -37,7 +37,7 @@ export const researcherEmail = (
   proposal: Proposal | ProposalWithoutContent,
   categories: EmailCategory[],
   projectLink: string,
-  emailParameterMap: Partial<Record<TemplateProposalEmailConditionKeys, boolean>>,
+  emailParameterMap: EmailParameterMap,
 ): ITemplateEmail => {
   return {
     to: validContacts,
@@ -57,16 +57,18 @@ export const researcherEmail = (
       conditionProposalFinished: !!emailParameterMap['conditionProposalFinished'],
       conditionProposalConcluded: !!emailParameterMap['conditionProposalConcluded'],
       conditionProposalArchived: !!emailParameterMap['conditionProposalArchived'],
+      conditionProposalLocked: !!emailParameterMap['conditionProposalLocked'],
+      conditionProposalUnlocked: !!emailParameterMap['conditionProposalUnlocked'],
     },
   };
 };
 
 export const fdpgEmail = (
   validContacts: string[],
-  proposal: Proposal,
+  proposal: Proposal | ProposalWithoutContent,
   categories: EmailCategory[],
   projectLink: string,
-  emailParameterMap: Partial<Record<TemplateProposalEmailConditionKeys, boolean>>,
+  emailParameterMap: EmailParameterMap,
 ): ITemplateEmail => {
   return {
     to: validContacts,
@@ -75,10 +77,9 @@ export const fdpgEmail = (
     params: {
       projectAbbreviation: proposal.projectAbbreviation,
       projectLink: projectLink,
-      firstName: 'firstName',
-      lastName: 'lastName',
       conditionProposalRejected: !!emailParameterMap['conditionProposalRejected'],
       conditionProposalFdpgCheck: !!emailParameterMap['conditionProposalFdpgCheck'],
+      conditionFdpgCheckReminderForFdpg: !!emailParameterMap['conditionFdpgCheckReminderForFdpg'],
       conditionProposalUacCheck: !!emailParameterMap['conditionProposalUacCheck'],
       conditionProposalLocationCheck: !!emailParameterMap['conditionProposalLocationCheck'],
       conditionProposalContracting: !!emailParameterMap['conditionProposalContracting'],
@@ -91,7 +92,12 @@ export const fdpgEmail = (
       conditionProposalRegistration: !!emailParameterMap['conditionProposalRegistration'],
       conditionProposalConcluded: !!emailParameterMap['conditionProposalConcluded'],
       conditionProposalArchived: !!emailParameterMap['conditionProposalArchived'],
-
+      conditionProposalReportCreate: !!emailParameterMap['conditionProposalReportCreate'],
+      conditionProposalReportUpdate: !!emailParameterMap['conditionProposalReportUpdate'],
+      conditionProposalReportDelete: !!emailParameterMap['conditionProposalReportDelete'],
+      conditionProposalPublicationCreate: !!emailParameterMap['conditionProposalPublicationCreate'],
+      conditionProposalPublicationUpdate: !!emailParameterMap['conditionProposalPublicationUpdate'],
+      conditionProposalPublicationDelete: !!emailParameterMap['conditionProposalPublicationDelete'],
       conditionProposalContractSignedUser: !!emailParameterMap['conditionProposalContractSignedUser'],
       conditionProposalContractSignedLocations: !!emailParameterMap['conditionProposalContractSignedLocations'],
       conditionProposalDataReturn: !!emailParameterMap['conditionProposalDataReturn'],
@@ -104,7 +110,7 @@ export const dizEmail = (
   proposal: Proposal | ProposalWithoutContent,
   categories: EmailCategory[],
   projectLink: string,
-  emailParameterMap: Partial<Record<TemplateProposalEmailConditionKeys, boolean>>,
+  emailParameterMap: EmailParameterMap,
 ): ITemplateEmail => {
   const timestamp = getLocaleDateString(proposal.dueDateForStatus);
 
@@ -129,6 +135,9 @@ export const dizEmail = (
       conditionProposalPublication: !!emailParameterMap['conditionProposalPublication'],
       conditionProposalConcluded: !!emailParameterMap['conditionProposalConcluded'],
       conditionProposalArchived: !!emailParameterMap['conditionProposalArchived'],
+      DUE_DAYS_LOCATION_CHECK: emailParameterMap['DUE_DAYS_LOCATION_CHECK'],
+      DUE_DAYS_LOCATION_CONTRACTING: emailParameterMap['DUE_DAYS_LOCATION_CONTRACTING'],
+      DUE_DAYS_EXPECT_DATA_DELIVERY: emailParameterMap['DUE_DAYS_EXPECT_DATA_DELIVERY'],
     },
   };
 };
@@ -138,7 +147,7 @@ export const uacEmail = (
   proposal: Proposal | ProposalWithoutContent,
   categories: EmailCategory[],
   projectLink: string,
-  emailParameterMap: Partial<Record<TemplateProposalEmailConditionKeys, boolean>>,
+  emailParameterMap: EmailParameterMap,
 ): ITemplateEmail => {
   const timestamp = getLocaleDateString(proposal.dueDateForStatus);
 
@@ -152,6 +161,9 @@ export const uacEmail = (
       timestamp,
       conditionProposalLocationCheckDizForward: !!emailParameterMap['conditionProposalLocationCheckDizForward'],
       conditionProposalUacReminder: !!emailParameterMap['conditionProposalUacReminder'],
+      DUE_DAYS_LOCATION_CHECK: emailParameterMap['DUE_DAYS_LOCATION_CHECK'],
+      DUE_DAYS_LOCATION_CONTRACTING: emailParameterMap['DUE_DAYS_LOCATION_CONTRACTING'],
+      DUE_DAYS_EXPECT_DATA_DELIVERY: emailParameterMap['DUE_DAYS_EXPECT_DATA_DELIVERY'],
     },
   };
 };

@@ -4,10 +4,9 @@ import { ScheduleType } from 'src/modules/scheduler/enums/schedule-type.enum';
 import { Schedule } from 'src/modules/scheduler/schema/schedule.schema';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { ProposalWithoutContent } from '../../types/proposal-without-content.type';
-
-import { getProposalFdpgCheckReminderEmailForFdpg } from './proposal-fdpg-check.emails';
-import { dizEmail, researcherEmail, uacEmail } from 'src/modules/email/proposal.emails';
+import { dizEmail, fdpgEmail, researcherEmail, uacEmail } from 'src/modules/email/proposal.emails';
 import { EmailCategory } from 'src/modules/email/types/email-category.enum';
+import { getEmailReminderText as getEmailReminderDueDaysText } from 'src/modules/email/util/email.util';
 
 @Injectable()
 export class StatusReminderService {
@@ -21,7 +20,9 @@ export class StatusReminderService {
       const validFdpgContacts = await this.keycloakUtilService
         .getFdpgMemberLevelContacts(proposal)
         .then((members) => members.map((member) => member.email));
-      const mail = getProposalFdpgCheckReminderEmailForFdpg(validFdpgContacts, proposal, proposalUrl);
+      const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.StatusReminder], proposalUrl, {
+        conditionFdpgCheckReminderForFdpg: true,
+      });
       return await this.emailService.send(mail);
     };
 
@@ -30,7 +31,7 @@ export class StatusReminderService {
     await Promise.allSettled(emailTasks);
   }
 
-  private async handleLocationCheckReminder(proposal: ProposalWithoutContent, proposalUrl: string) {
+  private async handleLocationCheckReminder(proposal: ProposalWithoutContent, proposalUrl: string, type: 0 | 1 | 2) {
     const dizTask = async () => {
       const locations = [...proposal.openDizChecks];
       const validDizContacts = await this.keycloakUtilService
@@ -39,6 +40,7 @@ export class StatusReminderService {
 
       const mail = dizEmail(validDizContacts, proposal, [EmailCategory.StatusReminder], proposalUrl, {
         conditionProposalUacReminder: true,
+        DUE_DAYS_LOCATION_CHECK: getEmailReminderDueDaysText(type),
       });
 
       return await this.emailService.send(mail);
@@ -52,6 +54,7 @@ export class StatusReminderService {
 
       const mail = uacEmail(validUacContacts, proposal, [EmailCategory.StatusReminder], proposalUrl, {
         conditionProposalUacReminder: true,
+        DUE_DAYS_LOCATION_CHECK: getEmailReminderDueDaysText(type),
       });
 
       return await this.emailService.send(mail);
@@ -82,9 +85,13 @@ export class StatusReminderService {
         await this.handleFdpgCheckReminder(proposal, proposalUrl);
         break;
       case ScheduleType.ReminderLocationCheck1:
+        await this.handleLocationCheckReminder(proposal, proposalUrl, 0);
+        break;
       case ScheduleType.ReminderLocationCheck2:
+        await this.handleLocationCheckReminder(proposal, proposalUrl, 1);
+        break;
       case ScheduleType.ReminderLocationCheck3:
-        await this.handleLocationCheckReminder(proposal, proposalUrl);
+        await this.handleLocationCheckReminder(proposal, proposalUrl, 2);
         break;
       case ScheduleType.ReminderResearcherPublications:
         await this.handleResearcherPublicationsReminder(proposal, proposalUrl);

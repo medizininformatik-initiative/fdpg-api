@@ -2,6 +2,7 @@ export type TemplateProposalEmailConditionKeys =
   | 'conditionProposalRejected'
   | 'conditionProposalRework'
   | 'conditionProposalFdpgCheck'
+  | 'conditionFdpgCheckReminderForFdpg'
   | 'conditionProposalLocationCheck'
   | 'conditionProposalLocalUacCheck'
   | 'conditionProposalUacCheck'
@@ -19,7 +20,18 @@ export type TemplateProposalEmailConditionKeys =
   | 'conditionProposalRegistration'
   | 'conditionProposalFinished'
   | 'conditionProposalConcluded'
-  | 'conditionProposalArchived';
+  | 'conditionProposalArchived'
+  | 'conditionProposalUnlocked'
+  | 'conditionProposalLocked'
+  | 'conditionProposalReportCreate'
+  | 'conditionProposalReportUpdate'
+  | 'conditionProposalReportDelete'
+  | 'conditionProposalPublicationCreate'
+  | 'conditionProposalPublicationUpdate'
+  | 'conditionProposalPublicationDelete'
+  | 'DUE_DAYS_LOCATION_CHECK'
+  | 'DUE_DAYS_LOCATION_CONTRACTING'
+  | 'DUE_DAYS_EXPECT_DATA_DELIVERY';
 
 export type TemplateEmailParamKeys =
   | Partial<TemplateProposalEmailConditionKeys>
@@ -29,3 +41,5 @@ export type TemplateEmailParamKeys =
   | 'projectResearchers'
   | 'firstName'
   | 'lastName';
+
+export type EmailParameterMap = Partial<Record<TemplateProposalEmailConditionKeys, boolean | string>>;
