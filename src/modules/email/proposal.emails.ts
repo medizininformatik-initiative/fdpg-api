@@ -11,26 +11,37 @@ export const buildParticipatingEmailSummary = (
   changes: HistoryEventType[],
   proposal: ProposalWithoutContent,
   proposalUrl: string,
-): ITemplateEmail => ({
-  to: validContacts,
-  categories: [EmailCategory.ParticipatingScientistSummary],
-  templateId: 46,
-  params: {
-    projectAbbreviation: proposal.projectAbbreviation,
-    projectLink: proposalUrl,
-    projectResearchers: [proposal.ownerName],
-    conditionProposalRejected: changes.includes(HistoryEventType.ProposalRejected),
-    conditionProposalRework: changes.includes(HistoryEventType.ProposalRework),
-    conditionProposalFdpgCheck: changes.includes(HistoryEventType.ProposalFdpgCheck),
-    conditionProposalLocationCheck: changes.includes(HistoryEventType.ProposalLocationCheck),
-    conditionProposalContracting: changes.includes(HistoryEventType.ProposalContracting),
-    conditionProposalDataDelivery: changes.includes(HistoryEventType.ProposalDataDelivery),
-    conditionProposalDataResearch: changes.includes(HistoryEventType.ProposalDataResearch),
-    conditionProposalFinished: changes.includes(HistoryEventType.ProposalFinished),
-    conditionProposalConcluded: false, // changes.includes(HistoryEventType.Concluded),
-    conditionProposalArchived: changes.includes(HistoryEventType.ProposalArchived),
-  },
-});
+): ITemplateEmail => {
+  const projectResearchers = [
+    `${proposal.projectResponsible.researcher.firstName} ${proposal.projectResponsible.researcher.lastName}`,
+    ...(proposal.participants
+      ? proposal.participants.map(
+          (participant) => `${participant.researcher.firstName} ${participant.researcher.lastName}`,
+        )
+      : []),
+  ];
+
+  return {
+    to: validContacts,
+    categories: [EmailCategory.ParticipatingScientistSummary],
+    templateId: 46,
+    params: {
+      projectAbbreviation: proposal.projectAbbreviation,
+      projectLink: proposalUrl,
+      projectResearchers,
+      conditionProposalRejected: changes.includes(HistoryEventType.ProposalRejected),
+      conditionProposalRework: changes.includes(HistoryEventType.ProposalRework),
+      conditionProposalFdpgCheck: changes.includes(HistoryEventType.ProposalFdpgCheck),
+      conditionProposalLocationCheck: changes.includes(HistoryEventType.ProposalLocationCheck),
+      conditionProposalContracting: changes.includes(HistoryEventType.ProposalContracting),
+      conditionProposalDataDelivery: changes.includes(HistoryEventType.ProposalDataDelivery),
+      conditionProposalDataResearch: changes.includes(HistoryEventType.ProposalDataResearch),
+      conditionProposalFinished: changes.includes(HistoryEventType.ProposalFinished),
+      conditionProposalConcluded: false, // changes.includes(HistoryEventType.Concluded),
+      conditionProposalArchived: changes.includes(HistoryEventType.ProposalArchived),
+    },
+  };
+};
 
 export const researcherEmail = (
   validContacts: string[],
