@@ -17,8 +17,8 @@ export class DataDelivery {
   @Prop({ type: String, enum: DeliveryAcceptance, required: true, default: DeliveryAcceptance.PENDING })
   acceptance: DeliveryAcceptance;
 
-  @Prop({ type: DeliveryInfoSchema, default: null })
-  delivery?: DeliveryInfo | null;
+  @Prop({ type: [DeliveryInfoSchema], default: [] })
+  delivery?: DeliveryInfo[] | null;
 
   @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;

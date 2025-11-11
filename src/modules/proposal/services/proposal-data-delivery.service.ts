@@ -47,7 +47,7 @@ export class ProposalDataDeliveryService {
     proposal.dataDelivery = {
       dataManagementSite: dto.dataManagementSite,
       acceptance: dto.acceptance,
-      delivery: this.#mapToDeliveryInfo(dto.delivery),
+      delivery: this.mapToDeliveryInfo(dto.delivery),
       createdAt: now,
       updatedAt: now,
     };
@@ -78,7 +78,7 @@ export class ProposalDataDeliveryService {
     proposal.dataDelivery = {
       dataManagementSite: dto.dataManagementSite,
       acceptance: dto.acceptance,
-      delivery: this.#mapToDeliveryInfo(dto.delivery),
+      delivery: this.mapToDeliveryInfo(dto.delivery),
       createdAt: existing.createdAt ?? now,
       updatedAt: now,
     };
@@ -87,13 +87,13 @@ export class ProposalDataDeliveryService {
     return plainToClass(DataDeliveryGetDto, saved.dataDelivery as DataDelivery, { strategy: 'excludeAll' });
   };
 
-  #mapToDeliveryInfo = (dto: DeliveryInfoUpdateDto | null | undefined): DeliveryInfo | null => {
-    if (dto === undefined || dto === null) return null;
+  private mapToDeliveryInfo = (dtos: DeliveryInfoUpdateDto[] | null | undefined): DeliveryInfo[] | null => {
+    if (dtos === undefined || dtos === null) return null;
 
-    return {
+    return dtos.map((dto) => ({
       name: dto.name,
       date: dto.date,
       subDeliveries: [], // ignore subdeliveries for now
-    };
+    }));
   };
 }
