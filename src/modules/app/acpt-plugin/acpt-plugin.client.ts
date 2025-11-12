@@ -1,7 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { AcptProjectDto, AcptProjectResponseDto } from '../../proposal/dto/acpt-plugin/acpt-project.dto';
+import {
+  AcptProjectDto,
+  AcptProjectResponseDto,
+  AcptResearcherDto,
+  AcptResearcherListItemDto,
+  AcptResearcherResponseDto,
+  AcptLocationDto,
+  AcptLocationListItemDto,
+  AcptLocationResponseDto,
+} from '../../proposal/dto/acpt-plugin/acpt-project.dto';
 import { DEFAULT_CIPHERS } from 'tls';
 import * as https from 'https';
 
@@ -19,15 +28,16 @@ export class AcptPluginClient {
   private readonly apiClient: AxiosInstance;
   private readonly logger = new Logger(AcptPluginClient.name);
   private readonly isConfigured: boolean;
+  private readonly baseURL: string;
 
   constructor(private readonly configService: ConfigService) {
-    const baseURL = this.configService.get<string>('ACPT_PLUGIN_BASE_URL');
+    this.baseURL = this.configService.get<string>('ACPT_PLUGIN_BASE_URL');
     const username = this.configService.get<string>('ACPT_PLUGIN_USERNAME');
     const password = this.configService.get<string>('ACPT_PLUGIN_PASSWORD');
 
-    this.isConfigured = !!(baseURL && username && password);
+    this.isConfigured = !!(this.baseURL && username && password);
 
-    if (!baseURL) {
+    if (!this.baseURL) {
       this.logger.warn('ACPT_PLUGIN_BASE_URL is not configured. Sync functionality will not work.');
     }
 
@@ -50,7 +60,7 @@ export class AcptPluginClient {
     });
 
     this.apiClient = axios.create({
-      baseURL,
+      baseURL: this.baseURL,
       auth: username && password ? { username, password } : undefined,
       timeout: 60000, // 60 seconds for WordPress API
       headers: {
@@ -88,7 +98,7 @@ export class AcptPluginClient {
       this.logger.log('📤 SENDING PAYLOAD TO ACPT PLUGIN API:');
       this.logger.log(JSON.stringify(projectData, null, 2));
 
-      const response = await this.apiClient.post<AcptProjectResponseDto>('', projectData);
+      const response = await this.apiClient.post<AcptProjectResponseDto>('/fdpgx-project', projectData);
 
       this.logger.log(`✅ Project created successfully with ID: ${response.data.id}`);
       this.logger.log('📥 API RESPONSE:');
@@ -118,7 +128,7 @@ export class AcptPluginClient {
       this.logger.log('📤 SENDING PAYLOAD TO ACPT PLUGIN API:');
       this.logger.log(JSON.stringify(projectData, null, 2));
 
-      const response = await this.apiClient.post<AcptProjectResponseDto>(`/${projectId}`, projectData);
+      const response = await this.apiClient.post<AcptProjectResponseDto>(`/fdpgx-project/${projectId}`, projectData);
 
       this.logger.log(`✅ Project updated successfully: ${response.data.id}`);
       this.logger.log('📥 API RESPONSE:');
@@ -144,12 +154,162 @@ export class AcptPluginClient {
         return false;
       }
 
-      // WordPress REST API root endpoint
-      await this.apiClient.get('');
+      await this.apiClient.get('/fdpgx-project');
       return true;
     } catch (error) {
       this.logger.warn('ACPT Plugin health check failed', error.message);
       return false;
+    }
+  }
+
+  /**
+   * Get all researchers from WordPress
+   * @returns List of researchers
+   */
+  async getResearchers(): Promise<AcptResearcherListItemDto[]> {
+    this.validateConfiguration();
+
+    try {
+      this.logger.log('Fetching researchers from ACPT Plugin');
+      const response = await this.apiClient.get<AcptResearcherListItemDto[]>('/fdpgx-researcher');
+
+      this.logger.log(`Found ${response.data.length} researchers`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Failed to fetch researchers: ${error.message}`);
+      throw new Error(`ACPT Plugin API error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Helper to extract meta field value from ACPT response
+   * @param item The ACPT item (researcher, location, etc.)
+   * @param fieldName The meta field name to extract
+   * @returns The field value or null if not found
+   */
+  private getMetaFieldValue(
+    item: AcptResearcherListItemDto | AcptLocationListItemDto,
+    fieldName: string,
+  ): string | null {
+    if (!item.acpt?.meta) return null;
+
+    for (const metaBox of item.acpt.meta) {
+      const field = metaBox.meta_fields?.find((f) => f.name === fieldName);
+      if (field) {
+        return Array.isArray(field.value) ? field.value.join(' ') : field.value;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Find a researcher by first and last name
+   * @param firstName The researcher's first name
+   * @param lastName The researcher's last name
+   * @returns The researcher ID if found, null otherwise
+   */
+  async findResearcherByName(firstName: string, lastName: string): Promise<string | null> {
+    const researchers = await this.getResearchers();
+
+    const found = researchers.find((r) => {
+      const researcherFirstName = this.getMetaFieldValue(r, 'fdpgx-firstname');
+      const researcherLastName = this.getMetaFieldValue(r, 'fdpgx-lastname');
+
+      return (
+        researcherFirstName?.toLowerCase() === firstName.toLowerCase() &&
+        researcherLastName?.toLowerCase() === lastName.toLowerCase()
+      );
+    });
+
+    return found ? found.id : null;
+  }
+
+  /**
+   * Create a new researcher in WordPress
+   * @param researcherData The researcher data
+   * @returns The created researcher with WordPress post ID
+   */
+  async createResearcher(researcherData: AcptResearcherDto): Promise<AcptResearcherResponseDto> {
+    this.validateConfiguration();
+
+    try {
+      this.logger.log(`Creating researcher in ACPT Plugin: ${researcherData.title}`);
+      this.logger.log('📤 SENDING RESEARCHER PAYLOAD:');
+      this.logger.log(JSON.stringify(researcherData, null, 2));
+
+      const response = await this.apiClient.post<AcptResearcherResponseDto>('/fdpgx-researcher', researcherData);
+
+      this.logger.log(`✅ Researcher created successfully with ID: ${response.data.id}`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Failed to create researcher: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`Response status: ${error.response.status}`);
+        this.logger.error(`Response data: ${JSON.stringify(error.response.data)}`);
+      }
+      throw new Error(`ACPT Plugin API error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get all locations from WordPress
+   * @returns List of locations
+   */
+  async getLocations(): Promise<AcptLocationListItemDto[]> {
+    this.validateConfiguration();
+
+    try {
+      this.logger.log('Fetching locations from ACPT Plugin');
+      const response = await this.apiClient.get<AcptLocationListItemDto[]>('/fdpgx-location');
+
+      this.logger.log(`Found ${response.data.length} locations`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Failed to fetch locations: ${error.message}`);
+      throw new Error(`ACPT Plugin API error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Find a location by name (searches in fdpgx-name meta field)
+   * @param locationName The location name to search for
+   * @returns The location ID if found, null otherwise
+   */
+  async findLocationByName(locationName: string): Promise<string | null> {
+    const locations = await this.getLocations();
+
+    const found = locations.find((l) => {
+      const name = this.getMetaFieldValue(l, 'fdpgx-name');
+      return name?.toLowerCase() === locationName.toLowerCase();
+    });
+
+    return found ? found.id : null;
+  }
+
+  /**
+   * Create a new location in WordPress
+   * @param locationData The location data
+   * @returns The created location with WordPress post ID
+   */
+  async createLocation(locationData: AcptLocationDto): Promise<AcptLocationResponseDto> {
+    this.validateConfiguration();
+
+    try {
+      this.logger.log(`Creating location in ACPT Plugin: ${locationData.title}`);
+      this.logger.log('📤 SENDING LOCATION PAYLOAD:');
+      this.logger.log(JSON.stringify(locationData, null, 2));
+
+      const response = await this.apiClient.post<AcptLocationResponseDto>('/fdpgx-location', locationData);
+
+      this.logger.log(`✅ Location created successfully with ID: ${response.data.id}`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Failed to create location: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`Response status: ${error.response.status}`);
+        this.logger.error(`Response data: ${JSON.stringify(error.response.data)}`);
+      }
+      throw new Error(`ACPT Plugin API error: ${error.message}`);
     }
   }
 }
