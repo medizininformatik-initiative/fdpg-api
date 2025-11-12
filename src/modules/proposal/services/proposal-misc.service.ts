@@ -922,6 +922,10 @@ export class ProposalMiscService {
       suffix++;
     }
 
+    // Calculate desiredStartTime: DUE_DAYS_LOCATION_CHECK + 7 days
+    const locationCheckDate = originalObj.deadlines?.DUE_DAYS_LOCATION_CHECK;
+    const desiredStartTime = locationCheckDate ? new Date(locationCheckDate.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+
     const copyData = {
       ...originalObj,
       _id: undefined,
@@ -940,6 +944,14 @@ export class ProposalMiscService {
       applicant: originalObj.applicant,
       projectResponsible: projectResponsible,
       participants: originalObj.participants,
+      userProject: {
+        ...originalObj.userProject,
+        generalProjectInformation: {
+          ...originalObj.userProject?.generalProjectInformation,
+          desiredStartTime,
+          desiredStartTimeType: 'later',
+        },
+      },
       history: [
         {
           status: ProposalStatus.Draft,
@@ -954,7 +966,7 @@ export class ProposalMiscService {
       createdAt: new Date(),
       updatedAt: new Date(),
       version: { mayor: 0, minor: 0 },
-    };
+    } as ProposalDocument;
 
     const newProposal = new this.proposalModel(copyData);
     const formVersion = await this.proposalFormService.getCurrentVersion();

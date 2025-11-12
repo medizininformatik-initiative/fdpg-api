@@ -9,6 +9,7 @@ import { ProposalType } from '../enums/proposal-type.enum';
 import { SyncStatus } from '../enums/sync-status.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { AcptMetaField, AcptProjectDto } from '../dto/acpt-plugin/acpt-project.dto';
+import { PublishedProposalStatus } from '../enums/published-proposal.enum';
 
 export interface SyncResult {
   success: boolean;
@@ -197,10 +198,17 @@ export class ProposalSyncService {
       });
 
       if (proposal.userProject?.generalProjectInformation?.desiredStartTime) {
-        const startDate = new Date(proposal.userProject.generalProjectInformation.desiredStartTime);
-        const duration = proposal.userProject.generalProjectInformation.projectDuration;
-        const endDate = new Date(startDate);
-        endDate.setMonth(endDate.getMonth() + duration);
+        let endDate: Date;
+        if (proposal.registerInfo?.isInternalRegistration && proposal.deadlines.DUE_DAYS_FINISHED_PROJECT) {
+          // For internal registrations with a finished project deadline, set end date to that deadline
+          endDate = new Date(proposal.deadlines.DUE_DAYS_FINISHED_PROJECT);
+        } else {
+          const startDate = new Date(proposal.userProject.generalProjectInformation.desiredStartTime);
+          const duration = proposal.userProject.generalProjectInformation.projectDuration;
+          endDate = new Date(startDate);
+          endDate.setMonth(endDate.getMonth() + duration);
+        }
+
         meta.push({
           box: 'project-fields',
           field: 'fdpgx-projectend',
@@ -209,11 +217,17 @@ export class ProposalSyncService {
       }
     }
 
-    // Project State (always "Projekt veröffentlicht" when Published)
+    let projectState = PublishedProposalStatus.PUBLISHED;
+    if (
+      proposal.registerInfo.originalProposalStatus &&
+      proposal.registerInfo.originalProposalStatus in PublishedProposalStatus
+    ) {
+      projectState = PublishedProposalStatus[proposal.registerInfo.originalProposalStatus];
+    }
     meta.push({
       box: 'project-fields',
       field: 'fdpgx-projectstate',
-      value: 'Projekt veröffentlicht',
+      value: projectState,
     });
 
     if (proposal.userProject?.projectDetails?.simpleProjectDescription) {
@@ -323,7 +337,9 @@ export class ProposalSyncService {
       meta.push({
         box: 'project-fields',
         field: 'fdpgx-participantsinstitute',
-        value: proposal.userProject.addressees.desiredLocations,
+        value: proposal.participants
+          ?.map((participant) => participant.institute?.miiLocation)
+          .filter((institute): institute is string => !!institute),
       });
     }
 
