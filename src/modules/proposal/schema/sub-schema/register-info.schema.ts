@@ -17,7 +17,8 @@ export class RegisterInfo {
   originalProposalId?: string;
 
   @Prop({
-    type: ProposalStatus,
+    type: String,
+    enum: ProposalStatus,
     required: false,
   })
   originalProposalStatus?: ProposalStatus;
