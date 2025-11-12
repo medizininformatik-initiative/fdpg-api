@@ -1,4 +1,5 @@
 export type TemplateProposalEmailConditionKeys =
+  | 'timestamp'
   | 'conditionProposalRejected'
   | 'conditionProposalRework'
   | 'conditionProposalFdpgCheck'
@@ -31,15 +32,26 @@ export type TemplateProposalEmailConditionKeys =
   | 'conditionProposalPublicationDelete'
   | 'DUE_DAYS_LOCATION_CHECK'
   | 'DUE_DAYS_LOCATION_CONTRACTING'
-  | 'DUE_DAYS_EXPECT_DATA_DELIVERY';
+  | 'DUE_DAYS_EXPECT_DATA_DELIVERY'
+  | 'conditionDeadlineFdpgCheckChanged'
+  | 'deadlineFdpgCheckNewDate'
+  | 'conditionDeadlineLocationCheckChanged'
+  | 'deadlineLocationCheckNewDate'
+  | 'conditionDeadlineLocationContractingChanged'
+  | 'deadlineLocationContractingNewDate'
+  | 'conditionDeadlineExpectedDataDeliveryChanged'
+  | 'deadlineExpectedDataDeliveryNewDate'
+  | 'conditionDeadlineExpectedDataCorruptChanged'
+  | 'deadlineExpectedDataCorruptNewDate'
+  | 'conditionDeadlineFinishedProjectChanged'
+  | 'deadlineFinishedProjectNewDate';
 
 export type TemplateEmailParamKeys =
   | Partial<TemplateProposalEmailConditionKeys>
   | 'projectAbbreviation'
-  | 'timestamp'
   | 'projectLink'
   | 'projectResearchers'
   | 'firstName'
   | 'lastName';
 
-export type EmailParameterMap = Partial<Record<TemplateProposalEmailConditionKeys, boolean | string>>;
+export type EmailParameterMap = Partial<Record<TemplateProposalEmailConditionKeys, boolean | string | Date>>;

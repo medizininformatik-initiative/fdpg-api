@@ -27,6 +27,7 @@ export class LocationVoteService {
 
         const mail = uacEmail(validUacContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
           conditionProposalLocationCheckDizForward: true,
+          timestamp: proposal.deadlines.DUE_DAYS_LOCATION_CHECK,
         });
 
         return await this.emailService.send(mail);
@@ -42,6 +43,7 @@ export class LocationVoteService {
 
         const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
           conditionProposalUacCheck: true,
+          timestamp: proposal.deadlines.DUE_DAYS_LOCATION_CHECK,
         });
 
         return await this.emailService.send(mail);

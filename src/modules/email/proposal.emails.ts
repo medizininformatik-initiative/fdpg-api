@@ -123,7 +123,9 @@ export const dizEmail = (
   projectLink: string,
   emailParameterMap: EmailParameterMap,
 ): ITemplateEmail => {
-  const timestamp = getLocaleDateString(proposal.dueDateForStatus);
+  const timestamp = !!emailParameterMap['timestamp']
+    ? getLocaleDateString(emailParameterMap['timestamp'] as Date)
+    : undefined;
 
   return {
     to: validContacts,
@@ -146,9 +148,9 @@ export const dizEmail = (
       conditionProposalPublication: !!emailParameterMap['conditionProposalPublication'],
       conditionProposalConcluded: !!emailParameterMap['conditionProposalConcluded'],
       conditionProposalArchived: !!emailParameterMap['conditionProposalArchived'],
-      DUE_DAYS_LOCATION_CHECK: emailParameterMap['DUE_DAYS_LOCATION_CHECK'],
-      DUE_DAYS_LOCATION_CONTRACTING: emailParameterMap['DUE_DAYS_LOCATION_CONTRACTING'],
-      DUE_DAYS_EXPECT_DATA_DELIVERY: emailParameterMap['DUE_DAYS_EXPECT_DATA_DELIVERY'],
+      DUE_DAYS_LOCATION_CHECK: emailParameterMap['DUE_DAYS_LOCATION_CHECK'] as string,
+      DUE_DAYS_LOCATION_CONTRACTING: emailParameterMap['DUE_DAYS_LOCATION_CONTRACTING'] as string,
+      DUE_DAYS_EXPECT_DATA_DELIVERY: emailParameterMap['DUE_DAYS_EXPECT_DATA_DELIVERY'] as string,
     },
   };
 };
@@ -172,9 +174,9 @@ export const uacEmail = (
       timestamp,
       conditionProposalLocationCheckDizForward: !!emailParameterMap['conditionProposalLocationCheckDizForward'],
       conditionProposalUacReminder: !!emailParameterMap['conditionProposalUacReminder'],
-      DUE_DAYS_LOCATION_CHECK: emailParameterMap['DUE_DAYS_LOCATION_CHECK'],
-      DUE_DAYS_LOCATION_CONTRACTING: emailParameterMap['DUE_DAYS_LOCATION_CONTRACTING'],
-      DUE_DAYS_EXPECT_DATA_DELIVERY: emailParameterMap['DUE_DAYS_EXPECT_DATA_DELIVERY'],
+      DUE_DAYS_LOCATION_CHECK: emailParameterMap['DUE_DAYS_LOCATION_CHECK'] as string,
+      DUE_DAYS_LOCATION_CONTRACTING: emailParameterMap['DUE_DAYS_LOCATION_CONTRACTING'] as string,
+      DUE_DAYS_EXPECT_DATA_DELIVERY: emailParameterMap['DUE_DAYS_EXPECT_DATA_DELIVERY'] as string,
     },
   };
 };
