@@ -21,7 +21,7 @@ export class ProposalDataDeliveryController {
   constructor(private readonly proposalDataDeliveryService: ProposalDataDeliveryService) {}
 
   // GET /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
   @Get(':id/data-delivery')
   @ApiOperation({ summary: 'Gets the data delivery section of a proposal' })
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -34,7 +34,7 @@ export class ProposalDataDeliveryController {
   }
 
   // POST /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
   @Post(':id/data-delivery')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Creates the data delivery section for a proposal' })
@@ -51,7 +51,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PUT /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
   @Put(':id/data-delivery')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Updates the data delivery section of a proposal' })
