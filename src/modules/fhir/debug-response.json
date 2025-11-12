@@ -1,0 +1,58 @@
+[
+  {
+    "fullUrl": "https://dsf.fdpg.test.forschen-fuer-gesundheit.de/fhir/Task/c8d5d055-8262-4b55-9edb-2d4c5c836ac4",
+    "resource": {
+      "resourceType": "Task",
+      "id": "c8d5d055-8262-4b55-9edb-2d4c5c836ac4",
+      "meta": {
+        "versionId": "3",
+        "lastUpdated": "2025-10-15T23:33:37.730+02:00",
+        "profile": ["http://medizininformatik-initiative.de/fhir/StructureDefinition/task-received-data-set|1.1"]
+      },
+      "instantiatesCanonical": "http://medizininformatik-initiative.de/bpe/Process/coordinateDataSharing|1.1",
+      "status": "completed",
+      "intent": "order",
+      "authoredOn": "2025-10-15T23:33:36+02:00",
+      "requester": {
+        "type": "Organization",
+        "identifier": { "system": "http://dsf.dev/sid/organization-identifier", "value": "hs-heilbronn.de" }
+      },
+      "restriction": {
+        "recipient": [
+          {
+            "type": "Organization",
+            "identifier": {
+              "system": "http://dsf.dev/sid/organization-identifier",
+              "value": "forschen-fuer-gesundheit.de"
+            }
+          }
+        ]
+      },
+      "input": [
+        {
+          "type": { "coding": [{ "system": "http://dsf.dev/fhir/CodeSystem/bpmn-message", "code": "message-name" }] },
+          "valueString": "receivedDataSet"
+        },
+        {
+          "type": { "coding": [{ "system": "http://dsf.dev/fhir/CodeSystem/bpmn-message", "code": "business-key" }] },
+          "valueString": "f0626200-6732-4d58-a54d-d3e9ba91d991"
+        },
+        {
+          "type": {
+            "coding": [
+              {
+                "system": "http://medizininformatik-initiative.de/fhir/CodeSystem/data-sharing",
+                "code": "dic-identifier"
+              }
+            ]
+          },
+          "valueReference": {
+            "type": "Organization",
+            "identifier": { "system": "http://dsf.dev/sid/organization-identifier", "value": "ukhd.de" }
+          }
+        }
+      ]
+    },
+    "search": { "mode": "match" }
+  }
+]

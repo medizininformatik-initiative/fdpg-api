@@ -31,6 +31,7 @@ import { LocationModule } from '../location/location.module';
 import { Connection } from 'mongoose';
 import { Location } from '../location/schema/location.schema';
 import { ProposalDataDeliveryService } from './services/proposal-data-delivery.service';
+import { FhirModule } from '../fhir/fhir.module';
 @Module({
   imports: [
     LocationModule,
@@ -50,6 +51,7 @@ import { ProposalDataDeliveryService } from './services/proposal-data-delivery.s
     PdfEngineModule,
     SharedModule,
     FeasibilityModule,
+    FhirModule,
     SchedulerModule,
     AdminModule,
     ProposalFormModule,
