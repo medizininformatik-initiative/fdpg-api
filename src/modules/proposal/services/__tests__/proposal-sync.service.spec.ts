@@ -127,30 +127,29 @@ describe('ProposalSyncService', () => {
   } as ProposalDocument;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ProposalSyncService,
-        {
-          provide: getModelToken(Proposal.name),
-          useValue: {
-            findById: jest.fn(),
-            find: jest.fn(),
-            updateOne: jest.fn(),
-          },
+  const module: TestingModule = await Test.createTestingModule({
+    providers: [
+      ProposalSyncService,
+      {
+        provide: getModelToken(Proposal.name),
+        useValue: {
+          findById: jest.fn(),
+          find: jest.fn(),
         },
-        {
-          provide: AcptPluginClient,
-          useValue: {
-            createProject: jest.fn(),
-            updateProject: jest.fn(),
-            findResearcherByName: jest.fn(),
-            createResearcher: jest.fn(),
-            findLocationByName: jest.fn(),
-            createLocation: jest.fn(),
-          },
+      },
+      {
+        provide: AcptPluginClient,
+        useValue: {
+          createProject: jest.fn(),
+          updateProject: jest.fn(),
+          findResearcherByName: jest.fn(),
+          createResearcher: jest.fn(),
+          findLocationByName: jest.fn(),
+          createLocation: jest.fn(),
         },
-      ],
-    }).compile();
+      },
+    ],
+  }).compile();
 
     service = module.get<ProposalSyncService>(ProposalSyncService);
     proposalModel = module.get<Model<ProposalDocument>>(getModelToken(Proposal.name));
@@ -159,14 +158,19 @@ describe('ProposalSyncService', () => {
 
   describe('syncProposal', () => {
     it('should sync a proposal successfully', async () => {
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
+      const mockProposalForUpdate = {
+        ...mockProposal,
+        _id: mockProposal._id,
+        registerInfo: { ...mockProposal.registerInfo, syncStatus: SyncStatus.Syncing },
+        save: mockSave,
+      };
+
       // Mock initial findById and double-check findById
       (proposalModel.findById as jest.Mock)
-        .mockResolvedValueOnce(mockProposal) // First call in findAndValidate
-        .mockResolvedValueOnce({
-          ...mockProposal,
-          registerInfo: { ...mockProposal.registerInfo, syncStatus: SyncStatus.Syncing },
-        }); // Second call for double-check
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+        .mockResolvedValueOnce({ ...mockProposal, _id: mockProposal._id, save: jest.fn().mockResolvedValue(mockProposal) }) // First call in findAndValidate
+        .mockResolvedValueOnce(mockProposalForUpdate) // Second call for double-check
+        .mockResolvedValueOnce(mockProposalForUpdate); // Third call in updateSyncStatus
 
       // Mock researcher sync
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -183,33 +187,19 @@ describe('ProposalSyncService', () => {
       expect(result.proposalId).toBe('proposal-123');
       expect(result.projectAbbreviation).toBe('TEST-001');
 
-      // Verify findById was called twice (initial + double-check)
-      expect(proposalModel.findById).toHaveBeenCalledTimes(2);
+      // Verify save was called (for updateSyncStatus and final update)
+      expect(mockSave).toHaveBeenCalled();
 
-      // Verify status was set to SYNCING
-      expect(proposalModel.updateOne).toHaveBeenCalledWith(
-        { _id: mockProposal._id },
-        { $set: { 'registerInfo.syncStatus': SyncStatus.Syncing } },
-      );
-
-      // Verify final update with SYNCED status
-      expect(proposalModel.updateOne).toHaveBeenCalledWith(
-        { _id: mockProposal._id },
-        {
-          $set: {
-            'registerInfo.syncStatus': SyncStatus.Synced,
-            'registerInfo.lastSyncedAt': expect.any(Date),
-            'registerInfo.lastSyncError': null,
-            'registerInfo.syncRetryCount': 0,
-            'registerInfo.acptPluginId': 'project-wp-id',
-          },
-        },
-      );
+      // Verify the proposal was updated with correct status
+      expect(mockProposalForUpdate.registerInfo.syncStatus).toBe(SyncStatus.Synced);
+      expect(mockProposalForUpdate.registerInfo.acptPluginId).toBe('project-wp-id');
     });
 
     it('should create new researcher if not found', async () => {
-      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposal);
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
+      const mockProposalWithSave = { ...mockProposal, _id: mockProposal._id, save: mockSave };
+      
+      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposalWithSave);
 
       // Researcher not found
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue(null);
@@ -240,8 +230,10 @@ describe('ProposalSyncService', () => {
     });
 
     it('should create new location if not found', async () => {
-      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposal);
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
+      const mockProposalWithSave = { ...mockProposal, _id: mockProposal._id, save: mockSave };
+      
+      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposalWithSave);
 
       // Mock researcher sync
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -295,8 +287,10 @@ describe('ProposalSyncService', () => {
     });
 
     it('should handle sync failure and update status to SYNC_FAILED', async () => {
-      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposal);
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
+      const mockProposalWithSave = { ...mockProposal, _id: mockProposal._id, save: mockSave };
+      
+      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposalWithSave);
 
       // Mock researcher sync
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -312,21 +306,17 @@ describe('ProposalSyncService', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('API Error');
 
-      // Verify failure update
-      expect(proposalModel.updateOne).toHaveBeenCalledWith(
-        { _id: mockProposal._id },
-        {
-          $set: {
-            'registerInfo.syncStatus': SyncStatus.SyncFailed,
-            'registerInfo.lastSyncError': expect.stringContaining('API Error'),
-          },
-        },
-      );
+      // Verify failure was saved
+      expect(mockSave).toHaveBeenCalled();
+      expect(mockProposalWithSave.registerInfo.syncStatus).toBe(SyncStatus.SyncFailed);
+      expect(mockProposalWithSave.registerInfo.lastSyncError).toContain('API Error');
     });
 
     it('should handle timeout errors specifically', async () => {
-      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposal);
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
+      const mockProposalWithSave = { ...mockProposal, _id: mockProposal._id, save: mockSave };
+      
+      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposalWithSave);
 
       // Mock researcher sync
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -343,27 +333,26 @@ describe('ProposalSyncService', () => {
       expect(result.error).toContain('ACPT Plugin sync timed out');
       expect(result.error).toContain('WordPress server is slow or unreachable');
 
-      // Verify failure update
-      expect(proposalModel.updateOne).toHaveBeenCalledWith(
-        { _id: mockProposal._id },
-        {
-          $set: {
-            'registerInfo.syncStatus': SyncStatus.SyncFailed,
-            'registerInfo.lastSyncError': expect.stringContaining('timed out'),
-          },
-        },
-      );
+      // Verify failure was saved
+      expect(mockSave).toHaveBeenCalled();
+      expect(mockProposalWithSave.registerInfo.syncStatus).toBe(SyncStatus.SyncFailed);
+      expect(mockProposalWithSave.registerInfo.lastSyncError).toContain('timed out');
     });
 
     it('should not set status to SYNCED if proposal was marked as SYNC_FAILED by another process', async () => {
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
+      const failedProposal = {
+        ...mockProposal,
+        _id: mockProposal._id,
+        registerInfo: { ...mockProposal.registerInfo, syncStatus: SyncStatus.SyncFailed },
+        save: mockSave,
+      };
+
       // Initial findById returns proposal with NotSynced status
       (proposalModel.findById as jest.Mock)
-        .mockResolvedValueOnce(mockProposal) // First call in findAndValidate
-        .mockResolvedValueOnce({
-          ...mockProposal,
-          registerInfo: { ...mockProposal.registerInfo, syncStatus: SyncStatus.SyncFailed },
-        }); // Second call shows it was marked as failed
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+        .mockResolvedValueOnce({ ...mockProposal, _id: mockProposal._id, save: jest.fn().mockResolvedValue(mockProposal) }) // First call in findAndValidate
+        .mockResolvedValueOnce(failedProposal) // Second call shows it was marked as failed
+        .mockResolvedValueOnce(failedProposal); // Third call in updateSyncStatus
 
       // Mock successful sync operations
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -376,28 +365,23 @@ describe('ProposalSyncService', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('Sync was cancelled or failed');
 
-      // Should NOT have called updateOne with SYNCED status
-      expect(proposalModel.updateOne).not.toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          $set: expect.objectContaining({
-            'registerInfo.syncStatus': SyncStatus.Synced,
-          }),
-        }),
-      );
+      // Should NOT have updated the status to SYNCED
+      expect(failedProposal.registerInfo.syncStatus).toBe(SyncStatus.SyncFailed);
     });
 
     it('should update existing project if acptPluginId exists', async () => {
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
       const proposalWithId = {
         ...mockProposal,
+        _id: mockProposal._id,
         registerInfo: {
           ...mockProposal.registerInfo,
           acptPluginId: 'existing-wp-id',
         },
+        save: mockSave,
       };
 
       (proposalModel.findById as jest.Mock).mockResolvedValue(proposalWithId);
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
 
       // Mock researcher sync
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -421,8 +405,10 @@ describe('ProposalSyncService', () => {
     });
 
     it('should separate desired locations from participant institutes', async () => {
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
       const proposalWithParticipants = {
         ...mockProposal,
+        _id: mockProposal._id,
         participants: [
           {
             institute: {
@@ -433,10 +419,10 @@ describe('ProposalSyncService', () => {
             },
           },
         ],
+        save: mockSave,
       };
 
       (proposalModel.findById as jest.Mock).mockResolvedValue(proposalWithParticipants);
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
 
       // Mock researcher sync
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -480,16 +466,16 @@ describe('ProposalSyncService', () => {
 
   describe('syncAllProposals', () => {
     it('should sync all eligible proposals', async () => {
-      const proposals = [
-        { ...mockProposal, _id: 'proposal-1', projectAbbreviation: 'TEST-001' },
-        { ...mockProposal, _id: 'proposal-2', projectAbbreviation: 'TEST-002' },
-      ];
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
+      const proposal1 = { ...mockProposal, _id: 'proposal-1', projectAbbreviation: 'TEST-001', save: mockSave };
+      const proposal2 = { ...mockProposal, _id: 'proposal-2', projectAbbreviation: 'TEST-002', save: mockSave };
+      const proposals = [proposal1, proposal2];
 
       (proposalModel.find as jest.Mock).mockResolvedValue(proposals);
       (proposalModel.findById as jest.Mock).mockImplementation((id) => {
-        return Promise.resolve(proposals.find((p) => p._id === id));
+        const found = proposals.find((p) => p._id === id);
+        return Promise.resolve(found || { ...mockProposal, _id: id, save: mockSave });
       });
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
 
       // Mock all external calls
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -513,17 +499,19 @@ describe('ProposalSyncService', () => {
 
   describe('retrySync', () => {
     it('should increment retry count and retry sync', async () => {
+      const mockSave = jest.fn().mockResolvedValue(mockProposal);
       const proposalWithRetry = {
         ...mockProposal,
+        _id: mockProposal._id,
         registerInfo: {
           ...mockProposal.registerInfo,
           syncStatus: SyncStatus.SyncFailed,
           syncRetryCount: 1,
         },
+        save: mockSave,
       };
 
       (proposalModel.findById as jest.Mock).mockResolvedValue(proposalWithRetry);
-      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
 
       // Mock external calls
       (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
@@ -532,11 +520,9 @@ describe('ProposalSyncService', () => {
 
       await service.retrySync('proposal-123', mockFdpgUser);
 
-      // Verify retry count was incremented
-      expect(proposalModel.updateOne).toHaveBeenCalledWith(
-        { _id: proposalWithRetry._id },
-        { $inc: { 'registerInfo.syncRetryCount': 1 } },
-      );
+      // Verify retry count was incremented and saved
+      expect(mockSave).toHaveBeenCalled();
+      expect(proposalWithRetry.registerInfo.syncRetryCount).toBe(2);
     });
   });
 });

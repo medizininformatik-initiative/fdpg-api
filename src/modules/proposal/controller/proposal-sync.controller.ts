@@ -5,7 +5,8 @@ import { Auth } from 'src/shared/decorators/auth.decorator';
 import { MongoIdParamDto } from 'src/shared/dto/mongo-id-param.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
-import { ProposalSyncService, BulkSyncResults, SyncResult } from '../services/proposal-sync.service';
+import { ProposalSyncService } from '../services/proposal-sync.service';
+import { SyncResultDto, BulkSyncResultsDto } from '../dto/sync-result.dto';
 
 @ApiController('proposals', undefined, 'sync')
 export class ProposalSyncController {
@@ -21,11 +22,11 @@ export class ProposalSyncController {
       'If the proposal is in ReadyToPublish status, it will be moved to Published. ' +
       'If already Published but OutOfSync, it will be re-synced.',
   })
-  @ApiResponse({ status: 200, description: 'Sync completed successfully' })
+  @ApiResponse({ status: 200, description: 'Sync completed successfully', type: SyncResultDto })
   @ApiResponse({ status: 400, description: 'Invalid proposal or not a registering form' })
   @ApiResponse({ status: 403, description: 'Only FDPG members can sync proposals' })
   @ApiResponse({ status: 404, description: 'Proposal not found' })
-  async syncProposal(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest): Promise<SyncResult> {
+  async syncProposal(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest): Promise<SyncResultDto> {
     return await this.proposalSyncService.syncProposal(id, user);
   }
 
@@ -36,10 +37,10 @@ export class ProposalSyncController {
     summary: 'Retry a failed sync',
     description: 'Retries syncing a proposal that previously failed. Retry count is tracked but not limited.',
   })
-  @ApiResponse({ status: 200, description: 'Retry completed' })
+  @ApiResponse({ status: 200, description: 'Retry completed', type: SyncResultDto })
   @ApiResponse({ status: 403, description: 'Only FDPG members can retry sync' })
   @ApiResponse({ status: 404, description: 'Proposal not found' })
-  async retrySync(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest): Promise<SyncResult> {
+  async retrySync(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest): Promise<SyncResultDto> {
     return await this.proposalSyncService.retrySync(id, user);
   }
 
@@ -52,10 +53,10 @@ export class ProposalSyncController {
       'Syncs all proposals with status ReadyToPublish or Published+OutOfSync. ' +
       'This operation processes proposals sequentially and may take several minutes.',
   })
-  @ApiResponse({ status: 200, description: 'Bulk sync completed', type: Object })
+  @ApiResponse({ status: 200, description: 'Bulk sync completed', type: BulkSyncResultsDto })
   @ApiResponse({ status: 400, description: 'No proposals to sync' })
   @ApiResponse({ status: 403, description: 'Only FDPG members can bulk sync' })
-  async syncAllProposals(@Request() { user }: FdpgRequest): Promise<BulkSyncResults> {
+  async syncAllProposals(@Request() { user }: FdpgRequest): Promise<BulkSyncResultsDto> {
     return await this.proposalSyncService.syncAllProposals(user);
   }
 }

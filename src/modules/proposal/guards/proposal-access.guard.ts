@@ -18,12 +18,10 @@ export class ProposalAccessGuard implements CanActivate {
       })
       .end();
 
-    // Allow if user is a Researcher (primary role)
     if (user.singleKnownRole === Role.Researcher) {
       return true;
     }
 
-    // Allow if user has RegisteringMember among their roles
     if (user.roles?.includes(Role.RegisteringMember)) {
       return true;
     }

@@ -1,5 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, MaxLength, ValidateIf } from 'class-validator';
+import { IsArray, IsDate, IsNumber, IsOptional, MaxLength, ValidateIf } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
@@ -23,7 +23,6 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   @IsDate()
   @IsAfterToday({
     groups: [ProposalValidation.IsNotDraftAndNotRegister],
-    // This validation only runs for non-draft AND non-register forms
   })
   @IsOptional({
     groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],

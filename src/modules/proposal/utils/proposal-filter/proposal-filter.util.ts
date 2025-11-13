@@ -12,7 +12,6 @@ import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalType } from '../../enums/proposal-type.enum';
 import { getFilterForDmo } from './dmo/dmo-filter.util';
 
-// Filter for register proposals that belong to a specific user
 export const getRegisterProposalsForUser = (
   user: IRequestUser,
   status: ProposalStatus | ProposalStatus[],
@@ -24,6 +23,7 @@ export const getRegisterProposalsForUser = (
   ],
   type: ProposalType.RegisteringForm,
   'registerInfo.isInternalRegistration': { $ne: true },
+  'owner.role': { $ne: Role.FdpgMember },
   status: Array.isArray(status) ? { $in: status } : status,
 });
 

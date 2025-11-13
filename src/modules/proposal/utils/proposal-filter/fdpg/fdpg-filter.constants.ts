@@ -2,6 +2,7 @@ import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
 import { ProposalType } from 'src/modules/proposal/enums/proposal-type.enum';
 import { SyncStatus } from 'src/modules/proposal/enums/sync-status.enum';
+import { Role } from 'src/shared/enums/role.enum';
 import { FilterQuery } from 'mongoose';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 
@@ -38,25 +39,11 @@ const FINISHED = {
 };
 const ARCHIVED = { status: ProposalStatus.Archived };
 
-// Published page panels (for non-FDPG users - exclude internal registrations)
-const PUBLISHED_DRAFT = {
+// FDPG Published page panels (for registering forms)
+const FDPG_PUBLISHED_REQUESTED: FilterQuery<Proposal> = {
   type: ProposalType.RegisteringForm,
-  'registerInfo.isInternalRegistration': { $ne: true },
-  status: ProposalStatus.Draft,
+  status: ProposalStatus.FdpgCheck,
 };
-const PUBLISHED_PENDING = {
-  type: ProposalType.RegisteringForm,
-  'registerInfo.isInternalRegistration': { $ne: true },
-  status: { $in: [ProposalStatus.Rework, ProposalStatus.FdpgCheck] },
-};
-const PUBLISHED_COMPLETED = {
-  type: ProposalType.RegisteringForm,
-  'registerInfo.isInternalRegistration': { $ne: true },
-  status: { $in: [ProposalStatus.Published, ProposalStatus.Rejected] },
-};
-
-// FDPG Published page panels
-const FDPG_PUBLISHED_REQUESTED = { type: ProposalType.RegisteringForm, status: ProposalStatus.FdpgCheck };
 const FDPG_PUBLISHED_READY: FilterQuery<Proposal> = {
   type: ProposalType.RegisteringForm,
   status: ProposalStatus.Published,
@@ -64,15 +51,15 @@ const FDPG_PUBLISHED_READY: FilterQuery<Proposal> = {
     $in: [SyncStatus.OutOfSync, SyncStatus.SyncFailed, SyncStatus.Syncing, SyncStatus.NotSynced],
   },
 };
-const FDPG_PUBLISHED_PUBLISHED = {
+const FDPG_PUBLISHED_PUBLISHED: FilterQuery<Proposal> = {
   type: ProposalType.RegisteringForm,
   status: ProposalStatus.Published,
   'registerInfo.syncStatus': SyncStatus.Synced,
 };
-const FDPG_PUBLISHED_DRAFT = {
+const FDPG_PUBLISHED_DRAFT: FilterQuery<Proposal> = {
   type: ProposalType.RegisteringForm,
-  'registerInfo.isInternalRegistration': true,
   status: ProposalStatus.Draft,
+  $or: [{ 'registerInfo.isInternalRegistration': true }, { 'owner.role': Role.FdpgMember }],
 };
 
 export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
@@ -83,10 +70,6 @@ export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgOngoingToCheck]: ONGOING_TO_CHECK,
   [PanelQuery.FdpgOngoingInWork]: ONGOING_IN_WORK,
   [PanelQuery.FdpgFinished]: FINISHED,
-
-  [PanelQuery.PublishedDraft]: PUBLISHED_DRAFT,
-  [PanelQuery.PublishedPending]: PUBLISHED_PENDING,
-  [PanelQuery.PublishedCompleted]: PUBLISHED_COMPLETED,
   [PanelQuery.FdpgPublishedRequested]: FDPG_PUBLISHED_REQUESTED,
   [PanelQuery.FdpgPublishedReady]: FDPG_PUBLISHED_READY,
   [PanelQuery.FdpgPublishedPublished]: FDPG_PUBLISHED_PUBLISHED,

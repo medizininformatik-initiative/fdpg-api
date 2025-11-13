@@ -80,9 +80,6 @@ export const addLocationPreSaveHook = <TClass, ModelClass extends Document>(
             return;
           }
 
-          if (expectedCount === 0) {
-            return;
-          }
           const count = await LocationModel.countDocuments({ _id: { $in: idsToCheck } });
 
           if (count !== expectedCount) {
