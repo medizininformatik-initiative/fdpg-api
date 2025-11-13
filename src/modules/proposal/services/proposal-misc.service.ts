@@ -69,9 +69,13 @@ import { Location } from 'src/modules/location/schema/location.schema';
 import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
 import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
 import { HistoryEventType } from '../enums/history-event.enum';
+import { ProposalSyncService } from './proposal-sync.service';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class ProposalMiscService {
+  private readonly logger = new Logger(ProposalMiscService.name);
+
   constructor(
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
@@ -87,6 +91,7 @@ export class ProposalMiscService {
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
     private locationService: LocationService,
+    private proposalSyncService: ProposalSyncService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -197,6 +202,21 @@ export class ProposalMiscService {
 
     if (toBeUpdated.status === ProposalStatus.LocationCheck) {
       await this.proposalPdfService.createProposalPdf(saveResult, user);
+    }
+
+    // Auto-sync when approving registering form (FdpgCheck -> Published)
+    const isApprovalToPublished =
+      oldStatus === ProposalStatus.FdpgCheck &&
+      status === ProposalStatus.Published &&
+      toBeUpdated.type === ProposalType.RegisteringForm;
+
+    if (isApprovalToPublished) {
+      try {
+        await this.proposalSyncService.syncProposal(proposalId, user);
+        this.logger.log(`Auto-sync completed successfully for proposal ${proposalId}`);
+      } catch (error) {
+        this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
+      }
     }
   }
 

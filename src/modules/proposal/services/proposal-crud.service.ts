@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
 import { Model } from 'mongoose';
@@ -189,25 +189,6 @@ export class ProposalCrudService {
       toBeUpdated.registerInfo.syncStatus = SyncStatus.OutOfSync;
     }
 
-    // Auto-sync when approving registering form (FdpgCheck -> Published)
-    const isApprovalToPublished =
-      isStatusChange &&
-      oldStatus === ProposalStatus.FdpgCheck &&
-      toBeUpdated.status === ProposalStatus.Published &&
-      toBeUpdated.type === ProposalType.RegisteringForm;
-
-    if (isApprovalToPublished) {
-      try {
-        this.logger.log(`Auto-syncing registering form ${proposalId} on approval`);
-        if (!toBeUpdated.registerInfo) {
-          toBeUpdated.registerInfo = {} as any;
-        }
-        toBeUpdated.registerInfo.syncStatus = SyncStatus.Syncing;
-      } catch (error) {
-        this.logger.error(`Failed to initialize sync status: ${error.message}`);
-      }
-    }
-
     await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
 
@@ -216,6 +197,7 @@ export class ProposalCrudService {
     if (isStatusChange) {
       await this.eventEngineService.handleProposalStatusChange(saveResult);
 
+      // Update linked registering form's originalProposalStatus when application form status changes
       if (saveResult.type === ProposalType.ApplicationForm && saveResult.registerFormId) {
         try {
           this.logger.log(
@@ -236,29 +218,20 @@ export class ProposalCrudService {
           );
         }
       }
-    }
 
-    if (isApprovalToPublished) {
-      if (!this.proposalSyncService) {
-        this.logger.error(`ProposalSyncService is not available! Cannot auto-sync proposal ${proposalId}`);
-        await this.proposalModel.updateOne(
-          { _id: proposalId },
-          {
-            $set: {
-              'registerInfo.syncStatus': SyncStatus.SyncFailed,
-              'registerInfo.lastSyncError': 'Sync service not available',
-            },
-          },
-        );
-      } else {
-        this.proposalSyncService
-          .syncProposal(proposalId, user)
-          .then(() => {
-            this.logger.log(`Auto-sync completed for proposal ${proposalId}`);
-          })
-          .catch((error) => {
-            this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
-          });
+      const isApprovalToPublished =
+        oldStatus === ProposalStatus.FdpgCheck &&
+        saveResult.status === ProposalStatus.Published &&
+        saveResult.type === ProposalType.RegisteringForm;
+
+      if (isApprovalToPublished) {
+        this.logger.log(`Auto-syncing registering form ${proposalId} on approval`);
+        try {
+          await this.proposalSyncService.syncProposal(proposalId, user);
+          this.logger.log(`Auto-sync completed successfully for proposal ${proposalId}`);
+        } catch (error) {
+          this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
+        }
       }
     }
 

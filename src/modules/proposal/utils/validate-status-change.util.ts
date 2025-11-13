@@ -10,13 +10,12 @@ import { Proposal } from '../schema/proposal.schema';
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
 
-const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
-  proposal.type === ProposalType.RegisteringForm &&
-  user.roles.includes(Role.RegisteringMember) &&
-  user.userId === proposal.ownerId;
-
 const isFdpg = (user: IRequestUser) =>
   user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember;
+
+const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
+  proposal.type === ProposalType.RegisteringForm &&
+  ((user.roles.includes(Role.RegisteringMember) && user.userId === proposal.ownerId) || isFdpg(user));
 
 const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) => isOwner(user, proposal) || isFdpg(user);
 

@@ -380,6 +380,12 @@ describe('validateStatusChange', () => {
           ValidationException,
         );
       });
+
+      it('allows FDPG member to submit any registering form (regardless of ownership)', () => {
+        // FDPG should be able to submit registering forms even if they don't own them
+        baseProposal.ownerId = 'different-owner';
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, fdpgMember)).not.toThrow();
+      });
     });
 
     describe('FdpgCheck -> ReadyToPublish (Registering Form Only)', () => {
@@ -483,6 +489,12 @@ describe('validateStatusChange', () => {
         expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, registeringMemberUser)).toThrow(
           ValidationException,
         );
+      });
+
+      it('allows FDPG member to resubmit any registering form (regardless of ownership)', () => {
+        // FDPG should be able to resubmit registering forms from Rework even if they don't own them
+        baseProposal.ownerId = 'different-owner';
+        expect(() => validateStatusChange(baseProposal, ProposalStatus.FdpgCheck, fdpgMember)).not.toThrow();
       });
     });
 

@@ -125,7 +125,6 @@ export class ProposalSyncService {
     const proposals = await this.proposalModel.find({
       type: ProposalType.RegisteringForm,
       status: ProposalStatus.Published,
-      'registerInfo.isInternalRegistration': { $ne: true },
       'registerInfo.syncStatus': { $in: [SyncStatus.OutOfSync, SyncStatus.SyncFailed, SyncStatus.NotSynced] },
     });
 
