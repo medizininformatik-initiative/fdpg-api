@@ -8,7 +8,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
 import { SyncStatus } from '../enums/sync-status.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
-import { AcptMetaField, AcptProjectDto } from '../dto/acpt-plugin/acpt-project.dto';
+import { AcptMetaField, AcptProjectDto, AcptResearcherDto, AcptLocationDto } from '../dto/acpt-plugin/acpt-project.dto';
 import { PublishedProposalStatus } from '../enums/published-proposal.enum';
 
 export interface SyncResult {
@@ -140,7 +140,23 @@ export class ProposalSyncService {
   }
 
   private async callAcptPlugin(proposal: ProposalDocument, isUpdate: boolean): Promise<string> {
-    const projectData: AcptProjectDto = this.buildAcptPayload(proposal);
+    // Step 1: Sync researchers first (they need to exist before project)
+    const researcherIds = await this.syncResearchers(proposal);
+    this.logger.log(`Synced ${researcherIds.length} researchers for project ${proposal.projectAbbreviation}`);
+
+    // Step 2: Sync locations (they need to exist before project)
+    const { desiredLocationIds, participantInstituteIds } = await this.syncLocations(proposal);
+    this.logger.log(
+      `Synced ${desiredLocationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
+    );
+
+    // Step 3: Build project payload with researcher and location IDs
+    const projectData: AcptProjectDto = this.buildAcptPayload(
+      proposal,
+      researcherIds,
+      desiredLocationIds,
+      participantInstituteIds,
+    );
 
     try {
       const projectResponse = isUpdate
@@ -162,8 +178,204 @@ export class ProposalSyncService {
     }
   }
 
-  private buildAcptPayload(proposal: ProposalDocument): AcptProjectDto {
+  private async syncResearchers(proposal: ProposalDocument): Promise<string[]> {
+    const researcherIds: string[] = [];
+
+    const researcher = proposal.projectResponsible?.researcher;
+
+    if (!researcher?.firstName || !researcher?.lastName) {
+      this.logger.warn(`No valid responsible scientist found for project ${proposal.projectAbbreviation}`);
+      return researcherIds;
+    }
+
+    this.logger.log(
+      `Syncing responsible scientist ${researcher.firstName} ${researcher.lastName} for project ${proposal.projectAbbreviation}`,
+    );
+
+    try {
+      const researcherId = await this.ensureResearcherExists(
+        researcher.firstName,
+        researcher.lastName,
+        researcher.title,
+        researcher.affiliation,
+      );
+
+      if (researcherId) {
+        researcherIds.push(researcherId);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to sync researcher ${researcher.firstName} ${researcher.lastName}: ${error.message}`);
+      throw error;
+    }
+
+    return researcherIds;
+  }
+
+  private async ensureResearcherExists(
+    firstName: string,
+    lastName: string,
+    title?: string,
+    affiliation?: string,
+  ): Promise<string | null> {
+    const existingId = await this.acptPluginClient.findResearcherByName(firstName, lastName);
+
+    if (existingId) {
+      this.logger.log(`Researcher ${firstName} ${lastName} already exists with ID ${existingId}`);
+      return existingId;
+    }
+
+    this.logger.log(`Creating new researcher: ${firstName} ${lastName}`);
+
+    const researcherData: AcptResearcherDto = this.buildResearcherPayload(firstName, lastName, title, affiliation);
+
+    const response = await this.acptPluginClient.createResearcher(researcherData);
+    this.logger.log(`Created researcher ${firstName} ${lastName} with ID ${response.id}`);
+
+    return response.id;
+  }
+
+  private buildResearcherPayload(
+    firstName: string,
+    lastName: string,
+    title?: string,
+    affiliation?: string,
+  ): AcptResearcherDto {
+    const meta: AcptMetaField[] = [
+      { box: 'fdpgx-researcher-fields', field: 'fdpgx-firstname', value: firstName },
+      { box: 'fdpgx-researcher-fields', field: 'fdpgx-lastname', value: lastName },
+    ];
+
+    if (title) {
+      meta.push({ box: 'fdpgx-researcher-fields', field: 'fdpgx-scientifictitle', value: title });
+    }
+
+    if (affiliation) {
+      meta.push({ box: 'fdpgx-researcher-fields', field: 'fdpgx-affiliation', value: affiliation });
+    }
+
+    return {
+      title: `${title || ''} ${firstName} ${lastName}`.trim(),
+      status: 'publish',
+      content: '',
+      acpt: { meta },
+    };
+  }
+
+  private async syncLocations(
+    proposal: ProposalDocument,
+  ): Promise<{ desiredLocationIds: string[]; participantInstituteIds: string[] }> {
+    const desiredLocationIds: string[] = [];
+    const participantInstituteIds: string[] = [];
+
+    const desiredLocationNames = new Set<string>();
+    proposal.userProject?.addressees?.desiredLocations?.forEach((loc) => {
+      if (loc && loc !== 'VIRTUAL_ALL') {
+        desiredLocationNames.add(loc);
+      }
+    });
+
+    this.logger.log(
+      `Found ${desiredLocationNames.size} desired locations to sync for project ${proposal.projectAbbreviation}`,
+    );
+
+    for (const locationName of Array.from(desiredLocationNames)) {
+      try {
+        const locationId = await this.ensureLocationExists(locationName);
+        if (locationId) {
+          desiredLocationIds.push(locationId);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to sync desired location ${locationName}: ${error.message}`);
+      }
+    }
+
+    const participantInstituteNames = new Set<string>();
+    proposal.participants?.forEach((p) => {
+      // Use miiLocation if available, otherwise use custom name
+      const instituteName = p.institute?.miiLocation || p.institute?.name;
+      if (instituteName) {
+        participantInstituteNames.add(instituteName);
+      }
+    });
+
+    this.logger.log(
+      `Found ${participantInstituteNames.size} participant institutes to sync for project ${proposal.projectAbbreviation}`,
+    );
+
+    for (const locationName of Array.from(participantInstituteNames)) {
+      try {
+        const locationId = await this.ensureLocationExists(locationName);
+        if (locationId) {
+          participantInstituteIds.push(locationId);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to sync participant institute ${locationName}: ${error.message}`);
+      }
+    }
+
+    return { desiredLocationIds, participantInstituteIds };
+  }
+
+  private async ensureLocationExists(locationName: string): Promise<string | null> {
+    const existingId = await this.acptPluginClient.findLocationByName(locationName);
+
+    if (existingId) {
+      this.logger.log(`Location ${locationName} already exists with ID ${existingId}`);
+      return existingId;
+    }
+
+    this.logger.log(`Creating new location: ${locationName}`);
+
+    const locationData: AcptLocationDto = this.buildLocationPayload(locationName);
+
+    const response = await this.acptPluginClient.createLocation(locationData);
+    this.logger.log(`Created location ${locationName} with ID ${response.id}`);
+
+    return response.id;
+  }
+
+  private buildLocationPayload(locationName: string): AcptLocationDto {
+    const meta: AcptMetaField[] = [{ box: 'location-fields', field: 'fdpgx-name', value: locationName }];
+
+    return {
+      title: locationName,
+      status: 'publish',
+      content: '',
+      acpt: { meta },
+    };
+  }
+
+  private buildAcptPayload(
+    proposal: ProposalDocument,
+    researcherIds: string[],
+    desiredLocationIds: string[],
+    participantInstituteIds: string[],
+  ): AcptProjectDto {
     const meta: AcptMetaField[] = [];
+
+    if (researcherIds.length > 0) {
+      meta.push({
+        box: 'project-fields',
+        field: 'fdpgx-researcher',
+        value: researcherIds,
+      });
+    }
+
+    if (desiredLocationIds.length > 0) {
+      meta.push({
+        box: 'project-fields',
+        field: 'fdpgx-location',
+        value: desiredLocationIds,
+      });
+    }
+
+    if (participantInstituteIds.length > 0) {
+      meta.push({
+        box: 'project-fields',
+        field: 'fdpgx-participantsinstitute',
+        value: participantInstituteIds,
+      });
+    }
 
     if (proposal.userProject?.generalProjectInformation?.projectTitle) {
       meta.push({
@@ -286,6 +498,14 @@ export class ProposalSyncService {
       });
     }
 
+    if (proposal.userProject?.typeOfUse?.usage?.length > 0) {
+      meta.push({
+        box: 'project-fields',
+        field: 'fdpgx-usage',
+        value: proposal.userProject.typeOfUse.usage.join(', '),
+      });
+    }
+
     if (proposal.userProject?.generalProjectInformation?.keywords?.length > 0) {
       meta.push({
         box: 'project-fields',
@@ -325,28 +545,6 @@ export class ProposalSyncService {
         value: ['1'], // "1" represents "has legal basis"
       });
     }
-
-    if (proposal.userProject?.addressees?.desiredLocations?.length > 0) {
-      meta.push({
-        box: 'project-fields',
-        field: 'fdpgx-location',
-        value: proposal.userProject.addressees.desiredLocations,
-      });
-
-      //  participating institutes
-      meta.push({
-        box: 'project-fields',
-        field: 'fdpgx-participantsinstitute',
-        value: proposal.participants
-          ?.map((participant) => participant.institute?.miiLocation)
-          .filter((institute): institute is string => !!institute),
-      });
-    }
-
-    // Researcher Information (Responsible Scientist)
-    // Note: fdpgx-researcher expects an array of researcher IDs
-    // According to ZARS-716, researcher information is handled separately
-    // and should not be included in the registration form meta fields
 
     // Local Project flag (0 for internally registered projects, 1 for external)
     meta.push({
