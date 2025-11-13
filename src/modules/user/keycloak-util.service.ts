@@ -76,19 +76,15 @@ export class KeycloakUtilService {
   }
 
   /** Returns all users with role DataSourceMember and specific data source */
-  async getDataSourceMembers(dataSource: PlatformIdentifier): Promise<ICachedKeycloakUser[]> {
-    let dataSourceMembers: ICachedKeycloakUser[] = await this.cacheManager.get<ICachedKeycloakUser[]>(
+  async getDataSourceMembers(
+    dataSource: PlatformIdentifier,
+    withFilterForReceivingMails,
+  ): Promise<ICachedKeycloakUser[]> {
+    const dataSourceMembers: ICachedKeycloakUser[] = await this.getMembers(
+      Role.DataSourceMember,
       CacheKey.AllDataSourceMembers,
+      withFilterForReceivingMails,
     );
-
-    if (dataSourceMembers && dataSourceMembers.length > 0) {
-      return dataSourceMembers;
-    }
-
-    const dataSourceMembersFullModel = await this.keycloakService.getUsersByRole(Role.DataSourceMember);
-    dataSourceMembers = dataSourceMembersFullModel.map(({ email, id, attributes }) => ({ email, id, attributes }));
-
-    await this.cacheManager.set(CacheKey.AllDataSourceMembers, dataSourceMembers, this.ROLE_CACHE_TIME);
 
     const result = dataSourceMembers.filter((dataSourceMember) => {
       const assignedDataSources: PlatformIdentifier[] = (
@@ -118,7 +114,9 @@ export class KeycloakUtilService {
     const validFdpgContacts = await this.getFdpgMembers();
 
     const dataSourceKeycloakContacts = await Promise.all(
-      (proposal.selectedDataSources ?? []).map(async (dataSource) => await this.getDataSourceMembers(dataSource)),
+      (proposal.selectedDataSources ?? []).map(
+        async (dataSource) => await this.getDataSourceMembers(dataSource, false),
+      ),
     );
 
     const dataSourceContacts = dataSourceKeycloakContacts.flatMap((dataSourceMembers) => dataSourceMembers);
@@ -179,7 +177,7 @@ export class KeycloakUtilService {
                 return [];
               }
               return (
-                await Promise.all(query.dataSources.map(async (ds) => await this.getDataSourceMembers(ds)))
+                await Promise.all(query.dataSources.map(async (ds) => await this.getDataSourceMembers(ds, false)))
               ).flat();
             case Role.FdpgMember:
               return await this.getFdpgMembers();
