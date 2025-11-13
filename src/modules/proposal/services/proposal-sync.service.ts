@@ -51,6 +51,17 @@ export class ProposalSyncService {
 
       const acptPluginId = await this.callAcptPlugin(proposal, isUpdate);
 
+      const currentProposal = await this.proposalModel.findById(proposal._id);
+      if (currentProposal?.registerInfo?.syncStatus === SyncStatus.SyncFailed) {
+        this.logger.warn(`Proposal ${proposalId} was marked as failed by another process. Aborting success update.`);
+        return {
+          success: false,
+          proposalId: proposal._id.toString(),
+          projectAbbreviation: proposal.projectAbbreviation,
+          error: 'Sync was cancelled or failed',
+        };
+      }
+
       const updateFields: any = {
         'registerInfo.syncStatus': SyncStatus.Synced,
         'registerInfo.lastSyncedAt': new Date(),
@@ -65,7 +76,9 @@ export class ProposalSyncService {
 
       await this.proposalModel.updateOne({ _id: proposal._id }, { $set: updateFields });
 
-      this.logger.log(`Successfully synced proposal ${proposal.projectAbbreviation}`);
+      this.logger.log(
+        `✅ Successfully synced proposal ${proposal.projectAbbreviation} with ACPT Plugin ID: ${acptPluginId}`,
+      );
 
       return {
         success: true,
@@ -73,15 +86,24 @@ export class ProposalSyncService {
         projectAbbreviation: proposal.projectAbbreviation,
       };
     } catch (error) {
-      await this.handleSyncFailure(proposal._id.toString(), error);
+      // Handle timeout specifically
+      const errorMessage = error.message || 'Unknown error';
+      const isTimeout =
+        errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT') || errorMessage.includes('ECONNABORTED');
 
-      this.logger.error(`Sync failed for proposal ${proposalId}: ${error.message}`);
+      if (isTimeout) {
+        this.logger.error(`⏱️ TIMEOUT ERROR during sync for proposal ${proposalId}: ${errorMessage}`);
+      } else {
+        this.logger.error(`❌ Sync failed for proposal ${proposalId}: ${errorMessage}`);
+      }
+
+      await this.handleSyncFailure(proposal._id.toString(), error);
 
       return {
         success: false,
         proposalId: proposal._id.toString(),
         projectAbbreviation: proposal.projectAbbreviation,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }
@@ -140,41 +162,64 @@ export class ProposalSyncService {
   }
 
   private async callAcptPlugin(proposal: ProposalDocument, isUpdate: boolean): Promise<string> {
-    // Step 1: Sync researchers first (they need to exist before project)
-    const researcherIds = await this.syncResearchers(proposal);
-    this.logger.log(`Synced ${researcherIds.length} researchers for project ${proposal.projectAbbreviation}`);
-
-    // Step 2: Sync locations (they need to exist before project)
-    const { desiredLocationIds, participantInstituteIds } = await this.syncLocations(proposal);
-    this.logger.log(
-      `Synced ${desiredLocationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
-    );
-
-    // Step 3: Build project payload with researcher and location IDs
-    const projectData: AcptProjectDto = this.buildAcptPayload(
-      proposal,
-      researcherIds,
-      desiredLocationIds,
-      participantInstituteIds,
-    );
-
     try {
-      const projectResponse = isUpdate
-        ? await this.acptPluginClient.updateProject(proposal.registerInfo?.acptPluginId, projectData)
-        : await this.acptPluginClient.createProject(projectData);
+      // Step 1: Sync researchers first (they need to exist before project)
+      this.logger.log(`[1/3] Syncing researchers for project ${proposal.projectAbbreviation}...`);
+      const researcherIds = await this.syncResearchers(proposal);
+      this.logger.log(`✓ Synced ${researcherIds.length} researchers for project ${proposal.projectAbbreviation}`);
 
-      return projectResponse.id;
-    } catch (error) {
-      // If UPDATE fails with 404 (project doesn't exist in WordPress), fallback to CREATE
-      if (isUpdate && error.message?.includes('404')) {
-        this.logger.warn(
-          `Update failed with 404 for ID ${proposal.registerInfo?.acptPluginId}. Falling back to CREATE.`,
+      // Step 2: Sync locations (they need to exist before project)
+      this.logger.log(`[2/3] Syncing locations for project ${proposal.projectAbbreviation}...`);
+      const { desiredLocationIds, participantInstituteIds } = await this.syncLocations(proposal);
+      this.logger.log(
+        `✓ Synced ${desiredLocationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
+      );
+
+      // Step 3: Build project payload with researcher and location IDs
+      this.logger.log(
+        `[3/3] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
+      );
+      const projectData: AcptProjectDto = this.buildAcptPayload(
+        proposal,
+        researcherIds,
+        desiredLocationIds,
+        participantInstituteIds,
+      );
+
+      try {
+        const projectResponse = isUpdate
+          ? await this.acptPluginClient.updateProject(proposal.registerInfo?.acptPluginId, projectData)
+          : await this.acptPluginClient.createProject(projectData);
+
+        this.logger.log(
+          `✓ Project ${isUpdate ? 'updated' : 'created'} successfully with WordPress ID: ${projectResponse.id}`,
         );
-        const projectResponse = await this.acptPluginClient.createProject(projectData);
         return projectResponse.id;
+      } catch (error) {
+        // If UPDATE fails with 404 (project doesn't exist in WordPress), fallback to CREATE
+        if (isUpdate && error.message?.includes('404')) {
+          this.logger.warn(
+            `Update failed with 404 for ID ${proposal.registerInfo?.acptPluginId}. Falling back to CREATE.`,
+          );
+          const projectResponse = await this.acptPluginClient.createProject(projectData);
+          this.logger.log(`✓ Project created successfully with WordPress ID: ${projectResponse.id}`);
+          return projectResponse.id;
+        }
+
+        throw error;
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Unknown error';
+      const isTimeout =
+        errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT') || errorMessage.includes('ECONNABORTED');
+
+      if (isTimeout) {
+        throw new Error(
+          `ACPT Plugin sync timed out: ${errorMessage}. This usually means the WordPress server is slow or unreachable. Try again later.`,
+        );
       }
 
-      throw error;
+      throw new Error(`ACPT Plugin sync failed: ${errorMessage}`);
     }
   }
 

@@ -11,8 +11,6 @@ import {
   AcptLocationListItemDto,
   AcptLocationResponseDto,
 } from '../../proposal/dto/acpt-plugin/acpt-project.dto';
-import { DEFAULT_CIPHERS } from 'tls';
-import * as https from 'https';
 
 /**
  * Client for interacting with the ACPT WordPress Plugin API
@@ -31,45 +29,35 @@ export class AcptPluginClient {
   private readonly baseURL: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.baseURL = this.configService.get<string>('ACPT_PLUGIN_BASE_URL');
-    const username = this.configService.get<string>('ACPT_PLUGIN_USERNAME');
-    const password = this.configService.get<string>('ACPT_PLUGIN_PASSWORD');
-
-    this.isConfigured = !!(this.baseURL && username && password);
+    this.baseURL = this.configService.get<string>('FDPG_ACPT_PLUGIN_BASE_URL');
+    const username = this.configService.get<string>('FDPG_ACPT_USERNAME');
+    const password = this.configService.get<string>('FDPG_ACPT_PASSWORD');
+    const cloudflareApiToken = this.configService.get<string>('FDPG_ACPT_PLUGIN_CLOUDFLARE_API_TOKEN');
+    this.isConfigured = !!(this.baseURL && username && password && cloudflareApiToken);
 
     if (!this.baseURL) {
-      this.logger.warn('ACPT_PLUGIN_BASE_URL is not configured. Sync functionality will not work.');
+      this.logger.warn('FDPG_ACPT_PLUGIN_BASE_URL is not configured. Sync functionality will not work.');
     }
 
     if (!username || !password) {
       this.logger.warn('ACPT_PLUGIN credentials are not configured. Sync functionality will not work.');
     }
 
-    const defaultCiphers = DEFAULT_CIPHERS.split(':');
-    const shuffledCiphers = [
-      defaultCiphers[0],
-      // Swap the 2nd & 3rd ciphers:
-      defaultCiphers[2],
-      defaultCiphers[1],
-      ...defaultCiphers.slice(3),
-    ].join(':');
-
-    const httpsAgent = new https.Agent({
-      ciphers: shuffledCiphers,
-      minVersion: 'TLSv1.3',
-    });
+    if (!cloudflareApiToken) {
+      this.logger.warn('FDPG_CLOUDFLARE_API_TOKEN is not configured. Sync functionality will not work.');
+    }
 
     this.apiClient = axios.create({
       baseURL: this.baseURL,
       auth: username && password ? { username, password } : undefined,
-      timeout: 60000, // 60 seconds for WordPress API
+      timeout: 300000, // 5 minutes for WordPress API (sync involves multiple operations)
       headers: {
         'User-Agent': 'FDPG-API-Client/1.0',
         Accept: '*/*',
         'Accept-Encoding': 'gzip, deflate, br',
         Connection: 'keep-alive',
+        'x-api-key': cloudflareApiToken ? cloudflareApiToken : '',
       },
-      httpsAgent,
     });
   }
 
@@ -80,7 +68,7 @@ export class AcptPluginClient {
   private validateConfiguration(): void {
     if (!this.isConfigured) {
       throw new Error(
-        'ACPT Plugin is not configured. Please set ACPT_PLUGIN_BASE_URL, ACPT_PLUGIN_USERNAME, and ACPT_PLUGIN_PASSWORD in environment variables.',
+        'ACPT Plugin is not configured. Please set FDPG_ACPT_PLUGIN_BASE_URL, FDPG_ACPT_USERNAME, FDPG_ACPT_PASSWORD, and FDPG_ACPT_PLUGIN_CLOUDFLARE_API_TOKEN in environment variables.',
       );
     }
   }

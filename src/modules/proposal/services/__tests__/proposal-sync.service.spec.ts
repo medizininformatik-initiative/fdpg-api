@@ -159,7 +159,13 @@ describe('ProposalSyncService', () => {
 
   describe('syncProposal', () => {
     it('should sync a proposal successfully', async () => {
-      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposal);
+      // Mock initial findById and double-check findById
+      (proposalModel.findById as jest.Mock)
+        .mockResolvedValueOnce(mockProposal) // First call in findAndValidate
+        .mockResolvedValueOnce({
+          ...mockProposal,
+          registerInfo: { ...mockProposal.registerInfo, syncStatus: SyncStatus.Syncing },
+        }); // Second call for double-check
       (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
 
       // Mock researcher sync
@@ -176,6 +182,9 @@ describe('ProposalSyncService', () => {
       expect(result.success).toBe(true);
       expect(result.proposalId).toBe('proposal-123');
       expect(result.projectAbbreviation).toBe('TEST-001');
+
+      // Verify findById was called twice (initial + double-check)
+      expect(proposalModel.findById).toHaveBeenCalledTimes(2);
 
       // Verify status was set to SYNCING
       expect(proposalModel.updateOne).toHaveBeenCalledWith(
@@ -301,7 +310,7 @@ describe('ProposalSyncService', () => {
       const result = await service.syncProposal('proposal-123', mockFdpgUser);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('API Error');
+      expect(result.error).toContain('API Error');
 
       // Verify failure update
       expect(proposalModel.updateOne).toHaveBeenCalledWith(
@@ -309,9 +318,72 @@ describe('ProposalSyncService', () => {
         {
           $set: {
             'registerInfo.syncStatus': SyncStatus.SyncFailed,
-            'registerInfo.lastSyncError': 'API Error',
+            'registerInfo.lastSyncError': expect.stringContaining('API Error'),
           },
         },
+      );
+    });
+
+    it('should handle timeout errors specifically', async () => {
+      (proposalModel.findById as jest.Mock).mockResolvedValue(mockProposal);
+      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+
+      // Mock researcher sync
+      (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
+
+      // Mock location sync
+      (acptPluginClient.findLocationByName as jest.Mock).mockResolvedValue('location-wp-id');
+
+      // Mock project creation timeout
+      (acptPluginClient.createProject as jest.Mock).mockRejectedValue(new Error('timeout of 300000ms exceeded'));
+
+      const result = await service.syncProposal('proposal-123', mockFdpgUser);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('ACPT Plugin sync timed out');
+      expect(result.error).toContain('WordPress server is slow or unreachable');
+
+      // Verify failure update
+      expect(proposalModel.updateOne).toHaveBeenCalledWith(
+        { _id: mockProposal._id },
+        {
+          $set: {
+            'registerInfo.syncStatus': SyncStatus.SyncFailed,
+            'registerInfo.lastSyncError': expect.stringContaining('timed out'),
+          },
+        },
+      );
+    });
+
+    it('should not set status to SYNCED if proposal was marked as SYNC_FAILED by another process', async () => {
+      // Initial findById returns proposal with NotSynced status
+      (proposalModel.findById as jest.Mock)
+        .mockResolvedValueOnce(mockProposal) // First call in findAndValidate
+        .mockResolvedValueOnce({
+          ...mockProposal,
+          registerInfo: { ...mockProposal.registerInfo, syncStatus: SyncStatus.SyncFailed },
+        }); // Second call shows it was marked as failed
+      (proposalModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+
+      // Mock successful sync operations
+      (acptPluginClient.findResearcherByName as jest.Mock).mockResolvedValue('researcher-wp-id');
+      (acptPluginClient.findLocationByName as jest.Mock).mockResolvedValue('location-wp-id');
+      (acptPluginClient.createProject as jest.Mock).mockResolvedValue({ id: 'project-wp-id' });
+
+      const result = await service.syncProposal('proposal-123', mockFdpgUser);
+
+      // Should return failure even though sync completed
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Sync was cancelled or failed');
+
+      // Should NOT have called updateOne with SYNCED status
+      expect(proposalModel.updateOne).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          $set: expect.objectContaining({
+            'registerInfo.syncStatus': SyncStatus.Synced,
+          }),
+        }),
       );
     });
 
@@ -468,4 +540,3 @@ describe('ProposalSyncService', () => {
     });
   });
 });
-
