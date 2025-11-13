@@ -10,6 +10,7 @@ import { getFilterForDiz } from './diz/diz-filter.util';
 import { getFilterForUac } from './uac/uac-filter.util';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalType } from '../../enums/proposal-type.enum';
+import { getFilterForDmo } from './dmo/dmo-filter.util';
 
 // Filter for register proposals that belong to a specific user
 export const getRegisterProposalsForUser = (
@@ -25,7 +26,6 @@ export const getRegisterProposalsForUser = (
   'registerInfo.isInternalRegistration': { $ne: true },
   status: Array.isArray(status) ? { $in: status } : status,
 });
-import { getFilterForDmo } from './dmo/dmo-filter.util';
 
 export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
   let baseFilter: FilterQuery<Proposal>;
@@ -53,8 +53,8 @@ export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): F
       };
       break;
     case Role.DataManagementOffice:
-      return getFilterForDmo(panelQuery, user);
-
+      baseFilter = getFilterForDmo(panelQuery, user);
+      break;
     default:
       throw new ForbiddenException();
   }
