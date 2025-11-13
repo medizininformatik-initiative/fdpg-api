@@ -5,6 +5,7 @@ import { ProposalType } from '../../enums/proposal-type.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { validateStatusChange } from '../validate-status-change.util';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { SyncStatus } from '../../enums/sync-status.enum';
 
 describe('validateStatusChange', () => {
   let baseProposal: Proposal;
@@ -351,6 +352,8 @@ describe('validateStatusChange', () => {
           projectCategory: 'Some Category',
           isDone: false,
           _id: 'internal-registration-123',
+          syncStatus: SyncStatus.NotSynced,
+          syncRetryCount: 0,
         };
         registeringMemberUser.userId = 'owner-123';
         baseProposal.ownerId = 'owner-123';
@@ -391,6 +394,8 @@ describe('validateStatusChange', () => {
           projectCategory: 'Some Category',
           isDone: false,
           _id: 'internal-registration-123',
+          syncStatus: SyncStatus.NotSynced,
+          syncRetryCount: 0,
         };
       });
 
@@ -436,6 +441,8 @@ describe('validateStatusChange', () => {
           projectCategory: 'Some Category',
           isDone: false,
           _id: 'internal-registration-123',
+          syncStatus: SyncStatus.NotSynced,
+          syncRetryCount: 0,
         };
       });
 
@@ -460,6 +467,8 @@ describe('validateStatusChange', () => {
           projectCategory: 'Some Category',
           isDone: false,
           _id: 'internal-registration-123',
+          syncStatus: SyncStatus.NotSynced,
+          syncRetryCount: 0,
         };
         registeringMemberUser.userId = 'owner-123';
         baseProposal.ownerId = 'owner-123';
@@ -489,6 +498,8 @@ describe('validateStatusChange', () => {
           projectCategory: 'Some Category',
           isDone: false,
           _id: 'internal-registration-123',
+          syncStatus: SyncStatus.NotSynced,
+          syncRetryCount: 0,
         };
       });
 
@@ -515,6 +526,8 @@ describe('validateStatusChange', () => {
           projectCategory: 'Some Category',
           isDone: false,
           _id: 'internal-registration-123',
+          syncStatus: SyncStatus.NotSynced,
+          syncRetryCount: 0,
         };
         // Internal registrations keep the original owner, so FDPG creates them but owner submits
         baseProposal.ownerId = 'owner-123';

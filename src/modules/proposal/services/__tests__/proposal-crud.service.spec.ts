@@ -25,6 +25,7 @@ import { validateMatchingId } from 'src/shared/utils/validate-matching-ids.util'
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../../dto/check-unique-proposal.dto';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
+import { ProposalSyncService } from '../proposal-sync.service';
 
 class ProposalModel {
   constructor(data) {
@@ -96,6 +97,7 @@ describe('ProposalCrudService', () => {
   let sharedService: jest.Mocked<SharedService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let proposalFormService: jest.Mocked<ProposalFormService>;
+  let proposalSyncService: jest.Mocked<ProposalSyncService>;
 
   const request = {
     user: {
@@ -146,6 +148,14 @@ describe('ProposalCrudService', () => {
             getCurrentVersion: jest.fn(),
           },
         },
+        {
+          provide: ProposalSyncService,
+          useValue: {
+            syncProposal: jest.fn(),
+            retrySync: jest.fn(),
+            syncAllProposals: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -157,6 +167,7 @@ describe('ProposalCrudService', () => {
     sharedService = module.get<SharedService>(SharedService) as jest.Mocked<SharedService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
+    proposalSyncService = module.get<ProposalSyncService>(ProposalSyncService) as jest.Mocked<ProposalSyncService>;
   });
 
   it('should be defined', () => {

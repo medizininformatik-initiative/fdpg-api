@@ -1937,6 +1937,7 @@ describe('ProposalMiscService', () => {
       expect(originalProposal.registerInfo).toEqual({
         isInternalRegistration: true,
         originalProposalId: proposalId,
+        originalProposalStatus: ProposalStatus.Contracting,
       });
     });
 
