@@ -8,6 +8,7 @@ import { getRegisterProposalsForUser } from '../proposal-filter.util';
 
 export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
   const allowedQuery = [
+    PanelQuery.DizComingUp,
     PanelQuery.DizRequested,
     PanelQuery.DizPending,
     PanelQuery.DizOngoing,
@@ -20,6 +21,8 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
 
   if (allowedQuery.includes(panelQuery)) {
     switch (panelQuery) {
+      case PanelQuery.DizComingUp:
+        return getFilterQueryForComingUp(user);
       case PanelQuery.DizRequested:
         return getFilterForRequested(user);
       case PanelQuery.DizPending:
@@ -44,6 +47,15 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
   } else {
     throw new ForbiddenException();
   }
+};
+
+const getFilterQueryForComingUp = (user: IRequestUser): FilterQuery<Proposal> => {
+  return {
+    status: ProposalStatus.FdpgCheck,
+    'userProject.addressees.desiredLocations': user.miiLocation,
+    'fdpgChecklist.initialViewing': true,
+    'fdpgChecklist.depthCheck': true,
+  };
 };
 
 const getFilterForRequested = (user: IRequestUser): FilterQuery<Proposal> => {

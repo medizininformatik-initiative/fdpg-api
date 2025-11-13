@@ -1,0 +1,68 @@
+// /controllers/proposal-data-delivery.controller.ts
+import { Body, Get, Param, Post, Put, Request, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
+import { ApiController } from 'src/shared/decorators/api-controller.decorator';
+import { Auth } from 'src/shared/decorators/auth.decorator';
+import { MongoIdParamDto } from 'src/shared/dto/mongo-id-param.dto';
+import { Role } from 'src/shared/enums/role.enum';
+import { FdpgRequest } from 'src/shared/types/request-user.interface';
+import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-delivery/data-delivery.dto';
+import { ProposalDataDeliveryService } from '../services/proposal-data-delivery.service';
+
+@ApiController('proposals', undefined, 'data-delivery')
+export class ProposalDataDeliveryController {
+  constructor(private readonly proposalDataDeliveryService: ProposalDataDeliveryService) {}
+
+  // GET /api/proposals/:id/data-delivery
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Get(':id/data-delivery')
+  @ApiOperation({ summary: 'Gets the data delivery section of a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  @ApiOkResponse({ description: 'Data delivery (or null if not set)', type: DataDeliveryGetDto })
+  async getDataDelivery(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto | null> {
+    return this.proposalDataDeliveryService.getDataDelivery(id, user);
+  }
+
+  // POST /api/proposals/:id/data-delivery
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Post(':id/data-delivery')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Creates the data delivery section for a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  @ApiBadRequestResponse({ description: 'Data delivery already exists. Use update instead.' })
+  @ApiCreatedResponse({ description: 'Data delivery created', type: DataDeliveryGetDto })
+  @ApiBody({ type: DataDeliveryUpdateDto })
+  async createDataDelivery(
+    @Param() { id }: MongoIdParamDto,
+    @Body() dto: DataDeliveryUpdateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    return this.proposalDataDeliveryService.createDataDelivery(id, dto, user);
+  }
+
+  // PUT /api/proposals/:id/data-delivery
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Put(':id/data-delivery')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Updates the data delivery section of a proposal' })
+  @ApiNotFoundResponse({ description: 'Proposal or data delivery could not be found' })
+  @ApiOkResponse({ description: 'Data delivery updated', type: DataDeliveryGetDto })
+  @ApiBody({ type: DataDeliveryUpdateDto })
+  async updateDataDelivery(
+    @Param() { id }: MongoIdParamDto,
+    @Body() dto: DataDeliveryUpdateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    return this.proposalDataDeliveryService.updateDataDelivery(id, dto, user);
+  }
+}

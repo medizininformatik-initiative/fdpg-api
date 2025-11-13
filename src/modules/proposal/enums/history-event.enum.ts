@@ -57,4 +57,7 @@ export enum HistoryEventType {
   ExpectDataDeliveryDeadlineChange = 'EXPECT_DATA_DELIVERY_DEADLINE_CHANGE',
   DataCorruptDeadlineChange = 'DATA_CORRUPTED_DEADLINE_CHANGE',
   FinishedProjectDeadlineChange = 'FINISHED_PROJECT_DEADLINE_CHANGE',
+
+  // Misc
+  ProjectAssigneChange = 'FDPG_PROJECT_ASSIGNEE_CHANGE',
 }

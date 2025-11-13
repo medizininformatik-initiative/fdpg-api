@@ -10,6 +10,7 @@ import { SchedulerModule } from '../scheduler/scheduler.module';
 import { UserModule } from '../user/user.module';
 import { ProposalContractingController } from './controller/proposal-contracting.controller';
 import { ProposalCrudController } from './controller/proposal-crud.controller';
+import { ProposalDataDeliveryController } from './controller/proposal-data-delivery.controller';
 import { ProposalMiscController } from './controller/proposal-misc.controller';
 import { ProposalPublicationController } from './controller/proposal-publication.controller';
 import { ProposalReportController } from './controller/proposal-reports.controller';
@@ -32,6 +33,7 @@ import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { LocationModule } from '../location/location.module';
 import { Connection } from 'mongoose';
 import { Location } from '../location/schema/location.schema';
+import { ProposalDataDeliveryService } from './services/proposal-data-delivery.service';
 @Module({
   imports: [
     LocationModule,
@@ -63,6 +65,7 @@ import { Location } from '../location/schema/location.schema';
     ProposalReportController,
     ProposalContractingController,
     ProposalSyncController,
+    ProposalDataDeliveryController,
   ],
   providers: [
     ProposalCrudService,
@@ -72,6 +75,7 @@ import { Location } from '../location/schema/location.schema';
     ProposalPublicationService,
     ProposalReportService,
     ProposalContractingService,
+    ProposalDataDeliveryService,
     IsUniqueAbbreviationConstraint,
     StatusChangeService,
     ProposalPdfService,

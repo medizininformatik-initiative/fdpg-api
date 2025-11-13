@@ -26,6 +26,7 @@ import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../../dto/check-unique-proposal.dto';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { ProposalSyncService } from '../proposal-sync.service';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 class ProposalModel {
   constructor(data) {
@@ -98,6 +99,7 @@ describe('ProposalCrudService', () => {
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let proposalFormService: jest.Mocked<ProposalFormService>;
   let proposalSyncService: jest.Mocked<ProposalSyncService>;
+  let locationService: jest.Mocked<LocationService>;
 
   const request = {
     user: {
@@ -156,6 +158,12 @@ describe('ProposalCrudService', () => {
             syncAllProposals: jest.fn(),
           },
         },
+        {
+          provide: LocationService,
+          useValue: {
+            findById: jest.fn().mockImplementation(() => undefined),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -168,6 +176,7 @@ describe('ProposalCrudService', () => {
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
     proposalSyncService = module.get<ProposalSyncService>(ProposalSyncService) as jest.Mocked<ProposalSyncService>;
+    locationService = module.get<LocationService>(LocationService) as jest.Mocked<LocationService>;
   });
 
   it('should be defined', () => {
@@ -239,7 +248,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified);
     });
 
     it('should find a proposal with projection', async () => {
@@ -251,6 +260,7 @@ describe('ProposalCrudService', () => {
         participants: 1,
         deadlines: 1,
         selectedDataSources: 1,
+        dataDelivery: 1,
       };
       const desiredProjection = { ['reports.content']: 1 };
       const willBeModified = true;
@@ -267,7 +277,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified);
     });
 
     it('should find a proposal with diz member projection', async () => {
@@ -297,7 +307,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified);
     });
 
     it('should find a proposal with uac member projection', async () => {
@@ -326,7 +336,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified);
     });
 
     it('should throw 404 if not found', async () => {

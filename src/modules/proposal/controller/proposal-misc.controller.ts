@@ -54,6 +54,7 @@ import { Participant } from '../schema/sub-schema/participant.schema';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
+import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -370,5 +371,19 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     await this.proposalMiscService.makeParticipantResponsible(id, participantId, user);
+  }
+
+  @Auth(Role.FdpgMember)
+  @Put(':id/assignee')
+  @ApiOperation({ summary: 'Updates the project assignee' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  @ApiNoContentResponse({ description: 'Successfully set project assignee' })
+  @HttpCode(204)
+  async updateProjectAssignee(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+    @Body() { projectAssignee }: { projectAssignee?: ProjectAssigneeDto },
+  ): Promise<void> {
+    await this.proposalMiscService.updateProjectAssignee(id, user, projectAssignee);
   }
 }

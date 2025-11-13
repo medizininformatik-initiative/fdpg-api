@@ -25,6 +25,7 @@ export const getRegisterProposalsForUser = (
   'registerInfo.isInternalRegistration': { $ne: true },
   status: Array.isArray(status) ? { $in: status } : status,
 });
+import { getFilterForDmo } from './dmo/dmo-filter.util';
 
 export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
   let baseFilter: FilterQuery<Proposal>;
@@ -51,6 +52,9 @@ export const getProposalFilter = (panelQuery: PanelQuery, user: IRequestUser): F
         selectedDataSources: { $in: user.assignedDataSources },
       };
       break;
+    case Role.DataManagementOffice:
+      return getFilterForDmo(panelQuery, user);
+
     default:
       throw new ForbiddenException();
   }
