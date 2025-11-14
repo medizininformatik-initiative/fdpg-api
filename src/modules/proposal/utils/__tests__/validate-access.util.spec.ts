@@ -145,7 +145,7 @@ describe('validateProposalAccess', () => {
 
     it('allows FDPG member to modify internal registration in Draft status', () => {
       internalRegistrationProposal.owner.id = 'different-owner';
-      expect(() => validateProposalAccess(internalRegistrationProposal, fdpgUser, true)).not.toThrow();
+      expect(() => validateProposalAccess(internalRegistrationProposal, fdpgUser, undefined, true)).not.toThrow();
     });
 
     it("throws for non-FDPG members trying to access internal registration they don't own", () => {

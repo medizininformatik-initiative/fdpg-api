@@ -23,15 +23,12 @@ export const validateProposalAccess = (
     return;
   }
 
-  // Special handling for register proposals when user has RegisteringMember role
   if (proposal.type === ProposalType.RegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
     checkAccessForRegisteringMember(proposal, user);
-    return; // Exit early for register proposals with RegisteringMember role
+    return;
   }
 
-  // Special handling for users who have RegisteringMember among their roles (not just primary role)
   if (user.roles?.includes(Role.RegisteringMember)) {
-    // If user has RegisteringMember role, they should have access regardless of primary role
     return;
   }
 
@@ -85,7 +82,6 @@ const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequ
     );
   }
 
-  // ZARS-29: RegisteringMembers cannot edit Published forms
   // Only FDPG members can edit Published forms (via the sync functionality)
   if (proposal.type === ProposalType.RegisteringForm && proposal.status === ProposalStatus.Published) {
     throwForbiddenError(
@@ -264,7 +260,7 @@ export const validateModifyingCohortAccess = (proposal: ProposalDocument, user: 
   }
 
   if (
-    (user.singleKnownRole === Role.Researcher || user.singleKnownRole === Role.RegisteringMember) &&
+    user.singleKnownRole === Role.Researcher &&
     ![ProposalStatus.Draft, ProposalStatus.Rework].includes(proposal.status)
   ) {
     throwForbiddenError('Cohorts cannot be changed at this step');

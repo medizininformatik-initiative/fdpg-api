@@ -41,6 +41,7 @@ import { addUpload, getBlobName } from '../../utils/proposal.utils';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { LocationDto } from 'src/modules/location/dto/location.dto';
+import { ProposalSyncService } from '../proposal-sync.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -326,6 +327,14 @@ describe('ProposalMiscService', () => {
           useValue: {
             findAll: jest.fn(),
             findById: jest.fn().mockImplementation(() => undefined),
+          },
+        },
+        {
+          provide: ProposalSyncService,
+          useValue: {
+            syncProposal: jest.fn(),
+            syncAllProposals: jest.fn(),
+            retrySync: jest.fn(),
           },
         },
       ],

@@ -92,7 +92,7 @@ export class ProposalValidationPipe implements PipeTransform<any> {
     if (object.type === ProposalType.RegisteringForm) {
       groups.push(ProposalValidation.IsRegister);
     } else {
-      // Add special group for non-register, non-draft validations (like date validation)
+      // Add special group for non-register, non-draft validations
       groups.push(ProposalValidation.IsNotDraftAndNotRegister);
     }
 
