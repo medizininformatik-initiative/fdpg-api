@@ -331,7 +331,7 @@ export class ProposalMiscController {
     return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
   }
 
-  @Auth(Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.FdpgMember)
   @Post(':id/copy-for-registration')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Copy proposal as internal registration for publication' })
