@@ -1,5 +1,10 @@
 # Docker compose environment for local development
 version: '3'
+
+volumes:
+  grafana_data: {}
+  prometheus_data: {}
+
 services:
   s3:
     image: quay.io/minio/minio:latest
@@ -29,3 +34,26 @@ services:
     environment:
       ENABLE_TELEMETRY: false
       PRINT_FRONTEND_HOST: http://localhost:3000
+
+  # 1. Prometheus Service
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./docker_compose_files/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  # 2. Grafana Service
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - '3099:3000' # Access Grafana on http://localhost:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
