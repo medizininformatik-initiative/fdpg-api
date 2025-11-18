@@ -28,6 +28,9 @@ export class AcptPluginClient {
   private readonly isConfigured: boolean;
   private readonly baseURL: string;
 
+  private researchersCache: AcptResearcherListItemDto[] | null = null;
+  private locationsCache: AcptLocationListItemDto[] | null = null;
+
   constructor(private readonly configService: ConfigService) {
     this.baseURL = this.configService.get<string>('FDPG_ACPT_PLUGIN_BASE_URL');
     const username = this.configService.get<string>('FDPG_ACPT_USERNAME');
@@ -151,18 +154,49 @@ export class AcptPluginClient {
   }
 
   /**
-   * Get all researchers from WordPress
+   * Get all researchers from WordPress (fetches all pages, cached)
+   * @param forceRefresh Force refresh the cache
    * @returns List of researchers
    */
-  async getResearchers(): Promise<AcptResearcherListItemDto[]> {
+  async getResearchers(forceRefresh: boolean = false): Promise<AcptResearcherListItemDto[]> {
     this.validateConfiguration();
+
+    if (this.researchersCache && !forceRefresh) {
+      this.logger.log(`Using cached researchers (${this.researchersCache.length} items)`);
+      return this.researchersCache;
+    }
 
     try {
       this.logger.log('Fetching researchers from ACPT Plugin');
-      const response = await this.apiClient.get<AcptResearcherListItemDto[]>('/fdpgx-researcher');
+      const allResearchers: AcptResearcherListItemDto[] = [];
+      let page = 1;
+      let hasMore = true;
 
-      this.logger.log(`Found ${response.data.length} researchers`);
-      return response.data;
+      while (hasMore) {
+        const response = await this.apiClient.get<AcptResearcherListItemDto[]>('/fdpgx-researcher', {
+          params: {
+            per_page: 100, // WordPress max per page
+            page: page,
+          },
+        });
+
+        allResearchers.push(...response.data);
+
+        // Check if there are more pages (WordPress returns X-WP-TotalPages header)
+        const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1', 10);
+        hasMore = page < totalPages;
+        page++;
+
+        if (hasMore) {
+          this.logger.log(`Fetched page ${page - 1}/${totalPages}, continuing...`);
+        }
+      }
+
+      this.logger.log(`Found ${allResearchers.length} researchers across ${page - 1} page(s)`);
+
+      this.researchersCache = allResearchers;
+
+      return allResearchers;
     } catch (error) {
       this.logger.error(`Failed to fetch researchers: ${error.message}`);
       throw new Error(`ACPT Plugin API error: ${error.message}`);
@@ -194,7 +228,7 @@ export class AcptPluginClient {
    * Find a researcher by first and last name
    * @param firstName The researcher's first name
    * @param lastName The researcher's last name
-   * @returns The researcher ID if found, null otherwise
+   * @returns The researcher WordPress post ID if found, null otherwise
    */
   async findResearcherByName(firstName: string, lastName: string): Promise<string | null> {
     const researchers = await this.getResearchers();
@@ -228,6 +262,9 @@ export class AcptPluginClient {
       const response = await this.apiClient.post<AcptResearcherResponseDto>('/fdpgx-researcher', researcherData);
 
       this.logger.log(`✅ Researcher created successfully with ID: ${response.data.id}`);
+
+      this.researchersCache = null;
+
       return response.data;
     } catch (error) {
       this.logger.error(`Failed to create researcher: ${error.message}`);
@@ -240,18 +277,49 @@ export class AcptPluginClient {
   }
 
   /**
-   * Get all locations from WordPress
+   * Get all locations from WordPress (fetches all pages, cached)
+   * @param forceRefresh Force refresh the cache
    * @returns List of locations
    */
-  async getLocations(): Promise<AcptLocationListItemDto[]> {
+  async getLocations(forceRefresh: boolean = false): Promise<AcptLocationListItemDto[]> {
     this.validateConfiguration();
+
+    if (this.locationsCache && !forceRefresh) {
+      this.logger.log(`Using cached locations (${this.locationsCache.length} items)`);
+      return this.locationsCache;
+    }
 
     try {
       this.logger.log('Fetching locations from ACPT Plugin');
-      const response = await this.apiClient.get<AcptLocationListItemDto[]>('/fdpgx-location');
+      const allLocations: AcptLocationListItemDto[] = [];
+      let page = 1;
+      let hasMore = true;
 
-      this.logger.log(`Found ${response.data.length} locations`);
-      return response.data;
+      while (hasMore) {
+        const response = await this.apiClient.get<AcptLocationListItemDto[]>('/fdpgx-location', {
+          params: {
+            per_page: 100, // WordPress max per page
+            page: page,
+          },
+        });
+
+        allLocations.push(...response.data);
+
+        // Check if there are more pages (WordPress returns X-WP-TotalPages header)
+        const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1', 10);
+        hasMore = page < totalPages;
+        page++;
+
+        if (hasMore) {
+          this.logger.log(`Fetched page ${page - 1}/${totalPages}, continuing...`);
+        }
+      }
+
+      this.logger.log(`Found ${allLocations.length} locations across ${page - 1} page(s)`);
+
+      this.locationsCache = allLocations;
+
+      return allLocations;
     } catch (error) {
       this.logger.error(`Failed to fetch locations: ${error.message}`);
       throw new Error(`ACPT Plugin API error: ${error.message}`);
@@ -261,7 +329,7 @@ export class AcptPluginClient {
   /**
    * Find a location by name (searches in fdpgx-name meta field)
    * @param locationName The location name to search for
-   * @returns The location ID if found, null otherwise
+   * @returns The location WordPress post ID if found, null otherwise
    */
   async findLocationByName(locationName: string): Promise<string | null> {
     const locations = await this.getLocations();
@@ -290,6 +358,9 @@ export class AcptPluginClient {
       const response = await this.apiClient.post<AcptLocationResponseDto>('/fdpgx-location', locationData);
 
       this.logger.log(`✅ Location created successfully with ID: ${response.data.id}`);
+
+      this.locationsCache = null;
+
       return response.data;
     } catch (error) {
       this.logger.error(`Failed to create location: ${error.message}`);
@@ -299,5 +370,15 @@ export class AcptPluginClient {
       }
       throw new Error(`ACPT Plugin API error: ${error.message}`);
     }
+  }
+
+  /**
+   * Clear the researchers and locations cache
+   * Useful when you need to force a refresh
+   */
+  clearCache(): void {
+    this.logger.log('Clearing researchers and locations cache');
+    this.researchersCache = null;
+    this.locationsCache = null;
   }
 }

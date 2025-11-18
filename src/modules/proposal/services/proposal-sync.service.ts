@@ -30,6 +30,8 @@ export class ProposalSyncService {
     this.logger.log(`Starting sync for proposal ${proposalId}`);
     const proposal = await this.findAndValidate(proposalId, user);
 
+    this.acptPluginClient.clearCache();
+
     try {
       await this.updateSyncStatus(proposal._id.toString(), SyncStatus.Syncing);
 
@@ -134,6 +136,8 @@ export class ProposalSyncService {
 
   async syncAllProposals(user: IRequestUser): Promise<BulkSyncResultsDto> {
     this.validateFdpgPermissions(user);
+
+    this.acptPluginClient.clearCache();
 
     const proposals = await this.proposalModel.find({
       type: ProposalType.RegisteringForm,
