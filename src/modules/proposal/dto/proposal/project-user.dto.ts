@@ -7,6 +7,6 @@ import { ProposalValidation } from '../../enums/porposal-validation.enum';
 export class ProjectUserDto extends WithIdForObjectDto {
   @Expose()
   @IsEnum(ProjectUserType)
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   projectUserType: ProjectUserType;
 }

@@ -8,7 +8,12 @@ export class RequestedDataDto extends WithIdForObjectDto {
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({
-    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+    groups: [
+      ProposalValidation.IsDraft,
+      ProposalValidation.IsDIFEDataSource,
+      ProposalValidation.IsRework,
+      ProposalValidation.IsRegister,
+    ],
   })
   @MaxLength(10000)
   patientInfo: string;
@@ -16,7 +21,12 @@ export class RequestedDataDto extends WithIdForObjectDto {
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({
-    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+    groups: [
+      ProposalValidation.IsDraft,
+      ProposalValidation.IsDIFEDataSource,
+      ProposalValidation.IsRework,
+      ProposalValidation.IsRegister,
+    ],
   })
   @MaxLength(10000)
   dataInfo: string;
@@ -24,14 +34,24 @@ export class RequestedDataDto extends WithIdForObjectDto {
   @Expose()
   @IsNumber()
   @IsOptional({
-    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+    groups: [
+      ProposalValidation.IsDraft,
+      ProposalValidation.IsDIFEDataSource,
+      ProposalValidation.IsRework,
+      ProposalValidation.IsRegister,
+    ],
   })
   desiredDataAmount: number;
 
   @Expose()
   @IsNumber()
   @IsOptional({
-    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRework],
+    groups: [
+      ProposalValidation.IsDraft,
+      ProposalValidation.IsDIFEDataSource,
+      ProposalValidation.IsRework,
+      ProposalValidation.IsRegister,
+    ],
   })
   desiredControlDataAmount: number;
 }
