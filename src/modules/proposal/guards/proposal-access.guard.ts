@@ -12,7 +12,7 @@ export class ProposalAccessGuard implements CanActivate {
       .startSpan('Proposal Access Guard', {
         attributes: {
           ['proposal.accessGuard.requiredCondition']:
-            'Researcher OR RegisteringMember OR FdpgMember OR DataSourceMember OR DizMember OR UacMember OR DataManagementOffice in roles',
+            'Researcher OR RegisteringMember OR FdpgMember OR DataSourceMember in roles',
           ['proposal.accessGuard.userSingleRole']: user.singleKnownRole,
           ['proposal.accessGuard.userRoles']: user.roles?.join(', ') || 'none',
         },
