@@ -104,14 +104,12 @@ export const fdpgEmail = (
       conditionProposalConcluded: !!emailParameterMap['conditionProposalConcluded'],
       conditionProposalArchived: !!emailParameterMap['conditionProposalArchived'],
       conditionProposalReportCreate: !!emailParameterMap['conditionProposalReportCreate'],
-      conditionProposalReportUpdate: !!emailParameterMap['conditionProposalReportUpdate'],
-      conditionProposalReportDelete: !!emailParameterMap['conditionProposalReportDelete'],
       conditionProposalPublicationCreate: !!emailParameterMap['conditionProposalPublicationCreate'],
       conditionProposalPublicationUpdate: !!emailParameterMap['conditionProposalPublicationUpdate'],
-      conditionProposalPublicationDelete: !!emailParameterMap['conditionProposalPublicationDelete'],
       conditionProposalContractSignedUser: !!emailParameterMap['conditionProposalContractSignedUser'],
       conditionProposalContractSignedLocations: !!emailParameterMap['conditionProposalContractSignedLocations'],
       conditionProposalDataReturn: !!emailParameterMap['conditionProposalDataReturn'],
+      conditionProposalRegistrationCreate: !!emailParameterMap['conditionProposalRegistrationCreate'],
     },
   };
 };

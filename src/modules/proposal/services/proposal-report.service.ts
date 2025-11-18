@@ -169,8 +169,6 @@ export class ProposalReportService {
 
     await Promise.allSettled(downloadLinkTasks);
 
-    await this.eventEngineService.handleProposalReportUpdate(proposal, report);
-
     return plainToInstance(ReportGetDto, plainReport, { strategy: 'excludeAll' });
   }
 
@@ -189,9 +187,8 @@ export class ProposalReportService {
       await this.storageService.deleteManyBlobs(proposal.reports[reportIdx].uploads.map((upload) => upload.blobName));
     }
 
-    const deletedReports = proposal.reports.splice(reportIdx, 1);
+    proposal.reports.splice(reportIdx, 1);
 
-    await this.eventEngineService.handleProposalReportDelete(proposal, deletedReports[0]);
     await proposal.save();
   }
 }

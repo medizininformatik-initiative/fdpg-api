@@ -53,24 +53,4 @@ export class PublicationsService {
 
     await Promise.allSettled(emailTasks);
   }
-
-  async handlePublicationDelete(proposal: Proposal, publication: Publication, proposalUrl: string) {
-    const emailTasks: Promise<void>[] = [];
-
-    const fdpgTask = async () => {
-      const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMemberLevelContacts(proposal)
-        .then((members) => members.map((member) => member.email));
-
-      const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.PublicationDelete], proposalUrl, {
-        conditionProposalPublicationDelete: true,
-      });
-
-      return await this.emailService.send(mail);
-    };
-
-    emailTasks.push(fdpgTask());
-
-    await Promise.allSettled(emailTasks);
-  }
 }

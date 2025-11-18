@@ -101,7 +101,13 @@ export class DeadlineEventService {
     changeList: Record<DueDateEnum, Date | null>,
     proposalUrl: string,
   ): ITemplateEmail | null {
-    const relevantChanges = Object.keys(DueDateEnum).map((key) => key as DueDateEnum);
+    const relevantChanges = [
+      DueDateEnum.DUE_DAYS_LOCATION_CHECK,
+      DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING,
+      DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY,
+      DueDateEnum.DUE_DAYS_FINISHED_PROJECT,
+    ];
+
     return this.buildMailMessage(validContacts, relevantChanges, changeList, proposal, proposalUrl);
   }
 
@@ -115,7 +121,6 @@ export class DeadlineEventService {
       DueDateEnum.DUE_DAYS_LOCATION_CHECK,
       DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING,
       DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY,
-      DueDateEnum.DUE_DAYS_DATA_CORRUPT,
       DueDateEnum.DUE_DAYS_FINISHED_PROJECT,
     ];
 
@@ -132,7 +137,6 @@ export class DeadlineEventService {
       DueDateEnum.DUE_DAYS_LOCATION_CHECK,
       DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING,
       DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY,
-      DueDateEnum.DUE_DAYS_DATA_CORRUPT,
       DueDateEnum.DUE_DAYS_FINISHED_PROJECT,
     ];
     return this.buildMailMessage(validContacts, relevantChanges, changeList, proposal, proposalUrl);
@@ -144,7 +148,12 @@ export class DeadlineEventService {
     changeList: Record<DueDateEnum, Date | null>,
     proposalUrl: string,
   ): ITemplateEmail | null {
-    const relevantChanges = Object.keys(DueDateEnum).map((key) => key as DueDateEnum);
+    const relevantChanges = [
+      DueDateEnum.DUE_DAYS_LOCATION_CHECK,
+      DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING,
+      DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY,
+      DueDateEnum.DUE_DAYS_FINISHED_PROJECT,
+    ];
     return this.buildMailMessage(validContacts, relevantChanges, changeList, proposal, proposalUrl);
   }
 

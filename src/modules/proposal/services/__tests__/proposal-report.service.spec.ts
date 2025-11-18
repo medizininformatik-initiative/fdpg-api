@@ -93,7 +93,6 @@ describe('ProposalReportService', () => {
           useValue: {
             handleProposalReportCreate: jest.fn(),
             handleProposalReportUpdate: jest.fn(),
-            handleProposalReportDelete: jest.fn(),
           },
         },
         {
@@ -475,10 +474,6 @@ describe('ProposalReportService', () => {
 
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalReportDelete).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: proposalId }),
-        expect.objectContaining({ content: 'content' }),
-      );
       expect(storageService.deleteManyBlobs).toHaveBeenCalledWith(['blobName']);
     });
 
@@ -508,7 +503,6 @@ describe('ProposalReportService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
 
       expect(proposalDocument.save).not.toHaveBeenCalled();
-      expect(eventEngineService.handleProposalReportDelete).not.toHaveBeenCalled();
       expect(storageService.deleteManyBlobs).not.toHaveBeenCalled();
     });
   });

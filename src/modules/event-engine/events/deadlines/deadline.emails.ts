@@ -9,7 +9,7 @@ import { getLocaleDateString } from 'src/shared/utils/date.utils';
 export const getDeadlineEmailContent = (deadlineType: DueDateEnum, date: Date | null): EmailParameterMap => {
   switch (deadlineType) {
     case DueDateEnum.DUE_DAYS_FDPG_CHECK:
-      return { conditionDeadlineFdpgCheckChanged: true, deadlineFdpgCheckNewDate: date };
+      return {};
     case DueDateEnum.DUE_DAYS_LOCATION_CHECK:
       return {
         conditionDeadlineLocationCheckChanged: true,
@@ -23,7 +23,7 @@ export const getDeadlineEmailContent = (deadlineType: DueDateEnum, date: Date | 
         deadlineExpectedDataDeliveryNewDate: date,
       };
     case DueDateEnum.DUE_DAYS_DATA_CORRUPT:
-      return { conditionDeadlineExpectedDataCorruptChanged: true, deadlineExpectedDataCorruptNewDate: date };
+      return {};
     case DueDateEnum.DUE_DAYS_FINISHED_PROJECT:
       return {
         conditionDeadlineFinishedProjectChanged: true,

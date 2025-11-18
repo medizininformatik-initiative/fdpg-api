@@ -88,8 +88,6 @@ describe('EventEngineService', () => {
           provide: ReportsService,
           useValue: {
             handleReportCreate: jest.fn(),
-            handleReportUpdate: jest.fn(),
-            handleReportDelete: jest.fn(),
           },
         },
         {
@@ -97,7 +95,6 @@ describe('EventEngineService', () => {
           useValue: {
             handlePublicationCreate: jest.fn(),
             handlePublicationUpdate: jest.fn(),
-            handlePublicationDelete: jest.fn(),
           },
         },
         {
@@ -239,18 +236,6 @@ describe('EventEngineService', () => {
     expect(reportsService.handleReportCreate).toHaveBeenCalledWith(proposal, report, expectedUrl);
   });
 
-  it('should handleProposalReportUpdate', async () => {
-    const report = { content: 'report' } as any;
-    await eventEngineService.handleProposalReportUpdate(proposal as any, report);
-    expect(reportsService.handleReportUpdate).toHaveBeenCalledWith(proposal, report, expectedUrl);
-  });
-
-  it('should handleProposalReportDelete', async () => {
-    const report = { content: 'report' } as any;
-    await eventEngineService.handleProposalReportDelete(proposal as any, report);
-    expect(reportsService.handleReportDelete).toHaveBeenCalledWith(proposal, report, expectedUrl);
-  });
-
   it('should handleProposalPublicationCreate', async () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationCreate(proposal as any, publication);
@@ -261,11 +246,5 @@ describe('EventEngineService', () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationUpdate(proposal as any, publication);
     expect(publicationsService.handlePublicationUpdate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
-  });
-
-  it('should handleProposalPublicationDelete', async () => {
-    const publication = { content: 'publication' } as any;
-    await eventEngineService.handleProposalPublicationDelete(proposal as any, publication);
-    expect(publicationsService.handlePublicationDelete).toHaveBeenCalledWith(proposal, publication, expectedUrl);
   });
 });

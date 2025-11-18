@@ -25,11 +25,8 @@ export type TemplateProposalEmailConditionKeys =
   | 'conditionProposalUnlocked'
   | 'conditionProposalLocked'
   | 'conditionProposalReportCreate'
-  | 'conditionProposalReportUpdate'
-  | 'conditionProposalReportDelete'
   | 'conditionProposalPublicationCreate'
   | 'conditionProposalPublicationUpdate'
-  | 'conditionProposalPublicationDelete'
   | 'DUE_DAYS_LOCATION_CHECK'
   | 'DUE_DAYS_LOCATION_CONTRACTING'
   | 'DUE_DAYS_EXPECT_DATA_DELIVERY'
@@ -44,7 +41,8 @@ export type TemplateProposalEmailConditionKeys =
   | 'conditionDeadlineExpectedDataCorruptChanged'
   | 'deadlineExpectedDataCorruptNewDate'
   | 'conditionDeadlineFinishedProjectChanged'
-  | 'deadlineFinishedProjectNewDate';
+  | 'deadlineFinishedProjectNewDate'
+  | 'conditionProposalRegistrationCreate';
 
 export type TemplateEmailParamKeys =
   | Partial<TemplateProposalEmailConditionKeys>
