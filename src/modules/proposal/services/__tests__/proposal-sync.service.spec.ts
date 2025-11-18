@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ProposalSyncService } from '../proposal-sync.service';
 import { AcptPluginClient } from '../../../app/acpt-plugin/acpt-plugin.client';
+import { LocationService } from '../../../location/service/location.service';
 import { Proposal, ProposalDocument } from '../../schema/proposal.schema';
 import { ProposalType } from '../../enums/proposal-type.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
@@ -25,6 +26,7 @@ describe('ProposalSyncService', () => {
   const mockCreateResearcher = jest.fn();
   const mockFindLocationByName = jest.fn();
   const mockCreateLocation = jest.fn();
+  const mockFindAllLocations = jest.fn();
 
   const mockFdpgUser: IRequestUser = {
     userId: 'fdpg-user',
@@ -146,6 +148,13 @@ describe('ProposalSyncService', () => {
     mockCreateResearcher.mockReset();
     mockFindLocationByName.mockReset();
     mockCreateLocation.mockReset();
+    mockFindAllLocations.mockReset();
+
+    // Mock location service to return some default locations
+    mockFindAllLocations.mockResolvedValue([
+      { _id: 'Charité', display: 'Charité - Universitätsmedizin Berlin', definition: 'Berlin' },
+      { _id: 'UKOWL', display: 'Universitätsklinikum OWL', definition: 'Bielefeld' },
+    ]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -166,6 +175,12 @@ describe('ProposalSyncService', () => {
             createResearcher: mockCreateResearcher,
             findLocationByName: mockFindLocationByName,
             createLocation: mockCreateLocation,
+          },
+        },
+        {
+          provide: LocationService,
+          useValue: {
+            findAll: mockFindAllLocations,
           },
         },
       ],
@@ -271,13 +286,16 @@ describe('ProposalSyncService', () => {
 
       await service.syncProposal('proposal-123', mockFdpgUser);
 
-      expect(mockFindLocationByName).toHaveBeenCalledWith('Charité');
+      expect(mockFindLocationByName).toHaveBeenCalledWith('Charité - Universitätsmedizin Berlin');
       expect(mockCreateLocation).toHaveBeenCalledWith({
-        title: 'Charité',
+        title: 'Charité - Universitätsmedizin Berlin',
         status: 'publish',
         content: '',
         acpt: {
-          meta: [{ box: 'location-fields', field: 'fdpgx-name', value: 'Charité' }],
+          meta: [
+            { box: 'location-fields', field: 'fdpgx-name', value: 'Charité - Universitätsmedizin Berlin' },
+            { box: 'location-fields', field: 'fdpgx-city', value: 'Berlin' },
+          ],
         },
       });
     });
@@ -498,8 +516,8 @@ describe('ProposalSyncService', () => {
 
       // Verify locations were queried separately
       expect(mockFindLocationByName).toHaveBeenCalledTimes(3);
-      expect(mockFindLocationByName).toHaveBeenCalledWith('Charité');
-      expect(mockFindLocationByName).toHaveBeenCalledWith('UKOWL');
+      expect(mockFindLocationByName).toHaveBeenCalledWith('Charité - Universitätsmedizin Berlin');
+      expect(mockFindLocationByName).toHaveBeenCalledWith('Universitätsklinikum OWL');
       expect(mockFindLocationByName).toHaveBeenCalledWith('Custom Institute');
 
       // Verify the payload has separate arrays
