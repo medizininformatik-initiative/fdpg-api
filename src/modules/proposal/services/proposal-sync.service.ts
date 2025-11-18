@@ -681,6 +681,30 @@ export class ProposalSyncService {
       value: proposal.registerInfo?.isInternalRegistration ? '0' : '1',
     });
 
+    // Biosample
+    if (proposal.userProject?.informationOnRequestedBioSamples?.biosamples?.length > 0) {
+      this.logger.log(
+        `Adding biosample fields for proposal ${proposal._id}: type=${proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type}`,
+      );
+      meta.push(
+        {
+          box: 'project-fields',
+          field: 'fdpgx-biosampletype',
+          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type,
+        },
+        {
+          box: 'project-fields',
+          field: 'fdpgx-biosampledetails',
+          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].typeDetails || '',
+        },
+        {
+          box: 'project-fields',
+          field: 'fdpgx-biosamplecode',
+          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].sampleCode || [],
+        },
+      );
+    }
+
     return {
       title: proposal.userProject?.generalProjectInformation?.projectTitle || proposal.projectAbbreviation,
       status: 'publish', // WordPress post status
