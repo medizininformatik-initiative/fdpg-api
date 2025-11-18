@@ -19,15 +19,7 @@ export class ProposalAccessGuard implements CanActivate {
       })
       .end();
 
-    const allowedRoles = [
-      Role.Researcher,
-      Role.RegisteringMember,
-      Role.FdpgMember,
-      Role.DataSourceMember,
-      Role.DizMember,
-      Role.UacMember,
-      Role.DataManagementOffice,
-    ];
+    const allowedRoles = [Role.Researcher, Role.RegisteringMember, Role.FdpgMember, Role.DataSourceMember];
 
     if (user.singleKnownRole && allowedRoles.includes(user.singleKnownRole)) {
       return true;
