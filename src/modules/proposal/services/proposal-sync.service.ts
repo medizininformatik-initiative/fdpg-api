@@ -26,11 +26,13 @@ export class ProposalSyncService {
     private locationService: LocationService,
   ) {}
 
-  async syncProposal(proposalId: string, user: IRequestUser): Promise<SyncResultDto> {
+  async syncProposal(proposalId: string, user: IRequestUser, skipCacheClear: boolean = false): Promise<SyncResultDto> {
     this.logger.log(`Starting sync for proposal ${proposalId}`);
     const proposal = await this.findAndValidate(proposalId, user);
 
-    this.acptPluginClient.clearCache();
+    if (!skipCacheClear) {
+      this.acptPluginClient.clearCache();
+    }
 
     try {
       await this.updateSyncStatus(proposal._id.toString(), SyncStatus.Syncing);
@@ -137,6 +139,7 @@ export class ProposalSyncService {
   async syncAllProposals(user: IRequestUser): Promise<BulkSyncResultsDto> {
     this.validateFdpgPermissions(user);
 
+    this.logger.log('Clearing cache before bulk sync to fetch fresh data from WordPress');
     this.acptPluginClient.clearCache();
 
     const proposals = await this.proposalModel.find({
@@ -150,6 +153,7 @@ export class ProposalSyncService {
     }
 
     this.logger.log(`Starting bulk sync for ${proposals.length} proposals with concurrency limit of 3`);
+    this.logger.log('Cache will be reused across all proposals for optimal performance');
 
     const results = {
       total: proposals.length,
@@ -159,7 +163,7 @@ export class ProposalSyncService {
     };
 
     const syncResults = await this.syncWithConcurrency(
-      proposals.map((p) => () => this.syncProposal(p._id.toString(), user)),
+      proposals.map((p) => () => this.syncProposal(p._id.toString(), user, true)),
       3,
     );
 
@@ -174,6 +178,9 @@ export class ProposalSyncService {
         });
       }
     });
+
+    this.logger.log('Clearing cache after bulk sync completion');
+    this.acptPluginClient.clearCache();
 
     this.logger.log(`Bulk sync completed: ${results.synced}/${results.total} synced, ${results.failed} failed`);
 
