@@ -11,20 +11,24 @@ export class ProposalAccessGuard implements CanActivate {
     tracer
       .startSpan('Proposal Access Guard', {
         attributes: {
-          ['proposal.accessGuard.requiredCondition']: 'Researcher OR RegisteringMember in roles',
+          ['proposal.accessGuard.requiredCondition']:
+            'Researcher OR RegisteringMember OR FdpgMember OR DataSourceMember in roles',
           ['proposal.accessGuard.userSingleRole']: user.singleKnownRole,
           ['proposal.accessGuard.userRoles']: user.roles?.join(', ') || 'none',
         },
       })
       .end();
 
-    if (user.singleKnownRole === Role.Researcher) {
+    const allowedRoles = [Role.Researcher, Role.RegisteringMember, Role.FdpgMember, Role.DataSourceMember];
+
+    if (user.singleKnownRole && allowedRoles.includes(user.singleKnownRole)) {
       return true;
     }
 
-    if (user.roles?.includes(Role.RegisteringMember)) {
+    if (user.roles?.some((role: Role) => allowedRoles.includes(role))) {
       return true;
     }
+
     return false;
   }
 }
