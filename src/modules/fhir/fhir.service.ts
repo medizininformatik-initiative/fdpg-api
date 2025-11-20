@@ -140,12 +140,6 @@ export class FhirService {
       meta: {
         profile: ['http://medizininformatik-initiative.de/fhir/StructureDefinition/task-coordinate-data-sharing|1.1'],
       },
-      identifier: [
-        {
-          system: 'http://dsf.dev/sid/task-identifier',
-          value: 'http://medizininformatik-initiative.de/bpe/Process/coordinateDataSharing/1.1/coordinateDataSharing',
-        },
-      ],
       instantiatesCanonical: 'http://medizininformatik-initiative.de/bpe/Process/coordinateDataSharing|1.1',
       status: 'requested',
       intent: 'order',
@@ -346,10 +340,6 @@ export class FhirService {
     <meta>
         <profile value="http://medizininformatik-initiative.de/fhir/StructureDefinition/task-coordinate-data-sharing|1.1"/>
     </meta>
-    <identifier>
-        <system value="http://dsf.dev/sid/task-identifier"/>
-        <value value="http://medizininformatik-initiative.de/bpe/Process/coordinateDataSharing/1.1/coordinateDataSharing"/>
-    </identifier>
     <instantiatesCanonical value="http://medizininformatik-initiative.de/bpe/Process/coordinateDataSharing|1.1"/>
     <status value="requested"/>
     <intent value="order"/>
@@ -448,6 +438,14 @@ export class FhirService {
       console.error('Error starting coordinate process (XML):', error.response?.data || error.message);
       throw error;
     }
+  }
+
+  async getTaskById(taskId: string): Promise<any> {
+    const response = await this.apiClient.get(`/Task/${taskId}`, {
+      headers: this.fhirClient.FHIR_XML_HEADERS,
+    });
+
+    return response.data;
   }
 
   /**

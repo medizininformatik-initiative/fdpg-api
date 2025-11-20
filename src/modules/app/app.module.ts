@@ -33,7 +33,10 @@ import { FhirModule } from '../fhir/fhir.module';
       },
       inject: [ConfigService],
     }),
-    ServeStaticModule.forRoot({ exclude: ['/api*'], rootPath: join(__dirname, '..', '..', '..', 'static-content') }),
+    ServeStaticModule.forRoot({
+      exclude: ['/api'],
+      rootPath: join(__dirname, '..', '..', '..', 'static-content'),
+    }),
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: Migration.name, schema: MigrationSchema },
