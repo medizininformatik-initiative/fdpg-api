@@ -290,3 +290,12 @@ export const addHistoryItemForParticipantsUpdated = (
     pushHistoryItem(proposal, user, type);
   }
 };
+
+export const addHistoryItemForCopyAsInternalRegistration = (
+  proposal: Proposal,
+  user: IRequestUser,
+  originalProposalAbbreviation: string,
+): void => {
+  const type = HistoryEventType.ProposalCopyAsInternalRegistration;
+  pushHistoryItem(proposal, user, type, undefined, { originalProposalAbbreviation });
+};
