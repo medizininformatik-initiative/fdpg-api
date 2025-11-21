@@ -7,19 +7,19 @@ import { PublicationType } from '../../../enums/publication-type.enum';
 
 export class PublicationDto extends WithIdForArrayDto {
   @Expose()
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   @IsEnum(PublicationType)
   type: PublicationType;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   @MaxLength(10000)
   description: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   @MaxLength(10000)
   authors: string;
 }

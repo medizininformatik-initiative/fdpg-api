@@ -25,6 +25,7 @@ import { validateMatchingId } from 'src/shared/utils/validate-matching-ids.util'
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../../dto/check-unique-proposal.dto';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
+import { ProposalSyncService } from '../proposal-sync.service';
 import { LocationService } from 'src/modules/location/service/location.service';
 
 class ProposalModel {
@@ -97,6 +98,7 @@ describe('ProposalCrudService', () => {
   let sharedService: jest.Mocked<SharedService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let proposalFormService: jest.Mocked<ProposalFormService>;
+  let proposalSyncService: jest.Mocked<ProposalSyncService>;
   let locationService: jest.Mocked<LocationService>;
 
   const request = {
@@ -149,6 +151,14 @@ describe('ProposalCrudService', () => {
           },
         },
         {
+          provide: ProposalSyncService,
+          useValue: {
+            syncProposal: jest.fn(),
+            retrySync: jest.fn(),
+            syncAllProposals: jest.fn(),
+          },
+        },
+        {
           provide: LocationService,
           useValue: {
             findById: jest.fn().mockImplementation(() => undefined),
@@ -165,6 +175,7 @@ describe('ProposalCrudService', () => {
     sharedService = module.get<SharedService>(SharedService) as jest.Mocked<SharedService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
+    proposalSyncService = module.get<ProposalSyncService>(ProposalSyncService) as jest.Mocked<ProposalSyncService>;
     locationService = module.get<LocationService>(LocationService) as jest.Mocked<LocationService>;
   });
 

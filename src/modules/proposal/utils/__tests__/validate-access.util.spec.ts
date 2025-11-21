@@ -1,6 +1,7 @@
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalType } from '../../enums/proposal-type.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import {
@@ -72,6 +73,91 @@ describe('validateProposalAccess', () => {
       miiLocation: 'UKL',
       email: 'uac@example.com',
     } as IRequestUser;
+  });
+
+  describe('RegisteringMember branch', () => {
+    let registeringMemberUser: IRequestUser;
+    let registeringProposal: ProposalDocument;
+
+    beforeEach(() => {
+      registeringMemberUser = {
+        singleKnownRole: Role.RegisteringMember,
+        userId: 'register-id',
+        email: 'register@example.com',
+        roles: [Role.RegisteringMember],
+      } as IRequestUser;
+
+      registeringProposal = {
+        ...baseProposal,
+        type: ProposalType.RegisteringForm,
+        registerInfo: {
+          isInternalRegistration: false,
+        },
+      } as ProposalDocument;
+    });
+
+    it('allows RegisteringMember owner to access registering form', () => {
+      registeringProposal.owner.id = 'register-id';
+      expect(() => validateProposalAccess(registeringProposal, registeringMemberUser)).not.toThrow();
+    });
+
+    it('allows RegisteringMember participating scientist to access', () => {
+      registeringProposal.owner.id = 'other-id';
+      registeringProposal.participants = [{ researcher: { email: 'register@example.com' } } as any as Participant];
+      expect(() => validateProposalAccess(registeringProposal, registeringMemberUser)).not.toThrow();
+    });
+
+    it('throws when RegisteringMember is not owner or participant', () => {
+      registeringProposal.owner.id = 'other-id';
+      registeringProposal.participants = [{ researcher: { email: 'someone-else@example.com' } } as any as Participant];
+      expect(() => validateProposalAccess(registeringProposal, registeringMemberUser)).toThrow(ForbiddenException);
+    });
+
+    it('allows RegisteringMember with multi-role to access registering forms', () => {
+      const multiRoleUser = {
+        ...registeringMemberUser,
+        singleKnownRole: Role.Researcher,
+        roles: [Role.Researcher, Role.RegisteringMember],
+      } as IRequestUser;
+      registeringProposal.owner.id = 'register-id';
+      expect(() => validateProposalAccess(registeringProposal, multiRoleUser)).not.toThrow();
+    });
+  });
+
+  describe('Internal Registration Access', () => {
+    let internalRegistrationProposal: ProposalDocument;
+
+    beforeEach(() => {
+      internalRegistrationProposal = {
+        ...baseProposal,
+        type: ProposalType.RegisteringForm,
+        registerInfo: {
+          isInternalRegistration: true,
+        },
+        status: ProposalStatus.Draft,
+      } as ProposalDocument;
+    });
+
+    it('allows FDPG member to access internal registration regardless of ownership', () => {
+      internalRegistrationProposal.owner.id = 'different-owner';
+      expect(() => validateProposalAccess(internalRegistrationProposal, fdpgUser)).not.toThrow();
+    });
+
+    it('allows FDPG member to modify internal registration in Draft status', () => {
+      internalRegistrationProposal.owner.id = 'different-owner';
+      expect(() => validateProposalAccess(internalRegistrationProposal, fdpgUser, undefined, true)).not.toThrow();
+    });
+
+    it("throws for non-FDPG members trying to access internal registration they don't own", () => {
+      internalRegistrationProposal.owner.id = 'different-owner';
+      const researcherUser = {
+        singleKnownRole: Role.Researcher,
+        userId: 'researcher-id',
+        email: 'researcher@example.com',
+        roles: [Role.Researcher],
+      } as IRequestUser;
+      expect(() => validateProposalAccess(internalRegistrationProposal, researcherUser)).toThrow(ForbiddenException);
+    });
   });
 
   describe('Researcher branch', () => {

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, Model, Schema as MongooseSchema } from 'mongoose';
+import { Document, Model, Schema as MongooseSchema } from 'mongoose';
 import { Owner, OwnerSchema } from 'src/shared/schema/owner.schema';
 import { Version, VersionSchema } from 'src/shared/schema/version.schema';
 import { ProposalStatus } from '../enums/proposal-status.enum';
@@ -25,7 +25,9 @@ import {
   AdditionalLocationInformationSchema,
 } from './sub-schema/additional-location-information.schema';
 import { DizDetails, DizDetailsSchema } from './sub-schema/diz-details.schema';
+import { RegisterInfo, RegisterInfoSchema } from './sub-schema/register-info.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 import { addLocationPreSaveHook, Location } from 'src/modules/location/schema/location.schema';
 import { InstituteSchema } from './sub-schema/participants/institute.schema';
 import { AddresseesSchema } from './sub-schema/user-project/addressees.schema';
@@ -71,6 +73,22 @@ export class Proposal {
 
   @Prop({ type: Boolean, default: false })
   isLocked: boolean;
+
+  @Prop({
+    type: String,
+    enum: ProposalType,
+    default: ProposalType.ApplicationForm,
+  })
+  type: ProposalType;
+
+  @Prop({
+    type: RegisterInfoSchema,
+    default: () => ({}),
+  })
+  registerInfo: RegisterInfo;
+
+  @Prop({ type: String })
+  registerFormId: string;
 
   @Prop({ type: Number, default: 0 })
   formVersion: number;

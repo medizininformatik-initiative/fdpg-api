@@ -30,6 +30,16 @@ export enum PanelQuery {
   FdpgOngoingInWork = 'FDPG_ONGOING_IN_WORK',
   FdpgFinished = 'FDPG_FINISHED',
 
+  // Published Page Panels
+  PublishedDraft = 'PUBLISHED_DRAFT',
+  PublishedPending = 'PUBLISHED_PENDING',
+  PublishedCompleted = 'PUBLISHED_COMPLETED',
+
+  // FDPG Published Page Panels
+  FdpgPublishedRequested = 'FDPG_PUBLISHED_REQUESTED',
+  FdpgPublishedReady = 'FDPG_PUBLISHED_READY',
+  FdpgPublishedPublished = 'FDPG_PUBLISHED_PUBLISHED',
+  FdpgPublishedDraft = 'FDPG_PUBLISHED_DRAFT',
   // DataManagementOffice
   DmsPending = 'DMS_PENDING',
   DmsApproved = 'DMS_APPROVED',

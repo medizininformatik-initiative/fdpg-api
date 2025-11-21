@@ -4,6 +4,7 @@ import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
+import { getRegisterProposalsForUser } from '../proposal-filter.util';
 
 export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
   const allowedQuery = [
@@ -12,6 +13,9 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
     PanelQuery.DizPending,
     PanelQuery.DizOngoing,
     PanelQuery.DizFinished,
+    PanelQuery.PublishedDraft,
+    PanelQuery.PublishedPending,
+    PanelQuery.PublishedCompleted,
     PanelQuery.Archived,
   ];
 
@@ -27,6 +31,16 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
         return getFilterForOngoing(user);
       case PanelQuery.DizFinished:
         return getFilterForFinished(user);
+      case PanelQuery.PublishedDraft:
+        return getRegisterProposalsForUser(user, ProposalStatus.Draft);
+      case PanelQuery.PublishedPending:
+        return getRegisterProposalsForUser(user, [
+          ProposalStatus.Rework,
+          ProposalStatus.FdpgCheck,
+          ProposalStatus.ReadyToPublish,
+        ]);
+      case PanelQuery.PublishedCompleted:
+        return getRegisterProposalsForUser(user, [ProposalStatus.Published, ProposalStatus.Rejected]);
       case PanelQuery.Archived:
         return getFilterForArchived(user);
     }

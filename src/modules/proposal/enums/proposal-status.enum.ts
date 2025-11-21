@@ -11,4 +11,6 @@ export enum ProposalStatus {
   DataCorrupt = 'DATA_CORRUPT',
   FinishedProject = 'FINISHED_PROJECT',
   ReadyToArchive = 'READY_TO_ARCHIVE',
+  ReadyToPublish = 'READY_TO_PUBLISH',
+  Published = 'PUBLISHED',
 }
