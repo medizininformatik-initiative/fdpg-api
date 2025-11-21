@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
+import { CacheModule } from '@nestjs/cache-manager';
 import { SharedModule } from 'src/shared/shared.module';
 import { AdminModule } from '../admin/admin.module';
 import { StorageModule } from '../storage/storage.module';
@@ -47,6 +48,7 @@ import { ProposalDataDeliveryService } from './services/proposal-data-delivery.s
         },
       },
     ]),
+    CacheModule.register(),
     UserModule,
     forwardRef(() => EventEngineModule),
     StorageModule,

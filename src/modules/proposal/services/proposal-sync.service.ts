@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { plainToClass } from 'class-transformer';
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { AcptPluginClient } from '../../app/acpt-plugin/acpt-plugin.client';
+import { LocationService } from '../../location/service/location.service';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Role } from 'src/shared/enums/role.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
@@ -12,6 +13,7 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { AcptMetaField, AcptProjectDto, AcptResearcherDto, AcptLocationDto } from '../dto/acpt-plugin/acpt-project.dto';
 import { PublishedProposalStatus } from '../enums/published-proposal.enum';
 import { SyncResultDto, BulkSyncResultsDto, SyncErrorDto } from '../dto/sync-result.dto';
+import { LocationDto } from 'src/modules/location/dto/location.dto';
 
 @Injectable()
 export class ProposalSyncService {
@@ -21,11 +23,16 @@ export class ProposalSyncService {
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
     private acptPluginClient: AcptPluginClient,
+    private locationService: LocationService,
   ) {}
 
-  async syncProposal(proposalId: string, user: IRequestUser): Promise<SyncResultDto> {
+  async syncProposal(proposalId: string, user: IRequestUser, skipCacheClear: boolean = false): Promise<SyncResultDto> {
     this.logger.log(`Starting sync for proposal ${proposalId}`);
     const proposal = await this.findAndValidate(proposalId, user);
+
+    if (!skipCacheClear) {
+      await this.acptPluginClient.clearCache();
+    }
 
     try {
       await this.updateSyncStatus(proposal._id.toString(), SyncStatus.Syncing);
@@ -132,6 +139,9 @@ export class ProposalSyncService {
   async syncAllProposals(user: IRequestUser): Promise<BulkSyncResultsDto> {
     this.validateFdpgPermissions(user);
 
+    this.logger.log('Clearing cache before bulk sync to fetch fresh data from WordPress');
+    await this.acptPluginClient.clearCache();
+
     const proposals = await this.proposalModel.find({
       type: ProposalType.RegisteringForm,
       status: ProposalStatus.Published,
@@ -143,6 +153,7 @@ export class ProposalSyncService {
     }
 
     this.logger.log(`Starting bulk sync for ${proposals.length} proposals with concurrency limit of 3`);
+    this.logger.log('Cache will be reused across all proposals for optimal performance');
 
     const results = {
       total: proposals.length,
@@ -152,7 +163,7 @@ export class ProposalSyncService {
     };
 
     const syncResults = await this.syncWithConcurrency(
-      proposals.map((p) => () => this.syncProposal(p._id.toString(), user)),
+      proposals.map((p) => () => this.syncProposal(p._id.toString(), user, true)),
       3,
     );
 
@@ -167,6 +178,9 @@ export class ProposalSyncService {
         });
       }
     });
+
+    this.logger.log('Clearing cache after bulk sync completion');
+    await this.acptPluginClient.clearCache();
 
     this.logger.log(`Bulk sync completed: ${results.synced}/${results.total} synced, ${results.failed} failed`);
 
@@ -323,77 +337,147 @@ export class ProposalSyncService {
     const desiredLocationIds: string[] = [];
     const participantInstituteIds: string[] = [];
 
-    const desiredLocationNames = new Set<string>();
+    const desiredLocationCodes = new Set<string>();
     proposal.userProject?.addressees?.desiredLocations?.forEach((loc) => {
       if (loc && loc !== 'VIRTUAL_ALL') {
-        desiredLocationNames.add(loc);
+        desiredLocationCodes.add(loc);
       }
     });
 
     this.logger.log(
-      `Found ${desiredLocationNames.size} desired locations to sync for project ${proposal.projectAbbreviation}`,
+      `Found ${desiredLocationCodes.size} desired locations to sync for project ${proposal.projectAbbreviation}`,
     );
 
-    for (const locationName of Array.from(desiredLocationNames)) {
+    for (const locationCode of Array.from(desiredLocationCodes)) {
       try {
-        const locationId = await this.ensureLocationExists(locationName);
+        const locationId = await this.ensureLocationExists(locationCode, 'miiLocation');
         if (locationId) {
           desiredLocationIds.push(locationId);
         }
       } catch (error) {
-        this.logger.error(`Failed to sync desired location ${locationName}: ${error.message}`);
+        this.logger.error(`Failed to sync desired location ${locationCode}: ${error.message}`);
       }
     }
 
-    const participantInstituteNames = new Set<string>();
+    const participantInstituteIdentifiers = new Map<string, 'miiLocation' | 'instituteName'>();
     proposal.participants?.forEach((p) => {
-      const instituteName = p.institute?.miiLocation || p.institute?.name;
-      if (instituteName) {
-        participantInstituteNames.add(instituteName);
+      if (p.institute?.miiLocation) {
+        participantInstituteIdentifiers.set(p.institute.miiLocation, 'miiLocation');
+      } else if (p.institute?.name) {
+        participantInstituteIdentifiers.set(p.institute.name, 'instituteName');
       }
     });
 
     this.logger.log(
-      `Found ${participantInstituteNames.size} participant institutes to sync for project ${proposal.projectAbbreviation}`,
+      `Found ${participantInstituteIdentifiers.size} participant institutes to sync for project ${proposal.projectAbbreviation}`,
     );
 
-    for (const locationName of Array.from(participantInstituteNames)) {
+    for (const [identifier, type] of participantInstituteIdentifiers.entries()) {
       try {
-        const locationId = await this.ensureLocationExists(locationName);
+        const locationId = await this.ensureLocationExists(identifier, type);
         if (locationId) {
           participantInstituteIds.push(locationId);
         }
       } catch (error) {
-        this.logger.error(`Failed to sync participant institute ${locationName}: ${error.message}`);
+        this.logger.error(`Failed to sync participant institute ${identifier}: ${error.message}`);
       }
     }
 
     return { desiredLocationIds, participantInstituteIds };
   }
 
-  private async ensureLocationExists(locationName: string): Promise<string | null> {
-    const existingId = await this.acptPluginClient.findLocationByName(locationName);
+  private async ensureLocationExists(
+    locationIdentifier: string,
+    type: 'miiLocation' | 'instituteName' = 'miiLocation',
+  ): Promise<string | null> {
+    // Special case: DIFE is not in the locations API, use it as-is
+    if (locationIdentifier === 'DIFE') {
+      const existingId = await this.acptPluginClient.findLocationByName('DIFE');
 
-    if (existingId) {
-      this.logger.log(`Location ${locationName} already exists with ID ${existingId}`);
-      return existingId;
+      if (existingId) {
+        this.logger.log(`Location DIFE already exists in WordPress with ID ${existingId}`);
+        return existingId;
+      }
+
+      this.logger.log(`Creating new location in WordPress: DIFE`);
+      const locationData: AcptLocationDto = this.buildLocationPayload('DIFE');
+      const response = await this.acptPluginClient.createLocation(locationData);
+      this.logger.log(`Created location DIFE with WordPress ID ${response.id}`);
+      return response.id;
     }
 
-    this.logger.log(`Creating new location: ${locationName}`);
+    if (type === 'miiLocation') {
+      const locations = await this.locationService.findAll();
+      const location = locations.find((loc) => loc._id === locationIdentifier);
 
-    const locationData: AcptLocationDto = this.buildLocationPayload(locationName);
+      if (location) {
+        const displayName = location.display;
+        if (!displayName) {
+          this.logger.warn(`Location ${locationIdentifier} has no display name`);
+          return null;
+        }
 
-    const response = await this.acptPluginClient.createLocation(locationData);
-    this.logger.log(`Created location ${locationName} with ID ${response.id}`);
+        const existingId = await this.acptPluginClient.findLocationByName(displayName);
 
-    return response.id;
+        if (existingId) {
+          this.logger.log(
+            `Location ${displayName} (ID: ${locationIdentifier}) already exists in WordPress with ID ${existingId}`,
+          );
+          return existingId;
+        }
+
+        this.logger.log(`Creating new location in WordPress: ${displayName} (ID: ${locationIdentifier})`);
+        const locationData: AcptLocationDto = this.buildLocationPayload(location);
+        const response = await this.acptPluginClient.createLocation(locationData);
+        this.logger.log(`Created location ${displayName} with WordPress ID ${response.id}`);
+        return response.id;
+      } else {
+        this.logger.warn(`MII Location ID ${locationIdentifier} not found in locations API`);
+        return null;
+      }
+    } else {
+      this.logger.log(`Processing institute name: ${locationIdentifier}`);
+
+      const existingId = await this.acptPluginClient.findLocationByName(locationIdentifier);
+
+      if (existingId) {
+        this.logger.log(`Institute ${locationIdentifier} already exists in WordPress with ID ${existingId}`);
+        return existingId;
+      }
+
+      this.logger.log(`Creating new institute in WordPress: ${locationIdentifier}`);
+      const locationData: AcptLocationDto = this.buildLocationPayload(locationIdentifier);
+      const response = await this.acptPluginClient.createLocation(locationData);
+      this.logger.log(`Created institute ${locationIdentifier} with WordPress ID ${response.id}`);
+      return response.id;
+    }
   }
 
-  private buildLocationPayload(locationName: string): AcptLocationDto {
-    const meta: AcptMetaField[] = [{ box: 'location-fields', field: 'fdpgx-name', value: locationName }];
+  private buildLocationPayload(locationNameOrDto: string | LocationDto): AcptLocationDto {
+    if (typeof locationNameOrDto === 'string') {
+      const meta: AcptMetaField[] = [{ box: 'location-fields', field: 'fdpgx-name', value: locationNameOrDto }];
+
+      return {
+        title: locationNameOrDto,
+        status: 'publish',
+        content: '',
+        acpt: { meta },
+      };
+    }
+
+    const location = locationNameOrDto;
+    const meta: AcptMetaField[] = [{ box: 'location-fields', field: 'fdpgx-name', value: location.display }];
+
+    if (location.definition) {
+      meta.push({
+        box: 'location-fields',
+        field: 'fdpgx-city',
+        value: location.definition,
+      });
+    }
 
     return {
-      title: locationName,
+      title: location.display,
       status: 'publish',
       content: '',
       acpt: { meta },
@@ -607,6 +691,30 @@ export class ProposalSyncService {
       field: 'fdpgx-localproject',
       value: proposal.registerInfo?.isInternalRegistration ? '0' : '1',
     });
+
+    // Biosample
+    if (proposal.userProject?.informationOnRequestedBioSamples?.biosamples?.length > 0) {
+      this.logger.log(
+        `Adding biosample fields for proposal ${proposal._id}: type=${proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type}`,
+      );
+      meta.push(
+        {
+          box: 'project-fields',
+          field: 'fdpgx-biosampletype',
+          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type,
+        },
+        {
+          box: 'project-fields',
+          field: 'fdpgx-biosampledetails',
+          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].typeDetails || '',
+        },
+        {
+          box: 'project-fields',
+          field: 'fdpgx-biosamplecode',
+          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].sampleCode || [],
+        },
+      );
+    }
 
     return {
       title: proposal.userProject?.generalProjectInformation?.projectTitle || proposal.projectAbbreviation,
