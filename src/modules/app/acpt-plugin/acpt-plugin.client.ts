@@ -1,5 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import axios, { AxiosInstance } from 'axios';
 import {
   AcptProjectDto,
@@ -11,6 +13,7 @@ import {
   AcptLocationListItemDto,
   AcptLocationResponseDto,
 } from '../../proposal/dto/acpt-plugin/acpt-project.dto';
+import { CacheKey } from '../../../shared/enums/cache-key.enum';
 
 /**
  * Client for interacting with the ACPT WordPress Plugin API
@@ -27,16 +30,18 @@ export class AcptPluginClient {
   private readonly logger = new Logger(AcptPluginClient.name);
   private readonly isConfigured: boolean;
   private readonly baseURL: string;
-
-  private researchersCache: AcptResearcherListItemDto[] | null = null;
-  private locationsCache: AcptLocationListItemDto[] | null = null;
-
-  constructor(private readonly configService: ConfigService) {
+  private readonly CACHE_DURATION_MS: number;
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {
     this.baseURL = this.configService.get<string>('FDPG_ACPT_PLUGIN_BASE_URL');
     const username = this.configService.get<string>('FDPG_ACPT_USERNAME');
     const password = this.configService.get<string>('FDPG_ACPT_PASSWORD');
     const cloudflareApiToken = this.configService.get<string>('FDPG_ACPT_PLUGIN_CLOUDFLARE_API_TOKEN');
     this.isConfigured = !!(this.baseURL && username && password && cloudflareApiToken);
+    const cacheDurationMinutes = this.configService.get<number>('ACPT_CACHE_DURATION_MINUTES', 15);
+    this.CACHE_DURATION_MS = cacheDurationMinutes * 60 * 1000;
 
     if (!this.baseURL) {
       this.logger.warn('FDPG_ACPT_PLUGIN_BASE_URL is not configured. Sync functionality will not work.');
@@ -161,9 +166,12 @@ export class AcptPluginClient {
   async getResearchers(forceRefresh: boolean = false): Promise<AcptResearcherListItemDto[]> {
     this.validateConfiguration();
 
-    if (this.researchersCache && !forceRefresh) {
-      this.logger.log(`Using cached researchers (${this.researchersCache.length} items)`);
-      return this.researchersCache;
+    if (!forceRefresh) {
+      const cached = await this.cacheManager.get<AcptResearcherListItemDto[]>(CacheKey.AcptResearchers);
+      if (cached) {
+        this.logger.log(`Using cached researchers (${cached.length} items)`);
+        return cached;
+      }
     }
 
     try {
@@ -194,7 +202,7 @@ export class AcptPluginClient {
 
       this.logger.log(`Found ${allResearchers.length} researchers across ${page - 1} page(s)`);
 
-      this.researchersCache = allResearchers;
+      await this.cacheManager.set(CacheKey.AcptResearchers, allResearchers, this.CACHE_DURATION_MS);
 
       return allResearchers;
     } catch (error) {
@@ -263,7 +271,7 @@ export class AcptPluginClient {
 
       this.logger.log(`✅ Researcher created successfully with ID: ${response.data.id}`);
 
-      this.researchersCache = null;
+      await this.cacheManager.del(CacheKey.AcptResearchers);
 
       return response.data;
     } catch (error) {
@@ -284,9 +292,12 @@ export class AcptPluginClient {
   async getLocations(forceRefresh: boolean = false): Promise<AcptLocationListItemDto[]> {
     this.validateConfiguration();
 
-    if (this.locationsCache && !forceRefresh) {
-      this.logger.log(`Using cached locations (${this.locationsCache.length} items)`);
-      return this.locationsCache;
+    if (!forceRefresh) {
+      const cached = await this.cacheManager.get<AcptLocationListItemDto[]>(CacheKey.AcptLocations);
+      if (cached) {
+        this.logger.log(`Using cached locations (${cached.length} items)`);
+        return cached;
+      }
     }
 
     try {
@@ -317,7 +328,7 @@ export class AcptPluginClient {
 
       this.logger.log(`Found ${allLocations.length} locations across ${page - 1} page(s)`);
 
-      this.locationsCache = allLocations;
+      await this.cacheManager.set(CacheKey.AcptLocations, allLocations, this.CACHE_DURATION_MS);
 
       return allLocations;
     } catch (error) {
@@ -359,7 +370,7 @@ export class AcptPluginClient {
 
       this.logger.log(`✅ Location created successfully with ID: ${response.data.id}`);
 
-      this.locationsCache = null;
+      await this.cacheManager.del(CacheKey.AcptLocations);
 
       return response.data;
     } catch (error) {
@@ -376,9 +387,9 @@ export class AcptPluginClient {
    * Clear the researchers and locations cache
    * Useful when you need to force a refresh
    */
-  clearCache(): void {
+  async clearCache(): Promise<void> {
     this.logger.log('Clearing researchers and locations cache');
-    this.researchersCache = null;
-    this.locationsCache = null;
+    await this.cacheManager.del(CacheKey.AcptResearchers);
+    await this.cacheManager.del(CacheKey.AcptLocations);
   }
 }

@@ -31,7 +31,7 @@ export class ProposalSyncService {
     const proposal = await this.findAndValidate(proposalId, user);
 
     if (!skipCacheClear) {
-      this.acptPluginClient.clearCache();
+      await this.acptPluginClient.clearCache();
     }
 
     try {
@@ -140,7 +140,7 @@ export class ProposalSyncService {
     this.validateFdpgPermissions(user);
 
     this.logger.log('Clearing cache before bulk sync to fetch fresh data from WordPress');
-    this.acptPluginClient.clearCache();
+    await this.acptPluginClient.clearCache();
 
     const proposals = await this.proposalModel.find({
       type: ProposalType.RegisteringForm,
@@ -180,7 +180,7 @@ export class ProposalSyncService {
     });
 
     this.logger.log('Clearing cache after bulk sync completion');
-    this.acptPluginClient.clearCache();
+    await this.acptPluginClient.clearCache();
 
     this.logger.log(`Bulk sync completed: ${results.synced}/${results.total} synced, ${results.failed} failed`);
 
