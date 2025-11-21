@@ -50,7 +50,7 @@ export const deadlineEmail = (
   return {
     to: validContacts,
     categories,
-    templateId: 0, // TODO adjust template id after it was created
+    templateId: 63,
     params: {
       projectAbbreviation: proposal.projectAbbreviation,
       projectLink: projectLink,
