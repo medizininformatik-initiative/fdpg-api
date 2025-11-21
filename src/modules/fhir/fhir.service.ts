@@ -4,6 +4,8 @@ import { FhirClient } from './fhir.client';
 import { DeliveryInfo } from '../proposal/schema/sub-schema/data-delivery/delivery-info.schema';
 import { Proposal } from '../proposal/schema/proposal.schema';
 import { LocationService } from '../location/service/location.service';
+import { processReceivedDataSetResponse } from './util/fhir-received-dataset.util';
+import { FhirReceivedDataSetType } from './type/fhir-received-dataset.type';
 
 @Injectable()
 export class FhirService {
@@ -16,6 +18,25 @@ export class FhirService {
 
   private readonly BUSINESS_KEY_CODE = 'business-key';
   private readonly GET_TASK_DELAY_MS = 3 * 1000;
+
+  private readonly INPUT_CODE_MAPPINGS = {
+    // For "message-name" and "business-key", we map to a single target key
+    // and specify the path to the string value (valueString).
+    'message-name': {
+      targetKey: 'message-name',
+      valuePath: 'valueString',
+    },
+    [this.BUSINESS_KEY_CODE]: {
+      targetKey: this.BUSINESS_KEY_CODE,
+      valuePath: 'valueString',
+    },
+    'dic-identifier': [
+      {
+        targetKey: 'dic-identifier-value',
+        valuePath: 'valueReference.identifier.value',
+      },
+    ],
+  };
 
   private apiClient: AxiosInstance;
 
@@ -421,7 +442,7 @@ export class FhirService {
    * Fetches Tasks with the specific profile, sorted by last updated.
    *
    */
-  async pollForReceivedDataSetsByBusinessKey(businessKey: string, lastSync: Date) {
+  async pollForReceivedDataSetsByBusinessKey(lastSync: Date): Promise<FhirReceivedDataSetType> {
     try {
       const response = await this.apiClient.get('/Task', {
         params: {
@@ -438,7 +459,7 @@ export class FhirService {
     }
   }
 
-  async pollForReceivedDataSets() {
+  async pollForReceivedDataSets(): Promise<FhirReceivedDataSetType> {
     try {
       const response = await this.apiClient.get('/Task', {
         params: {
@@ -447,7 +468,7 @@ export class FhirService {
         },
       });
       console.log(`Found ${response.data.total} 'Received Data Set' tasks.`);
-      return response.data; // This is a FHIR Bundle
+      return response.data.entry.map((entry) => processReceivedDataSetResponse(entry, this.INPUT_CODE_MAPPINGS));
     } catch (error) {
       console.error('Error polling for received data sets:', error.response?.data || error.message);
       throw error;
