@@ -92,7 +92,6 @@ describe('ProposalReportService', () => {
           provide: EventEngineService,
           useValue: {
             handleProposalReportCreate: jest.fn(),
-            handleProposalReportUpdate: jest.fn(),
           },
         },
         {
@@ -324,10 +323,6 @@ describe('ProposalReportService', () => {
 
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalReportUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: proposalId }),
-        expect.objectContaining({ content: 'content' }),
-      );
       expect(result.uploads.length).toBe(2);
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
       expect(result.uploads[1].downloadUrl).toBe('downloadUrl');
@@ -385,10 +380,6 @@ describe('ProposalReportService', () => {
 
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalReportUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: proposalId }),
-        expect.objectContaining({ content: 'content' }),
-      );
       expect(result.uploads.length).toBe(2);
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
       expect(result.uploads[1].downloadUrl).toBe('downloadUrl');

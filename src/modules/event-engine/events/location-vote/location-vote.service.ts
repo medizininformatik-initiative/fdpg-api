@@ -19,6 +19,7 @@ export class LocationVoteService {
 
   async handleDizApproval(proposal: Proposal, vote: boolean, location: string, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
+
     if (vote === true) {
       const uacTask = async () => {
         const validUacContacts = await this.keycloakUtilService
@@ -32,6 +33,7 @@ export class LocationVoteService {
 
         return await this.emailService.send(mail);
       };
+
       emailTasks.push(uacTask());
     }
 

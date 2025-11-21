@@ -52,6 +52,7 @@ export class ParticipantEmailSummaryService {
       const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
 
       const mail = buildParticipatingEmailSummary(validParticipantsContacts, mailBodyChanges, proposal, proposalUrl);
+
       return await this.emailService.send(mail);
     };
 
