@@ -8,6 +8,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalType } from '../../enums/proposal-type.enum';
+import { HistoryEventType } from '../../enums/history-event.enum';
 import { Proposal, ProposalDocument } from '../../schema/proposal.schema';
 import { getModelToken } from '@nestjs/mongoose';
 import { ParticipantType } from '../../enums/participant-type.enum';
@@ -55,13 +56,17 @@ jest.mock('../../utils/validate-status-change.util', () => ({
   validateStatusChange: jest.fn(),
 }));
 
-jest.mock('../../utils/proposal-history.util', () => ({
-  addHistoryItemForStatus: jest.fn(),
-  addHistoryItemForProposalLock: jest.fn(),
-  addHistoryItemForChangedDeadline: jest.fn(),
-  addHistoryItemForParticipantsUpdated: jest.fn(),
-  addHistoryItemForParticipantRemoved: jest.fn(),
-}));
+jest.mock('../../utils/proposal-history.util', () => {
+  const actual = jest.requireActual('../../utils/proposal-history.util');
+  return {
+    addHistoryItemForStatus: jest.fn(),
+    addHistoryItemForProposalLock: jest.fn(),
+    addHistoryItemForChangedDeadline: jest.fn(),
+    addHistoryItemForParticipantsUpdated: jest.fn(),
+    addHistoryItemForParticipantRemoved: jest.fn(),
+    addHistoryItemForCopyAsInternalRegistration: actual.addHistoryItemForCopyAsInternalRegistration,
+  };
+});
 
 jest.mock('../../utils/validate-fdpg-check-status.util', () => ({
   validateFdpgCheckStatus: jest.fn(),
@@ -1906,6 +1911,8 @@ describe('ProposalMiscService', () => {
             usage: [ProposalTypeOfUse.Distributed],
           },
         },
+        history: [],
+        version: { mayor: 0, minor: 0 },
         toObject: jest.fn().mockReturnThis(),
         save: jest.fn().mockResolvedValue({ _id: 'new-proposal-id' }),
       };
@@ -1914,6 +1921,10 @@ describe('ProposalMiscService', () => {
         user: {
           userId: 'fdpg-user-id',
           username: 'FDPG User',
+          firstName: 'FDPG',
+          lastName: 'User',
+          email: 'fdpg@example.com',
+          miiLocation: 'fdpg-location',
           singleKnownRole: Role.FdpgMember,
           roles: [Role.FdpgMember],
         },
@@ -1924,9 +1935,15 @@ describe('ProposalMiscService', () => {
 
       // Mock the proposalModel constructor to return a mock with save method
       const mockProposalModel = jest.fn().mockImplementation((data) => {
-        // Spread the data into originalProposal to simulate new model creation
-        Object.assign(originalProposal, data);
-        return originalProposal;
+        // Create a new mock object for the new proposal instead of mutating originalProposal
+        const newProposal = {
+          ...data,
+          history: data.history || [],
+          save: jest.fn().mockResolvedValue({ _id: 'new-proposal-id' }),
+        };
+        // Store reference to new proposal for assertions
+        originalProposal._newProposalRef = newProposal;
+        return newProposal;
       });
 
       // Replace proposalModel in the service
@@ -1939,12 +1956,13 @@ describe('ProposalMiscService', () => {
 
     it('should create internal registration copy with correct flags', async () => {
       const result = await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
       expect(result).toBe('new-proposal-id');
-      expect(originalProposal.save).toHaveBeenCalled();
+      expect(newProposal.save).toHaveBeenCalled();
       // Verify type and registerInfo are set correctly
-      expect(originalProposal.type).toBe(ProposalType.RegisteringForm);
-      expect(originalProposal.registerInfo).toEqual({
+      expect(newProposal.type).toBe(ProposalType.RegisteringForm);
+      expect(newProposal.registerInfo).toEqual({
         isInternalRegistration: true,
         originalProposalId: proposalId,
         originalProposalStatus: ProposalStatus.Contracting,
@@ -1953,67 +1971,84 @@ describe('ProposalMiscService', () => {
 
     it('should reset all isDone flags in copied proposal', async () => {
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
       // Verify isDone flags are reset
-      expect(originalProposal.userProject.projectDetails.isDone).toBe(false);
-      expect(originalProposal.userProject.typeOfUse.isDone).toBe(false);
+      expect(newProposal.userProject.projectDetails.isDone).toBe(false);
+      expect(newProposal.userProject.typeOfUse.isDone).toBe(false);
     });
 
     it('should preserve original owner information', async () => {
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
-      expect(originalProposal.owner).toEqual({ id: 'owner-id', name: 'Owner Name' });
-      expect(originalProposal.ownerId).toBe('owner-id');
-      expect(originalProposal.ownerName).toBe('Owner Name');
+      expect(newProposal.owner).toEqual({ id: 'owner-id', name: 'Owner Name' });
+      expect(newProposal.ownerId).toBe('owner-id');
+      expect(newProposal.ownerName).toBe('Owner Name');
     });
 
     it('should clear dataSourceLocaleId', async () => {
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
-      expect(originalProposal.dataSourceLocaleId).toBeUndefined();
+      expect(newProposal.dataSourceLocaleId).toBeUndefined();
     });
 
     it('should set status to Draft', async () => {
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
-      expect(originalProposal.status).toBe(ProposalStatus.Draft);
+      expect(newProposal.status).toBe(ProposalStatus.Draft);
     });
 
     it('should generate unique project abbreviation', async () => {
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
-      expect(originalProposal.projectAbbreviation).toBe('ORIGINAL-PROJECT-REG');
+      expect(newProposal.projectAbbreviation).toBe('ORIGINAL-PROJECT-REG');
     });
 
     it('should copy applicant data to projectResponsible when applicantIsProjectResponsible is true', async () => {
       originalProposal.projectResponsible.projectResponsibility.applicantIsProjectResponsible = true;
 
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
-      expect(originalProposal.projectResponsible.researcher).toEqual(originalProposal.applicant.researcher);
-      expect(originalProposal.projectResponsible.institute).toEqual(originalProposal.applicant.institute);
-      expect(originalProposal.projectResponsible.participantCategory).toBe(
-        originalProposal.applicant.participantCategory,
-      );
+      expect(newProposal.projectResponsible.researcher).toEqual(originalProposal.applicant.researcher);
+      expect(newProposal.projectResponsible.institute).toEqual(originalProposal.applicant.institute);
+      expect(newProposal.projectResponsible.participantCategory).toBe(originalProposal.applicant.participantCategory);
       // Should set applicantIsProjectResponsible to false in the copy
-      expect(originalProposal.projectResponsible.projectResponsibility.applicantIsProjectResponsible).toBe(false);
+      expect(newProposal.projectResponsible.projectResponsibility.applicantIsProjectResponsible).toBe(false);
     });
 
     it('should not copy applicant data when applicantIsProjectResponsible is false', async () => {
       const originalResponsible = { ...originalProposal.projectResponsible.researcher };
 
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
-      expect(originalProposal.projectResponsible.researcher).toEqual(originalResponsible);
+      expect(newProposal.projectResponsible.researcher).toEqual(originalResponsible);
     });
 
     it('should add history entry for internal registration', async () => {
       await proposalMiscService.copyAsInternalRegistration(proposalId, fdpgRequest.user);
+      const newProposal = originalProposal._newProposalRef;
 
-      expect(originalProposal.history).toHaveLength(1);
-      expect(originalProposal.history[0].status).toBe(ProposalStatus.Draft);
-      expect(originalProposal.history[0].user.id).toBe('fdpg-user-id');
-      expect(originalProposal.history[0].comment).toContain('internal registration by FDPG');
+      expect(newProposal.history).toHaveLength(1);
+      expect(newProposal.history[0].type).toBe(HistoryEventType.ProposalCopyAsInternalRegistration);
+      expect(newProposal.history[0].owner).toEqual({
+        firstName: 'FDPG',
+        lastName: 'User',
+        email: 'fdpg@example.com',
+        id: 'fdpg-user-id',
+        miiLocation: 'fdpg-location',
+        role: Role.FdpgMember,
+      });
+      expect(newProposal.history[0].data).toEqual({
+        originalProposalAbbreviation: 'ORIGINAL-PROJECT',
+      });
+      expect(newProposal.history[0].proposalVersion).toEqual({ mayor: 0, minor: 0 });
+      expect(newProposal.history[0].createdAt).toBeInstanceOf(Date);
     });
   });
 });
