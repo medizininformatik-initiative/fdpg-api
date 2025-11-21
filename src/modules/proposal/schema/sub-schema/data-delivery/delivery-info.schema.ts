@@ -14,6 +14,12 @@ export class DeliveryInfo {
 
   @Prop({ type: [SubDeliverySchema], default: [] })
   subDeliveries: SubDelivery[];
+
+  @Prop({ type: String, required: false })
+  fhirTaskId?: string;
+
+  @Prop({ type: String, required: false })
+  fhirBusinessKey?: string;
 }
 
 export const DeliveryInfoSchema = SchemaFactory.createForClass(DeliveryInfo);

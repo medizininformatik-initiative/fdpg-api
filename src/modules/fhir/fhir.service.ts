@@ -1,130 +1,105 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { AxiosInstance } from 'axios';
 import { FhirClient } from './fhir.client';
-import { FhirAuthenticationClient } from './fhir-authentication.client';
-import { randomUUID } from 'node:crypto';
+import { DeliveryInfo } from '../proposal/schema/sub-schema/data-delivery/delivery-info.schema';
+import { Proposal } from '../proposal/schema/proposal.schema';
+import { LocationService } from '../location/service/location.service';
 
 @Injectable()
 export class FhirService {
   constructor(
     private fhirClient: FhirClient,
-    private fhirAuth: FhirAuthenticationClient,
+    private locationService: LocationService,
   ) {
     this.apiClient = this.fhirClient.client;
-    this.auth = this.fhirAuth;
   }
+
+  private readonly BUSINESS_KEY_CODE = 'business-key';
+  private readonly GET_TASK_DELAY_MS = 3 * 1000;
 
   private apiClient: AxiosInstance;
-  private auth: FhirAuthenticationClient;
 
-  async test() {
-    const result = await this.apiClient.get(
-      //   '/Task?_profile=http://medizininformatik-initiative.de/fhir/StructureDefinition/task-received-data-set|1.1&_sort=-_lastUpdated',
-      '/Task',
-      {
-        headers: {
-          'Content-Type': 'application/fhir+xml',
-        },
-      },
+  private async fetchBusinessKey(dataDelivery: DeliveryInfo): Promise<string> {
+    if (!dataDelivery.fhirTaskId) {
+      throw new Error(`No Task Id given for delivery ${dataDelivery.name}`);
+    }
+
+    const getTask = await this.getTaskById(dataDelivery.fhirTaskId);
+    console.log('GET TASK');
+    console.log(JSON.stringify(getTask));
+
+    const businessKeyEntry = getTask.input.find((entry) =>
+      entry.type.coding.some((coding) => coding.code === this.BUSINESS_KEY_CODE),
     );
 
-    console.log({ data: JSON.stringify(result.data.entry) });
-  }
+    console.log(`Business Key: ${businessKeyEntry}`);
 
-  /**
-   * 1. Prepares the DIC CDS FHIR store (Decentralized) using JSON.
-   *
-   * @param {object} params - Parameters for the transaction.
-   * @param {string} params.projectIdentifier - The project identifier.
-   * @param {string} params.organizationIdentifier - Your DIC organization identifier.
-   * @param {string} params.base64Data - The base64-encoded file content.
-   * @param {string} params.contentType - The MIME type of the data.
-   * @param {string} [params.docRefUuid] - Optional UUID (still required, see below).
-   * @param {string} [params.binaryUuid] - Optional UUID (still required, see below).
-   * @param {string} [params.dateTime] - Optional ISO 8601 datetime string.
-   * @returns {Promise<object>} The FHIR response data from the server.
-   */
-  async prepareCdsDecentralizedJson({
-    projectIdentifier,
-    organizationIdentifier,
-    base64Data,
-    contentType,
-    docRefUuid = randomUUID(),
-    binaryUuid = randomUUID(),
-    dateTime = new Date().toISOString(),
-  }) {
-    const bundle = {
-      resourceType: 'Bundle',
-      type: 'transaction',
-      entry: [
-        {
-          fullUrl: `DocumentReference/${docRefUuid}`,
-          resource: {
-            resourceType: 'DocumentReference',
-            id: docRefUuid,
-            masterIdentifier: {
-              system: 'http://medizininformatik-initiative.de/sid/project-identifier',
-              value: projectIdentifier,
-            },
-            status: 'current',
-            docStatus: 'final',
-            author: [
-              {
-                type: 'Organization',
-                identifier: {
-                  system: 'http://dsf.dev/sid/organization-identifier',
-                  value: organizationIdentifier,
-                },
-              },
-            ],
-            date: dateTime,
-            content: [
-              {
-                attachment: {
-                  contentType: contentType,
-                  url: `Binary/${binaryUuid}`,
-                },
-              },
-            ],
-          },
-          request: {
-            method: 'PUT',
-            url: `DocumentReference/${docRefUuid}`,
-          },
-        },
-        {
-          fullUrl: `Binary/${binaryUuid}`,
-          resource: {
-            resourceType: 'Binary',
-            id: binaryUuid,
-            contentType: contentType,
-            data: base64Data,
-          },
-          request: {
-            method: 'PUT',
-            url: `Binary/${binaryUuid}`,
-          },
-        },
-      ],
-    };
-
-    try {
-      const response = await this.apiClient.post('', bundle);
-      console.log('Successfully prepared CDS for Decentralized Analysis (JSON).');
-      return response.data;
-    } catch (error) {
-      console.error('Error preparing CDS (JSON):', error.response?.data || error.message);
-      throw error;
+    if (!businessKeyEntry || !businessKeyEntry.valueString) {
+      throw new Error(
+        `Business key not present for dataDelivery ${dataDelivery.name} and taskId ${dataDelivery.fhirTaskId}`,
+      );
     }
+
+    return businessKeyEntry.valueString;
   }
 
-  /**
-   * 3. Starts the data-sharing coordinate process (JSON).
-   *
-   * @param {object} params - Parameters for the Task.
-   * // ... (all other params are the same as the XML version)
-   * @returns {Promise<object>} The created Task resource.
-   */
+  async createTask(deliveryInfo: DeliveryInfo, proposal: Proposal): Promise<DeliveryInfo> {
+    const locationMap = this.locationService.findAllLookUpMap();
+    console.log('Starting coordination process on HRP...');
+
+    const dms = locationMap[proposal.dataDelivery.dataManagementSite];
+    const dicLocations = deliveryInfo.subDeliveries
+      .map((delivery) => locationMap[delivery.location])
+      .map((location) => location.uri);
+
+    if (!dms.dataManagementCenter) {
+      throw new ForbiddenException(`Location ${dms._id} is not a DMS`);
+    }
+
+    const notDicLocations = dicLocations.filter((loc) => !loc.dataIntegrationCenter);
+
+    if (notDicLocations.length > 0) {
+      throw new ForbiddenException(`Locations ${notDicLocations} aren't data integration locations`);
+    }
+
+    const startParams = {
+      hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
+      projectIdentifier: proposal.projectAbbreviation,
+      contractUrl: `http://example.com/contract/Test_PROJECT_ZIP_${proposal.projectAbbreviation}`,
+      dmsIdentifier: dms.uri, //'forschen-fuer-gesundheit.de', // Using HRP as DMS for testing
+      researcherIdentifiers: ['researcher-1', 'researcher-2'],
+      dicIdentifiers: dicLocations,
+      extractionPeriod: 'P28D', // <REPLACE-WITH-EXTRACTION-PERIOD> with initial maximum extraction period the DIC sites have time to deliver the results to the DMS. Given in ISO8601 duration format (default P28D )
+    };
+    const createdTask = await this.startCoordinateProcessJson(startParams);
+
+    console.log(JSON.stringify(createdTask));
+    console.log('Process started. Main Task ID:', createdTask.id);
+
+    deliveryInfo.fhirTaskId = createdTask.id;
+
+    const businessKey = await new Promise<string>((resolve, reject) =>
+      // Delay needed since DSF doesn't create the business key right away
+      setTimeout(async () => {
+        try {
+          const bk = await this.fetchBusinessKey(deliveryInfo);
+          if (!bk) {
+            reject(new Error(`Business key for Task ${createdTask.id} is not present`));
+            return;
+          }
+
+          resolve(bk);
+        } catch (e) {
+          reject(e);
+        }
+      }, this.GET_TASK_DELAY_MS),
+    );
+
+    deliveryInfo.fhirBusinessKey = businessKey;
+
+    return deliveryInfo;
+  }
+
   async startCoordinateProcessJson({
     hrpOrganizationIdentifier,
     projectIdentifier,
@@ -274,13 +249,6 @@ export class FhirService {
     }
   }
 
-  /**
-   * 3. Starts the data-sharing coordinate process (JSON).
-   *
-   * @param {object} params - Parameters for the Task.
-   * // ... (all other params are the same as the XML version)
-   * @returns {Promise<object>} The created Task resource.
-   */
   async startCoordinateProcessXml({
     hrpOrganizationIdentifier,
     projectIdentifier,
@@ -442,7 +410,7 @@ export class FhirService {
 
   async getTaskById(taskId: string): Promise<any> {
     const response = await this.apiClient.get(`/Task/${taskId}`, {
-      headers: this.fhirClient.FHIR_XML_HEADERS,
+      headers: this.fhirClient.FHIR_JSON_HEADERS,
     });
 
     return response.data;
@@ -452,10 +420,24 @@ export class FhirService {
    * 4. Polls for 'TaskReceivedDataSet' Tasks.
    * Fetches Tasks with the specific profile, sorted by last updated.
    *
-   * @param {object} axiosInstance - Your pre-configured Axios instance for the HRP DSF.
-   * @param {string} dsfFhirBaseUrl - The base URL of the HRP DSF FHIR server.
-   * @returns {Promise<object>} The FHIR Bundle of matching Task resources.
    */
+  async pollForReceivedDataSetsByBusinessKey(businessKey: string, lastSync: Date) {
+    try {
+      const response = await this.apiClient.get('/Task', {
+        params: {
+          _profile: 'http://medizininformatik-initiative.de/fhir/StructureDefinition/task-received-data-set|1.1',
+          _sort: '-_lastUpdated',
+          _lastUpdated: `ge${lastSync.toISOString()}`,
+        },
+      });
+      console.log(`Found ${response.data.total} 'Received Data Set' tasks.`);
+      return response.data; // This is a FHIR Bundle
+    } catch (error) {
+      console.error('Error polling for received data sets:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   async pollForReceivedDataSets() {
     try {
       const response = await this.apiClient.get('/Task', {
