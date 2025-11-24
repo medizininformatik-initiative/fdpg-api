@@ -114,28 +114,28 @@ export class ProposalDataDeliveryController {
         // (This would be run by the HRP)
         // console.log('Starting coordination process on HRP...');
 
-        // const ts = this.formatCurrentDateForCode();
-        // const startParams = {
-        //   hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
-        //   projectIdentifier: `Test_PROJECT_ZIP_local_dev_${ts}`,
-        //   contractUrl: `http://example.com/contract/Test_PROJECT_ZIP_${ts}`,
-        //   dmsIdentifier: 'forschen-fuer-gesundheit.de', // Using HRP as DMS for testing
-        //   researcherIdentifiers: ['researcher-1', 'researcher-2'],
-        //   dicIdentifiers: ['diz-1.test.fdpg.forschen-fuer-gesundheit.de'],
-        //   extractionPeriod: 'P28D', // <REPLACE-WITH-EXTRACTION-PERIOD> with initial maximum extraction period the DIC sites have time to deliver the results to the DMS. Given in ISO8601 duration format (default P28D )
-        // };
-        // const createdTask = await this.fhirService.startCoordinateProcessJson(startParams);
+        const ts = this.formatCurrentDateForCode();
+        const startParams = {
+          hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
+          projectIdentifier: `Test_PROJECT_ZIP_local_dev_${ts}`,
+          contractUrl: `http://example.com/contract/Test_PROJECT_ZIP_${ts}`,
+          dmsIdentifier: 'dms.test.forschen-fuer-gesundheit.de',
+          researcherIdentifiers: ['researcher-1', 'researcher-2'],
+          dicIdentifiers: ['diz-1.test.fdpg.forschen-fuer-gesundheit.de'],
+          extractionPeriod: 'P28D', // <REPLACE-WITH-EXTRACTION-PERIOD> with initial maximum extraction period the DIC sites have time to deliver the results to the DMS. Given in ISO8601 duration format (default P28D )
+        };
+        const createdTask = await this.fhirService.startCoordinateProcessJson(startParams);
 
         // // == create task and get business key
-        // console.log(JSON.stringify(createdTask));
-        // console.log('Process started. Main Task ID:', createdTask.id);
+        console.log(JSON.stringify(createdTask));
+        console.log('Process started. Main Task ID:', createdTask.id);
 
-        // setTimeout(async () => {
-        //   const getTask = await this.fhirService.getTaskById(createdTask.id);
-        //   console.log('GET TASK');
-        //   console.log(JSON.stringify(getTask));
-        //   return getTask.businessKey;
-        // }, 5000);
+        setTimeout(async () => {
+          const getTask = await this.fhirService.getTaskById(createdTask.id);
+          console.log('GET TASK');
+          console.log(JSON.stringify(getTask));
+          return getTask.businessKey;
+        }, 5000);
         // ======
 
         // == HRP Action: Poll for results ==
