@@ -101,9 +101,7 @@ export class ProposalPublicationService {
       return;
     }
 
-    const deletedPublications = proposal.publications.splice(publicationIdx, 1);
-
-    await this.eventEngineService.handleProposalPublicationDelete(proposal, deletedPublications[0]);
+    proposal.publications.splice(publicationIdx, 1);
 
     await proposal.save();
   }

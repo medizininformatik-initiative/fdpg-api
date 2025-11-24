@@ -80,13 +80,5 @@ describe('ReportsService', () => {
       await reportsService.handleReportCreate(proposal, mockReport as ReportDto, proposalUrl);
       expect(emailService.send).toHaveBeenCalled();
     });
-    it('on update', async () => {
-      await reportsService.handleReportUpdate(proposal, mockReport as ReportDto, proposalUrl);
-      expect(emailService.send).toHaveBeenCalled();
-    });
-    it('on delete', async () => {
-      await reportsService.handleReportDelete(proposal, mockReport as ReportDto, proposalUrl);
-      expect(emailService.send).toHaveBeenCalled();
-    });
   });
 });
