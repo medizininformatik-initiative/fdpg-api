@@ -16,6 +16,7 @@ import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-delivery/data-delivery.dto';
 import { ProposalDataDeliveryService } from '../services/proposal-data-delivery.service';
 import { FhirService } from 'src/modules/fhir/fhir.service';
+import { v4 } from 'uuid';
 
 @ApiController('proposals', undefined, 'data-delivery')
 export class ProposalDataDeliveryController {
@@ -97,23 +98,6 @@ export class ProposalDataDeliveryController {
   async test(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest): Promise<void> {
     try {
       try {
-        // == DIC Action: Prepare CDS ==
-        // (This would be run by the DIC)
-        // console.log('Preparing DIC CDS store...');
-        // const prepParams = {
-        //   projectIdentifier: 'Test_PROJECT_ZIP',
-        //   organizationIdentifier: 'diz-1.test.fdpg.forschen-fuer-gesundheit.de',
-        //   base64Data: 'SGVsbG8sIFdvcmxkIQ==', // "Hello, World!"
-        //   contentType: 'text/csv',
-        //   // UUIDs will be auto-generated
-        // };
-        // await this.fhirService.prepareCdsDecentralizedJson(prepParams);
-        // console.log('DIC CDS store prepared.');
-
-        // == HRP Action: Start Coordinate Process ==
-        // (This would be run by the HRP)
-        // console.log('Starting coordination process on HRP...');
-
         const ts = this.formatCurrentDateForCode();
         const startParams = {
           hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
@@ -122,7 +106,8 @@ export class ProposalDataDeliveryController {
           dmsIdentifier: 'dms.test.forschen-fuer-gesundheit.de',
           researcherIdentifiers: ['researcher-1', 'researcher-2'],
           dicIdentifiers: ['diz-1.test.fdpg.forschen-fuer-gesundheit.de'],
-          extractionPeriod: 'P28D', // <REPLACE-WITH-EXTRACTION-PERIOD> with initial maximum extraction period the DIC sites have time to deliver the results to the DMS. Given in ISO8601 duration format (default P28D )
+          extractionPeriod: 'P28D',
+          businessKey: v4(),
         };
         const createdTask = await this.fhirService.startCoordinateProcessJson(startParams);
 

@@ -6,6 +6,7 @@ import { Proposal } from '../proposal/schema/proposal.schema';
 import { LocationService } from '../location/service/location.service';
 import { processReceivedDataSetResponse } from './util/fhir-received-dataset.util';
 import { FhirReceivedDataSetType } from './type/fhir-received-dataset.type';
+import { v4 as uuidV4 } from 'uuid';
 
 @Injectable()
 export class FhirService {
@@ -83,6 +84,8 @@ export class FhirService {
       throw new ForbiddenException(`Locations ${notDicLocations} aren't data integration locations`);
     }
 
+    const businessKey = uuidV4();
+
     const startParams = {
       hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
       projectIdentifier: proposal.projectAbbreviation,
@@ -91,37 +94,17 @@ export class FhirService {
       researcherIdentifiers: ['researcher-1', 'researcher-2'], // email von researchers?
       dicIdentifiers: dicLocations, // diz-1.test.fdpg.forschen-fuer-gesundheit.de
       extractionPeriod: 'P28D', // <REPLACE-WITH-EXTRACTION-PERIOD> with initial maximum extraction period the DIC sites have time to deliver the results to the DMS. Given in ISO8601 duration format (default P28D )
+      businessKey,
     };
     const createdTask = await this.startCoordinateProcessJson(startParams);
-
-    console.log(JSON.stringify(createdTask));
-    console.log('Process started. Main Task ID:', createdTask.id);
-
     deliveryInfo.fhirTaskId = createdTask.id;
-
-    const businessKey = await new Promise<string>((resolve, reject) =>
-      // Delay needed since DSF doesn't create the business key right away
-      setTimeout(async () => {
-        try {
-          const bk = await this.fetchBusinessKey(deliveryInfo);
-          if (!bk) {
-            reject(new Error(`Business key for Task ${createdTask.id} is not present`));
-            return;
-          }
-
-          resolve(bk);
-        } catch (e) {
-          reject(e);
-        }
-      }, this.GET_TASK_DELAY_MS),
-    );
-
     deliveryInfo.fhirBusinessKey = businessKey;
 
     return deliveryInfo;
   }
 
   async startCoordinateProcessJson({
+    businessKey,
     hrpOrganizationIdentifier,
     projectIdentifier,
     contractUrl,
@@ -131,6 +114,8 @@ export class FhirService {
     extractionPeriod = 'P28D',
     dateTime = new Date().toISOString(),
   }) {
+    console.log(`Creating task with id ... ${businessKey}`);
+
     const task = {
       resourceType: 'Task',
       meta: {
@@ -159,7 +144,17 @@ export class FhirService {
         ],
       },
       input: [
-        // BUSINESS KEY HINZUFÜGEN
+        {
+          type: {
+            coding: [
+              {
+                system: 'http://dsf.dev/fhir/CodeSystem/bpmn-message',
+                code: this.BUSINESS_KEY_CODE,
+              },
+            ],
+          },
+          valueString: businessKey,
+        },
         {
           type: {
             coding: [
