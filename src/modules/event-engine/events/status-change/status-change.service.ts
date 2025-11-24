@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { ProposalStatus } from '../../../proposal/enums/proposal-status.enum';
+import { ProposalType } from '../../../proposal/enums/proposal-type.enum';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
 import { fdpgEmail, researcherEmail } from 'src/modules/email/proposal.emails';
 import { EmailCategory } from 'src/modules/email/types/email-category.enum';
@@ -56,8 +57,10 @@ export class StatusChangeService {
   async handleStatusChange(proposal: Proposal, proposalUrl: string) {
     switch (proposal.status) {
       case ProposalStatus.FdpgCheck:
+        const isRegistrationForm = proposal.type === ProposalType.RegisteringForm;
         return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher, EmailRoleTargets.Fdpg], {
-          conditionProposalFdpgCheck: true,
+          conditionProposalFdpgCheck: !isRegistrationForm,
+          conditionProposalRegistrationCreate: isRegistrationForm,
         });
       case ProposalStatus.Rework:
         return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher], {
