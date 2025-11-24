@@ -30,6 +30,7 @@ export type TemplateProposalEmailConditionKeys =
   | 'DUE_DAYS_LOCATION_CHECK'
   | 'DUE_DAYS_LOCATION_CONTRACTING'
   | 'DUE_DAYS_EXPECT_DATA_DELIVERY'
+  | 'DUE_DAYS_FINISHED_PROJECT'
   | 'conditionDeadlineFdpgCheckChanged'
   | 'deadlineFdpgCheckNewDate'
   | 'conditionDeadlineLocationCheckChanged'
@@ -42,7 +43,8 @@ export type TemplateProposalEmailConditionKeys =
   | 'deadlineExpectedDataCorruptNewDate'
   | 'conditionDeadlineFinishedProjectChanged'
   | 'deadlineFinishedProjectNewDate'
-  | 'conditionProposalRegistrationCreate';
+  | 'conditionProposalRegistrationCreate'
+  | 'conditionProposalFinishedReminderForFdpg';
 
 export type TemplateEmailParamKeys =
   | Partial<TemplateProposalEmailConditionKeys>
