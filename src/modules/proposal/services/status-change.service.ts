@@ -43,7 +43,8 @@ export class StatusChangeService {
       case ProposalStatus.FdpgCheck:
         proposalAfterChanges.version.mayor++;
         proposalAfterChanges.version.minor = 0;
-        proposalAfterChanges.fdpgChecklist = initChecklist({ isRegistrationLinkSent: false });
+        if (!proposalAfterChanges.fdpgChecklist)
+          proposalAfterChanges.fdpgChecklist = initChecklist({ isRegistrationLinkSent: false });
 
         proposalAfterChanges.submittedAt = new Date();
 
