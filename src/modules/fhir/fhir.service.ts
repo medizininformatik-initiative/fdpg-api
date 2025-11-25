@@ -7,39 +7,22 @@ import { LocationService } from '../location/service/location.service';
 import { processReceivedDataSetResponse } from './util/fhir-received-dataset.util';
 import { FhirReceivedDataSetType } from './type/fhir-received-dataset.type';
 import { v4 as uuidV4 } from 'uuid';
-import { DateTime, Interval } from 'luxon';
 import { FhirTaskCoordinateSharingPayloadFactory } from './factory/fhir-task-coordinate-sharing-payload.factory';
 import { FHIR_SYSTEM_CONSTANTS } from './constants/fhir-constants';
+import { FhirHelpersUtil } from './util/fhir-helpers.util';
 
 @Injectable()
 export class FhirService {
   constructor(
     private fhirClient: FhirClient,
     private locationService: LocationService,
-    private fhirTaskCreationPayloadFactory: FhirTaskCoordinateSharingPayloadFactory,
   ) {
     this.apiClient = this.fhirClient.client;
   }
 
   private readonly logger = new Logger(FhirService.name);
+  private readonly MAX_PAGINATION_REQUEST_COUNT = 10;
   private apiClient: AxiosInstance;
-
-  /**
-   * Calculates the ISO 8601 period duration string
-   */
-  private getExtractionPeriod(startDate: Date, endDate: Date): string {
-    const startOriginal = DateTime.fromJSDate(startDate);
-    const endOriginal = DateTime.fromJSDate(endDate);
-
-    const startAdjusted = startOriginal.endOf('day');
-    const endAdjusted = endOriginal.endOf('day');
-
-    const interval = Interval.fromDateTimes(startAdjusted, endAdjusted);
-
-    const duration = interval.toDuration(['years', 'months', 'days']);
-
-    return duration.toISO();
-  }
 
   async createCoordinateDataSharingTask(deliveryInfo: DeliveryInfo, proposal: Proposal): Promise<DeliveryInfo> {
     const locationMap = this.locationService.findAllLookUpMap();
@@ -61,7 +44,7 @@ export class FhirService {
 
     const businessKey = uuidV4();
 
-    const extractionPeriod = this.getExtractionPeriod(new Date(), deliveryInfo.date);
+    const extractionPeriod = FhirHelpersUtil.getExtractionPeriod(new Date(), deliveryInfo.date);
 
     const startParams = {
       hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
@@ -94,7 +77,7 @@ export class FhirService {
   }) {
     this.logger.verbose(`Creating task with business key ... ${businessKey}`);
 
-    const task = this.fhirTaskCreationPayloadFactory.createStartProcessPayload({
+    const task = FhirTaskCoordinateSharingPayloadFactory.createStartProcessPayload({
       businessKey,
       hrpOrganizationIdentifier,
       projectIdentifier,
@@ -124,36 +107,59 @@ export class FhirService {
     return response.data;
   }
 
-  async pollForReceivedDataSetsByBusinessKey(lastSync: Date): Promise<FhirReceivedDataSetType> {
-    try {
-      const response = await this.apiClient.get('/Task', {
-        params: {
-          _profile: 'http://medizininformatik-initiative.de/fhir/StructureDefinition/task-received-data-set|1.1',
-          _sort: '-_lastUpdated',
-          _lastUpdated: `ge${lastSync.toISOString()}`,
-        },
-      });
-      this.logger.verbose(`Found ${response.data.total} 'Received Data Set' tasks.`);
-      return response.data; // This is a FHIR Bundle
-    } catch (error) {
-      this.logger.error('Error polling for received data sets:', error.response?.data || error.message);
-      throw error;
-    }
-  }
+  async pollForReceivedDataSetsByBusinessKey(
+    businessKey?: string,
+    lastSync?: Date,
+  ): Promise<FhirReceivedDataSetType[]> {
+    const processedDataSets: FhirReceivedDataSetType[] = [];
+    let requestCount = 0;
 
-  async pollForReceivedDataSets(): Promise<FhirReceivedDataSetType> {
+    if (!businessKey) {
+      this.logger.warn('Business key not given. Returning all received data set results');
+    }
+
+    const initialParams = {
+      _profile: 'http://medizininformatik-initiative.de/fhir/StructureDefinition/task-received-data-set|1.1',
+      _sort: '-_lastUpdated',
+      _lastUpdated: lastSync ? `ge${FhirHelpersUtil.subtractOneHour(lastSync).toISOString()}` : undefined,
+    };
+
     try {
-      const response = await this.apiClient.get('/Task', {
-        params: {
-          _profile: 'http://medizininformatik-initiative.de/fhir/StructureDefinition/task-received-data-set|1.1',
-          _sort: '-_lastUpdated',
-        },
-      });
-      this.logger.verbose(`Found ${response.data.total} 'Received Data Set' tasks.`);
-      return response.data.entry.map((entry) => processReceivedDataSetResponse(entry, FHIR_SYSTEM_CONSTANTS));
+      const paginator = FhirHelpersUtil.paginateFhirTaskGenerator(this.apiClient, initialParams, '/Task');
+
+      for await (const rawEntries of paginator) {
+        requestCount++;
+
+        if (rawEntries && rawEntries.length > 0) {
+          const pageDataSets = rawEntries.map((entry) => processReceivedDataSetResponse(entry, FHIR_SYSTEM_CONSTANTS));
+          processedDataSets.push(...pageDataSets);
+        }
+
+        this.logger.verbose(
+          `Page ${requestCount} fetched. Found ${rawEntries?.length || 0} tasks. ` +
+            `Total processed data sets collected: ${processedDataSets.length}`,
+        );
+
+        if (requestCount >= this.MAX_PAGINATION_REQUEST_COUNT) {
+          this.logger.warn(
+            `Reached maximum request count (${this.MAX_PAGINATION_REQUEST_COUNT}) for business key '${'' + businessKey}'. Stopping polling.`,
+          );
+          break;
+        }
+      }
     } catch (error) {
       this.logger.error('Error polling for received data sets:', error.response?.data || error.message);
       throw error;
     }
+
+    const filteredByBusinessKey = processedDataSets.filter((dataSet) =>
+      businessKey ? dataSet['business-key'] === businessKey : true,
+    );
+
+    this.logger.verbose(
+      `Finished polling. Total data sets found: ${processedDataSets.length}. Filtered by business key: ${filteredByBusinessKey.length}`,
+    );
+
+    return filteredByBusinessKey;
   }
 }
