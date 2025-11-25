@@ -1,5 +1,4 @@
 import { Exclude, Expose } from 'class-transformer';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Owner } from 'src/shared/schema/owner.schema';
 import { DeclineType } from '../../enums/decline-type.enum';
 
@@ -12,7 +11,7 @@ export class DeclineReasonDto {
   reason: string;
 
   @Expose()
-  location: MiiLocation;
+  location: string;
 
   @Exclude()
   owner?: Owner;

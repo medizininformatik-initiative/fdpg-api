@@ -18,56 +18,29 @@ import { AdminModule } from '../admin/admin.module';
 import { FeasibilityModule } from '../feasibility/feasibility.module';
 import { MigrationService } from './migration.service';
 import { Migration, MigrationSchema } from './schema/migration.schema';
-import { TermsConfig, TermsConfigSchema } from '../admin/schema/terms/terms-config.schema';
-import { Proposal, ProposalSchema } from '../proposal/schema/proposal.schema';
-import { DataPrivacyConfig, DataPrivacyConfigSchema } from '../admin/schema/data-privacy/data-privacy-config.schema';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
-import { ProposalForm, ProposalFormSchema } from '../proposal-form/schema/proposal-form.schema';
-import { MiiLocationModule } from '../mii-location/mii-location.module';
+import { LocationModule } from '../location/location.module';
+import { Location, LocationSchema } from '../location/schema/location.schema';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
-    }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env.local', '.env'] }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
-        return {
-          uri: configService.get('MONGO_CONNECTION_STRING'),
-          appName: 'api-backend',
-        };
+        return { uri: configService.get('MONGO_CONNECTION_STRING'), appName: 'api-backend' };
       },
       inject: [ConfigService],
     }),
-    ServeStaticModule.forRoot({
-      exclude: ['/api*'],
-      rootPath: join(__dirname, '..', '..', '..', 'static-content'),
-    }),
+    ServeStaticModule.forRoot({ exclude: ['/api*'], rootPath: join(__dirname, '..', '..', '..', 'static-content') }),
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
-      {
-        name: Migration.name,
-        schema: MigrationSchema,
-      },
-      {
-        name: TermsConfig.name,
-        schema: TermsConfigSchema,
-      },
-      {
-        name: Proposal.name,
-        schema: ProposalSchema,
-      },
-      {
-        name: DataPrivacyConfig.name,
-        schema: DataPrivacyConfigSchema,
-      },
-      { name: ProposalForm.name, schema: ProposalFormSchema },
+      { name: Migration.name, schema: MigrationSchema },
+      { name: Location.name, schema: LocationSchema },
     ]),
 
     /** Modules */
-
+    LocationModule,
     AuthModule,
     AdminModule,
     ProposalModule,
@@ -77,16 +50,8 @@ import { MiiLocationModule } from '../mii-location/mii-location.module';
     PdfEngineModule,
     FeasibilityModule,
     ProposalFormModule,
-    MiiLocationModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    MigrationService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: GlobalHeadersInterceptor,
-    },
-  ],
+  providers: [AppService, MigrationService, { provide: APP_INTERCEPTOR, useClass: GlobalHeadersInterceptor }],
 })
 export class AppModule {}

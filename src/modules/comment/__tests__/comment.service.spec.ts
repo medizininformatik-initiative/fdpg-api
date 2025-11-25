@@ -7,7 +7,6 @@ import { EventEngineService } from 'src/modules/event-engine/event-engine.servic
 import { FdpgTaskType } from 'src/modules/proposal/enums/fdpg-task-type.enum';
 import { ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { addFdpgTaskAndReturnId, removeFdpgTask } from 'src/modules/proposal/utils/add-fdpg-task.util';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getError } from 'test/get-error';
@@ -254,7 +253,7 @@ describe('CommentService', () => {
 
         referenceType: ReferenceType.Proposal,
         owner: {
-          miiLocation: MiiLocation.UMG,
+          miiLocation: 'UMG',
           role,
         },
         answers: [],
@@ -262,12 +261,17 @@ describe('CommentService', () => {
 
       const user = {
         singleKnownRole: role,
-        miiLocation: role === Role.Researcher ? undefined : MiiLocation.KUM,
+        miiLocation: role === Role.Researcher ? undefined : 'KUM',
         isFromLocation: role === Role.Researcher ? false : true,
       } as unknown as IRequestUser;
 
       const proposal = {
         status: ProposalStatus.Rework,
+        userProject: {
+          addressees: {
+            desiredLocations: ['UKL'],
+          },
+        },
       } as unknown as ProposalDocument;
 
       CommentModel.find.mockResolvedValue([mainComment]);
@@ -285,7 +289,7 @@ describe('CommentService', () => {
         filter.type = { $in: [CommentType.ProposalMessageToOwner] };
       } else {
         filter.type = { $in: [CommentType.ProposalMessageToLocation, CommentType.ProposalTaskFdpg] };
-        filter.locations = { $in: [user.miiLocation, MiiLocation.VirtualAll] };
+        filter.locations = { $in: [user.miiLocation] };
       }
 
       expect(CommentModel.find).toHaveBeenCalledWith(filter);
@@ -301,7 +305,7 @@ describe('CommentService', () => {
         userId: 'ownerId',
       } as unknown as IRequestUser;
       const newContent = 'new Content';
-      const newLocations = [MiiLocation.UKL];
+      const newLocations = ['UKL'];
       const mainComment = {
         save: jest.fn().mockResolvedValue({
           toObject: jest.fn().mockReturnValue('toObjectResult'),
@@ -312,7 +316,7 @@ describe('CommentService', () => {
           id: 'ownerId',
           role: Role.FdpgMember,
         },
-        locations: [MiiLocation.UMG],
+        locations: ['UMG'],
         content: 'oldContent',
       };
 
@@ -340,8 +344,8 @@ describe('CommentService', () => {
         userId: 'ownerId',
       } as unknown as IRequestUser;
       const newContent = 'new Content';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const mainComment = {
         save: jest.fn().mockResolvedValue({
@@ -381,8 +385,8 @@ describe('CommentService', () => {
         userId: 'someOtherUserId',
       } as unknown as IRequestUser;
       const newContent = 'new Content';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const mainComment = {
         save: jest.fn().mockResolvedValue({
@@ -419,8 +423,8 @@ describe('CommentService', () => {
         userId: 'someOtherUserId',
       } as unknown as IRequestUser;
       const newContent = 'new Content';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const mainComment = {
         save: jest.fn().mockResolvedValue({
@@ -456,8 +460,8 @@ describe('CommentService', () => {
       const answerId = 'answerId';
       const newContent = 'new Content';
       const oldContent = 'old Content';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const mainComment = {
         save: jest.fn().mockResolvedValue({
@@ -493,7 +497,7 @@ describe('CommentService', () => {
 
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       (getAnswer as any).mockReturnValue({ answer });
-      (getAnswersLocations as any).mockReturnValue([MiiLocation.KUM]);
+      (getAnswersLocations as any).mockReturnValue(['KUM']);
 
       const result = await service.updateAnswer(commentId, answerId, updateAnswerDto, user);
 
@@ -509,8 +513,8 @@ describe('CommentService', () => {
       const answerId = 'answerId';
       const newContent = 'new Content';
       const oldContent = 'old Content';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const mainComment = {
         save: jest.fn().mockResolvedValue({
@@ -546,7 +550,7 @@ describe('CommentService', () => {
 
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       (getAnswer as any).mockReturnValue({ answer });
-      (getAnswersLocations as any).mockReturnValue([MiiLocation.KUM]);
+      (getAnswersLocations as any).mockReturnValue(['KUM']);
 
       const result = await service.updateAnswer(commentId, answerId, updateAnswerDto, user);
 
@@ -562,8 +566,8 @@ describe('CommentService', () => {
       const answerId = 'answerId';
       const newContent = 'new Content';
       const oldContent = 'old Content';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const mainComment = {
         save: jest.fn().mockResolvedValue({
@@ -600,7 +604,7 @@ describe('CommentService', () => {
 
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       (getAnswer as any).mockReturnValue({ answer });
-      (getAnswersLocations as any).mockReturnValue([MiiLocation.KUM]);
+      (getAnswersLocations as any).mockReturnValue(['KUM']);
 
       const result = await service.updateAnswer(commentId, answerId, updateAnswerDto, user);
 
@@ -616,8 +620,8 @@ describe('CommentService', () => {
       const answerId = 'answerId';
       const newContent = 'new Content';
       const oldContent = 'old Content';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const mainComment = {
         save: jest.fn().mockResolvedValue({
@@ -836,8 +840,8 @@ describe('CommentService', () => {
     it('fdpg member should be able to delete answers', async () => {
       const commentId = 'commentId';
       const answerId = 'answerId';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const answer = {
         locations: oldLocations,
@@ -872,7 +876,7 @@ describe('CommentService', () => {
 
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       (getAnswer as any).mockReturnValue({ answer, answerIndex });
-      (getAnswersLocations as any).mockReturnValue([MiiLocation.KUM]);
+      (getAnswersLocations as any).mockReturnValue(['KUM']);
 
       const result = await service.deleteAnswer(commentId, answerId, user);
 
@@ -885,8 +889,8 @@ describe('CommentService', () => {
     it('answer owner should be able to delete answers', async () => {
       const commentId = 'commentId';
       const answerId = 'answerId';
-      const newLocations = [MiiLocation.UKL];
-      const oldLocations = [MiiLocation.UMG];
+      const newLocations = ['UKL'];
+      const oldLocations = ['UMG'];
 
       const answer = {
         locations: oldLocations,
@@ -921,7 +925,7 @@ describe('CommentService', () => {
 
       CommentModel.findById.mockResolvedValueOnce(mainComment);
       (getAnswer as any).mockReturnValue({ answer, answerIndex });
-      (getAnswersLocations as any).mockReturnValue([MiiLocation.KUM]);
+      (getAnswersLocations as any).mockReturnValue(['KUM']);
 
       const result = await service.deleteAnswer(commentId, answerId, user);
 
@@ -934,7 +938,7 @@ describe('CommentService', () => {
     it('should throw for deleting others answers', async () => {
       const commentId = 'commentId';
       const answerId = 'answerId';
-      const oldLocations = [MiiLocation.UMG];
+      const oldLocations = ['UMG'];
 
       const answer = {
         locations: oldLocations,

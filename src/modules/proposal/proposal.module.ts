@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { forwardRef, Module } from '@nestjs/common';
+import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
 import { SharedModule } from 'src/shared/shared.module';
 import { AdminModule } from '../admin/admin.module';
 import { StorageModule } from '../storage/storage.module';
@@ -14,7 +14,7 @@ import { ProposalMiscController } from './controller/proposal-misc.controller';
 import { ProposalPublicationController } from './controller/proposal-publication.controller';
 import { ProposalReportController } from './controller/proposal-reports.controller';
 import { ProposalUploadController } from './controller/proposal-upload.controller';
-import { Proposal, ProposalSchema } from './schema/proposal.schema';
+import { getProposalSchemaFactory, Proposal } from './schema/proposal.schema';
 import { ProposalContractingService } from './services/proposal-contracting.service';
 import { ProposalCrudService } from './services/proposal-crud.service';
 import { ProposalMiscService } from './services/proposal-misc.service';
@@ -26,18 +26,24 @@ import { StatusChangeService } from './services/status-change.service';
 import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviation.validator';
 import { ProposalPdfService } from './services/proposal-pdf.service';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
-import { MiiLocationModule } from '../mii-location/mii-location.module';
-
+import { LocationModule } from '../location/location.module';
+import { Connection } from 'mongoose';
+import { Location } from '../location/schema/location.schema';
 @Module({
   imports: [
-    MongooseModule.forFeature([
+    LocationModule,
+    MongooseModule.forFeatureAsync([
       {
         name: Proposal.name,
-        schema: ProposalSchema,
+        inject: [getConnectionToken()],
+        useFactory: (connection: Connection) => {
+          const LocationModel = connection.model<Location>(Location.name);
+          return getProposalSchemaFactory(LocationModel);
+        },
       },
     ]),
     UserModule,
-    EventEngineModule,
+    forwardRef(() => EventEngineModule),
     StorageModule,
     PdfEngineModule,
     SharedModule,
@@ -45,7 +51,6 @@ import { MiiLocationModule } from '../mii-location/mii-location.module';
     SchedulerModule,
     AdminModule,
     ProposalFormModule,
-    MiiLocationModule,
   ],
   controllers: [
     ProposalCrudController,
@@ -67,6 +72,6 @@ import { MiiLocationModule } from '../mii-location/mii-location.module';
     StatusChangeService,
     ProposalPdfService,
   ],
-  exports: [ProposalCrudService],
+  exports: [ProposalCrudService, MongooseModule],
 })
 export class ProposalModule {}

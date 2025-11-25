@@ -1,6 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
-import { IsBoolean, isBoolean, IsEmail, IsEnum, IsOptional } from 'class-validator';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
+import { IsBoolean, IsEmail, IsEnum, IsOptional } from 'class-validator';
 import { Role } from 'src/shared/enums/role.enum';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 
@@ -28,9 +27,8 @@ export class CreateUserDto {
   role?: Role;
 
   @Expose()
-  @IsEnum(MiiLocation)
   @IsOptional()
-  location?: MiiLocation;
+  location?: string;
 
   @Expose()
   @IsNotEmptyString()

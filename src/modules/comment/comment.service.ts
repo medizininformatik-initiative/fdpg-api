@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
 import { FilterQuery, Model } from 'mongoose';
 import { Comment, CommentDocument } from 'src/modules/comment/schema/comment.schema';
-import { MiiLocation } from 'src/shared/constants/mii-locations';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getOwner } from 'src/shared/utils/get-owner.util';
@@ -133,9 +132,7 @@ export class CommentService {
       if (answer.owner.id === user.userId) {
         answerGroups.push(ValidationGroup.IsOwnLocation);
       }
-      return plainToClass(AnswerGetDto, JSON.parse(JSON.stringify(answer)), {
-        groups: answerGroups,
-      });
+      return plainToClass(AnswerGetDto, JSON.parse(JSON.stringify(answer)), { groups: answerGroups });
     });
     saveResult.answers = [];
     const plain = saveResult.toObject();
@@ -145,9 +142,7 @@ export class CommentService {
   }
 
   async findForItem(commentReference: CommentReferenceDto, user: IRequestUser): Promise<CommentGetDto[]> {
-    const filter: FilterQuery<Comment> = {
-      ...commentReference,
-    };
+    const filter: FilterQuery<Comment> = { ...commentReference };
     const projection = { status: 1 };
     const proposal = await this.proposalCrudService.findDocument(
       commentReference.referenceDocumentId,
@@ -162,7 +157,7 @@ export class CommentService {
       filter.type = { $in: [CommentType.ProposalMessageToOwner] };
     } else if (user.isFromLocation) {
       filter.type = { $in: [CommentType.ProposalMessageToLocation, CommentType.ProposalTaskFdpg] };
-      filter.locations = { $in: [user.miiLocation, MiiLocation.VirtualAll] };
+      filter.locations = { $in: [user.miiLocation] };
     }
 
     const comments = await this.commentModel.find(filter);
@@ -179,15 +174,11 @@ export class CommentService {
         if (answer.owner.id === user.userId) {
           answerGroups.push(ValidationGroup.IsOwnLocation);
         }
-        return plainToClass(AnswerGetDto, JSON.parse(JSON.stringify(answer)), {
-          groups: answerGroups,
-        });
+        return plainToClass(AnswerGetDto, JSON.parse(JSON.stringify(answer)), { groups: answerGroups });
       });
       comment.answers = [];
       const plain = comment.toObject();
-      const finalComment = plainToClass(CommentGetDto, plain, {
-        groups,
-      });
+      const finalComment = plainToClass(CommentGetDto, plain, { groups });
       finalComment.answers = finalAnswers;
       return finalComment;
     });
