@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { AxiosInstance } from 'axios';
 import { FhirClient } from './fhir.client';
 import { DeliveryInfo } from '../proposal/schema/sub-schema/data-delivery/delivery-info.schema';
@@ -21,6 +21,7 @@ export class FhirService {
     this.apiClient = this.fhirClient.client;
   }
 
+  private readonly logger = new Logger(FhirService.name);
   private apiClient: AxiosInstance;
 
   /**
@@ -66,10 +67,10 @@ export class FhirService {
       hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
       projectIdentifier: proposal.projectAbbreviation,
       contractUrl: `http://example.com/contract/Test_PROJECT_ZIP_${proposal.projectAbbreviation}`, // MARIE FRAGEN?
-      dmsIdentifier: dms.uri, //'forschen-fuer-gesundheit.de', //dms.test.forschen-fuer-gesundheit.de
+      dmsIdentifier: dms.uri,
       researcherIdentifiers: ['researcher-1', 'researcher-2'], // email von researchers?
-      dicIdentifiers: dicLocations, // diz-1.test.fdpg.forschen-fuer-gesundheit.de
-      extractionPeriod, // <REPLACE-WITH-EXTRACTION-PERIOD>  with initial maximum extraction period the DIC sites have time to deliver the results to the DMS. Given in ISO8601 duration format (default 'P28D' 28 Days)
+      dicIdentifiers: dicLocations,
+      extractionPeriod,
       businessKey,
     };
 
@@ -91,7 +92,7 @@ export class FhirService {
     extractionPeriod = 'P28D',
     dateTime = new Date().toISOString(),
   }) {
-    console.log(`Creating task with id ... ${businessKey}`);
+    this.logger.verbose(`Creating task with business key ... ${businessKey}`);
 
     const task = this.fhirTaskCreationPayloadFactory.createStartProcessPayload({
       businessKey,
@@ -107,10 +108,10 @@ export class FhirService {
 
     try {
       const response = await this.apiClient.post('/Task', task);
-      console.log('Successfully started coordinate process (JSON). Task created:', response.data.id);
+      this.logger.verbose('Successfully started coordinate process (JSON). Task created:', response.data.id);
       return response.data;
     } catch (error) {
-      console.error('Error starting coordinate process (JSON):', error.response?.data || error.message);
+      this.logger.error('Error starting coordinate process (JSON):', error.response?.data || error.message);
       throw error;
     }
   }
@@ -132,10 +133,10 @@ export class FhirService {
           _lastUpdated: `ge${lastSync.toISOString()}`,
         },
       });
-      console.log(`Found ${response.data.total} 'Received Data Set' tasks.`);
+      this.logger.verbose(`Found ${response.data.total} 'Received Data Set' tasks.`);
       return response.data; // This is a FHIR Bundle
     } catch (error) {
-      console.error('Error polling for received data sets:', error.response?.data || error.message);
+      this.logger.error('Error polling for received data sets:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -148,10 +149,10 @@ export class FhirService {
           _sort: '-_lastUpdated',
         },
       });
-      console.log(`Found ${response.data.total} 'Received Data Set' tasks.`);
+      this.logger.verbose(`Found ${response.data.total} 'Received Data Set' tasks.`);
       return response.data.entry.map((entry) => processReceivedDataSetResponse(entry, FHIR_SYSTEM_CONSTANTS));
     } catch (error) {
-      console.error('Error polling for received data sets:', error.response?.data || error.message);
+      this.logger.error('Error polling for received data sets:', error.response?.data || error.message);
       throw error;
     }
   }

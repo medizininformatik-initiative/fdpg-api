@@ -10,9 +10,9 @@ export class FhirTaskCoordinateSharingPayloadFactory {
    * @param hrpOrganizationIdentifier - health portal identifier. Default 'forschen-fuer-gesundheit.de'
    * @param projectIdentifier - The project identifier
    * @param contractUrl - the contract url
-   * @param dmsIdentifier - the uri of the DMS
+   * @param dmsIdentifier - the uri of the DMS. For testing use 'dms.test.forschen-fuer-gesundheit.de'
    * @param researcherIdentifiers - researcher identifiers
-   * @param dicIdentifiers - the uri of the requested dic
+   * @param dicIdentifiers - the uri of the requested dic. For testing without external DIC use 'diz-1.test.fdpg.forschen-fuer-gesundheit.de'
    * @param extractionPeriod - maximum extraction period the DIC sites have time to deliver the results to the DMS. Given in ISO8601 duration format (DSF defaults to 'P28D' => 28 Days)
    * @param dateTime - Timestamp when the ressource is created. Is optional and defaults to the current timestamp
    */
