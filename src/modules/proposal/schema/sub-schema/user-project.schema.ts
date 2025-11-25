@@ -16,12 +16,7 @@ import {
   InformationOnRequestedBioSamples,
   InformationOnRequestedBioSamplesSchema,
 } from './user-project/information-on-biosample.schema';
-import {
-  DifeVariableSelectionData,
-  VariableSelectionData,
-  VariableSelectionDataSchema,
-} from './variable-selection-data.schema';
-import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { VariableSelectionData, VariableSelectionDataSchema } from './variable-selection-data.schema';
 import { SelectionOfCases, SelectionOfCasesSchema } from './selection-of-cases.schema';
 import { Cohort, CohortSchema } from './user-project/cohort.schema';
 

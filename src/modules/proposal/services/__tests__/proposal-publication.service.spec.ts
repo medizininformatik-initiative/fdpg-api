@@ -90,7 +90,6 @@ describe('ProposalPublicationService', () => {
           useValue: {
             handleProposalPublicationCreate: jest.fn(),
             handleProposalPublicationUpdate: jest.fn(),
-            handleProposalPublicationDelete: jest.fn(),
           },
         },
       ],
@@ -238,7 +237,6 @@ describe('ProposalPublicationService', () => {
 
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalPublicationDelete).toHaveBeenCalledWith(proposalDocument, publication);
     });
 
     it('should not save if a publication is not found to be deleted', async () => {
@@ -256,10 +254,6 @@ describe('ProposalPublicationService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
 
       expect(proposalDocument.save).not.toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalPublicationDelete).not.toHaveBeenCalledWith(
-        proposalDocument,
-        publication,
-      );
     });
   });
 });

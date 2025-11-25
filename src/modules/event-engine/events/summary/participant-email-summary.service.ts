@@ -3,7 +3,7 @@ import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { ProposalWithoutContent } from '../../types/proposal-without-content.type';
 import { HistoryEventType } from 'src/modules/proposal/enums/history-event.enum';
-import { buildParticipatingEmailSummary } from './participating-email-summary.email';
+import { buildParticipatingEmailSummary } from 'src/modules/email/proposal.emails';
 
 @Injectable()
 export class ParticipantEmailSummaryService {
@@ -52,6 +52,7 @@ export class ParticipantEmailSummaryService {
       const validParticipantsContacts = await this.keycloakUtilService.getValidContacts(participants);
 
       const mail = buildParticipatingEmailSummary(validParticipantsContacts, mailBodyChanges, proposal, proposalUrl);
+
       return await this.emailService.send(mail);
     };
 

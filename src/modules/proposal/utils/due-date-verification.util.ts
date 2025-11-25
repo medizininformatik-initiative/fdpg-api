@@ -53,6 +53,8 @@ const statusToDueDatesMap: Record<ProposalStatus, DueDateEnum[]> = {
   [ProposalStatus.Rework]: [],
   [ProposalStatus.ReadyToArchive]: [],
   [ProposalStatus.DataResearch]: [],
+  [ProposalStatus.ReadyToPublish]: [],
+  [ProposalStatus.Published]: [],
 };
 
 const getMinDate = (deadlineType: DueDateEnum, deadlines: Record<DueDateEnum, Date | null>): Date | null => {

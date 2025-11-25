@@ -18,13 +18,13 @@ export class ResearcherDto extends WithIdForObjectDto {
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   @MaxLength(250)
   firstName: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   @MaxLength(250)
   lastName: string;
 
@@ -36,7 +36,7 @@ export class ResearcherDto extends WithIdForObjectDto {
 
   @Expose()
   @IsEmail()
-  @IsOptional({ groups: [ProposalValidation.IsDraft] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
   email: string;
 }
 
