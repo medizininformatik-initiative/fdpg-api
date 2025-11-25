@@ -16,6 +16,7 @@ import { SyncResultDto, BulkSyncResultsDto, SyncErrorDto } from '../dto/sync-res
 import { StorageService } from '../../storage/storage.service';
 import { DirectUpload } from '../enums/upload-type.enum';
 import { LocationDto } from 'src/modules/location/dto/location.dto';
+import { BiosampleCode } from '../enums/biosample-code.enum';
 
 @Injectable()
 export class ProposalSyncService {
@@ -711,25 +712,33 @@ export class ProposalSyncService {
     });
 
     // Biosample
-    if (proposal.userProject?.informationOnRequestedBioSamples?.biosamples?.length > 0) {
-      this.logger.log(
-        `Adding biosample fields for proposal ${proposal._id}: type=${proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type}`,
-      );
+    const biosamples = proposal.userProject?.informationOnRequestedBioSamples?.biosamples;
+    if (biosamples?.length > 0) {
+      const biosampleTypes: string[] = [];
+      const biosampleTypeDetails: string[] = [];
+      const biosampleSampleCodes: BiosampleCode[] = [];
+
+      biosamples.forEach((biosample) => {
+        if (biosample?.type) biosampleTypes.push(biosample.type);
+        if (biosample?.typeDetails) biosampleTypeDetails.push(biosample.typeDetails);
+        if (biosample?.sampleCode) biosampleSampleCodes.push(...biosample.sampleCode);
+      });
+
       meta.push(
         {
           box: 'project-fields',
           field: 'fdpgx-biosampletype',
-          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type,
+          value: biosampleTypes,
         },
         {
           box: 'project-fields',
           field: 'fdpgx-biosampledetails',
-          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].typeDetails || '',
+          value: biosampleTypeDetails,
         },
         {
           box: 'project-fields',
           field: 'fdpgx-biosamplecode',
-          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].sampleCode || [],
+          value: biosampleSampleCodes,
         },
       );
     }

@@ -32,7 +32,10 @@ import { Location, LocationSchema } from '../location/schema/location.schema';
       },
       inject: [ConfigService],
     }),
-    ServeStaticModule.forRoot({ exclude: ['/api*'], rootPath: join(__dirname, '..', '..', '..', 'static-content') }),
+    ServeStaticModule.forRoot({
+      exclude: ['/api'],
+      rootPath: join(__dirname, '..', '..', '..', 'static-content'),
+    }),
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: Migration.name, schema: MigrationSchema },

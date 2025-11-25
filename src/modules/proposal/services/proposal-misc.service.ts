@@ -18,6 +18,7 @@ import {
   addHistoryItemForStatus,
   addHistoryItemForParticipantsUpdated,
   addHistoryItemForParticipantRemoved,
+  addHistoryItemForCopyAsInternalRegistration,
 } from '../utils/proposal-history.util';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
@@ -67,7 +68,6 @@ import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { Location } from 'src/modules/location/schema/location.schema';
 import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
-import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
 import { HistoryEventType } from '../enums/history-event.enum';
 import { ProposalSyncService } from './proposal-sync.service';
 import { Logger } from '@nestjs/common';
@@ -988,17 +988,7 @@ export class ProposalMiscService {
           desiredLocations: originalObj.signedContracts || [],
         },
       },
-      history: [
-        {
-          status: ProposalStatus.Draft,
-          timestamp: new Date(),
-          user: {
-            id: user.userId,
-            name: user.username,
-          },
-          comment: `Copied from proposal ${original.projectAbbreviation} for internal registration by FDPG`,
-        },
-      ],
+      history: [],
       createdAt: new Date(),
       updatedAt: new Date(),
       version: { mayor: 0, minor: 0 },
@@ -1007,6 +997,8 @@ export class ProposalMiscService {
     const newProposal = new this.proposalModel(copyData);
     const formVersion = await this.proposalFormService.getCurrentVersion();
     newProposal.formVersion = formVersion;
+
+    addHistoryItemForCopyAsInternalRegistration(newProposal, user, original.projectAbbreviation);
 
     await this.statusChangeService.handleEffects(newProposal, null, user);
     const saveResult = await newProposal.save();

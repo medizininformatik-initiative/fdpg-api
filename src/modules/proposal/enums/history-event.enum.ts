@@ -14,6 +14,7 @@ export enum HistoryEventType {
   ProposalFinished = 'PROPOSAL_FINISHED',
   ProposalReadyToArchive = 'PROPOSAL_READY_TO_ARCHIVE',
   ProposalArchived = 'PROPOSAL_ARCHIVED',
+  ProposalCopyAsInternalRegistration = 'PROPOSAL_COPY_AS_INTERNAL_REGISTRATION',
 
   /** DIZ Votes */
   DizVoteAccept = 'DIZ_VOTE_ACCEPT',

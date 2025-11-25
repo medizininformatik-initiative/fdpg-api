@@ -5,6 +5,7 @@ import { HistoryEventType } from '../enums/history-event.enum';
 type HistoryEventData = {
   [HistoryEventType.ParticipantAdded]: { participantName: string };
   [HistoryEventType.ParticipantRemoved]: { participantName: string };
+  [HistoryEventType.ProposalCopyAsInternalRegistration]: { originalProposalAbbreviation: string };
 };
 
 export type HistoryEventDataMap<T extends HistoryEventType> = T extends keyof HistoryEventData
