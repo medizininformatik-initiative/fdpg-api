@@ -15,10 +15,15 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-delivery/data-delivery.dto';
 import { ProposalDataDeliveryService } from '../services/proposal-data-delivery.service';
+import { FhirService } from 'src/modules/fhir/fhir.service';
+import { v4 } from 'uuid';
 
 @ApiController('proposals', undefined, 'data-delivery')
 export class ProposalDataDeliveryController {
-  constructor(private readonly proposalDataDeliveryService: ProposalDataDeliveryService) {}
+  constructor(
+    private readonly proposalDataDeliveryService: ProposalDataDeliveryService,
+    private readonly fhirService: FhirService,
+  ) {}
 
   // GET /api/proposals/:id/data-delivery
   @Auth(Role.FdpgMember, Role.DataManagementOffice)
@@ -64,5 +69,59 @@ export class ProposalDataDeliveryController {
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
     return this.proposalDataDeliveryService.updateDataDelivery(id, dto, user);
+  }
+
+  formatCurrentDateForCode() {
+    const now = new Date();
+
+    // Helper function to pad a number with a leading zero
+    const pad = (num) => String(num).padStart(2, '0');
+
+    // Month is 0-indexed, so we add 1
+    const month = pad(now.getMonth() + 1);
+
+    // Day of the month
+    const day = pad(now.getDate());
+
+    // Hour (24-hour format)
+    const hour = pad(now.getHours());
+
+    // Minute
+    const minute = pad(now.getMinutes());
+
+    return `${day}${month}T${hour}${minute}`;
+  }
+
+  @Auth(Role.FdpgMember)
+  @UsePipes(ValidationPipe)
+  @Get(':id/test')
+  async test(@Param() { id }: MongoIdParamDto, @Request() { user }: FdpgRequest): Promise<void> {
+    try {
+      try {
+        // const ts = this.formatCurrentDateForCode();
+        // const startParams = {
+        //   hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
+        //   projectIdentifier: `Test_PROJECT_ZIP_local_dev_${ts}`,
+        //   contractUrl: `http://example.com/contract/Test_PROJECT_ZIP_${ts}`,
+        //   dmsIdentifier: 'dms.test.forschen-fuer-gesundheit.de',
+        //   researcherIdentifiers: ['researcher-1', 'researcher-2'],
+        //   dicIdentifiers: ['diz-1.test.fdpg.forschen-fuer-gesundheit.de'],
+        //   extractionPeriod: 'P28D',
+        //   businessKey: v4(),
+        // };
+        // const createdTask = await this.fhirService.startCoordinateDataSharingProcess(startParams);
+
+        // == HRP Action: Poll for results ==
+        console.log('Polling for received data sets...');
+        const dataSetTasks = await this.fhirService.pollForReceivedDataSetsByBusinessKey();
+        console.log('Found tasks:', JSON.stringify(dataSetTasks));
+
+        // ... subsequent polling and answering steps would follow ...
+      } catch (error) {
+        console.error('An error occurred during the process:', error.message);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
