@@ -109,7 +109,7 @@ export class ProposalDataDeliveryController {
           extractionPeriod: 'P28D',
           businessKey: v4(),
         };
-        const createdTask = await this.fhirService.startCoordinateProcessJson(startParams);
+        const createdTask = await this.fhirService.startCoordinateDataSharingProcess(startParams);
 
         // // == create task and get business key
         console.log(JSON.stringify(createdTask));
