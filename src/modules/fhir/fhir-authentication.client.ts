@@ -10,11 +10,6 @@ export class FhirAuthenticationClient {
     this.configureService();
     this.configureClient();
     this.obtainToken();
-
-    console.log(this.keycloakHost);
-    console.log(this.clientId);
-    console.log(this.clientSecret);
-    console.log(this.tokenEndpoint);
   }
 
   public client: AxiosInstance;

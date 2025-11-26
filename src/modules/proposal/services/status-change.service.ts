@@ -67,6 +67,8 @@ export class StatusChangeService {
 
         const requestedLocations = [...(proposalAfterChanges.userProject.addressees?.desiredLocations || [])];
 
+        console.log({ requestedLocations });
+
         proposalAfterChanges.openDizChecks = requestedLocations;
         proposalAfterChanges.numberOfRequestedLocations = proposalAfterChanges.openDizChecks?.length || 0;
 

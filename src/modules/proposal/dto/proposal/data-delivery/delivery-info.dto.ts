@@ -1,6 +1,7 @@
 import { Expose, Type } from 'class-transformer';
-import { IsArray, IsDate, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsDate, IsEnum, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import { SubDeliveryGetDto, SubDeliveryUpdateDto } from './sub-delivery.dto';
+import { DeliveryInfoStatus } from 'src/modules/proposal/enums/delivery-info-status.enum';
 
 export class DeliveryInfoUpdateDto {
   @Expose()
@@ -11,7 +12,11 @@ export class DeliveryInfoUpdateDto {
   @Expose()
   @Type(() => Date)
   @IsDate()
-  date: Date;
+  deliveryDate: Date;
+
+  @Expose()
+  @IsEnum(DeliveryInfoStatus)
+  status: DeliveryInfoStatus;
 
   @Expose()
   @IsArray()
@@ -25,9 +30,23 @@ export class DeliveryInfoGetDto {
   name: string;
 
   @Expose()
-  date: Date;
+  @Type(() => Date)
+  @IsDate()
+  deliveryDate: Date;
+
+  @Expose()
+  @IsEnum(DeliveryInfoStatus)
+  status: DeliveryInfoStatus;
 
   @Expose()
   @Type(() => SubDeliveryGetDto)
   subDeliveries: SubDeliveryGetDto[];
+
+  @Expose()
+  @Type(() => Date)
+  createdAt?: Date;
+
+  @Expose()
+  @Type(() => Date)
+  updatedAt?: Date;
 }

@@ -44,7 +44,7 @@ export class FhirService {
 
     const businessKey = uuidV4();
 
-    const extractionPeriod = FhirHelpersUtil.getExtractionPeriod(new Date(), deliveryInfo.date);
+    const extractionPeriod = FhirHelpersUtil.getExtractionPeriod(new Date(), deliveryInfo.deliveryDate);
 
     const startParams = {
       hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',

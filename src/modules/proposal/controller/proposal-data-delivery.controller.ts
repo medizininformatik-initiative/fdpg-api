@@ -16,7 +16,7 @@ import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-delivery/data-delivery.dto';
 import { ProposalDataDeliveryService } from '../services/proposal-data-delivery.service';
 import { FhirService } from 'src/modules/fhir/fhir.service';
-import { v4 } from 'uuid';
+import { DeliveryInfoUpdateDto } from '../dto/proposal/data-delivery/delivery-info.dto';
 
 @ApiController('proposals', undefined, 'data-delivery')
 export class ProposalDataDeliveryController {
@@ -69,6 +69,23 @@ export class ProposalDataDeliveryController {
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
     return this.proposalDataDeliveryService.updateDataDelivery(id, dto, user);
+  }
+
+  // POST /api/proposals/:id/init-delivery-info
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Put(':id/init-delivery-info')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Creates a new delivery info' })
+  @ApiNotFoundResponse({ description: 'Proposalcould not be found' })
+  @ApiOkResponse({ description: 'Data delivery updated', type: DataDeliveryGetDto })
+  @ApiBody({ type: DeliveryInfoUpdateDto })
+  async initDeliveryInfo(
+    @Param() { id }: MongoIdParamDto,
+    @Body() dto: DeliveryInfoUpdateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    console.log({ id, dto, user });
+    return this.proposalDataDeliveryService.initDeliveryInfo(id, dto, user);
   }
 
   formatCurrentDateForCode() {
