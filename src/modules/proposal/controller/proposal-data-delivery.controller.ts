@@ -1,5 +1,5 @@
 // /controllers/proposal-data-delivery.controller.ts
-import { Body, Get, Param, Post, Put, Request, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Get, Param, Patch, Post, Put, Request, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -86,6 +86,22 @@ export class ProposalDataDeliveryController {
   ): Promise<DataDeliveryGetDto> {
     console.log({ id, dto, user });
     return this.proposalDataDeliveryService.initDeliveryInfo(id, dto, user);
+  }
+
+  // POST /api/proposals/:id/init-delivery-info
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Patch(':id/delivery-info/sync')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Creates a new delivery info' })
+  @ApiNotFoundResponse({ description: 'Proposalcould not be found' })
+  @ApiOkResponse({ description: 'Data delivery updated', type: DataDeliveryGetDto })
+  @ApiBody({ type: DeliveryInfoUpdateDto })
+  async syncDeliveryInfo(
+    @Param() { id }: MongoIdParamDto,
+    @Body() dto: DeliveryInfoUpdateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    return this.proposalDataDeliveryService.syncDeliveryInfoWithDsf(id, dto, user);
   }
 
   formatCurrentDateForCode() {

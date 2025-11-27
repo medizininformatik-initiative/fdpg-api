@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AxiosInstance } from 'axios';
 import { FhirClient } from './fhir.client';
 import { DeliveryInfo } from '../proposal/schema/sub-schema/data-delivery/delivery-info.schema';
@@ -10,27 +10,43 @@ import { v4 as uuidV4 } from 'uuid';
 import { FhirTaskCoordinateSharingPayloadFactory } from './factory/fhir-task-coordinate-sharing-payload.factory';
 import { FHIR_SYSTEM_CONSTANTS } from './constants/fhir-constants';
 import { FhirHelpersUtil } from './util/fhir-helpers.util';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class FhirService {
   constructor(
     private fhirClient: FhirClient,
     private locationService: LocationService,
+    private configService: ConfigService,
   ) {
     this.apiClient = this.fhirClient.client;
+    this.FRONTEND_URL = this.configService.get('FRONTEND_URL');
+    this.IS_FHIR_TEST = !!this.configService.get('IS_FHIR_TEST');
+
+    if (this.IS_FHIR_TEST) {
+      this.logger.warn('FHIR TESTING IS ENABLED');
+    }
   }
 
   private readonly logger = new Logger(FhirService.name);
   private readonly MAX_PAGINATION_REQUEST_COUNT = 10;
   private apiClient: AxiosInstance;
+  private FRONTEND_URL: string;
+  private IS_FHIR_TEST = false;
 
   async createCoordinateDataSharingTask(deliveryInfo: DeliveryInfo, proposal: Proposal): Promise<DeliveryInfo> {
-    const locationMap = this.locationService.findAllLookUpMap();
+    const locationMap = await this.locationService.findAllLookUpMap();
 
     const dms = locationMap[proposal.dataDelivery.dataManagementSite];
-    const dicLocations = deliveryInfo.subDeliveries
-      .map((delivery) => locationMap[delivery.location])
-      .map((location) => location.uri);
+    const dicLocations = deliveryInfo.subDeliveries.map((delivery) => {
+      const location = locationMap[delivery.location];
+
+      if (!location || !location.uri) {
+        throw new NotFoundException(`Location or URI not found for subDelivery location ID: ${delivery.location}`);
+      }
+
+      return location;
+    });
 
     if (!dms.dataManagementCenter) {
       throw new ForbiddenException(`Location ${dms._id} is not a DMS`);
@@ -44,15 +60,20 @@ export class FhirService {
 
     const businessKey = uuidV4();
 
-    const extractionPeriod = FhirHelpersUtil.getExtractionPeriod(new Date(), deliveryInfo.deliveryDate);
+    const extractionPeriod = FhirHelpersUtil.getExtractionPeriod(new Date(), new Date(deliveryInfo.deliveryDate));
+
+    const researcherEmails = [
+      proposal.applicant?.researcher?.email ?? 'applicant_mail_not_found@invalid.com',
+      ...(proposal.participants || []).map((p) => p.researcher.email),
+    ];
 
     const startParams = {
       hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
       projectIdentifier: proposal.projectAbbreviation,
-      contractUrl: `http://example.com/contract/Test_PROJECT_ZIP_${proposal.projectAbbreviation}`, // MARIE FRAGEN?
+      contractUrl: `${this.FRONTEND_URL}/proposals/${proposal._id}/details`,
       dmsIdentifier: dms.uri,
-      researcherIdentifiers: ['researcher-1', 'researcher-2'], // email von researchers?
-      dicIdentifiers: dicLocations,
+      researcherIdentifiers: researcherEmails,
+      dicIdentifiers: dicLocations.map((dic) => dic.uri),
       extractionPeriod,
       businessKey,
     };
@@ -77,7 +98,7 @@ export class FhirService {
   }) {
     this.logger.verbose(`Creating task with business key ... ${businessKey}`);
 
-    const task = FhirTaskCoordinateSharingPayloadFactory.createStartProcessPayload({
+    const payloadArgs = {
       businessKey,
       hrpOrganizationIdentifier,
       projectIdentifier,
@@ -87,15 +108,29 @@ export class FhirService {
       dicIdentifiers,
       extractionPeriod,
       dateTime,
-    });
+    };
+
+    if (this.IS_FHIR_TEST) {
+      this.logger.warn('FHIR TESTING ARGUMENTS ARE ENABLED. The client will not use actual DMS and DIC identifiers.');
+
+      payloadArgs.dmsIdentifier = 'dms.test.forschen-fuer-gesundheit.de';
+      this.logger.warn(`OVERRIDEN DMS IDENTIFIER ${payloadArgs.dmsIdentifier}`);
+      payloadArgs.dicIdentifiers = ['diz-1.test.fdpg.forschen-fuer-gesundheit.de'];
+      this.logger.warn(`OVERRIDEN DIC IDENTIFIER ${payloadArgs.dicIdentifiers}`);
+    }
+
+    const task = FhirTaskCoordinateSharingPayloadFactory.createStartProcessPayload(payloadArgs);
+
+    console.log(JSON.stringify(task));
 
     try {
       const response = await this.apiClient.post('/Task', task);
-      this.logger.verbose('Successfully started coordinate process (JSON). Task created:', response.data.id);
+      this.logger.verbose('Successfully started coordinate process. Task created:', response.data.id);
       return response.data;
     } catch (error) {
-      this.logger.error('Error starting coordinate process (JSON):', error.response?.data || error.message);
-      throw error;
+      this.logger.error('Error starting coordinate process :', JSON.stringify(error.response?.data || error.message));
+      throw Error('Clould not initiate process');
+      // throw error;
     }
   }
 

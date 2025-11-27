@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import type { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalCrudService } from 'src/modules/proposal/services/proposal-crud.service';
@@ -15,16 +15,21 @@ import { SubDelivery } from '../schema/sub-schema/data-delivery/sub-delivery.sch
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { LocationService } from 'src/modules/location/service/location.service';
+import { SubDeliveryStatus } from '../enums/data-delivery.enum';
 
 @Injectable()
 export class ProposalDataDeliveryService {
   constructor(
     private readonly proposalCrudService: ProposalCrudService,
     private readonly fhirService: FhirService,
+    private readonly locationService: LocationService,
 
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
   ) {}
+
+  private readonly logger = new Logger(ProposalDataDeliveryService.name);
 
   getDataDelivery = async (proposalId: string, user: IRequestUser): Promise<DataDeliveryGetDto | null> => {
     const proposal = await this.proposalCrudService.findDocument(
@@ -82,7 +87,9 @@ export class ProposalDataDeliveryService {
 
     const existing = proposal.dataDelivery ?? null;
     if (!existing) {
-      throw new NotFoundException('No data delivery found. Create it first.');
+      const message = 'No data delivery found. Create it first.';
+      this.logger.error(message);
+      throw new NotFoundException(message);
     }
 
     const now = new Date();
@@ -110,6 +117,8 @@ export class ProposalDataDeliveryService {
       proposalDoc.dataDelivery.deliveryInfos = [];
     }
     const newDeliveryModel = this.mapToDeliveryInfoModel([dto])[0];
+
+    await this.fhirService.createCoordinateDataSharingTask(newDeliveryModel, proposalDoc.toObject());
 
     await this.proposalModel
       .updateOne(
@@ -142,6 +151,75 @@ export class ProposalDataDeliveryService {
     }
 
     return plainToClass(DataDeliveryGetDto, updatedProposalDoc.dataDelivery as DataDelivery, {
+      strategy: 'excludeAll',
+    });
+  };
+
+  syncDeliveryInfoWithDsf = async (
+    proposalId: string,
+    dto: DeliveryInfoUpdateDto,
+    user: IRequestUser,
+  ): Promise<DataDeliveryGetDto> => {
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+
+    const deliveryInfo = (proposalDoc.dataDelivery?.deliveryInfos || []).find(
+      (deliveryInfo) => deliveryInfo._id.toString() === dto._id,
+    );
+
+    if (!deliveryInfo) {
+      const message = `Could not find DeliveryInfo with id ${dto._id} of proposal ${proposalId}`;
+      this.logger.error(message);
+      throw new NotFoundException(message);
+    }
+
+    if (!deliveryInfo.fhirBusinessKey) {
+      const message = `DeliveryInfo ${deliveryInfo._id} of proposal ${proposalId} does not have a business key`;
+      this.logger.error(message);
+      throw new NotFoundException(message);
+    }
+
+    const locationLookUpMap = await this.locationService.findAllLookUpMap();
+
+    const updatedFhirDeliveries = (
+      await this.fhirService.pollForReceivedDataSetsByBusinessKey(
+        deliveryInfo.fhirBusinessKey,
+        deliveryInfo.lastSynced ?? deliveryInfo.createdAt,
+      )
+    ).map((fhirResponse) => fhirResponse['dic-identifier-value']);
+
+    // TODO: I don't know how to set the state until we are able to test the whole process
+    (deliveryInfo.subDeliveries || []).forEach((subDel) => {
+      if (updatedFhirDeliveries.includes(locationLookUpMap[subDel.location]?.uri)) {
+        subDel.status = SubDeliveryStatus.ACCEPTED;
+      }
+    });
+
+    deliveryInfo.lastSynced = new Date();
+
+    const updatedProposalDoc = await this.proposalModel
+      .findOneAndUpdate(
+        {
+          _id: proposalId,
+          'dataDelivery.deliveryInfos._id': dto._id,
+        },
+        {
+          $set: {
+            'dataDelivery.deliveryInfos.$': deliveryInfo,
+            'dataDelivery.updatedAt': new Date(),
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+      .exec();
+
+    if (!updatedProposalDoc) {
+      throw new ForbiddenException('Proposal document not found or deliveryInfo not found.');
+    }
+
+    return plainToClass(DataDeliveryGetDto, proposalDoc.dataDelivery as DataDelivery, {
       strategy: 'excludeAll',
     });
   };
