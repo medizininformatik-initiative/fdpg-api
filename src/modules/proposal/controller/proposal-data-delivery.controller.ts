@@ -84,8 +84,7 @@ export class ProposalDataDeliveryController {
     @Body() dto: DeliveryInfoUpdateDto,
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
-    console.log({ id, dto, user });
-    return this.proposalDataDeliveryService.initDeliveryInfo(id, dto, user);
+    return await this.proposalDataDeliveryService.initDeliveryInfo(id, dto, user);
   }
 
   // POST /api/proposals/:id/init-delivery-info

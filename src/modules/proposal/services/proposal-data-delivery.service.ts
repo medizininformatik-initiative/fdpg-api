@@ -17,6 +17,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { SubDeliveryStatus } from '../enums/data-delivery.enum';
+import { ProposalValidation } from '../enums/porposal-validation.enum';
 
 @Injectable()
 export class ProposalDataDeliveryService {
@@ -150,8 +151,9 @@ export class ProposalDataDeliveryService {
       throw new ForbiddenException('Proposal document not found or user unauthorized.');
     }
 
-    return plainToClass(DataDeliveryGetDto, updatedProposalDoc.dataDelivery as DataDelivery, {
+    return plainToClass(DataDeliveryGetDto, updatedProposalDoc.toObject().dataDelivery as DataDelivery, {
       strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
     });
   };
 
@@ -219,8 +221,9 @@ export class ProposalDataDeliveryService {
       throw new ForbiddenException('Proposal document not found or deliveryInfo not found.');
     }
 
-    return plainToClass(DataDeliveryGetDto, proposalDoc.dataDelivery as DataDelivery, {
+    return plainToClass(DataDeliveryGetDto, proposalDoc.toObject().dataDelivery as DataDelivery, {
       strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
     });
   };
 
