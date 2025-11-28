@@ -202,7 +202,7 @@ export class ProposalDataDeliveryService {
     // TODO: I don't know how to set the state until we are able to test the whole process
     (deliveryInfo.subDeliveries || []).forEach((subDel) => {
       if (updatedFhirDeliveries.includes(locationLookUpMap[subDel.location]?.uri)) {
-        subDel.status = SubDeliveryStatus.ACCEPTED;
+        subDel.status = SubDeliveryStatus.DELIVERED;
       }
     });
 
