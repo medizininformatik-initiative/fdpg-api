@@ -117,7 +117,7 @@ export class ProposalDataDeliveryService {
     if (!proposalDoc.dataDelivery.deliveryInfos) {
       proposalDoc.dataDelivery.deliveryInfos = [];
     }
-    const newDeliveryModel = this.mapToDeliveryInfoModel([dto])[0];
+    const newDeliveryModel = { ...this.mapToDeliveryInfoModel([dto])[0], lastSynced: undefined } as DeliveryInfo;
 
     await this.fhirService.createCoordinateDataSharingTask(newDeliveryModel, proposalDoc.toObject());
 

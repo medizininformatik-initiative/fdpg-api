@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
 import axios, { AxiosInstance } from 'axios';
@@ -12,6 +12,8 @@ export class FhirAuthenticationClient {
     this.obtainToken();
   }
 
+  private readonly logger = new Logger(FhirAuthenticationClient.name);
+
   public client: AxiosInstance;
   private keycloakHost: string;
   private tokenEndpoint: string;
@@ -21,8 +23,8 @@ export class FhirAuthenticationClient {
   private configureService() {
     this.keycloakHost = this.configService.get('FEASIBILITY_KEYCLOAK_HOST') || this.configService.get('KEYCLOAK_HOST');
     const keycloakRealm = this.configService.get('KEYCLOAK_REALM');
-    this.clientId = this.configService.get('KEYCLOAK_CLIENT_FOR_FHIR_ID');
-    this.clientSecret = this.configService.get('KEYCLOAK_CLIENT_FOR_FHIR_SECRET');
+    this.clientId = this.configService.get('KEYCLOAK_CLIENT_FOR_FEASIBILITY_ID');
+    this.clientSecret = this.configService.get('KEYCLOAK_CLIENT_FOR_FEASIBILITY_SECRET');
     this.tokenEndpoint = `${this.keycloakHost}/auth/realms/${keycloakRealm}/protocol/openid-connect/token`;
   }
 
@@ -32,7 +34,7 @@ export class FhirAuthenticationClient {
 
   async obtainToken(): Promise<ITokenResult | undefined> {
     const tracer = trace.getTracer('basic');
-    const span = tracer.startSpan('Feasibility Client - Obtain Token', {
+    const span = tracer.startSpan('Fhir Client - Obtain Token', {
       kind: SpanKind.CLIENT,
       root: true,
       attributes: {
@@ -70,7 +72,7 @@ export class FhirAuthenticationClient {
       });
       span.setStatus({ code: SpanStatusCode.ERROR, message: e.name });
       span.end();
-      console.error(JSON.stringify({ e, error }));
+      this.logger.error(JSON.stringify({ e, error }));
     }
 
     return;
