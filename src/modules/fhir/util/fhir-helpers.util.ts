@@ -24,8 +24,6 @@ export const FhirHelpersUtil = {
 
     const duration = interval.toDuration(['years', 'months', 'days']);
 
-    console.log({ startDate, endDate, startOriginal, endOriginal, startAdjusted, endAdjusted, interval, duration });
-
     return duration.toISO();
   },
 

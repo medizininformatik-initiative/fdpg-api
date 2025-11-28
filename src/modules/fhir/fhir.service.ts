@@ -121,8 +121,6 @@ export class FhirService {
 
     const task = FhirTaskCoordinateSharingPayloadFactory.createStartProcessPayload(payloadArgs);
 
-    console.log(JSON.stringify(task));
-
     try {
       const response = await this.apiClient.post('/Task', task);
       this.logger.verbose('Successfully started coordinate process. Task created:', response.data.id);
