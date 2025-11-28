@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Schedule, ScheduleDocument } from './schema/schedule.schema';
 import { Model } from 'mongoose';
-import { IProposalScheduleEventSet } from './types/schedule-event.types';
+import { IProposalScheduleEventSet, ProposalScheduleTypes } from './types/schedule-event.types';
 import { getEventsFromSet } from './utils/get-events.util';
 import { ScheduledEvent } from '../proposal/schema/sub-schema/scheduled-event.schema';
 import { ScheduleType } from './enums/schedule-type.enum';
@@ -62,7 +62,7 @@ export class SchedulerService {
     await this.createEvents({ proposal, types: [...changedEvents] });
   }
 
-  private dueDateToEventMapping = (deadlineType: DueDateEnum): ScheduleType[] => {
+  private dueDateToEventMapping = (deadlineType: DueDateEnum): ProposalScheduleTypes[] => {
     switch (deadlineType) {
       case DueDateEnum.DUE_DAYS_FDPG_CHECK:
         return [ScheduleType.ReminderFdpgCheck];
@@ -84,10 +84,10 @@ export class SchedulerService {
   /**
    * Attempts to acquire a distributed lock for a specific cron job type.
    * @param jobType The ScheduleType representing the cron job ().
-   * @param leaseDurationMs How long the lock is held in milliseconds (e.g., 5 minutes = 300000).
+   * @param leaseDurationMs How long the lock is held in milliseconds (e.g., 5 minutes = 300_000). Default 5 Minutes
    * @returns true if the lock was successfully acquired, false otherwise.
    */
-  async acquireLock(jobType: ScheduleType, leaseDurationMs: number): Promise<boolean> {
+  async acquireLock(jobType: ScheduleType, leaseDurationMs: number = 5 * 60 * 1000): Promise<boolean> {
     const newLockedUntil = new Date(Date.now() + leaseDurationMs);
 
     try {

@@ -21,7 +21,7 @@ export class SyncDeliveryInfoCronService {
   })
   async handleDailyDeliveryInfoSync() {
     const jobType = ScheduleType.DailySyncDeliveryInfos;
-    const leaseTimeMs = 300000; // 5 minutes
+    const leaseTimeMs = 5 * 60 * 1000; // 5 minutes
 
     const isLocked = await this.lockService.acquireLock(jobType, leaseTimeMs);
 

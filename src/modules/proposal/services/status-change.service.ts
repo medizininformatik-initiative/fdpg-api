@@ -14,6 +14,7 @@ import {
   excludeAllRequestedLocations,
 } from '../utils/location-flow.util';
 import { ProposalPdfService } from './proposal-pdf.service';
+import { ProposalScheduleTypes } from 'src/modules/scheduler/types/schedule-event.types';
 
 @Injectable()
 export class StatusChangeService {
@@ -32,8 +33,8 @@ export class StatusChangeService {
       return;
     }
     setDueDate(proposalAfterChanges);
-    const scheduleTypesToAdd: ScheduleType[] = [];
-    const scheduleTypesToRemove: ScheduleType[] = [];
+    const scheduleTypesToAdd: ProposalScheduleTypes[] = [];
+    const scheduleTypesToRemove: ProposalScheduleTypes[] = [];
 
     switch (proposalAfterChanges.status) {
       case ProposalStatus.Rework:

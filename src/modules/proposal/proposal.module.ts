@@ -36,6 +36,7 @@ import { Connection } from 'mongoose';
 import { Location } from '../location/schema/location.schema';
 import { ProposalDataDeliveryService } from './services/proposal-data-delivery.service';
 import { FhirModule } from '../fhir/fhir.module';
+import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info.cron';
 @Module({
   imports: [
     LocationModule,
@@ -85,6 +86,7 @@ import { FhirModule } from '../fhir/fhir.module';
     ProposalPdfService,
     ProposalSyncService,
     AcptPluginClient,
+    SyncDeliveryInfoCronService,
   ],
   exports: [ProposalCrudService, MongooseModule, ProposalSyncService],
 })
