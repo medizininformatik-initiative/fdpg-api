@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import { Document } from 'mongoose';
 import { Location } from 'src/modules/location/schema/location.schema';
 import { SubDeliveryStatus } from '../../../enums/data-delivery.enum';
 

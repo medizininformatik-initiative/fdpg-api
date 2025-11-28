@@ -6,6 +6,7 @@ export enum DeliveryAcceptance {
 
 export enum SubDeliveryStatus {
   PENDING = 'PENDING',
+  DELIVERED = 'DELIVERED',
   ACCEPTED = 'ACCEPTED',
-  DENIED = 'DENIED',
+  CANCELED = 'CANCELED',
 }

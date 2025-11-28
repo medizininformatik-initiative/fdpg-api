@@ -38,6 +38,13 @@ export class LocationService {
     );
   }
 
+  async findAllLookUpMap(): Promise<Record<string, Location>> {
+    const all = await this.findAllDocuments();
+    const allModels = all.map((model) => model.toObject());
+
+    return Object.fromEntries(allModels.map((location) => [location._id, location]));
+  }
+
   async findAllKeyLabel(): Promise<LocationKeyLabelDto[]> {
     return await this.getOrCreateCached(CacheKey.MiiLocationsKeyLabel, async () =>
       (await this.findAll()).map((loc) => {

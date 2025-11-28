@@ -12,14 +12,20 @@ export class ProposalAccessGuard implements CanActivate {
       .startSpan('Proposal Access Guard', {
         attributes: {
           ['proposal.accessGuard.requiredCondition']:
-            'Researcher OR RegisteringMember OR FdpgMember OR DataSourceMember in roles',
+            'Researcher OR RegisteringMember OR FdpgMember OR DataSourceMember OR DataManagementOffice in roles',
           ['proposal.accessGuard.userSingleRole']: user.singleKnownRole,
           ['proposal.accessGuard.userRoles']: user.roles?.join(', ') || 'none',
         },
       })
       .end();
 
-    const allowedRoles = [Role.Researcher, Role.RegisteringMember, Role.FdpgMember, Role.DataSourceMember];
+    const allowedRoles = [
+      Role.Researcher,
+      Role.RegisteringMember,
+      Role.FdpgMember,
+      Role.DataSourceMember,
+      Role.DataManagementOffice,
+    ];
 
     if (user.singleKnownRole && allowedRoles.includes(user.singleKnownRole)) {
       return true;

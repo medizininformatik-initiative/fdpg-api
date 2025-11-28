@@ -4,6 +4,7 @@ import { Schedule, ScheduleDocument } from './schema/schedule.schema';
 import { Model, FilterQuery } from 'mongoose';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { ScheduleEventHandlerService } from './schedule-event-handler.service';
+import { ScheduleType } from './enums/schedule-type.enum';
 
 @Injectable()
 export class ScheduleProcessorService {
@@ -21,6 +22,7 @@ export class ScheduleProcessorService {
     const filter: FilterQuery<ScheduleDocument> = {
       lockedUntil: { $lt: now },
       numberOfTries: { $lt: 2 },
+      type: { $ne: ScheduleType.DailySyncDeliveryInfos },
     };
 
     if (getOnlyDueEvents) {
