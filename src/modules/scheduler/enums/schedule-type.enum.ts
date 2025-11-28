@@ -5,4 +5,5 @@ export enum ScheduleType {
   ReminderLocationCheck3 = 'REMINDER_LOCATION_CHECK_3',
   ReminderResearcherPublications = 'REMINDER_RESEARCHER_PUBLICATIONS',
   ParticipatingResearcherSummary = 'PARTICIPATING_RESEARCHER_SUMMARY',
+  DailySyncDeliveryInfos = 'DAILY_SYNC_DELIVERY_INFOS',
 }

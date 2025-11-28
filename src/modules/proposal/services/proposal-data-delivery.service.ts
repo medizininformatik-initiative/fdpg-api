@@ -18,6 +18,7 @@ import { Model } from 'mongoose';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { SubDeliveryStatus } from '../enums/data-delivery.enum';
 import { ProposalValidation } from '../enums/porposal-validation.enum';
+import { DeliveryInfoStatus } from '../enums/delivery-info-status.enum';
 
 @Injectable()
 export class ProposalDataDeliveryService {
@@ -157,7 +158,7 @@ export class ProposalDataDeliveryService {
     });
   };
 
-  syncDeliveryInfoWithDsf = async (
+  syncDeliveryInfoWithDsfWithUser = async (
     proposalId: string,
     dto: DeliveryInfoUpdateDto,
     user: IRequestUser,
@@ -168,8 +169,17 @@ export class ProposalDataDeliveryService {
       (deliveryInfo) => deliveryInfo._id.toString() === dto._id,
     );
 
+    await this.syncDeliveryInfoWithDsf(proposalId, deliveryInfo);
+
+    return plainToClass(DataDeliveryGetDto, proposalDoc.toObject().dataDelivery as DataDelivery, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
+  };
+
+  syncDeliveryInfoWithDsf = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<void> => {
     if (!deliveryInfo) {
-      const message = `Could not find DeliveryInfo with id ${dto._id} of proposal ${proposalId}`;
+      const message = `Could not find DeliveryInfo with id ${deliveryInfo._id} of proposal ${proposalId}`;
       this.logger.error(message);
       throw new NotFoundException(message);
     }
@@ -202,7 +212,7 @@ export class ProposalDataDeliveryService {
       .findOneAndUpdate(
         {
           _id: proposalId,
-          'dataDelivery.deliveryInfos._id': dto._id,
+          'dataDelivery.deliveryInfos._id': deliveryInfo._id,
         },
         {
           $set: {
@@ -220,10 +230,15 @@ export class ProposalDataDeliveryService {
     if (!updatedProposalDoc) {
       throw new ForbiddenException('Proposal document not found or deliveryInfo not found.');
     }
+  };
 
-    return plainToClass(DataDeliveryGetDto, proposalDoc.toObject().dataDelivery as DataDelivery, {
-      strategy: 'excludeAll',
-      groups: [ProposalValidation.IsOutput],
+  getProposalsWithDeliveriesPending = async (): Promise<Proposal[]> => {
+    return await this.proposalModel.find({
+      'dataDelivery.deliveryInfos': {
+        $elemMatch: {
+          status: DeliveryInfoStatus.PENDING,
+        },
+      },
     });
   };
 
@@ -231,6 +246,7 @@ export class ProposalDataDeliveryService {
     if (dtos === undefined || dtos === null) return null;
 
     return dtos.map((dto) => ({
+      _id: dto._id,
       name: dto.name,
       deliveryDate: dto.deliveryDate,
       status: dto.status,

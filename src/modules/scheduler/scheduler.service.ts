@@ -9,6 +9,7 @@ import { ScheduleType } from './enums/schedule-type.enum';
 import { Proposal } from '../proposal/schema/proposal.schema';
 import { ScheduleProcessorService } from './schedule-processor.service';
 import { DueDateEnum } from '../proposal/enums/due-date.enum';
+import { Logger } from 'testcontainers/build/common';
 
 @Injectable()
 export class SchedulerService {
@@ -17,6 +18,8 @@ export class SchedulerService {
     private scheduleModel: Model<ScheduleDocument>,
     private scheduleProcessorService: ScheduleProcessorService,
   ) {}
+
+  private readonly logger = new Logger(SchedulerService.name);
 
   async createEvents(eventSet: IProposalScheduleEventSet): Promise<void> {
     const events = getEventsFromSet(eventSet);
@@ -77,4 +80,50 @@ export class SchedulerService {
         return [];
     }
   };
+
+  /**
+   * Attempts to acquire a distributed lock for a specific cron job type.
+   * @param jobType The ScheduleType representing the cron job ().
+   * @param leaseDurationMs How long the lock is held in milliseconds (e.g., 5 minutes = 300000).
+   * @returns true if the lock was successfully acquired, false otherwise.
+   */
+  async acquireLock(jobType: ScheduleType, leaseDurationMs: number): Promise<boolean> {
+    const newLockedUntil = new Date(Date.now() + leaseDurationMs);
+
+    try {
+      const lockAcquired = await this.scheduleModel
+        .findOneAndUpdate(
+          {
+            type: jobType,
+            lockedUntil: { $lt: new Date() },
+          },
+          {
+            $set: {
+              lockedUntil: newLockedUntil,
+              updatedAt: new Date(),
+              numberOfTries: 0,
+            },
+            $setOnInsert: {
+              createdAt: new Date(),
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+          },
+        )
+        .lean();
+
+      if (lockAcquired) {
+        this.logger.debug(`Lock acquired successfully for job type: ${jobType}`);
+        return true;
+      }
+
+      this.logger.warn(`Lock already held by another instance for job type: ${jobType}`);
+      return false;
+    } catch (error) {
+      this.logger.error(`Error acquiring lock for ${jobType}:`, error.message);
+      return false;
+    }
+  }
 }

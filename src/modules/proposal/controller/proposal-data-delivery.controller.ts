@@ -100,7 +100,7 @@ export class ProposalDataDeliveryController {
     @Body() dto: DeliveryInfoUpdateDto,
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
-    return this.proposalDataDeliveryService.syncDeliveryInfoWithDsf(id, dto, user);
+    return this.proposalDataDeliveryService.syncDeliveryInfoWithDsfWithUser(id, dto, user);
   }
 
   formatCurrentDateForCode() {
