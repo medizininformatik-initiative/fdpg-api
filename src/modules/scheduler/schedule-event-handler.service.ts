@@ -13,6 +13,8 @@ export class ScheduleEventHandlerService {
       ScheduleType.ReminderLocationCheck1,
       ScheduleType.ReminderLocationCheck2,
       ScheduleType.ReminderLocationCheck3,
+      ScheduleType.ReminderFinishedProject1,
+      ScheduleType.ReminderFinishedProject2,
       ScheduleType.ReminderResearcherPublications,
     ];
     const proposalResearcherSummaryEvent = ScheduleType.ParticipatingResearcherSummary;

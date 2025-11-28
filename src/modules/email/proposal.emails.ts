@@ -110,6 +110,8 @@ export const fdpgEmail = (
       conditionProposalContractSignedLocations: !!emailParameterMap['conditionProposalContractSignedLocations'],
       conditionProposalDataReturn: !!emailParameterMap['conditionProposalDataReturn'],
       conditionProposalRegistrationCreate: !!emailParameterMap['conditionProposalRegistrationCreate'],
+      conditionProposalFinishedReminderForFdpg: !!emailParameterMap['conditionProposalFinishedReminderForFdpg'],
+      DUE_DAYS_FINISHED_PROJECT: emailParameterMap['DUE_DAYS_FINISHED_PROJECT'] as string,
     },
   };
 };
