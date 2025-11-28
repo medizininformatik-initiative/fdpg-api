@@ -21,7 +21,7 @@ export class FhirService {
   ) {
     this.apiClient = this.fhirClient.client;
     this.FRONTEND_URL = this.configService.get('FRONTEND_URL');
-    this.IS_FHIR_TEST = !!this.configService.get('IS_FHIR_TEST', 'false') === 'true';
+    this.IS_FHIR_TEST = this.configService.get('IS_FHIR_TEST', 'false') === 'true';
 
     if (this.IS_FHIR_TEST) {
       this.logger.warn('FHIR TESTING IS ENABLED');
