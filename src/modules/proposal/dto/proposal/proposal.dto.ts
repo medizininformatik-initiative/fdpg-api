@@ -72,7 +72,8 @@ const getSignedTransform = (proposal: ProposalGetDto) => {
       (approval) => !proposal.requestedButExcludedLocations.includes(approval.location),
     ) ?? [];
 
-  return [...uacApprovals, ...conditionAccepted];
+  const allItems = [...uacApprovals, ...conditionAccepted];
+  return [...new Map(allItems.map((item) => [item.location, item])).values()];
 };
 
 @Exclude()
@@ -347,7 +348,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   signedContracts: string[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       getSignedTransform(obj).filter(
@@ -434,24 +435,33 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Type(() => UacApprovalGetDto)
-  @Transform(({ value, options }) => {
+  @Transform(({ value, options, obj }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((approval: UacApprovalGetDto) => {
-      if (role === Role.DizMember || role === Role.UacMember) {
-        return approval.location === location;
-      }
+    return value
+      .filter((approval: UacApprovalGetDto) => {
+        if (role === Role.DizMember || role === Role.UacMember) {
+          return approval.location === location;
+        }
 
-      return true;
-    });
+        return true;
+      })
+      .filter(
+        (approval: UacApprovalGetDto) =>
+          !obj.conditionalApprovals.map(({ location }) => location).includes(approval.location),
+      );
   })
   uacApprovals: UacApprovalGetDto[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
-      obj.uacApprovals?.filter((approval) => !obj.requestedButExcludedLocations.includes(approval.location)).length ??
-      0,
+      obj.uacApprovals
+        ?.filter((approval) => !obj.requestedButExcludedLocations.includes(approval.location))
+        .filter(
+          (approval: UacApprovalGetDto) =>
+            !obj.conditionalApprovals.map(({ location }) => location).includes(approval.location),
+        ).length ?? 0,
   )
   uacApprovalsCount: number;
 
