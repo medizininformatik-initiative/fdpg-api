@@ -1,9 +1,10 @@
 import { Client, ItemBucketMetadata } from 'minio';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { validateMimetype } from 'src/shared/utils/validate-mimetype.util';
 import { SupportedMimetype } from '../proposal/enums/supported-mime-type.enum';
+import { PublicStorageService } from './public-storage.service';
 
 @Injectable()
 export class StorageService {
@@ -15,7 +16,10 @@ export class StorageService {
   private readonly useSSL: boolean;
   private readonly supportedMimetypes = Object.values(SupportedMimetype);
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional() private readonly publicStorageService?: PublicStorageService,
+  ) {
     this.endPoint = this.configService.get('S3_ENDPOINT');
     this.port = parseInt(this.configService.get('S3_PORT') || '443');
     this.useSSL = (this.configService.get('S3_USE_SSL') || '').toLowerCase() === 'true';
@@ -95,6 +99,8 @@ export class StorageService {
 
   /**
    * Copy a file from private bucket to public bucket for permanent access
+   * If PublicStorageService is available, uploads to IONOS Cloud
+   * Otherwise, copies to local MinIO public bucket
    * @param blobName - The name of the file in the private bucket
    * @returns The permanent public URL
    */
@@ -104,9 +110,32 @@ export class StorageService {
       throw new NotFoundException('File does not exist in private bucket');
     }
 
-    // Copy object from private to public bucket
-    await this.minioClient.copyObject(this.publicBucketName, blobName, `/${this.bucketName}/${blobName}`, null);
+    // If PublicStorageService is configured, upload to IONOS Cloud
+    if (this.publicStorageService) {
+      const stream = await this.getObject(blobName);
+      const chunks: Buffer[] = [];
 
+      for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk));
+      }
+
+      const buffer = Buffer.concat(chunks);
+      const metadata = await this.minioClient.statObject(this.bucketName, blobName);
+
+      // Create a mock file object for PublicStorageService
+      const file = {
+        buffer,
+        size: buffer.length,
+        mimetype: metadata.metaData['content-type'] || 'application/octet-stream',
+        originalname: blobName,
+      } as Express.Multer.File;
+
+      await this.publicStorageService.uploadFile(blobName, file);
+      return this.publicStorageService.getPublicUrl(blobName);
+    }
+
+    // Fallback: Copy to local MinIO public bucket
+    await this.minioClient.copyObject(this.publicBucketName, blobName, `/${this.bucketName}/${blobName}`, null);
     return this.getPublicUrl(blobName);
   }
 
