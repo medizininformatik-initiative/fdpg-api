@@ -1,32 +1,41 @@
 import { Client, ItemBucketMetadata } from 'minio';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { validateMimetype } from 'src/shared/utils/validate-mimetype.util';
 import { SupportedMimetype } from '../proposal/enums/supported-mime-type.enum';
+import { PublicStorageService } from './public-storage.service';
 
 @Injectable()
 export class StorageService {
   private readonly minioClient: Client;
   private readonly bucketName: string;
+  private readonly publicBucketName: string;
+  private readonly endPoint: string;
+  private readonly port: number;
+  private readonly useSSL: boolean;
   private readonly supportedMimetypes = Object.values(SupportedMimetype);
 
-  constructor(private readonly configService: ConfigService) {
-    const endPoint = this.configService.get('S3_ENDPOINT');
-    const port = parseInt(this.configService.get('S3_PORT') || '443');
-    const useSSL = (this.configService.get('S3_USE_SSL') || '').toLowerCase() === 'true';
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional() private readonly publicStorageService?: PublicStorageService,
+  ) {
+    this.endPoint = this.configService.get('S3_ENDPOINT');
+    this.port = parseInt(this.configService.get('S3_PORT') || '443');
+    this.useSSL = (this.configService.get('S3_USE_SSL') || '').toLowerCase() === 'true';
     const accessKey = this.configService.get('S3_ACCESSKEY');
     const secretKey = this.configService.get('S3_SECRETKEY');
 
     this.minioClient = new Client({
-      endPoint,
-      port,
-      useSSL,
+      endPoint: this.endPoint,
+      port: this.port,
+      useSSL: this.useSSL,
       accessKey,
       secretKey,
     });
 
     this.bucketName = this.configService.get('S3_BUCKET');
+    this.publicBucketName = this.configService.get('S3_PUBLIC_BUCKET');
   }
 
   async uploadFile(blobName: string, file: Express.Multer.File, user: IRequestUser): Promise<void> {
@@ -86,5 +95,84 @@ export class StorageService {
 
   async deleteManyBlobs(blobNames: string[]): Promise<void> {
     await this.minioClient.removeObjects(this.bucketName, blobNames);
+  }
+
+  /**
+   * Copy a file from private bucket to public bucket for permanent access
+   * If PublicStorageService is available, uploads to IONOS Cloud
+   * Otherwise, copies to local MinIO public bucket
+   * @param blobName - The name of the file in the private bucket
+   * @returns The permanent public URL
+   */
+  async copyToPublicBucket(blobName: string): Promise<string> {
+    const exists = await this.blobExists(blobName);
+    if (!exists) {
+      throw new NotFoundException('File does not exist in private bucket');
+    }
+
+    // If PublicStorageService is configured, upload to IONOS Cloud
+    if (this.publicStorageService) {
+      const stream = await this.getObject(blobName);
+      const chunks: Buffer[] = [];
+
+      for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk));
+      }
+
+      const buffer = Buffer.concat(chunks);
+      const metadata = await this.minioClient.statObject(this.bucketName, blobName);
+
+      // Create a mock file object for PublicStorageService
+      const file = {
+        buffer,
+        size: buffer.length,
+        mimetype: metadata.metaData['content-type'] || 'application/octet-stream',
+        originalname: blobName,
+      } as Express.Multer.File;
+
+      await this.publicStorageService.uploadFile(blobName, file);
+      return this.publicStorageService.getPublicUrl(blobName);
+    }
+
+    // Fallback: Copy to local MinIO public bucket
+    await this.minioClient.copyObject(this.publicBucketName, blobName, `/${this.bucketName}/${blobName}`, null);
+    return this.getPublicUrl(blobName);
+  }
+
+  /**
+   * Get permanent public URL for a file in the public bucket
+   * @param blobName - The name of the file
+   * @returns The permanent public URL
+   */
+  getPublicUrl(blobName: string): string {
+    const protocol = this.useSSL ? 'https' : 'http';
+    const portPart = (this.useSSL && this.port === 443) || (!this.useSSL && this.port === 80) ? '' : `:${this.port}`;
+    return `${protocol}://${this.endPoint}${portPart}/${this.publicBucketName}/${blobName}`;
+  }
+
+  /**
+   * Check if a file exists in the public bucket
+   * @param blobName - The name of the file
+   * @returns true if file exists, false otherwise
+   */
+  async publicBlobExists(blobName: string): Promise<boolean> {
+    try {
+      await this.minioClient.statObject(this.publicBucketName, blobName);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Delete a file from the public bucket
+   * @param blobName - The name of the file to delete
+   */
+  async deletePublicBlob(blobName: string): Promise<void> {
+    const exists = await this.publicBlobExists(blobName);
+    if (!exists) {
+      return;
+    }
+    await this.minioClient.removeObject(this.publicBucketName, blobName);
   }
 }

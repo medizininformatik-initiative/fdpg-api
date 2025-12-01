@@ -13,6 +13,8 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { AcptMetaField, AcptProjectDto, AcptResearcherDto, AcptLocationDto } from '../dto/acpt-plugin/acpt-project.dto';
 import { PublishedProposalStatus } from '../enums/published-proposal.enum';
 import { SyncResultDto, BulkSyncResultsDto, SyncErrorDto } from '../dto/sync-result.dto';
+import { StorageService } from '../../storage/storage.service';
+import { DirectUpload } from '../enums/upload-type.enum';
 import { LocationDto } from 'src/modules/location/dto/location.dto';
 import { BiosampleCode } from '../enums/biosample-code.enum';
 
@@ -24,6 +26,7 @@ export class ProposalSyncService {
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
     private acptPluginClient: AcptPluginClient,
+    private storageService: StorageService,
     private locationService: LocationService,
   ) {}
 
@@ -206,7 +209,7 @@ export class ProposalSyncService {
       this.logger.log(
         `[3/3] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
       );
-      const projectData: AcptProjectDto = this.buildAcptPayload(
+      const projectData: AcptProjectDto = await this.buildAcptPayload(
         proposal,
         researcherIds,
         desiredLocationIds,
@@ -485,13 +488,28 @@ export class ProposalSyncService {
     };
   }
 
-  private buildAcptPayload(
+  private async buildAcptPayload(
     proposal: ProposalDocument,
     researcherIds: string[],
     desiredLocationIds: string[],
     participantInstituteIds: string[],
-  ): AcptProjectDto {
+  ): Promise<AcptProjectDto> {
     const meta: AcptMetaField[] = [];
+
+    const projectLogo = proposal.uploads?.find((upload) => upload.type === DirectUpload.ProjectLogo);
+    if (projectLogo?.blobName) {
+      try {
+        this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
+        const publicLogoUrl = await this.storageService.copyToPublicBucket(projectLogo.blobName);
+        meta.push({
+          box: 'project-fields',
+          field: 'fdpgx-projectlogo',
+          value: [publicLogoUrl],
+        });
+      } catch (error) {
+        this.logger.error(`Failed to copy project logo to public bucket: ${error.message}`);
+      }
+    }
 
     if (researcherIds.length > 0) {
       meta.push({
