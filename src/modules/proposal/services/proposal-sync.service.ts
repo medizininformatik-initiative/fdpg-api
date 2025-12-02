@@ -13,7 +13,10 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { AcptMetaField, AcptProjectDto, AcptResearcherDto, AcptLocationDto } from '../dto/acpt-plugin/acpt-project.dto';
 import { PublishedProposalStatus } from '../enums/published-proposal.enum';
 import { SyncResultDto, BulkSyncResultsDto, SyncErrorDto } from '../dto/sync-result.dto';
+import { StorageService } from '../../storage/storage.service';
+import { DirectUpload } from '../enums/upload-type.enum';
 import { LocationDto } from 'src/modules/location/dto/location.dto';
+import { BiosampleCode } from '../enums/biosample-code.enum';
 
 @Injectable()
 export class ProposalSyncService {
@@ -23,6 +26,7 @@ export class ProposalSyncService {
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
     private acptPluginClient: AcptPluginClient,
+    private storageService: StorageService,
     private locationService: LocationService,
   ) {}
 
@@ -190,26 +194,48 @@ export class ProposalSyncService {
   private async callAcptPlugin(proposal: ProposalDocument, isUpdate: boolean): Promise<string> {
     try {
       // Step 1: Sync researchers first (they need to exist before project)
-      this.logger.log(`[1/3] Syncing researchers for project ${proposal.projectAbbreviation}...`);
+      this.logger.log(`[1/4] Syncing researchers for project ${proposal.projectAbbreviation}...`);
       const researcherIds = await this.syncResearchers(proposal);
       this.logger.log(`✓ Synced ${researcherIds.length} researchers for project ${proposal.projectAbbreviation}`);
 
       // Step 2: Sync locations (they need to exist before project)
-      this.logger.log(`[2/3] Syncing locations for project ${proposal.projectAbbreviation}...`);
+      this.logger.log(`[2/4] Syncing locations for project ${proposal.projectAbbreviation}...`);
       const { desiredLocationIds, participantInstituteIds } = await this.syncLocations(proposal);
       this.logger.log(
         `✓ Synced ${desiredLocationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
       );
 
-      // Step 3: Build project payload with researcher and location IDs
+      // Step 3: Upload project logo if available
+      let projectLogoWPId: number | undefined = undefined;
+      const projectLogo = proposal.uploads?.find((upload) => upload.type === DirectUpload.ProjectLogo);
+
+      this.logger.log(`[3/4] Processing project logo for project ${proposal.projectAbbreviation}...`);
+      if (projectLogo?.blobName) {
+        try {
+          this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
+          const publicLogoUrl = await this.storageService.copyToPublicBucket(projectLogo.blobName);
+          const result = await this.acptPluginClient.importFile({
+            fileUrl: publicLogoUrl,
+            title: projectLogo.fileName,
+            altText: proposal.projectAbbreviation + ' Logo',
+          });
+          projectLogoWPId = result.id;
+        } catch (error) {
+          this.logger.error(`Failed to copy project logo to public bucket: ${error.message}`);
+        }
+      }
+
+      // Step 4: Build project payload with researcher and location IDs
       this.logger.log(
-        `[3/3] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
+        `[4/4] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
       );
-      const projectData: AcptProjectDto = this.buildAcptPayload(
+
+      const projectData: AcptProjectDto = await this.buildAcptPayload(
         proposal,
         researcherIds,
         desiredLocationIds,
         participantInstituteIds,
+        projectLogoWPId,
       );
 
       try {
@@ -484,12 +510,13 @@ export class ProposalSyncService {
     };
   }
 
-  private buildAcptPayload(
+  private async buildAcptPayload(
     proposal: ProposalDocument,
     researcherIds: string[],
     desiredLocationIds: string[],
     participantInstituteIds: string[],
-  ): AcptProjectDto {
+    projectLogoWPId: number | undefined = undefined,
+  ): Promise<AcptProjectDto> {
     const meta: AcptMetaField[] = [];
 
     if (researcherIds.length > 0) {
@@ -513,6 +540,14 @@ export class ProposalSyncService {
         box: 'project-fields',
         field: 'fdpgx-participantsinstitute',
         value: participantInstituteIds,
+      });
+    }
+
+    if (projectLogoWPId !== undefined) {
+      meta.push({
+        box: 'project-fields',
+        field: 'fdpgx-projectlogo',
+        value: [projectLogoWPId.toString()],
       });
     }
 
@@ -693,25 +728,33 @@ export class ProposalSyncService {
     });
 
     // Biosample
-    if (proposal.userProject?.informationOnRequestedBioSamples?.biosamples?.length > 0) {
-      this.logger.log(
-        `Adding biosample fields for proposal ${proposal._id}: type=${proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type}`,
-      );
+    const biosamples = proposal.userProject?.informationOnRequestedBioSamples?.biosamples;
+    if (biosamples?.length > 0) {
+      const biosampleTypes: string[] = [];
+      const biosampleTypeDetails: string[] = [];
+      const biosampleSampleCodes: BiosampleCode[] = [];
+
+      biosamples.forEach((biosample) => {
+        if (biosample?.type) biosampleTypes.push(biosample.type);
+        if (biosample?.typeDetails) biosampleTypeDetails.push(biosample.typeDetails);
+        if (biosample?.sampleCode) biosampleSampleCodes.push(...biosample.sampleCode);
+      });
+
       meta.push(
         {
           box: 'project-fields',
           field: 'fdpgx-biosampletype',
-          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].type,
+          value: biosampleTypes,
         },
         {
           box: 'project-fields',
           field: 'fdpgx-biosampledetails',
-          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].typeDetails || '',
+          value: biosampleTypeDetails,
         },
         {
           box: 'project-fields',
           field: 'fdpgx-biosamplecode',
-          value: proposal.userProject.informationOnRequestedBioSamples.biosamples[0].sampleCode || [],
+          value: biosampleSampleCodes,
         },
       );
     }

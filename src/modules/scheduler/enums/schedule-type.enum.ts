@@ -6,4 +6,6 @@ export enum ScheduleType {
   ReminderResearcherPublications = 'REMINDER_RESEARCHER_PUBLICATIONS',
   ParticipatingResearcherSummary = 'PARTICIPATING_RESEARCHER_SUMMARY',
   DailySyncDeliveryInfos = 'DAILY_SYNC_DELIVERY_INFOS',
+  ReminderFinishedProject1 = 'REMINDER_FINISHED_PROJECT_1',
+  ReminderFinishedProject2 = 'REMINDER_FINISHED_PROJECT_2',
 }

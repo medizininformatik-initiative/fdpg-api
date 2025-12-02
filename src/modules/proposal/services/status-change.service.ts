@@ -155,7 +155,11 @@ export class StatusChangeService {
         break;
 
       case ProposalStatus.FinishedProject:
-        scheduleTypesToRemove.push(ScheduleType.ReminderResearcherPublications);
+        scheduleTypesToRemove.push(
+          ScheduleType.ReminderResearcherPublications,
+          ScheduleType.ReminderFinishedProject1,
+          ScheduleType.ReminderFinishedProject2,
+        );
         scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
         break;
 

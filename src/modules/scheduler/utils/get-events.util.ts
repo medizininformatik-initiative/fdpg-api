@@ -3,6 +3,7 @@ import {
   alterOnDeadline,
   getDueDateForDataResearch,
   getDueDateForFdpgCheck,
+  getDueDateForFinishedProject,
   getDueDateForLocationCheck,
 } from 'src/modules/proposal/utils/due-date.util';
 import { ScheduleType } from '../enums/schedule-type.enum';
@@ -16,6 +17,8 @@ const DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_1 = -2 * 7;
 const DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_2 = -3;
 const DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_3 = 0;
 const DAYS_BEFORE_DUE_REMINDER_RESEARCHER_PUBLICATIONS = -31;
+const DAYS_BEFORE_DUE_REMINDER_PROJECT_FINISH_1 = -1 * 7 * 4 * 2; // 2 Months
+const DAYS_BEFORE_DUE_REMINDER_PROJECT_FINISH_2 = -1; // 1 Day
 
 export const getEventsFromSet = (eventSet: IProposalScheduleEventSet) => {
   const now = new Date();
@@ -64,6 +67,22 @@ export const getEventsFromSet = (eventSet: IProposalScheduleEventSet) => {
             return deadline
               ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_3, [4, 0, 0])
               : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_LOCATION_CHECK_3);
+          }
+
+          case ScheduleType.ReminderFinishedProject1: {
+            const deadline = deadlines.DUE_DAYS_FINISHED_PROJECT;
+            const dueDate = getDueDateForFinishedProject(now, [4, 0, 0]);
+            return deadline
+              ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_PROJECT_FINISH_1, [4, 0, 0])
+              : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_PROJECT_FINISH_1);
+          }
+
+          case ScheduleType.ReminderFinishedProject2: {
+            const deadline = deadlines.DUE_DAYS_FINISHED_PROJECT;
+            const dueDate = getDueDateForFinishedProject(now, [4, 0, 0]);
+            return deadline
+              ? alterOnDeadline(deadline, DAYS_BEFORE_DUE_REMINDER_PROJECT_FINISH_2, [4, 0, 0])
+              : alterDaysOnDate(dueDate, DAYS_BEFORE_DUE_REMINDER_PROJECT_FINISH_2);
           }
 
           case ScheduleType.ReminderResearcherPublications: {

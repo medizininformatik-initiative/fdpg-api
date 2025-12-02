@@ -6,7 +6,10 @@ import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { ProposalWithoutContent } from '../../types/proposal-without-content.type';
 import { dizEmail, fdpgEmail, researcherEmail, uacEmail } from 'src/modules/email/proposal.emails';
 import { EmailCategory } from 'src/modules/email/types/email-category.enum';
-import { getEmailReminderText as getEmailReminderDueDaysText } from 'src/modules/email/util/email.util';
+import {
+  getEmailReminderText as getEmailReminderDueDaysText,
+  getEmailReminderFinishedProjectDueDaysText,
+} from 'src/modules/email/util/email.util';
 
 @Injectable()
 export class StatusReminderService {
@@ -79,6 +82,23 @@ export class StatusReminderService {
     await Promise.allSettled(emailTasks);
   }
 
+  private async handleFinishedProjectReminder(proposal: ProposalWithoutContent, proposalUrl: string, type: 0 | 1) {
+    const fdpgTask = async () => {
+      const validFdpgContacts = await this.keycloakUtilService
+        .getFdpgMemberLevelContacts(proposal)
+        .then((members) => members.map((member) => member.email));
+      const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.StatusReminder], proposalUrl, {
+        conditionProposalFinishedReminderForFdpg: true,
+        DUE_DAYS_FINISHED_PROJECT: getEmailReminderFinishedProjectDueDaysText(type),
+      });
+      return await this.emailService.send(mail);
+    };
+
+    const emailTasks = [fdpgTask()];
+
+    await Promise.allSettled(emailTasks);
+  }
+
   async handleStatusReminder(proposal: ProposalWithoutContent, proposalUrl: string, event: Schedule) {
     switch (event.type) {
       case ScheduleType.ReminderFdpgCheck:
@@ -95,6 +115,12 @@ export class StatusReminderService {
         break;
       case ScheduleType.ReminderResearcherPublications:
         await this.handleResearcherPublicationsReminder(proposal, proposalUrl);
+        break;
+      case ScheduleType.ReminderFinishedProject1:
+        await this.handleFinishedProjectReminder(proposal, proposalUrl, 0);
+        break;
+      case ScheduleType.ReminderFinishedProject2:
+        await this.handleFinishedProjectReminder(proposal, proposalUrl, 1);
         break;
     }
   }

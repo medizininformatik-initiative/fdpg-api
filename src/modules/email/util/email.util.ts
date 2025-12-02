@@ -8,3 +8,12 @@ export const getEmailReminderText = (type: 0 | 1 | 2): string => {
       return 'morgen';
   }
 };
+
+export const getEmailReminderFinishedProjectDueDaysText = (type: 0 | 1): string => {
+  switch (type) {
+    case 0:
+      return 'in 2 Monaten';
+    case 1:
+      return 'morgen';
+  }
+};

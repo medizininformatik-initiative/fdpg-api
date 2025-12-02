@@ -983,6 +983,10 @@ export class ProposalMiscService {
           desiredStartTime,
           desiredStartTimeType: 'later',
         },
+        addressees: {
+          ...originalObj.userProject?.addressees,
+          desiredLocations: originalObj.signedContracts || [],
+        },
       },
       history: [],
       createdAt: new Date(),

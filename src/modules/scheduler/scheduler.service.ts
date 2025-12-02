@@ -73,9 +73,13 @@ export class SchedulerService {
           ScheduleType.ReminderLocationCheck3,
         ];
       case DueDateEnum.DUE_DAYS_LOCATION_CONTRACTING:
+        return [];
       case DueDateEnum.DUE_DAYS_EXPECT_DATA_DELIVERY:
+        return [];
       case DueDateEnum.DUE_DAYS_DATA_CORRUPT:
+        return [];
       case DueDateEnum.DUE_DAYS_FINISHED_PROJECT:
+        return [ScheduleType.ReminderFinishedProject1, ScheduleType.ReminderFinishedProject2];
       default:
         return [];
     }
