@@ -24,7 +24,7 @@ export const validateProposalAccess = (
   }
 
   if (proposal.type === ProposalType.RegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
-    checkAccessForRegisteringMember(proposal, user);
+    checkAccessForRegisteringMember(proposal, user, willBeModified);
     return;
   }
 
@@ -37,7 +37,7 @@ export const validateProposalAccess = (
   }
 
   if (user.singleKnownRole === Role.RegisteringMember) {
-    checkAccessForRegisteringMember(proposal, user);
+    checkAccessForRegisteringMember(proposal, user, willBeModified);
   }
 
   if (user.singleKnownRole === Role.DataSourceMember) {
@@ -66,7 +66,7 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
   }
 };
 
-const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequestUser) => {
+const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
   if (
     proposal.type === ProposalType.RegisteringForm &&
     proposal.registerInfo?.isInternalRegistration &&
@@ -83,7 +83,11 @@ const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequ
   }
 
   // Only FDPG members can edit Published forms (via the sync functionality)
-  if (proposal.type === ProposalType.RegisteringForm && proposal.status === ProposalStatus.Published) {
+  if (
+    willBeModified &&
+    proposal.type === ProposalType.RegisteringForm &&
+    proposal.status === ProposalStatus.Published
+  ) {
     throwForbiddenError(
       'Published registering forms can only be edited by FDPG members. Changes will be synced to the website.',
     );
