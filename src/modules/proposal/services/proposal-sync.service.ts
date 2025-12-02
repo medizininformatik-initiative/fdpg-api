@@ -194,26 +194,48 @@ export class ProposalSyncService {
   private async callAcptPlugin(proposal: ProposalDocument, isUpdate: boolean): Promise<string> {
     try {
       // Step 1: Sync researchers first (they need to exist before project)
-      this.logger.log(`[1/3] Syncing researchers for project ${proposal.projectAbbreviation}...`);
+      this.logger.log(`[1/4] Syncing researchers for project ${proposal.projectAbbreviation}...`);
       const researcherIds = await this.syncResearchers(proposal);
       this.logger.log(`✓ Synced ${researcherIds.length} researchers for project ${proposal.projectAbbreviation}`);
 
       // Step 2: Sync locations (they need to exist before project)
-      this.logger.log(`[2/3] Syncing locations for project ${proposal.projectAbbreviation}...`);
+      this.logger.log(`[2/4] Syncing locations for project ${proposal.projectAbbreviation}...`);
       const { desiredLocationIds, participantInstituteIds } = await this.syncLocations(proposal);
       this.logger.log(
         `✓ Synced ${desiredLocationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
       );
 
-      // Step 3: Build project payload with researcher and location IDs
+      // Step 3: Upload project logo if available
+      let projectLogoWPId: number | undefined = undefined;
+      const projectLogo = proposal.uploads?.find((upload) => upload.type === DirectUpload.ProjectLogo);
+
+      this.logger.log(`[3/4] Processing project logo for project ${proposal.projectAbbreviation}...`);
+      if (projectLogo?.blobName) {
+        try {
+          this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
+          const publicLogoUrl = await this.storageService.copyToPublicBucket(projectLogo.blobName);
+          const result = await this.acptPluginClient.importFile({
+            fileUrl: publicLogoUrl,
+            title: projectLogo.fileName,
+            altText: proposal.projectAbbreviation + ' Logo',
+          });
+          projectLogoWPId = result.id;
+        } catch (error) {
+          this.logger.error(`Failed to copy project logo to public bucket: ${error.message}`);
+        }
+      }
+
+      // Step 4: Build project payload with researcher and location IDs
       this.logger.log(
-        `[3/3] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
+        `[4/4] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
       );
+
       const projectData: AcptProjectDto = await this.buildAcptPayload(
         proposal,
         researcherIds,
         desiredLocationIds,
         participantInstituteIds,
+        projectLogoWPId,
       );
 
       try {
@@ -493,23 +515,9 @@ export class ProposalSyncService {
     researcherIds: string[],
     desiredLocationIds: string[],
     participantInstituteIds: string[],
+    projectLogoWPId: number | undefined = undefined,
   ): Promise<AcptProjectDto> {
     const meta: AcptMetaField[] = [];
-
-    const projectLogo = proposal.uploads?.find((upload) => upload.type === DirectUpload.ProjectLogo);
-    if (projectLogo?.blobName) {
-      try {
-        this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
-        const publicLogoUrl = await this.storageService.copyToPublicBucket(projectLogo.blobName);
-        meta.push({
-          box: 'project-fields',
-          field: 'fdpgx-projectlogo',
-          value: [publicLogoUrl],
-        });
-      } catch (error) {
-        this.logger.error(`Failed to copy project logo to public bucket: ${error.message}`);
-      }
-    }
 
     if (researcherIds.length > 0) {
       meta.push({
@@ -532,6 +540,14 @@ export class ProposalSyncService {
         box: 'project-fields',
         field: 'fdpgx-participantsinstitute',
         value: participantInstituteIds,
+      });
+    }
+
+    if (projectLogoWPId !== undefined) {
+      meta.push({
+        box: 'project-fields',
+        field: 'fdpgx-projectlogo',
+        value: [projectLogoWPId.toString()],
       });
     }
 

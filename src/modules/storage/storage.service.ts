@@ -99,7 +99,7 @@ export class StorageService {
 
   /**
    * Copy a file from private bucket to public bucket for permanent access
-   * If PublicStorageService is available, uploads to IONOS Cloud
+   * If PublicStorageService is available and configured, uploads to IONOS Cloud
    * Otherwise, copies to local MinIO public bucket
    * @param blobName - The name of the file in the private bucket
    * @returns The permanent public URL
@@ -110,8 +110,8 @@ export class StorageService {
       throw new NotFoundException('File does not exist in private bucket');
     }
 
-    // If PublicStorageService is configured, upload to IONOS Cloud
-    if (this.publicStorageService) {
+    // If PublicStorageService is configured and available, upload to IONOS Cloud
+    if (this.publicStorageService?.isAvailable()) {
       const stream = await this.getObject(blobName);
       const chunks: Buffer[] = [];
 
