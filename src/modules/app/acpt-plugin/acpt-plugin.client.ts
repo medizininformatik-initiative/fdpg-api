@@ -383,6 +383,59 @@ export class AcptPluginClient {
     }
   }
 
+  async importFile(params: {
+    fileUrl: string;
+    title?: string;
+    altText?: string;
+    caption?: string;
+    description?: string;
+  }): Promise<{ id: number; url: string; title: string; mime_type: string }> {
+    this.validateConfiguration();
+
+    try {
+      this.logger.log(`Importing file to WordPress: ${params.fileUrl}`);
+
+      const payload = {
+        file_url: params.fileUrl,
+        ...(params.title && { title: params.title }),
+        ...(params.altText && { alt_text: params.altText }),
+        ...(params.caption && { caption: params.caption }),
+        ...(params.description && { description: params.description }),
+      };
+
+      this.logger.log('📤 SENDING FILE IMPORT PAYLOAD:');
+      this.logger.log(JSON.stringify(payload, null, 2));
+
+      // The import-file endpoint is at /wp-json/custom/v1/, not under /wp-json/wp/v2/
+      const wpRootUrl = this.baseURL.replace(/\/wp-json\/wp\/v2\/?$/, '');
+      const importFileUrl = `${wpRootUrl}/wp-json/custom/v1/import-file`;
+
+      this.logger.log(`📤 Calling import-file endpoint: ${importFileUrl}`);
+
+      const response = await this.apiClient.post<{
+        id: number;
+        url: string;
+        title: string;
+        mime_type: string;
+      }>(importFileUrl, payload, {
+        timeout: 15000,
+        baseURL: '',
+      });
+
+      this.logger.log(`✅ File imported successfully with media ID: ${response.data.id}`);
+      this.logger.log(`📥 Media URL: ${response.data.url}`);
+
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Failed to import file: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`Response status: ${error.response.status}`);
+        this.logger.error(`Response data: ${JSON.stringify(error.response.data)}`);
+      }
+      throw new Error(`ACPT Plugin file import error: ${error.message}`);
+    }
+  }
+
   /**
    * Clear the researchers and locations cache
    * Useful when you need to force a refresh
