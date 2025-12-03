@@ -6,6 +6,7 @@ import { StorageService } from '../../storage/storage.service';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { ReportCreateDto, ReportDto, ReportGetDto, ReportUpdateDto } from '../dto/proposal/report.dto';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
+import { ModificationContext } from '../enums/modification-context.enum';
 import { UseCaseUpload } from '../enums/upload-type.enum';
 import { ProposalCrudService } from './proposal-crud.service';
 import { ReportDocument } from '../schema/sub-schema/report.schema';
@@ -29,7 +30,13 @@ export class ProposalReportService {
   ): Promise<ReportGetDto> {
     // The owner is necessary for access control
     const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, projection, true);
+    const proposal = await this.proposalCrudService.findDocument(
+      proposalId,
+      user,
+      projection,
+      true,
+      ModificationContext.Report,
+    );
 
     const report = new ReportDto(reportCreateDto);
     const uploadTasks = files.map(async (file) => {
@@ -120,7 +127,13 @@ export class ProposalReportService {
 
     // The owner is necessary for access control
     const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, projection, true);
+    const proposal = await this.proposalCrudService.findDocument(
+      proposalId,
+      user,
+      projection,
+      true,
+      ModificationContext.Report,
+    );
 
     const reportIdx = proposal.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
 
@@ -175,7 +188,13 @@ export class ProposalReportService {
   async deleteReport(proposalId: string, reportId: string, user: IRequestUser): Promise<void> {
     // The owner is necessary for access control
     const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, projection, true);
+    const proposal = await this.proposalCrudService.findDocument(
+      proposalId,
+      user,
+      projection,
+      true,
+      ModificationContext.Report,
+    );
 
     const reportIdx = proposal.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
 

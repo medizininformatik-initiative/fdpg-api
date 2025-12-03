@@ -248,7 +248,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with projection', async () => {
@@ -277,7 +277,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with diz member projection', async () => {
@@ -307,7 +307,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with uac member projection', async () => {
@@ -336,7 +336,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified, undefined);
     });
 
     it('should throw 404 if not found', async () => {
