@@ -2,7 +2,9 @@ import { ForbiddenException } from '@nestjs/common';
 import { FilterQuery } from 'mongoose';
 import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
+import { ProposalType } from 'src/modules/proposal/enums/proposal-type.enum';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
+import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getRegisterProposalsForUser } from '../proposal-filter.util';
 
@@ -112,16 +114,31 @@ const getFilterForFinished = (user: IRequestUser): FilterQuery<Proposal> => {
 
 const getFilterForArchived = (user: IRequestUser): FilterQuery<Proposal> => {
   return {
-    $and: [
+    $or: [
       {
-        status: ProposalStatus.Archived,
+        $and: [
+          {
+            status: ProposalStatus.Archived,
+          },
+          {
+            $or: [
+              { requestedButExcludedLocations: user.miiLocation },
+              { uacApprovedLocations: user.miiLocation },
+              { signedContracts: user.miiLocation },
+            ],
+          },
+        ],
       },
       {
         $or: [
-          { requestedButExcludedLocations: user.miiLocation },
-          { uacApprovedLocations: user.miiLocation },
-          { signedContracts: user.miiLocation },
+          { ownerId: user.userId },
+          { participants: { $elemMatch: { 'researcher.email': user.email } } },
+          { 'projectResponsible.researcher.email': user.email },
         ],
+        type: ProposalType.RegisteringForm,
+        'registerInfo.isInternalRegistration': { $ne: true },
+        'owner.role': { $ne: Role.FdpgMember },
+        status: ProposalStatus.Archived,
       },
     ],
   };

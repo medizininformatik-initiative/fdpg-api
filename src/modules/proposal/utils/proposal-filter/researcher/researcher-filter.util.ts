@@ -38,7 +38,7 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
       return getRegisterProposalsForUser(user, [ProposalStatus.Published, ProposalStatus.Rejected]);
     }
 
-    return {
+    const baseFilter = {
       $or: [
         {
           ownerId: user.userId,
@@ -55,8 +55,13 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
         },
       ],
       status: RESEARCHER_STATUS[panelQuery],
-      type: { $eq: ProposalType.ApplicationForm as ProposalType },
     };
+
+    if (panelQuery !== PanelQuery.Archived) {
+      (baseFilter as any).type = { $eq: ProposalType.ApplicationForm as ProposalType };
+    }
+
+    return baseFilter;
   } else {
     throw new ForbiddenException();
   }
