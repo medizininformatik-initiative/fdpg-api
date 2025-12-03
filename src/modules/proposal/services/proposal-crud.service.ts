@@ -30,6 +30,7 @@ import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
 import { generateDataSourceLocaleId } from '../utils/generate-data-source-locale-id.util';
 import { ProposalType } from '../enums/proposal-type.enum';
 import { SyncStatus } from '../enums/sync-status.enum';
+import { ModificationContext } from '../enums/modification-context.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { Location } from 'src/modules/location/schema/location.schema';
 
@@ -79,6 +80,7 @@ export class ProposalCrudService {
     user: IRequestUser,
     projection?: Record<string, number>,
     willBeModified?: boolean,
+    modificationContext?: ModificationContext,
   ): Promise<ProposalDocument> {
     const dbProjection: Record<string, number> = {
       ...projection,
@@ -122,7 +124,7 @@ export class ProposalCrudService {
     if (proposal) {
       const userLocationDoc = await this.locationService.findById(user.miiLocation);
       const userLocation = userLocationDoc?.toObject() as Location;
-      validateProposalAccess(proposal, user, userLocation, willBeModified);
+      validateProposalAccess(proposal, user, userLocation, willBeModified, modificationContext);
       return proposal;
     } else {
       throw new NotFoundException();

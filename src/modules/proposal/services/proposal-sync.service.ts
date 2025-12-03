@@ -759,6 +759,39 @@ export class ProposalSyncService {
       );
     }
 
+    if (proposal.publications && proposal.publications.length > 0) {
+      const publicationTitles: string[] = proposal.publications
+        .map((pub) => pub.title)
+        .filter((title) => !!title) as string[];
+      const publicationDOIs: string[] = proposal.publications.map((pub) => pub.doi).filter((doi) => !!doi) as string[];
+      const publicationLinks: string[] = proposal.publications
+        .map((pub) => pub.link)
+        .filter((link) => !!link) as string[];
+
+      if (publicationLinks.length > 0) {
+        meta.push({
+          box: 'project-fields',
+          field: 'fdpgx-publicationslink',
+          value: publicationLinks,
+        });
+      }
+      if (publicationDOIs.length > 0) {
+        meta.push({
+          box: 'project-fields',
+          field: 'fdpgx-publicationsdoi',
+          value: publicationDOIs,
+        });
+      }
+
+      if (publicationTitles.length > 0) {
+        meta.push({
+          box: 'project-fields',
+          field: 'fdpgx-publicationstitle',
+          value: publicationTitles,
+        });
+      }
+    }
+
     return {
       title: proposal.userProject?.generalProjectInformation?.projectTitle || proposal.projectAbbreviation,
       status: 'publish', // WordPress post status

@@ -2,6 +2,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { LocationState } from '../enums/location-state.enum';
+import { ModificationContext } from '../enums/modification-context.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
@@ -13,6 +14,7 @@ export const validateProposalAccess = (
   user: IRequestUser,
   userLocation?: Location,
   willBeModified?: boolean,
+  modificationContext?: ModificationContext,
 ) => {
   if (willBeModified && proposal.isLocked) {
     throwForbiddenError('Proposal is currently locked to modifications');
@@ -24,7 +26,7 @@ export const validateProposalAccess = (
   }
 
   if (proposal.type === ProposalType.RegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
-    checkAccessForRegisteringMember(proposal, user, willBeModified);
+    checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
     return;
   }
 
@@ -37,7 +39,7 @@ export const validateProposalAccess = (
   }
 
   if (user.singleKnownRole === Role.RegisteringMember) {
-    checkAccessForRegisteringMember(proposal, user, willBeModified);
+    checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
   }
 
   if (user.singleKnownRole === Role.DataSourceMember) {
@@ -66,7 +68,12 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
   }
 };
 
-const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
+const checkAccessForRegisteringMember = (
+  proposal: ProposalDocument,
+  user: IRequestUser,
+  willBeModified?: boolean,
+  modificationContext?: ModificationContext,
+) => {
   if (
     proposal.type === ProposalType.RegisteringForm &&
     proposal.registerInfo?.isInternalRegistration &&
@@ -82,11 +89,16 @@ const checkAccessForRegisteringMember = (proposal: ProposalDocument, user: IRequ
     );
   }
 
+  // Allow RegisteringMembers to add/edit publications and reports for Published RegisteringForms
+  const isPublicationOrReport =
+    modificationContext === ModificationContext.Publication || modificationContext === ModificationContext.Report;
+
   // Only FDPG members can edit Published forms (via the sync functionality)
   if (
     willBeModified &&
     proposal.type === ProposalType.RegisteringForm &&
-    proposal.status === ProposalStatus.Published
+    proposal.status === ProposalStatus.Published &&
+    !isPublicationOrReport
   ) {
     throwForbiddenError(
       'Published registering forms can only be edited by FDPG members. Changes will be synced to the website.',
