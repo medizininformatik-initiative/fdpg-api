@@ -194,12 +194,12 @@ export class ProposalSyncService {
   private async callAcptPlugin(proposal: ProposalDocument, isUpdate: boolean): Promise<string> {
     try {
       // Step 1: Sync researchers first (they need to exist before project)
-      this.logger.log(`[1/4] Syncing researchers for project ${proposal.projectAbbreviation}...`);
+      this.logger.log(`[1/5] Syncing researchers for project ${proposal.projectAbbreviation}...`);
       const researcherIds = await this.syncResearchers(proposal);
       this.logger.log(`✓ Synced ${researcherIds.length} researchers for project ${proposal.projectAbbreviation}`);
 
       // Step 2: Sync locations (they need to exist before project)
-      this.logger.log(`[2/4] Syncing locations for project ${proposal.projectAbbreviation}...`);
+      this.logger.log(`[2/5] Syncing locations for project ${proposal.projectAbbreviation}...`);
       const { desiredLocationIds, participantInstituteIds } = await this.syncLocations(proposal);
       this.logger.log(
         `✓ Synced ${desiredLocationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
@@ -209,7 +209,7 @@ export class ProposalSyncService {
       let projectLogoWPId: number | undefined = undefined;
       const projectLogo = proposal.uploads?.find((upload) => upload.type === DirectUpload.ProjectLogo);
 
-      this.logger.log(`[3/4] Processing project logo for project ${proposal.projectAbbreviation}...`);
+      this.logger.log(`[3/5] Processing project logo for project ${proposal.projectAbbreviation}...`);
       if (projectLogo?.blobName) {
         try {
           this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
@@ -225,9 +225,31 @@ export class ProposalSyncService {
         }
       }
 
-      // Step 4: Build project payload with researcher and location IDs
+      // step 4: Upload attachments if available
+      let reportAttachmentIds: number[] = [];
+      const reportAttachments = proposal.reports?.flatMap((report) => report.uploads) || [];
+      this.logger.log(`[4/5] Processing report attachments for project ${proposal.projectAbbreviation}...`);
+      if (reportAttachments.length > 0) {
+        for (const attachment of reportAttachments) {
+          if (attachment?.blobName) {
+            try {
+              this.logger.log(`Copying report attachment to public bucket: ${attachment.fileName}`);
+              const publicAttachmentUrl = await this.storageService.copyToPublicBucket(attachment.blobName);
+              const result = await this.acptPluginClient.importFile({
+                fileUrl: publicAttachmentUrl,
+                title: attachment.fileName,
+                altText: proposal.projectAbbreviation + ' Report Attachment',
+              });
+              reportAttachmentIds.push(result.id);
+            } catch (error) {
+              this.logger.error(`Failed to copy report attachment to public bucket: ${error.message}`);
+            }
+          }
+        }
+      }
+      // Step 5: Build project payload with researcher and location IDs
       this.logger.log(
-        `[4/4] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
+        `[5/5] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
       );
 
       const projectData: AcptProjectDto = await this.buildAcptPayload(
@@ -236,6 +258,7 @@ export class ProposalSyncService {
         desiredLocationIds,
         participantInstituteIds,
         projectLogoWPId,
+        reportAttachmentIds,
       );
 
       try {
@@ -516,6 +539,7 @@ export class ProposalSyncService {
     desiredLocationIds: string[],
     participantInstituteIds: string[],
     projectLogoWPId: number | undefined = undefined,
+    reportAttachmentIds: number[] = [],
   ): Promise<AcptProjectDto> {
     const meta: AcptMetaField[] = [];
 
@@ -548,6 +572,14 @@ export class ProposalSyncService {
         box: 'project-fields',
         field: 'fdpgx-projectlogo',
         value: [projectLogoWPId.toString()],
+      });
+    }
+
+    if (reportAttachmentIds.length > 0) {
+      meta.push({
+        box: 'project-fields',
+        field: 'fdpgx-attachements',
+        value: reportAttachmentIds.map((id) => id.toString()),
       });
     }
 
@@ -788,6 +820,20 @@ export class ProposalSyncService {
           box: 'project-fields',
           field: 'fdpgx-publicationstitle',
           value: publicationTitles,
+        });
+      }
+    }
+
+    if (proposal.reports && proposal.reports.length > 0) {
+      const reportContents: string[] = proposal.reports
+        .map((report) => report.content)
+        .filter((content) => !!content) as string[];
+
+      if (reportContents.length > 0) {
+        meta.push({
+          box: 'project-fields',
+          field: 'fdpgx-projectresults',
+          value: reportContents,
         });
       }
     }
