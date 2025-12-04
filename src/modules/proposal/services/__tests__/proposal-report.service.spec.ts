@@ -4,6 +4,7 @@ import { EventEngineService } from 'src/modules/event-engine/event-engine.servic
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ReportCreateDto, ReportUpdateDto } from '../../dto/proposal/report.dto';
+import { ModificationContext } from '../../enums/modification-context.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { UseCaseUpload } from '../../enums/upload-type.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
@@ -143,6 +144,7 @@ describe('ProposalReportService', () => {
         request.user,
         { projectAbbreviation: 1, reports: 1, owner: 1 },
         true,
+        ModificationContext.Report,
       );
 
       expect(result.title).toBe('title');
@@ -321,7 +323,13 @@ describe('ProposalReportService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
+      );
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(result.uploads.length).toBe(2);
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
@@ -378,7 +386,13 @@ describe('ProposalReportService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
+      );
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(result.uploads.length).toBe(2);
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
@@ -435,7 +449,13 @@ describe('ProposalReportService', () => {
       const error = await getError(async () => await call);
 
       expect(error).toBeInstanceOf(NotFoundException);
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
+      );
     });
   });
 
@@ -463,7 +483,13 @@ describe('ProposalReportService', () => {
 
       await proposalReportService.deleteReport(proposalId, reportId, request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
+      );
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(storageService.deleteManyBlobs).toHaveBeenCalledWith(['blobName']);
     });
@@ -491,7 +517,13 @@ describe('ProposalReportService', () => {
 
       await proposalReportService.deleteReport(proposalId, notFoundReportId, request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
+      );
 
       expect(proposalDocument.save).not.toHaveBeenCalled();
       expect(storageService.deleteManyBlobs).not.toHaveBeenCalled();
