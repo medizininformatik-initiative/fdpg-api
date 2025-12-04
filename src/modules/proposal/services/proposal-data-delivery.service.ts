@@ -169,6 +169,12 @@ export class ProposalDataDeliveryService {
       (deliveryInfo) => deliveryInfo._id.toString() === dto._id,
     );
 
+    if (!deliveryInfo) {
+      const message = `Could not find DeliveryInfo with id '${dto._id}' of proposal '${proposalId}'`;
+      this.logger.error(message);
+      throw new NotFoundException(message);
+    }
+
     await this.syncDeliveryInfoWithDsf(proposalId, deliveryInfo);
 
     return plainToClass(DataDeliveryGetDto, proposalDoc.toObject().dataDelivery as DataDelivery, {
@@ -177,13 +183,7 @@ export class ProposalDataDeliveryService {
     });
   };
 
-  syncDeliveryInfoWithDsf = async (proposalId: string, deliveryInfo?: DeliveryInfo): Promise<void> => {
-    if (!deliveryInfo) {
-      const message = `Could not find DeliveryInfo with id ${deliveryInfo._id} of proposal ${proposalId}`;
-      this.logger.error(message);
-      throw new NotFoundException(message);
-    }
-
+  syncDeliveryInfoWithDsf = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<void> => {
     if (!deliveryInfo.fhirBusinessKey) {
       const message = `DeliveryInfo ${deliveryInfo._id} of proposal ${proposalId} does not have a business key`;
       this.logger.error(message);
