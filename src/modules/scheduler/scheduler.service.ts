@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Schedule, ScheduleDocument } from './schema/schedule.schema';
 import { Model } from 'mongoose';
@@ -9,7 +9,6 @@ import { ScheduleType } from './enums/schedule-type.enum';
 import { Proposal } from '../proposal/schema/proposal.schema';
 import { ScheduleProcessorService } from './schedule-processor.service';
 import { DueDateEnum } from '../proposal/enums/due-date.enum';
-import { Logger } from 'testcontainers/build/common';
 
 @Injectable()
 export class SchedulerService {

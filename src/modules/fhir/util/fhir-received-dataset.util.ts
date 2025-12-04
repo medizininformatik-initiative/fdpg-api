@@ -14,7 +14,7 @@ export const processReceivedDataSetResponse = (entry, INPUT_CODE_MAPPINGS) => {
   const resource = entry.resource;
 
   if (!resource) {
-    console.error("Input data does not contain a 'resource' object.");
+    throw Error("Input data does not contain a 'resource' object.");
     return {};
   }
 

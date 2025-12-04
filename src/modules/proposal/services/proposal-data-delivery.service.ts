@@ -177,7 +177,7 @@ export class ProposalDataDeliveryService {
     });
   };
 
-  syncDeliveryInfoWithDsf = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<void> => {
+  syncDeliveryInfoWithDsf = async (proposalId: string, deliveryInfo?: DeliveryInfo): Promise<void> => {
     if (!deliveryInfo) {
       const message = `Could not find DeliveryInfo with id ${deliveryInfo._id} of proposal ${proposalId}`;
       this.logger.error(message);

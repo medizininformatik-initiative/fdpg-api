@@ -1,5 +1,5 @@
 import { DateTime, Interval } from 'luxon';
-import { AxiosInstance } from 'node_modules/axios/index.cjs';
+import { AxiosInstance } from 'axios';
 
 export const FhirHelpersUtil = {
   subtractOneHour: (date: Date) => {
