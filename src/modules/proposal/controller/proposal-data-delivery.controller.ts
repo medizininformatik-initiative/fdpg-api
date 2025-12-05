@@ -17,6 +17,7 @@ import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-
 import { ProposalDataDeliveryService } from '../services/proposal-data-delivery.service';
 import { FhirService } from 'src/modules/fhir/fhir.service';
 import { DeliveryInfoUpdateDto } from '../dto/proposal/data-delivery/delivery-info.dto';
+import { DataDelivery } from '../schema/sub-schema/data-delivery/data-delivery.schema';
 
 @ApiController('proposals', undefined, 'data-delivery')
 export class ProposalDataDeliveryController {
@@ -39,7 +40,7 @@ export class ProposalDataDeliveryController {
   }
 
   // POST /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Auth(Role.FdpgMember)
   @Post(':id/data-delivery')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Creates the data delivery section for a proposal' })
@@ -72,7 +73,7 @@ export class ProposalDataDeliveryController {
   }
 
   // POST /api/proposals/:id/init-delivery-info
-  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Auth(Role.FdpgMember)
   @Put(':id/init-delivery-info')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Creates a new delivery info' })
@@ -101,5 +102,14 @@ export class ProposalDataDeliveryController {
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
     return this.proposalDataDeliveryService.syncDeliveryInfoWithDsfWithUser(id, dto, user);
+  }
+
+  @Auth(Role.FdpgMember)
+  @Post('/test')
+  async test(): Promise<void> {
+    const res = await this.fhirService.fetchResultUrl({
+      fhirTaskId: '2f716f14-84db-4c6a-bb01-d326a051ba4f',
+    } as any);
+    console.log(res);
   }
 }

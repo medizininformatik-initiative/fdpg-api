@@ -2,4 +2,5 @@ export enum DeliveryInfoStatus {
   PENDING = 'PENDING',
   FINISHED = 'FINISHED',
   CANCELED = 'CANCELED',
+  WAITING_FOR_DATA_SET = 'WAITING_FOR_DATA_SET',
 }

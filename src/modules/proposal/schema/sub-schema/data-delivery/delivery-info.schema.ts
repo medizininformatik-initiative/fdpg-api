@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { SubDelivery, SubDeliverySchema } from './sub-delivery.schema';
 import { DeliveryInfoStatus } from 'src/modules/proposal/enums/delivery-info-status.enum';
-import { ForbiddenException } from '@nestjs/common';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 export type DeliveryInfoDocument = DeliveryInfo & Document;
 
@@ -18,6 +18,23 @@ export class DeliveryInfo {
 
   @Prop({ type: String, enum: DeliveryInfoStatus, required: true, default: DeliveryInfoStatus.PENDING })
   status: DeliveryInfoStatus;
+
+  @Prop({
+    type: String,
+    ref: () => Location,
+  })
+  dms: string;
+
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  manualEntry: boolean;
+
+  @Prop({
+    type: String,
+  })
+  resultUrl?: string;
 
   @Prop({ type: [SubDeliverySchema], default: [] })
   subDeliveries: SubDelivery[];
@@ -43,10 +60,4 @@ export const DeliveryInfoSchema = SchemaFactory.createForClass(DeliveryInfo);
 DeliveryInfoSchema.pre<DeliveryInfo>('save', function (next) {
   this.updatedAt = new Date();
   next();
-});
-
-DeliveryInfoSchema.pre<DeliveryInfo>('save', function (next) {
-  if (this.status !== DeliveryInfoStatus.PENDING) {
-    throw new ForbiddenException('Cannot update delivery info when it was finished');
-  }
 });

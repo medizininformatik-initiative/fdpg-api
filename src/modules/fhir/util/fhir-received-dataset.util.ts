@@ -10,12 +10,11 @@ const getNestedValue = (obj, path) => {
  * @param {object} data - The source data object containing the resource.
  * @returns {object} The flattened JSON object.
  */
-export const processReceivedDataSetResponse = (entry, INPUT_CODE_MAPPINGS) => {
+export const mapTaskTableResponse = (entry, INPUT_CODE_MAPPINGS) => {
   const resource = entry.resource;
 
   if (!resource) {
     throw Error("Input data does not contain a 'resource' object.");
-    return {};
   }
 
   // 1. Start with the direct properties from 'resource'

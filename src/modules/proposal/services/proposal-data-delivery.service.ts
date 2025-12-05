@@ -250,6 +250,8 @@ export class ProposalDataDeliveryService {
       name: dto.name,
       deliveryDate: dto.deliveryDate,
       status: dto.status,
+      dms: dto.dms,
+      manualEntry: dto.manualEntry,
       subDeliveries: (dto.subDeliveries || []).map(this.mapToSubDeliveryModel),
     }));
   };
