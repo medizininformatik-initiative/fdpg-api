@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Schedule, ScheduleDocument } from './schema/schedule.schema';
 import { Model } from 'mongoose';
-import { IProposalScheduleEventSet } from './types/schedule-event.types';
+import { IProposalScheduleEventSet, ProposalScheduleTypes } from './types/schedule-event.types';
 import { getEventsFromSet } from './utils/get-events.util';
 import { ScheduledEvent } from '../proposal/schema/sub-schema/scheduled-event.schema';
 import { ScheduleType } from './enums/schedule-type.enum';
@@ -17,6 +17,8 @@ export class SchedulerService {
     private scheduleModel: Model<ScheduleDocument>,
     private scheduleProcessorService: ScheduleProcessorService,
   ) {}
+
+  private readonly logger = new Logger(SchedulerService.name);
 
   async createEvents(eventSet: IProposalScheduleEventSet): Promise<void> {
     const events = getEventsFromSet(eventSet);
@@ -59,7 +61,7 @@ export class SchedulerService {
     await this.createEvents({ proposal, types: [...changedEvents] });
   }
 
-  private dueDateToEventMapping = (deadlineType: DueDateEnum): ScheduleType[] => {
+  private dueDateToEventMapping = (deadlineType: DueDateEnum): ProposalScheduleTypes[] => {
     switch (deadlineType) {
       case DueDateEnum.DUE_DAYS_FDPG_CHECK:
         return [ScheduleType.ReminderFdpgCheck];
@@ -81,4 +83,50 @@ export class SchedulerService {
         return [];
     }
   };
+
+  /**
+   * Attempts to acquire a distributed lock for a specific cron job type.
+   * @param jobType The ScheduleType representing the cron job ().
+   * @param leaseDurationMs How long the lock is held in milliseconds (e.g., 5 minutes = 300_000). Default 5 Minutes
+   * @returns true if the lock was successfully acquired, false otherwise.
+   */
+  async acquireLock(jobType: ScheduleType, leaseDurationMs: number = 5 * 60 * 1000): Promise<boolean> {
+    const newLockedUntil = new Date(Date.now() + leaseDurationMs);
+
+    try {
+      const lockAcquired = await this.scheduleModel
+        .findOneAndUpdate(
+          {
+            type: jobType,
+            lockedUntil: { $lt: new Date() },
+          },
+          {
+            $set: {
+              lockedUntil: newLockedUntil,
+              updatedAt: new Date(),
+              numberOfTries: 0,
+            },
+            $setOnInsert: {
+              createdAt: new Date(),
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+          },
+        )
+        .lean();
+
+      if (lockAcquired) {
+        this.logger.debug(`Lock acquired successfully for job type: ${jobType}`);
+        return true;
+      }
+
+      this.logger.warn(`Lock already held by another instance for job type: ${jobType}`);
+      return false;
+    } catch (error) {
+      this.logger.error(`Error acquiring lock for ${jobType}:`, error.message);
+      return false;
+    }
+  }
 }

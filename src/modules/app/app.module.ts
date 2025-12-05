@@ -21,6 +21,7 @@ import { Migration, MigrationSchema } from './schema/migration.schema';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { LocationModule } from '../location/location.module';
 import { Location, LocationSchema } from '../location/schema/location.schema';
+import { FhirModule } from '../fhir/fhir.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { Location, LocationSchema } from '../location/schema/location.schema';
     StorageModule,
     PdfEngineModule,
     FeasibilityModule,
+    FhirModule,
     ProposalFormModule,
   ],
   controllers: [AppController],

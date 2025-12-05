@@ -1,5 +1,5 @@
 // /controllers/proposal-data-delivery.controller.ts
-import { Body, Get, Param, Post, Put, Request, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Get, Param, Patch, Post, Put, Request, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -15,10 +15,15 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-delivery/data-delivery.dto';
 import { ProposalDataDeliveryService } from '../services/proposal-data-delivery.service';
+import { FhirService } from 'src/modules/fhir/fhir.service';
+import { DeliveryInfoUpdateDto } from '../dto/proposal/data-delivery/delivery-info.dto';
 
 @ApiController('proposals', undefined, 'data-delivery')
 export class ProposalDataDeliveryController {
-  constructor(private readonly proposalDataDeliveryService: ProposalDataDeliveryService) {}
+  constructor(
+    private readonly proposalDataDeliveryService: ProposalDataDeliveryService,
+    private readonly fhirService: FhirService,
+  ) {}
 
   // GET /api/proposals/:id/data-delivery
   @Auth(Role.FdpgMember, Role.DataManagementOffice)
@@ -64,5 +69,37 @@ export class ProposalDataDeliveryController {
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
     return this.proposalDataDeliveryService.updateDataDelivery(id, dto, user);
+  }
+
+  // POST /api/proposals/:id/init-delivery-info
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Put(':id/init-delivery-info')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Creates a new delivery info' })
+  @ApiNotFoundResponse({ description: 'Proposalcould not be found' })
+  @ApiOkResponse({ description: 'Data delivery updated', type: DataDeliveryGetDto })
+  @ApiBody({ type: DeliveryInfoUpdateDto })
+  async initDeliveryInfo(
+    @Param() { id }: MongoIdParamDto,
+    @Body() dto: DeliveryInfoUpdateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    return await this.proposalDataDeliveryService.initDeliveryInfo(id, dto, user);
+  }
+
+  // POST /api/proposals/:id/init-delivery-info
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Patch(':id/delivery-info/sync')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Creates a new delivery info' })
+  @ApiNotFoundResponse({ description: 'Proposalcould not be found' })
+  @ApiOkResponse({ description: 'Data delivery updated', type: DataDeliveryGetDto })
+  @ApiBody({ type: DeliveryInfoUpdateDto })
+  async syncDeliveryInfo(
+    @Param() { id }: MongoIdParamDto,
+    @Body() dto: DeliveryInfoUpdateDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    return this.proposalDataDeliveryService.syncDeliveryInfoWithDsfWithUser(id, dto, user);
   }
 }
