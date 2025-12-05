@@ -16,7 +16,6 @@ import { StatusReminderService } from './events/status-reminder/status-reminder.
 import { ReportsService } from './events/reports/reports.service';
 import { ReportDto } from '../proposal/dto/proposal/report.dto';
 import { PublicationCreateDto, PublicationUpdateDto } from '../proposal/dto/proposal/publication.dto';
-import { Publication } from '../proposal/schema/sub-schema/publication.schema';
 import { PublicationsService } from './events/publications/publications.service';
 import { Answer } from '../comment/schema/answer.schema';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
@@ -141,20 +140,6 @@ export class EventEngineService {
     }
   }
 
-  async handleProposalReportUpdate(proposal: Proposal, report: ReportDto) {
-    if (proposal && report) {
-      const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportsService.handleReportUpdate(proposal, report, proposalUrl);
-    }
-  }
-
-  async handleProposalReportDelete(proposal: Proposal, report: ReportDto) {
-    if (proposal && report) {
-      const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportsService.handleReportDelete(proposal, report, proposalUrl);
-    }
-  }
-
   async handleProposalPublicationCreate(proposal: Proposal, publication: PublicationCreateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
@@ -166,13 +151,6 @@ export class EventEngineService {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.publicationsService.handlePublicationUpdate(proposal, publication, proposalUrl);
-    }
-  }
-
-  async handleProposalPublicationDelete(proposal: Proposal, publication: Publication) {
-    if (proposal && publication) {
-      const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationsService.handlePublicationDelete(proposal, publication, proposalUrl);
     }
   }
 

@@ -25,6 +25,7 @@ import { validateMatchingId } from 'src/shared/utils/validate-matching-ids.util'
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../../dto/check-unique-proposal.dto';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
+import { ProposalSyncService } from '../proposal-sync.service';
 import { LocationService } from 'src/modules/location/service/location.service';
 
 class ProposalModel {
@@ -97,6 +98,7 @@ describe('ProposalCrudService', () => {
   let sharedService: jest.Mocked<SharedService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let proposalFormService: jest.Mocked<ProposalFormService>;
+  let proposalSyncService: jest.Mocked<ProposalSyncService>;
   let locationService: jest.Mocked<LocationService>;
 
   const request = {
@@ -149,6 +151,14 @@ describe('ProposalCrudService', () => {
           },
         },
         {
+          provide: ProposalSyncService,
+          useValue: {
+            syncProposal: jest.fn(),
+            retrySync: jest.fn(),
+            syncAllProposals: jest.fn(),
+          },
+        },
+        {
           provide: LocationService,
           useValue: {
             findById: jest.fn().mockImplementation(() => undefined),
@@ -165,6 +175,7 @@ describe('ProposalCrudService', () => {
     sharedService = module.get<SharedService>(SharedService) as jest.Mocked<SharedService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
+    proposalSyncService = module.get<ProposalSyncService>(ProposalSyncService) as jest.Mocked<ProposalSyncService>;
     locationService = module.get<LocationService>(LocationService) as jest.Mocked<LocationService>;
   });
 
@@ -237,7 +248,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with projection', async () => {
@@ -266,7 +277,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with diz member projection', async () => {
@@ -296,7 +307,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with uac member projection', async () => {
@@ -325,7 +336,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified, undefined);
     });
 
     it('should throw 404 if not found', async () => {

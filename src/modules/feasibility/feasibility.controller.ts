@@ -1,4 +1,4 @@
-import { Get, Request, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Get, Param, Request, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
@@ -15,7 +15,16 @@ export class FeasibilityController {
   @Get()
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Returns all saved feasibility queries for the user' })
-  getQueriesByUser(@Request() { user }: FdpgRequest): Promise<FeasibilityUserQueryDetailDto[]> {
+  async getQueriesByUser(@Request() { user }: FdpgRequest): Promise<FeasibilityUserQueryDetailDto[]> {
     return this.feasibilityService.getQueriesByUser(user.userId);
+  }
+
+  @Get('/redirect/:queryId')
+  @Auth(Role.DizMember, Role.FdpgMember)
+  async getRedirectUrl(
+    @Param('queryId') queryId: number,
+    @Request() { user }: FdpgRequest,
+  ): Promise<{ redirectUrl: string }> {
+    return await this.feasibilityService.getRedirectUrl(queryId, user.userId);
   }
 }

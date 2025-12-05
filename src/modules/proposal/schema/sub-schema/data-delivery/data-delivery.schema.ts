@@ -18,7 +18,7 @@ export class DataDelivery {
   acceptance: DeliveryAcceptance;
 
   @Prop({ type: [DeliveryInfoSchema], default: [] })
-  delivery?: DeliveryInfo[] | null;
+  deliveryInfos: DeliveryInfo[];
 
   @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;

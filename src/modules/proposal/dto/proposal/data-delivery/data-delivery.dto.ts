@@ -2,8 +2,9 @@ import { Expose, Type } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { DeliveryAcceptance } from '../../../enums/data-delivery.enum';
 import { DeliveryInfoGetDto, DeliveryInfoUpdateDto } from './delivery-info.dto';
+import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 
-export class DataDeliveryUpdateDto {
+export class DataDeliveryUpdateDto extends WithIdForObjectDto {
   @Expose()
   @IsString()
   dataManagementSite: string;
@@ -16,10 +17,10 @@ export class DataDeliveryUpdateDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => DeliveryInfoUpdateDto)
-  delivery?: DeliveryInfoUpdateDto[] | null;
+  deliveryInfos: DeliveryInfoUpdateDto[] | null;
 }
 
-export class DataDeliveryGetDto {
+export class DataDeliveryGetDto extends WithIdForObjectDto {
   @Expose()
   dataManagementSite: string;
 
@@ -29,13 +30,13 @@ export class DataDeliveryGetDto {
   @Expose()
   @Type(() => DeliveryInfoGetDto)
   @IsOptional()
-  delivery?: DeliveryInfoGetDto[] | null;
+  deliveryInfos: DeliveryInfoGetDto[] | null;
 
   @Expose()
   @IsOptional()
-  createdAt?: Date;
+  createdAt: Date;
 
   @Expose()
   @IsOptional()
-  updatedAt?: Date;
+  updatedAt: Date;
 }

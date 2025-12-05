@@ -9,4 +9,6 @@ export enum CacheKey {
   MiiLocations = 'CACHE_KEY_MII_LOCATIONS',
   MiiLocationsKeyLabel = 'CACHE_KEY_MII_LOCATIONS_KEY_LABEL',
   AllDmoUsers = 'CACHE_KEY_DMO_USERS',
+  AcptResearchers = 'CACHE_KEY_ACPT_RESEARCHERS',
+  AcptLocations = 'CACHE_KEY_ACPT_LOCATIONS',
 }

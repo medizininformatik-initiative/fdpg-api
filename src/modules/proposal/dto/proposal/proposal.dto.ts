@@ -24,6 +24,7 @@ import { ExposeLocationStatus } from '../../decorators/expose-location-status.de
 import { ExposeUpload } from '../../decorators/expose-uploads.decorator';
 import { LocationState } from '../../enums/location-state.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalType } from '../../enums/proposal-type.enum';
 import { IProposalGetListSchema } from '../../types/proposal-get-list-schema.interface';
 import { getIsDoneOverview } from '../../utils/is-done-overview.util';
 import { getMostAdvancedState } from '../../utils/validate-access.util';
@@ -36,6 +37,7 @@ import { DeclineReasonDto } from './decline-reason.dto';
 import { FdpgChecklistGetDto, initChecklist } from './fdpg-checklist.dto';
 import { FdpgTaskGetDto } from './fdpg-task.dto';
 import { HistoryEventGetDto } from './history-event.dto';
+import { RegisterInfoDto } from './register-info.dto';
 import { ParticipantDto } from './participant.dto';
 import { ProjectResponsibleDto } from './project-responsible.dto';
 import { ProjectUserDto } from './project-user.dto';
@@ -74,7 +76,8 @@ const getSignedTransform = (proposal: ProposalGetDto) => {
       (approval) => !proposal.requestedButExcludedLocations.includes(approval.location),
     ) ?? [];
 
-  return [...uacApprovals, ...conditionAccepted];
+  const allItems = [...uacApprovals, ...conditionAccepted];
+  return [...new Map(allItems.map((item) => [item.location, item])).values()];
 };
 
 @Exclude()
@@ -128,6 +131,11 @@ export class ProposalBaseDto {
   status: ProposalStatus;
 
   @Expose()
+  @IsEnum(ProposalType)
+  @IsOptional()
+  type: ProposalType;
+
+  @Expose()
   @IsEnum(PlatformIdentifier)
   @IsOptional()
   platform: PlatformIdentifier;
@@ -141,6 +149,16 @@ export class ProposalBaseDto {
   @IsString()
   @IsOptional()
   dataSourceLocaleId: string;
+
+  @Expose()
+  @Type(() => RegisterInfoDto)
+  @IsOptional()
+  registerInfo?: RegisterInfoDto;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  registerFormId?: string;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -349,7 +367,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   signedContracts: string[];
 
-  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher] })
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
       getSignedTransform(obj).filter(
@@ -436,24 +454,33 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember] })
   @Type(() => UacApprovalGetDto)
-  @Transform(({ value, options }) => {
+  @Transform(({ value, options, obj }) => {
     const { role, location } = getRoleFromTransform(options);
 
-    return value.filter((approval: UacApprovalGetDto) => {
-      if (role === Role.DizMember || role === Role.UacMember) {
-        return approval.location === location;
-      }
+    return value
+      .filter((approval: UacApprovalGetDto) => {
+        if (role === Role.DizMember || role === Role.UacMember) {
+          return approval.location === location;
+        }
 
-      return true;
-    });
+        return true;
+      })
+      .filter(
+        (approval: UacApprovalGetDto) =>
+          !obj.conditionalApprovals.map(({ location }) => location).includes(approval.location),
+      );
   })
   uacApprovals: UacApprovalGetDto[];
 
   @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.Researcher, Role.DizMember, Role.UacMember] })
   @Transform(
     ({ obj }) =>
-      obj.uacApprovals?.filter((approval) => !obj.requestedButExcludedLocations.includes(approval.location)).length ??
-      0,
+      obj.uacApprovals
+        ?.filter((approval) => !obj.requestedButExcludedLocations.includes(approval.location))
+        .filter(
+          (approval: UacApprovalGetDto) =>
+            !obj.conditionalApprovals.map(({ location }) => location).includes(approval.location),
+        ).length ?? 0,
   )
   uacApprovalsCount: number;
 
@@ -518,6 +545,9 @@ export class ProposalGetListDto {
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
     this.selectedDataSources = dbProjection.selectedDataSources;
+    this.type = dbProjection.type;
+    this.registerInfo = dbProjection.registerInfo;
+    this.registerFormId = dbProjection.registerFormId;
 
     if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -567,6 +597,9 @@ export class ProposalGetListDto {
 
   _id: string;
   selectedDataSources: PlatformIdentifier[];
+  type: ProposalType;
+  registerInfo?: RegisterInfoDto;
+  registerFormId?: string;
 }
 
 @Exclude()

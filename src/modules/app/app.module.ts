@@ -21,6 +21,7 @@ import { Migration, MigrationSchema } from './schema/migration.schema';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { LocationModule } from '../location/location.module';
 import { Location, LocationSchema } from '../location/schema/location.schema';
+import { FhirModule } from '../fhir/fhir.module';
 
 @Module({
   imports: [
@@ -32,7 +33,10 @@ import { Location, LocationSchema } from '../location/schema/location.schema';
       },
       inject: [ConfigService],
     }),
-    ServeStaticModule.forRoot({ exclude: ['/api*'], rootPath: join(__dirname, '..', '..', '..', 'static-content') }),
+    ServeStaticModule.forRoot({
+      exclude: ['/api'],
+      rootPath: join(__dirname, '..', '..', '..', 'static-content'),
+    }),
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: Migration.name, schema: MigrationSchema },
@@ -49,6 +53,7 @@ import { Location, LocationSchema } from '../location/schema/location.schema';
     StorageModule,
     PdfEngineModule,
     FeasibilityModule,
+    FhirModule,
     ProposalFormModule,
   ],
   controllers: [AppController],

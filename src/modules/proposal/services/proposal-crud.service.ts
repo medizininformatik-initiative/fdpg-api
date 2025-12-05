@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
 import { Model } from 'mongoose';
@@ -16,6 +16,7 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { GetListProjection } from '../schema/constants/get-list.projection';
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { StatusChangeService } from './status-change.service';
+import { ProposalSyncService } from './proposal-sync.service';
 import { IProposalGetListSchema } from '../types/proposal-get-list-schema.interface';
 import { mergeProposal } from '../utils/merge-proposal.util';
 import { getProposalFilter } from '../utils/proposal-filter/proposal-filter.util';
@@ -27,11 +28,16 @@ import { Role } from 'src/shared/enums/role.enum';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
 import { generateDataSourceLocaleId } from '../utils/generate-data-source-locale-id.util';
+import { ProposalType } from '../enums/proposal-type.enum';
+import { SyncStatus } from '../enums/sync-status.enum';
+import { ModificationContext } from '../enums/modification-context.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { Location } from 'src/modules/location/schema/location.schema';
 
 @Injectable()
 export class ProposalCrudService {
+  private readonly logger = new Logger(ProposalCrudService.name);
+
   constructor(
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
@@ -39,6 +45,7 @@ export class ProposalCrudService {
     private sharedService: SharedService,
     private statusChangeService: StatusChangeService,
     private proposalFormService: ProposalFormService,
+    private proposalSyncService: ProposalSyncService,
     private locationService: LocationService,
   ) {}
 
@@ -73,6 +80,7 @@ export class ProposalCrudService {
     user: IRequestUser,
     projection?: Record<string, number>,
     willBeModified?: boolean,
+    modificationContext?: ModificationContext,
   ): Promise<ProposalDocument> {
     const dbProjection: Record<string, number> = {
       ...projection,
@@ -116,7 +124,7 @@ export class ProposalCrudService {
     if (proposal) {
       const userLocationDoc = await this.locationService.findById(user.miiLocation);
       const userLocation = userLocationDoc?.toObject() as Location;
-      validateProposalAccess(proposal, user, userLocation, willBeModified);
+      validateProposalAccess(proposal, user, userLocation, willBeModified, modificationContext);
       return proposal;
     } else {
       throw new NotFoundException();
@@ -171,6 +179,18 @@ export class ProposalCrudService {
       toBeUpdated.dataSourceLocaleId = undefined;
     }
 
+    // If FDPG edits a Published registering form that was Synced, mark it as OutOfSync
+    const isFdpg = user.roles.includes(Role.FdpgMember) || user.roles.includes(Role.DataSourceMember);
+    if (
+      isFdpg &&
+      !isStatusChange &&
+      toBeUpdated.type === ProposalType.RegisteringForm &&
+      toBeUpdated.status === ProposalStatus.Published &&
+      toBeUpdated.registerInfo?.syncStatus === SyncStatus.Synced
+    ) {
+      toBeUpdated.registerInfo.syncStatus = SyncStatus.OutOfSync;
+    }
+
     await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
 
@@ -178,6 +198,43 @@ export class ProposalCrudService {
 
     if (isStatusChange) {
       await this.eventEngineService.handleProposalStatusChange(saveResult);
+
+      // Update linked registering form's originalProposalStatus when application form status changes
+      if (saveResult.type === ProposalType.ApplicationForm && saveResult.registerFormId) {
+        try {
+          this.logger.log(
+            `Updating registering form ${saveResult.registerFormId} originalProposalStatus to ${saveResult.status}`,
+          );
+          await this.proposalModel.updateOne(
+            { _id: saveResult.registerFormId },
+            {
+              $set: {
+                'registerInfo.originalProposalStatus': saveResult.status,
+                'registerInfo.syncStatus': SyncStatus.OutOfSync,
+              },
+            },
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to update registering form originalProposalStatus for ${saveResult.registerFormId}: ${error.message}`,
+          );
+        }
+      }
+
+      const isApprovalToPublished =
+        oldStatus === ProposalStatus.FdpgCheck &&
+        saveResult.status === ProposalStatus.Published &&
+        saveResult.type === ProposalType.RegisteringForm;
+
+      if (isApprovalToPublished) {
+        this.logger.log(`Auto-syncing registering form ${proposalId} on approval`);
+        try {
+          await this.proposalSyncService.syncProposal(proposalId, user);
+          this.logger.log(`Auto-sync completed successfully for proposal ${proposalId}`);
+        } catch (error) {
+          this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
+        }
+      }
     }
 
     const plain = saveResult.toObject();
@@ -187,7 +244,12 @@ export class ProposalCrudService {
   }
 
   async delete(proposalId: string, user: IRequestUser): Promise<void> {
-    const document = await this.findDocument(proposalId, user, { uploads: 1, reports: 1, owner: 1, status: 1 }, true);
+    const document = await this.findDocument(
+      proposalId,
+      user,
+      { uploads: 1, reports: 1, owner: 1, status: 1, registerInfo: 1, type: 1 },
+      true,
+    );
     await this.sharedService.deleteProposalWithDependencies(document, user);
   }
 

@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
+import { CacheModule } from '@nestjs/cache-manager';
 import { SharedModule } from 'src/shared/shared.module';
 import { AdminModule } from '../admin/admin.module';
 import { StorageModule } from '../storage/storage.module';
@@ -15,6 +16,7 @@ import { ProposalMiscController } from './controller/proposal-misc.controller';
 import { ProposalPublicationController } from './controller/proposal-publication.controller';
 import { ProposalReportController } from './controller/proposal-reports.controller';
 import { ProposalUploadController } from './controller/proposal-upload.controller';
+import { ProposalSyncController } from './controller/proposal-sync.controller';
 import { getProposalSchemaFactory, Proposal } from './schema/proposal.schema';
 import { ProposalContractingService } from './services/proposal-contracting.service';
 import { ProposalCrudService } from './services/proposal-crud.service';
@@ -26,11 +28,15 @@ import { ProposalDownloadService } from './services/proposal-download.service';
 import { StatusChangeService } from './services/status-change.service';
 import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviation.validator';
 import { ProposalPdfService } from './services/proposal-pdf.service';
+import { ProposalSyncService } from './services/proposal-sync.service';
+import { AcptPluginClient } from '../app/acpt-plugin/acpt-plugin.client';
 import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { LocationModule } from '../location/location.module';
 import { Connection } from 'mongoose';
 import { Location } from '../location/schema/location.schema';
 import { ProposalDataDeliveryService } from './services/proposal-data-delivery.service';
+import { FhirModule } from '../fhir/fhir.module';
+import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info.cron';
 @Module({
   imports: [
     LocationModule,
@@ -44,12 +50,14 @@ import { ProposalDataDeliveryService } from './services/proposal-data-delivery.s
         },
       },
     ]),
+    CacheModule.register(),
     UserModule,
     forwardRef(() => EventEngineModule),
     StorageModule,
     PdfEngineModule,
     SharedModule,
     FeasibilityModule,
+    FhirModule,
     SchedulerModule,
     AdminModule,
     ProposalFormModule,
@@ -61,6 +69,7 @@ import { ProposalDataDeliveryService } from './services/proposal-data-delivery.s
     ProposalPublicationController,
     ProposalReportController,
     ProposalContractingController,
+    ProposalSyncController,
     ProposalDataDeliveryController,
   ],
   providers: [
@@ -75,7 +84,10 @@ import { ProposalDataDeliveryService } from './services/proposal-data-delivery.s
     IsUniqueAbbreviationConstraint,
     StatusChangeService,
     ProposalPdfService,
+    ProposalSyncService,
+    AcptPluginClient,
+    SyncDeliveryInfoCronService,
   ],
-  exports: [ProposalCrudService, MongooseModule],
+  exports: [ProposalCrudService, MongooseModule, ProposalSyncService],
 })
 export class ProposalModule {}
