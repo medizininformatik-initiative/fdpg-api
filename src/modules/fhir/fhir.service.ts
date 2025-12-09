@@ -1,19 +1,15 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { DeliveryInfo } from '../proposal/schema/sub-schema/data-delivery/delivery-info.schema';
-import { Proposal } from '../proposal/schema/proposal.schema';
-import { LocationService } from '../location/service/location.service';
+import { Injectable, Logger } from '@nestjs/common';
 import { FhirReceivedDataSetType } from './type/fhir-received-dataset.type';
 import { v4 as uuidV4 } from 'uuid';
 import { FhirHelpersUtil } from './util/fhir-helpers.util';
 import { ConfigService } from '@nestjs/config';
 import { DsfQuestionnaireResponseService } from './dsf-questionnaire-response/dsf-questionnaire-response.service';
 import { DsfTaskService } from './dsf-task/dsf-task.service';
-import { DeliveryInfoStatus } from '../proposal/enums/delivery-info-status.enum';
+import { Location } from '../location/schema/location.schema';
 
 @Injectable()
 export class FhirService {
   constructor(
-    private readonly locationService: LocationService,
     private readonly configService: ConfigService,
     private readonly questionnaireResponseService: DsfQuestionnaireResponseService,
     private readonly taskService: DsfTaskService,
@@ -30,45 +26,24 @@ export class FhirService {
   private FRONTEND_URL: string;
   private IS_FHIR_TEST = false;
 
-  async createCoordinateDataSharingTask(deliveryInfo: DeliveryInfo, proposal: Proposal): Promise<DeliveryInfo> {
-    const locationMap = await this.locationService.findAllLookUpMap();
-
-    const dms = locationMap[proposal.dataDelivery.dataManagementSite];
-    const dicLocations = deliveryInfo.subDeliveries.map((delivery) => {
-      const location = locationMap[delivery.location];
-
-      if (!location || !location.uri) {
-        throw new NotFoundException(`Location or URI not found for subDelivery location ID: ${delivery.location}`);
-      }
-
-      return location;
-    });
-
-    if (!dms.dataManagementCenter) {
-      throw new ForbiddenException(`Location '${dms._id}' is not a DMS`);
-    }
-
-    const notDicLocations = dicLocations.filter((loc) => !loc.dataIntegrationCenter);
-
-    if (notDicLocations.length > 0) {
-      throw new ForbiddenException(`Locations ${notDicLocations} aren't data integration centers`);
-    }
-
+  async createCoordinateDataSharingTask(
+    proposalId: string,
+    projectAbbreviation: string,
+    dms: Location,
+    dicLocations: Location[],
+    researcherMails: string[],
+    deliveryDate: Date,
+  ): Promise<{ fhirBusinessKey: string; fhirTaskId: string }> {
     const businessKey = uuidV4();
 
-    const extractionPeriod = FhirHelpersUtil.getExtractionPeriod(new Date(), new Date(deliveryInfo.deliveryDate));
-
-    const researcherEmails = [
-      proposal.applicant?.researcher?.email ?? 'applicant_mail_not_found@invalid.com',
-      ...(proposal.participants || []).map((p) => p.researcher.email),
-    ];
+    const extractionPeriod = FhirHelpersUtil.getExtractionPeriod(new Date(), new Date(deliveryDate));
 
     const startParams = {
       hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
-      projectIdentifier: proposal.projectAbbreviation,
-      contractUrl: `${this.FRONTEND_URL}/proposals/${proposal._id}/details`,
+      projectIdentifier: projectAbbreviation,
+      contractUrl: `${this.FRONTEND_URL}/proposals/${proposalId}/details`,
       dmsIdentifier: dms.uri,
-      researcherIdentifiers: researcherEmails,
+      researcherIdentifiers: researcherMails,
       dicIdentifiers: dicLocations.map((dic) => dic.uri),
       extractionPeriod,
       businessKey,
@@ -89,11 +64,7 @@ export class FhirService {
 
     const createdTask = await this.taskService.startCoordinateDataSharingProcess(startParams);
 
-    deliveryInfo.fhirTaskId = createdTask.id;
-    deliveryInfo.fhirBusinessKey = businessKey;
-    deliveryInfo.dms = dms._id;
-
-    return deliveryInfo;
+    return { fhirBusinessKey: businessKey, fhirTaskId: createdTask.id };
   }
 
   async pollForReceivedDataSetsByBusinessKey(businessKey: string, lastSync: Date): Promise<FhirReceivedDataSetType[]> {
@@ -113,22 +84,13 @@ export class FhirService {
     await this.questionnaireResponseService.setReleaseConsolidateDataSetsAnswer(businessKey, false);
   }
 
-  async fetchResultUrl(deliveryInfo: DeliveryInfo): Promise<DeliveryInfo> {
-    if (!deliveryInfo.fhirTaskId) {
-      const msg = `DeliveryInfo with Id '${deliveryInfo._id}' does not have a task Id!`;
-      this.logger.error(msg);
-      throw Error(msg);
+  async fetchResultUrl(fhirTaskId: string): Promise<string | null> {
+    const resultUrl = await this.taskService.getResultUrlByTaskId(fhirTaskId);
+
+    if (!resultUrl || resultUrl.trim() === '') {
+      return null;
     }
 
-    const resultUrl = await this.taskService.getResultUrlByTaskId(deliveryInfo.fhirTaskId);
-
-    if (!resultUrl) {
-      this.logger.warn(`No result URL for delivery info '${deliveryInfo._id}' found`);
-      return deliveryInfo;
-    }
-
-    deliveryInfo.resultUrl = resultUrl;
-
-    return deliveryInfo;
+    return resultUrl;
   }
 }

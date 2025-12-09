@@ -22,7 +22,9 @@ export class ScheduleProcessorService {
     const filter: FilterQuery<ScheduleDocument> = {
       lockedUntil: { $lt: now },
       numberOfTries: { $lt: 2 },
-      type: { $ne: ScheduleType.DailySyncDeliveryInfos },
+      type: {
+        $nin: [ScheduleType.DailySyncDeliveryInfosSetSubDeliveryStatus, ScheduleType.DailySyncDeliveryInfosFetchResult],
+      },
     };
 
     if (getOnlyDueEvents) {

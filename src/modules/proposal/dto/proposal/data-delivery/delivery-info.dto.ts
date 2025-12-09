@@ -78,4 +78,9 @@ export class DeliveryInfoGetDto extends WithIdForObjectDto {
   @IsString()
   @IsOptional()
   resultUrl?: string;
+
+  @Expose()
+  @IsDate()
+  @IsOptional()
+  forwardedOnDate?: Date;
 }
