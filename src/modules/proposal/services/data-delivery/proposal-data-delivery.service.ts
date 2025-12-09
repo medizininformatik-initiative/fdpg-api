@@ -62,7 +62,7 @@ export class ProposalDataDeliveryService {
     user: IRequestUser,
   ): Promise<DataDeliveryGetDto> => {
     const proposalDoc = await this.proposalCrudService.findDocument(proposalid, user);
-    const saved = await this.proposalDeliveryInfoService.initDeliveryInfo(proposalDoc.toObject(), dto);
+    const saved = await this.proposalDeliveryInfoService.initDeliveryInfo(proposalDoc.toObject(), dto, user);
     return plainToClass(DataDeliveryGetDto, saved, {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],

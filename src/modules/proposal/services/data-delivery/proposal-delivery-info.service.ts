@@ -9,6 +9,8 @@ import { LocationService } from 'src/modules/location/service/location.service';
 import { DataDelivery } from '../../schema/sub-schema/data-delivery/data-delivery.schema';
 import { DeliveryInfoStatus } from '../../enums/delivery-info-status.enum';
 import { SubDeliveryStatus } from '../../enums/data-delivery.enum';
+import { IRequestUser } from 'src/shared/types/request-user.interface';
+import { Role } from 'src/shared/enums/role.enum';
 
 @Injectable()
 export class ProposalDeliveryInfoService {
@@ -21,7 +23,11 @@ export class ProposalDeliveryInfoService {
 
   private readonly logger = new Logger(ProposalDeliveryInfoService.name);
 
-  initDeliveryInfo = async (proposal: Proposal, dto: DeliveryInfoUpdateDto): Promise<DataDelivery> => {
+  initDeliveryInfo = async (
+    proposal: Proposal,
+    dto: DeliveryInfoUpdateDto,
+    user: IRequestUser,
+  ): Promise<DataDelivery> => {
     const locationMap = await this.locationService.findAllLookUpMap();
     const selectedDms = locationMap[proposal.dataDelivery.dataManagementSite];
 
@@ -53,13 +59,20 @@ export class ProposalDeliveryInfoService {
 
     const toBeSaved = await (async (): Promise<DeliveryInfo> => {
       if (dto.manualEntry) {
+        if (![Role.DataManagementOffice, Role.FdpgMember].includes(user.singleKnownRole)) {
+          throw new ForbiddenException('Role cannot create manual entry');
+        }
+
         return {
           ...newDeliveryModel,
           status: DeliveryInfoStatus.FINISHED,
-          forwardedOnDate: new Date(),
+          forwardedOnDate: newDeliveryModel.deliveryDate ?? new Date(),
           subDeliveries: newDeliveryModel.subDeliveries.map((sd) => ({ ...sd, status: SubDeliveryStatus.ACCEPTED })),
         };
       } else {
+        if (user.singleKnownRole !== Role.FdpgMember) {
+          throw new ForbiddenException('Role cannot create DSF entry');
+        }
         const researcherEmails = [
           proposal.applicant?.researcher?.email ?? 'applicant_mail_not_found@invalid.com',
           ...(proposal.participants || []).map((p) => p.researcher.email),

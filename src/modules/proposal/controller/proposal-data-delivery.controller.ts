@@ -29,7 +29,6 @@ import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-
 import { ProposalDataDeliveryService } from '../services/data-delivery/proposal-data-delivery.service';
 import { FhirService } from 'src/modules/fhir/fhir.service';
 import { DeliveryInfoUpdateDto } from '../dto/proposal/data-delivery/delivery-info.dto';
-import { SubDeliveryStatus } from '../enums/data-delivery.enum';
 import { SubDeliveryUpdateDto } from '../dto/proposal/data-delivery/sub-delivery.dto';
 
 @ApiController('proposals', undefined, 'data-delivery')
@@ -86,7 +85,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PUT /api/proposals/:id/init-delivery-info
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataManagementOffice)
   @Put(':id/init-delivery-info')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Creates a new delivery info' })
