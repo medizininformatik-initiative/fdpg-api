@@ -37,7 +37,12 @@ export class ProposalDataDeliveryService {
 
   getDataDelivery = async (proposalId: string, user: IRequestUser): Promise<DataDeliveryGetDto | null> => {
     const dataDelivery = await this.proposalDataDeliveryCrudService.getDataDelivery(proposalId, user);
-    return dataDelivery ? plainToClass(DataDeliveryGetDto, dataDelivery, { strategy: 'excludeAll' }) : null;
+    return dataDelivery
+      ? plainToClass(DataDeliveryGetDto, dataDelivery, {
+          strategy: 'excludeAll',
+          groups: [ProposalValidation.IsOutput],
+        })
+      : null;
   };
 
   createDataDelivery = async (
@@ -56,7 +61,10 @@ export class ProposalDataDeliveryService {
 
     await updatedProposal.save();
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, { strategy: 'excludeAll' });
+    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   };
 
   updateDataDelivery = async (
@@ -79,6 +87,7 @@ export class ProposalDataDeliveryService {
       updatedProposal.dataDelivery.acceptance === DeliveryAcceptance.PENDING;
 
     if (isDmsAcceptanceAnswer) {
+      console.log({ updatedProposal });
       addHistoryItemForDmoAcceptanceAnswer(updatedProposal, user, updatedProposal.dataDelivery.acceptance);
     }
 
@@ -88,7 +97,10 @@ export class ProposalDataDeliveryService {
 
     await updatedProposal.save();
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, { strategy: 'excludeAll' });
+    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   };
 
   initDeliveryInfo = async (
@@ -99,7 +111,13 @@ export class ProposalDataDeliveryService {
     const proposalDoc = await this.proposalCrudService.findDocument(proposalid, user);
     const savedProposal = await this.proposalDeliveryInfoService.initDeliveryInfo(proposalDoc.toObject(), dto, user);
 
-    addHistoryItemForInitiateDelivery(savedProposal, user, dto.name, dto.manualEntry);
+    addHistoryItemForInitiateDelivery(
+      savedProposal,
+      user,
+      dto.name,
+      dto.manualEntry,
+      dto.subDeliveries.map(({ location }) => location),
+    );
     await savedProposal.save();
 
     return plainToClass(DataDeliveryGetDto, savedProposal.dataDelivery, {
@@ -114,14 +132,14 @@ export class ProposalDataDeliveryService {
     subDeliveryId: string,
     rating: SubDeliveryStatus,
   ): Promise<DataDeliveryGetDto> => {
-    const updated = await this.proposalSubDeliveryService.rateDelivery(
+    const updatedProposal = await this.proposalSubDeliveryService.rateDelivery(
       proposalId,
       deliveryInfoId,
       subDeliveryId,
       rating,
     );
 
-    return plainToClass(DataDeliveryGetDto, updated.dataDelivery, {
+    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });
@@ -139,8 +157,8 @@ export class ProposalDataDeliveryService {
     );
 
     if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET || dto.status === DeliveryInfoStatus.PENDING) {
-      this.proposalDeliveryInfoService.setToForwardDelivery(deliveryInfo);
-      await this.proposalDataDeliverySyncService.syncSubDeliveryStatusesWithDsf(proposalId, deliveryInfo);
+      await this.proposalDeliveryInfoService.setToForwardDelivery(deliveryInfo);
+      await this.proposalDataDeliverySyncService.syncDeliveryInfoResultWithDsf(proposalId, deliveryInfo);
     } else if (dto.status === DeliveryInfoStatus.CANCELED) {
       this.proposalDeliveryInfoService.setToCancelDelivery(deliveryInfo);
     } else {
@@ -150,14 +168,27 @@ export class ProposalDataDeliveryService {
     const updatedProposal = await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
 
     if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET || dto.status === DeliveryInfoStatus.PENDING) {
-      addHistoryItemForForwardedDelivery(updatedProposal, user, dto.name);
+      addHistoryItemForForwardedDelivery(
+        updatedProposal,
+        user,
+        dto.name,
+        dto.subDeliveries.map(({ location }) => location),
+      );
     } else if (dto.status === DeliveryInfoStatus.CANCELED) {
-      addHistoryItemForCanceledDelivery(updatedProposal, user, dto.name);
+      addHistoryItemForCanceledDelivery(
+        updatedProposal,
+        user,
+        dto.name,
+        dto.subDeliveries.map(({ location }) => location),
+      );
     }
 
     updatedProposal.save();
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, { strategy: 'excludeAll' });
+    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   };
 
   syncDeliveryInfoWithDsf = async (
@@ -189,9 +220,9 @@ export class ProposalDataDeliveryService {
       await this.proposalDataDeliverySyncService.syncDeliveryInfoResultWithDsf(proposalId, deliveryInfo);
     }
 
-    await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
+    const updatedProposal = await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
 
-    return plainToClass(DataDeliveryGetDto, deliveryInfo, {
+    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });

@@ -93,8 +93,10 @@ export class ProposalDeliveryInfoService {
     return await this.proposalDataDeliveryCrudService.createDeliveryInfo(proposal._id, toBeSaved);
   };
 
-  setToForwardDelivery = (deliveryInfo: DeliveryInfo) =>
+  setToForwardDelivery = async (deliveryInfo: DeliveryInfo) => {
     this.setStatus(deliveryInfo, DeliveryInfoStatus.WAITING_FOR_DATA_SET);
+    await this.fhirService.releaseQuestionnairResponseReleaseConsolidateDataSets(deliveryInfo.fhirBusinessKey);
+  };
 
   setToCancelDelivery = (deliveryInfo: DeliveryInfo) => this.setStatus(deliveryInfo, DeliveryInfoStatus.CANCELED);
 

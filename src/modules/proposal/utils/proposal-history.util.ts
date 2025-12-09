@@ -320,27 +320,30 @@ export const addHistoryItemForInitiateDelivery = (
   user: IRequestUser,
   deliveryName: string,
   isManual: boolean,
+  locations: string[],
 ): void => {
   const type = isManual ? HistoryEventType.DataDeliveryManualEntry : HistoryEventType.DataDeliveryStarted;
-  pushHistoryItem(proposal, user, type, undefined, { deliveryName });
+  pushHistoryItem(proposal, user, type, undefined, { deliveryName, locations });
 };
 
 export const addHistoryItemForCanceledDelivery = (
   proposal: Proposal,
   user: IRequestUser,
   deliveryName: string,
+  locations: string[],
 ): void => {
   const type = HistoryEventType.DataDeliveryCanceled;
-  pushHistoryItem(proposal, user, type, undefined, { deliveryName });
+  pushHistoryItem(proposal, user, type, undefined, { deliveryName, locations });
 };
 
 export const addHistoryItemForForwardedDelivery = (
   proposal: Proposal,
   user: IRequestUser,
   deliveryName: string,
+  locations: string[],
 ): void => {
   const type = HistoryEventType.DataDeliveryForwarded;
-  pushHistoryItem(proposal, user, type, undefined, { deliveryName });
+  pushHistoryItem(proposal, user, type, undefined, { deliveryName, locations });
 };
 
 export const addHistoryItemForDataDeliveryConcluded = (

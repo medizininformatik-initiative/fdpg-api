@@ -15,7 +15,7 @@ export class ProposalDataDeliverySyncService {
   private readonly logger = new Logger(ProposalDataDeliverySyncService.name);
 
   syncSubDeliveryStatusesWithDsf = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<void> => {
-    if (deliveryInfo.status !== DeliveryInfoStatus.PENDING) {
+    if (![DeliveryInfoStatus.PENDING, DeliveryInfoStatus.WAITING_FOR_DATA_SET].includes(deliveryInfo.status)) {
       const message = `DeliveryInfo ${deliveryInfo._id} of proposal ${proposalId} is not in a '${DeliveryInfoStatus.PENDING}' state`;
       this.logger.error(message);
       throw Error(message);
@@ -37,7 +37,10 @@ export class ProposalDataDeliverySyncService {
     ).map((fhirResponse) => fhirResponse['dic-identifier-value']);
 
     (deliveryInfo.subDeliveries || []).forEach((subDel) => {
-      if (updatedFhirDeliveries.includes(locationLookUpMap[subDel.location]?.uri)) {
+      if (
+        updatedFhirDeliveries.includes(locationLookUpMap[subDel.location]?.uri) &&
+        subDel.status !== SubDeliveryStatus.ACCEPTED
+      ) {
         subDel.status = SubDeliveryStatus.DELIVERED;
       }
     });
