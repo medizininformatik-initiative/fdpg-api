@@ -4,7 +4,6 @@ import { SubDeliveryStatus } from '../../enums/data-delivery.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Proposal, ProposalDocument } from '../../schema/proposal.schema';
 import { Model } from 'mongoose';
-import { DataDelivery } from '../../schema/sub-schema/data-delivery/data-delivery.schema';
 
 @Injectable()
 export class ProposalSubDeliveryService {
@@ -17,7 +16,7 @@ export class ProposalSubDeliveryService {
     deliveryInfoId: string,
     subDeliveryId: string,
     rating: SubDeliveryStatus,
-  ): Promise<DataDelivery> => {
+  ): Promise<ProposalDocument> => {
     if (![SubDeliveryStatus.ACCEPTED, SubDeliveryStatus.REPEATED].includes(rating)) {
       throw new BadRequestException(`Rating '${rating}' is not allowed`);
     }
@@ -40,6 +39,6 @@ export class ProposalSubDeliveryService {
       throw new NotFoundException('Proposal not found');
     }
 
-    return result.toObject().dataDelivery;
+    return result;
   };
 }

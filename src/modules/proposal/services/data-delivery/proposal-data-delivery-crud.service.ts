@@ -37,7 +37,7 @@ export class ProposalDataDeliveryCrudService {
     dmsId: string,
     acceptance: DeliveryAcceptance,
     user: IRequestUser,
-  ): Promise<DataDelivery> => {
+  ): Promise<ProposalDocument> => {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
@@ -59,14 +59,14 @@ export class ProposalDataDeliveryCrudService {
       updatedAt: now,
     };
 
-    return (await proposal.save()).toObject().dataDelivery;
+    return await proposal.save();
   };
 
   updateDataDelivery = async (
     proposalId: string,
     dto: DataDeliveryUpdateDto,
     user: IRequestUser,
-  ): Promise<DataDelivery> => {
+  ): Promise<ProposalDocument> => {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
@@ -91,10 +91,10 @@ export class ProposalDataDeliveryCrudService {
       updatedAt: now,
     };
 
-    return (await proposal.save()).toObject().dataDelivery;
+    return await proposal.save();
   };
 
-  updateDeliveryInfo = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<DataDelivery> => {
+  updateDeliveryInfo = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<ProposalDocument> => {
     const updatedProposalDoc = await this.proposalModel
       .findOneAndUpdate(
         {
@@ -118,7 +118,7 @@ export class ProposalDataDeliveryCrudService {
       throw new ForbiddenException('Proposal document not found or deliveryInfo not found.');
     }
 
-    return updatedProposalDoc.toObject()?.dataDelivery;
+    return updatedProposalDoc;
   };
 
   findDeliveryInfoByProposalId = async (
@@ -149,7 +149,7 @@ export class ProposalDataDeliveryCrudService {
     });
   };
 
-  createDeliveryInfo = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<DataDelivery> => {
+  createDeliveryInfo = async (proposalId: string, deliveryInfo: DeliveryInfo): Promise<ProposalDocument> => {
     const updatedProposalDoc = await this.proposalModel
       .findOneAndUpdate(
         { _id: proposalId },
@@ -168,6 +168,6 @@ export class ProposalDataDeliveryCrudService {
       throw new ForbiddenException('Proposal document not found or user unauthorized.');
     }
 
-    return updatedProposalDoc.toObject().dataDelivery;
+    return updatedProposalDoc;
   };
 }

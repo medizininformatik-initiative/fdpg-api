@@ -1,12 +1,11 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DeliveryInfo } from '../../schema/sub-schema/data-delivery/delivery-info.schema';
-import { Proposal } from '../../schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../../schema/proposal.schema';
 import { FhirService } from 'src/modules/fhir/fhir.service';
 import { DeliveryInfoUpdateDto } from '../../dto/proposal/data-delivery/delivery-info.dto';
 import { ProposalDataDeliveryCrudService } from './proposal-data-delivery-crud.service';
 import { ProposalDataDeliveryMappingService } from './proposal-data-delivery-mapping.service';
 import { LocationService } from 'src/modules/location/service/location.service';
-import { DataDelivery } from '../../schema/sub-schema/data-delivery/data-delivery.schema';
 import { DeliveryInfoStatus } from '../../enums/delivery-info-status.enum';
 import { SubDeliveryStatus } from '../../enums/data-delivery.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
@@ -27,7 +26,7 @@ export class ProposalDeliveryInfoService {
     proposal: Proposal,
     dto: DeliveryInfoUpdateDto,
     user: IRequestUser,
-  ): Promise<DataDelivery> => {
+  ): Promise<ProposalDocument> => {
     const locationMap = await this.locationService.findAllLookUpMap();
     const selectedDms = locationMap[proposal.dataDelivery.dataManagementSite];
 
