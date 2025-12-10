@@ -4,6 +4,9 @@ import { FhirClient } from '../fhir.client';
 import { FhirHelpersUtil } from '../util/fhir-helpers.util';
 import { findConsolidateDataSetsEntryByBusinessKey } from './dsf-questionnaire-response.util';
 import { QuestionnaireResponseItem, QuestionnaireResponseResource } from './dsf-questionnaire-response.type';
+import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
+import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
+import { ValidationException } from 'src/exceptions/validation/validation.exception';
 
 @Injectable()
 export class DsfQuestionnaireResponseService {
@@ -138,7 +141,14 @@ export class DsfQuestionnaireResponseService {
     if (!questionnaireResponse) {
       const errorMsg = `Could not find any 'in-progress' QuestionnaireResponse for businessKey '${businessKey}'. Aborting update.`;
       this.logger.error(errorMsg);
-      throw new Error(errorMsg);
+
+      const errorInfo = new ValidationErrorInfo({
+        constraint: 'FhirQuestionnairResponseNotFound',
+        message: errorMsg,
+        property: 'fhirBusinessKey',
+        code: BadRequestError.FhirQuestionnairResponseNotFound,
+      });
+      throw new ValidationException([errorInfo]);
     }
 
     this.logger.verbose(`Found QuestionnaireResponse (ID: ${questionnaireResponse.id}). Preparing payload...`);

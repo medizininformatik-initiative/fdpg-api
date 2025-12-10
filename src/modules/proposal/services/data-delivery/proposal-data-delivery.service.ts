@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import type { IRequestUser } from 'src/shared/types/request-user.interface';
 import {
@@ -22,6 +22,8 @@ import {
   addHistoryItemForInitiateDelivery,
 } from '../../utils/proposal-history.util';
 import { Role } from 'src/shared/enums/role.enum';
+import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
+import { DataDelivery } from '../../schema/sub-schema/data-delivery/data-delivery.schema';
 
 @Injectable()
 export class ProposalDataDeliveryService {
@@ -37,12 +39,7 @@ export class ProposalDataDeliveryService {
 
   getDataDelivery = async (proposalId: string, user: IRequestUser): Promise<DataDeliveryGetDto | null> => {
     const dataDelivery = await this.proposalDataDeliveryCrudService.getDataDelivery(proposalId, user);
-    return dataDelivery
-      ? plainToClass(DataDeliveryGetDto, dataDelivery, {
-          strategy: 'excludeAll',
-          groups: [ProposalValidation.IsOutput],
-        })
-      : null;
+    return dataDelivery ? this.dataDeliveryModelToGetDto(dataDelivery) : null;
   };
 
   createDataDelivery = async (
@@ -61,10 +58,7 @@ export class ProposalDataDeliveryService {
 
     await updatedProposal.save();
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
-      strategy: 'excludeAll',
-      groups: [ProposalValidation.IsOutput],
-    });
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
 
   updateDataDelivery = async (
@@ -97,33 +91,51 @@ export class ProposalDataDeliveryService {
 
     await updatedProposal.save();
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
+  };
+
+  setDmsVote = async (
+    proposalId: string,
+    acceptance: DeliveryAcceptance,
+    user: IRequestUser,
+  ): Promise<DataDeliveryGetDto> => {
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+    const dataDelivery = proposalDoc.dataDelivery;
+
+    if (!dataDelivery) {
+      throw new NotFoundException();
+    }
+
+    if (user.singleKnownRole === Role.DataManagementOffice && dataDelivery.dataManagementSite !== user.miiLocation) {
+      throw new ForbiddenException('User is not from the requested location');
+    }
+
+    const updateDto = plainToClass(DataDeliveryUpdateDto, dataDelivery, {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });
+
+    return await this.updateDataDelivery(proposalId, { ...updateDto, acceptance }, user);
   };
 
   initDeliveryInfo = async (
-    proposalid: string,
+    proposalId: string,
     dto: DeliveryInfoUpdateDto,
     user: IRequestUser,
   ): Promise<DataDeliveryGetDto> => {
-    const proposalDoc = await this.proposalCrudService.findDocument(proposalid, user);
-    const savedProposal = await this.proposalDeliveryInfoService.initDeliveryInfo(proposalDoc.toObject(), dto, user);
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+    const updatedProposal = await this.proposalDeliveryInfoService.initDeliveryInfo(proposalDoc.toObject(), dto, user);
 
     addHistoryItemForInitiateDelivery(
-      savedProposal,
+      updatedProposal,
       user,
       dto.name,
       dto.manualEntry,
       dto.subDeliveries.map(({ location }) => location),
     );
-    await savedProposal.save();
+    await updatedProposal.save();
 
-    return plainToClass(DataDeliveryGetDto, savedProposal.dataDelivery, {
-      strategy: 'excludeAll',
-      groups: [ProposalValidation.IsOutput],
-    });
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
 
   rateSubDelivery = async (
@@ -139,10 +151,7 @@ export class ProposalDataDeliveryService {
       rating,
     );
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
-      strategy: 'excludeAll',
-      groups: [ProposalValidation.IsOutput],
-    });
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
 
   setDeliveryInfoStatus = async (
@@ -185,10 +194,7 @@ export class ProposalDataDeliveryService {
 
     updatedProposal.save();
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
-      strategy: 'excludeAll',
-      groups: [ProposalValidation.IsOutput],
-    });
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
 
   syncDeliveryInfoWithDsf = async (
@@ -222,7 +228,40 @@ export class ProposalDataDeliveryService {
 
     const updatedProposal = await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
 
-    return plainToClass(DataDeliveryGetDto, updatedProposal.dataDelivery, {
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
+  };
+
+  extendDeliveryDate = async (
+    proposalId: string,
+    deliveryInfoId: string,
+    newDeliveryDate: Date,
+    user: IRequestUser,
+  ): Promise<DataDeliveryGetDto> => {
+    const deliveryInfo = await this.proposalDataDeliveryCrudService.findDeliveryInfoByProposalId(
+      proposalId,
+      deliveryInfoId,
+      user,
+    );
+
+    if (!deliveryInfo) {
+      throw new NotFoundException(`DeliveryInfo with Id '${deliveryInfoId}' not found`);
+    }
+
+    if (newDeliveryDate.getTime() < new Date(deliveryInfo.deliveryDate).getTime()) {
+      throw new BadRequestException(
+        `New delivery date '${newDeliveryDate.toISOString()}' cannot be before current delivery date '${deliveryInfo.deliveryDate.toISOString()}'`,
+      );
+    }
+
+    await this.proposalDeliveryInfoService.extendDeliveryInfo(deliveryInfo, newDeliveryDate);
+
+    const updatedProposal = await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
+
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
+  };
+
+  private dataDeliveryModelToGetDto = (dataDelivery: DataDelivery): DataDeliveryGetDto => {
+    return plainToClass(DataDeliveryGetDto, dataDelivery, {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
     });

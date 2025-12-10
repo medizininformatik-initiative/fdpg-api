@@ -27,16 +27,13 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { DataDeliveryGetDto, DataDeliveryUpdateDto } from '../dto/proposal/data-delivery/data-delivery.dto';
 import { ProposalDataDeliveryService } from '../services/data-delivery/proposal-data-delivery.service';
-import { FhirService } from 'src/modules/fhir/fhir.service';
 import { DeliveryInfoUpdateDto } from '../dto/proposal/data-delivery/delivery-info.dto';
 import { SubDeliveryUpdateDto } from '../dto/proposal/data-delivery/sub-delivery.dto';
+import { DeliveryAcceptance } from '../enums/data-delivery.enum';
 
 @ApiController('proposals', undefined, 'data-delivery')
 export class ProposalDataDeliveryController {
-  constructor(
-    private readonly proposalDataDeliveryService: ProposalDataDeliveryService,
-    private readonly fhirService: FhirService,
-  ) {}
+  constructor(private readonly proposalDataDeliveryService: ProposalDataDeliveryService) {}
 
   // GET /api/proposals/:id/data-delivery
   @Auth(Role.FdpgMember, Role.DataManagementOffice, Role.Researcher)
@@ -69,7 +66,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PUT /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Auth(Role.FdpgMember)
   @Put(':id/data-delivery')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Updates the data delivery section of a proposal' })
@@ -82,6 +79,21 @@ export class ProposalDataDeliveryController {
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
     return this.proposalDataDeliveryService.updateDataDelivery(id, dto, user);
+  }
+
+  // PUT /api/proposals/:id/data-delivery/vote
+  @Auth(Role.DataManagementOffice)
+  @Put(':id/data-delivery/acceptance')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Sets the vote of the DMS' })
+  @ApiNotFoundResponse({ description: 'Proposal or data delivery could not be found' })
+  @ApiOkResponse({ description: 'Data delivery updated', type: DataDeliveryGetDto })
+  async setDataDeliveryAcceptance(
+    @Param() { id }: MongoIdParamDto,
+    @Query() query: { acceptance: DeliveryAcceptance },
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    return this.proposalDataDeliveryService.setDmsVote(id, query.acceptance, user);
   }
 
   // PUT /api/proposals/:id/init-delivery-info
@@ -151,12 +163,24 @@ export class ProposalDataDeliveryController {
     return this.proposalDataDeliveryService.setDeliveryInfoStatus(id, dto, user);
   }
 
+  // PATCH /api/proposals/:id/delivery-info/extend-delivery
   @Auth(Role.FdpgMember)
-  @Post('/test')
-  async test(): Promise<void> {
-    const res = await this.fhirService.fetchResultUrl({
-      fhirTaskId: '2f716f14-84db-4c6a-bb01-d326a051ba4f',
-    } as any);
-    console.log(res);
+  @Patch(':id/delivery-info/extend-delivery')
+  @UsePipes(ValidationPipe)
+  @ApiOperation({ summary: 'Sets the state of a delivery' })
+  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
+  @ApiOkResponse({ description: 'Delivery Info updated', type: DataDeliveryGetDto })
+  @ApiBody({ type: Object })
+  async extendDeliveryDate(
+    @Param() { id }: MongoIdParamDto,
+    @Query() query: { deliveryInfoId: string; newDeliveryDate: string },
+    @Request() { user }: FdpgRequest,
+  ): Promise<DataDeliveryGetDto> {
+    return this.proposalDataDeliveryService.extendDeliveryDate(
+      id,
+      query.deliveryInfoId,
+      new Date(query.newDeliveryDate),
+      user,
+    );
   }
 }

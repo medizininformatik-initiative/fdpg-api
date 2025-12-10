@@ -110,4 +110,12 @@ export class ProposalDeliveryInfoService {
       };
     });
   };
+
+  extendDeliveryInfo = async (deliveryInfo: DeliveryInfo, newDeliveryDate: Date): Promise<void> => {
+    deliveryInfo.deliveryDate = new Date(newDeliveryDate);
+    await this.fhirService.extendQuestionnairResponseReleaseConsolidateDataSets(
+      deliveryInfo.fhirBusinessKey,
+      deliveryInfo.deliveryDate,
+    );
+  };
 }
