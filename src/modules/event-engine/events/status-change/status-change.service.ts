@@ -87,6 +87,8 @@ export class StatusChangeService {
         return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher], {
           conditionProposalDataResearch: true,
         });
+      case ProposalStatus.DataResearchFinished:
+        return Promise.resolve();
       case ProposalStatus.FinishedProject:
         return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher, EmailRoleTargets.Fdpg], {
           conditionProposalFinished: true,

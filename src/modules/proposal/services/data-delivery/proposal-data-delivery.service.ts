@@ -28,6 +28,7 @@ import { DeliveryInfo } from '../../schema/sub-schema/data-delivery/delivery-inf
 import { ProposalGetDto } from '../../dto/proposal/proposal.dto';
 import { ProposalMiscService } from '../proposal-misc.service';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { Proposal } from '../../schema/proposal.schema';
 
 @Injectable()
 export class ProposalDataDeliveryService {
@@ -265,21 +266,41 @@ export class ProposalDataDeliveryService {
     const proposal = await this.proposalCrudService.findDocument(proposalId, user);
 
     const dataDelivery = proposal.dataDelivery;
+    dataDelivery.deliveryInfos.map((di) => this.setFinalDeliveryInfoStateForAnalysis(di, proposal, user));
+
     await Promise.all(
       dataDelivery.deliveryInfos.map(async (di) => {
-        this.setFinalDeliveryInfoStateForAnalysis(di);
-        return this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, di);
+        return await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, di);
       }),
     );
+    await proposal.save();
 
-    return await this.proposalMiscService.setStatus(proposalId, ProposalStatus.DataResearch, user);
+    return plainToClass(ProposalGetDto, proposal.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   };
 
-  private setFinalDeliveryInfoStateForAnalysis = async (deliveryInfo: DeliveryInfo): Promise<void> => {
+  private setFinalDeliveryInfoStateForAnalysis = async (
+    deliveryInfo: DeliveryInfo,
+    proposal: Proposal,
+    user: IRequestUser,
+  ): Promise<void> => {
+    if ([DeliveryInfoStatus.FETCHED_BY_RESEARCHER, DeliveryInfoStatus.CANCELED].includes(deliveryInfo.status)) {
+      return;
+    }
+
     if ([DeliveryInfoStatus.WAITING_FOR_DATA_SET, DeliveryInfoStatus.RESULTS_AVAILABLE].includes(deliveryInfo.status)) {
       this.proposalDeliveryInfoService.setStatusToFetched(deliveryInfo);
+      addHistoryItemForDataDeliveryConcluded(proposal, user, deliveryInfo.name);
     } else {
       this.proposalDeliveryInfoService.setToCancelDelivery(deliveryInfo);
+      addHistoryItemForCanceledDelivery(
+        proposal,
+        user,
+        deliveryInfo.name,
+        deliveryInfo.subDeliveries.map(({ location }) => location),
+      );
     }
   };
 

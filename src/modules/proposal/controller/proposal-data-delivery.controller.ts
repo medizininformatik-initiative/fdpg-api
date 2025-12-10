@@ -39,7 +39,7 @@ export class ProposalDataDeliveryController {
   constructor(private readonly proposalDataDeliveryService: ProposalDataDeliveryService) {}
 
   // GET /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember, Role.DataManagementOffice, Role.Researcher)
+  @Auth(Role.FdpgMember, Role.DataSourceMember, Role.DataManagementOffice, Role.Researcher)
   @Get(':id/data-delivery')
   @ApiOperation({ summary: 'Gets the data delivery section of a proposal' })
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -52,7 +52,7 @@ export class ProposalDataDeliveryController {
   }
 
   // POST /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Post(':id/data-delivery')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Creates the data delivery section for a proposal' })
@@ -69,7 +69,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PUT /api/proposals/:id/data-delivery
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/data-delivery')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Updates the data delivery section of a proposal' })
@@ -100,7 +100,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PUT /api/proposals/:id/init-delivery-info
-  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Auth(Role.FdpgMember, Role.DataSourceMember, Role.DataManagementOffice)
   @Put(':id/init-delivery-info')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Creates a new delivery info' })
@@ -116,7 +116,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PATCH /api/proposals/:id/delivery-info/sync
-  @Auth(Role.FdpgMember, Role.DataManagementOffice)
+  @Auth(Role.FdpgMember, Role.DataSourceMember, Role.DataManagementOffice)
   @Patch(':id/delivery-info/sync')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Creates a new delivery info' })
@@ -151,7 +151,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PUT /api/proposals/:id/delivery-info/set-status
-  @Auth(Role.FdpgMember, Role.Researcher)
+  @Auth(Role.FdpgMember, Role.DataSourceMember, Role.Researcher)
   @Put(':id/delivery-info/set-status')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Sets the state of a delivery' })
@@ -167,9 +167,12 @@ export class ProposalDataDeliveryController {
       return await this.proposalDataDeliveryService.setStatusToFetched(id, dto._id, user);
     } else if (
       user.singleKnownRole === Role.FdpgMember &&
-      [DeliveryInfoStatus.PENDING, DeliveryInfoStatus.CANCELED, DeliveryInfoStatus.WAITING_FOR_DATA_SET].includes(
-        dto.status,
-      )
+      [
+        DeliveryInfoStatus.PENDING,
+        DeliveryInfoStatus.CANCELED,
+        DeliveryInfoStatus.WAITING_FOR_DATA_SET,
+        DeliveryInfoStatus.FETCHED_BY_RESEARCHER,
+      ].includes(dto.status)
     ) {
       return await this.proposalDataDeliveryService.setDeliveryInfoStatus(id, dto, user);
     } else {
@@ -178,7 +181,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PATCH /api/proposals/:id/delivery-info/extend-delivery
-  @Auth(Role.FdpgMember)
+  @Auth(Role.FdpgMember, Role.DataSourceMember)
   @Patch(':id/delivery-info/extend-delivery')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Sets the state of a delivery' })
@@ -199,7 +202,7 @@ export class ProposalDataDeliveryController {
   }
 
   // PUT /api/proposals/:id/data-delivery/analysis-started
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/data-delivery/analysis-started')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Marks the analysis as started and cancels all not fetched deliveries as canceled' })

@@ -119,6 +119,7 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
         return proposal.deadlines.DUE_DAYS_DATA_CORRUPT;
       }
 
+      case ProposalStatus.DataResearchFinished:
       case ProposalStatus.FinishedProject: {
         proposal.deadlines = {
           ...proposal.deadlines,
