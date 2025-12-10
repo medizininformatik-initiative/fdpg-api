@@ -71,6 +71,7 @@ import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
 import { HistoryEventType } from '../enums/history-event.enum';
 import { ProposalSyncService } from './proposal-sync.service';
 import { Logger } from '@nestjs/common';
+import { ValidationGroup } from 'src/modules/comment/enums/validation-group.enum';
 
 @Injectable()
 export class ProposalMiscService {
@@ -182,7 +183,7 @@ export class ProposalMiscService {
     return researchers;
   }
 
-  async setStatus(proposalId: string, status: ProposalStatus, user: IRequestUser): Promise<void> {
+  async setStatus(proposalId: string, status: ProposalStatus, user: IRequestUser): Promise<ProposalGetDto> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     const oldStatus = toBeUpdated.status;
     if (status === oldStatus) {
@@ -218,6 +219,11 @@ export class ProposalMiscService {
         this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
       }
     }
+
+    return plainToClass(ProposalGetDto, saveResult.toObject(), {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+    });
   }
 
   async setIsLockedStatus(proposalId: string, isLocked: boolean, user: IRequestUser): Promise<void> {

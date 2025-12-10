@@ -64,7 +64,7 @@ export class ProposalDeliveryInfoService {
 
         return {
           ...newDeliveryModel,
-          status: DeliveryInfoStatus.FINISHED,
+          status: DeliveryInfoStatus.RESULTS_AVAILABLE,
           forwardedOnDate: newDeliveryModel.deliveryDate ?? new Date(),
           subDeliveries: newDeliveryModel.subDeliveries.map((sd) => ({ ...sd, status: SubDeliveryStatus.ACCEPTED })),
         };
@@ -94,13 +94,14 @@ export class ProposalDeliveryInfoService {
   };
 
   setToForwardDelivery = async (deliveryInfo: DeliveryInfo) => {
-    this.setStatus(deliveryInfo, DeliveryInfoStatus.WAITING_FOR_DATA_SET);
+    this.setForwardOrCancelStatus(deliveryInfo, DeliveryInfoStatus.WAITING_FOR_DATA_SET);
     await this.fhirService.releaseQuestionnairResponseReleaseConsolidateDataSets(deliveryInfo.fhirBusinessKey);
   };
 
-  setToCancelDelivery = (deliveryInfo: DeliveryInfo) => this.setStatus(deliveryInfo, DeliveryInfoStatus.CANCELED);
+  setToCancelDelivery = (deliveryInfo: DeliveryInfo) =>
+    this.setForwardOrCancelStatus(deliveryInfo, DeliveryInfoStatus.CANCELED);
 
-  private setStatus = (deliveryInfo: DeliveryInfo, status: DeliveryInfoStatus) => {
+  private setForwardOrCancelStatus = (deliveryInfo: DeliveryInfo, status: DeliveryInfoStatus) => {
     deliveryInfo.status = status;
     deliveryInfo.forwardedOnDate = new Date();
     deliveryInfo.subDeliveries = (deliveryInfo.subDeliveries || []).map((sd) => {
@@ -109,6 +110,11 @@ export class ProposalDeliveryInfoService {
         status: sd.status === SubDeliveryStatus.ACCEPTED ? SubDeliveryStatus.ACCEPTED : SubDeliveryStatus.CANCELED,
       };
     });
+  };
+
+  setStatusToFetched = (deliveryInfo: DeliveryInfo): void => {
+    deliveryInfo.status = DeliveryInfoStatus.FETCHED_BY_RESEARCHER;
+    deliveryInfo.fetchedResultsOn = new Date();
   };
 
   extendDeliveryInfo = async (deliveryInfo: DeliveryInfo, newDeliveryDate: Date): Promise<void> => {

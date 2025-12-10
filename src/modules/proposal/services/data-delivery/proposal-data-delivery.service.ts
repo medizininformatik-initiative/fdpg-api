@@ -16,14 +16,18 @@ import { ProposalSubDeliveryService } from './proposal-sub-delivery.service';
 import { DeliveryAcceptance, SubDeliveryStatus } from '../../enums/data-delivery.enum';
 import {
   addHistoryItemForCanceledDelivery,
+  addHistoryItemForDataDeliveryConcluded,
   addHistoryItemForDmoAcceptanceAnswer,
   addHistoryItemForDmoRequest,
   addHistoryItemForForwardedDelivery,
   addHistoryItemForInitiateDelivery,
 } from '../../utils/proposal-history.util';
 import { Role } from 'src/shared/enums/role.enum';
-import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { DataDelivery } from '../../schema/sub-schema/data-delivery/data-delivery.schema';
+import { DeliveryInfo } from '../../schema/sub-schema/data-delivery/delivery-info.schema';
+import { ProposalGetDto } from '../../dto/proposal/proposal.dto';
+import { ProposalMiscService } from '../proposal-misc.service';
+import { ProposalStatus } from '../../enums/proposal-status.enum';
 
 @Injectable()
 export class ProposalDataDeliveryService {
@@ -33,6 +37,7 @@ export class ProposalDataDeliveryService {
     private readonly proposalDataDeliverySyncService: ProposalDataDeliverySyncService,
     private readonly proposalDeliveryInfoService: ProposalDeliveryInfoService,
     private readonly proposalSubDeliveryService: ProposalSubDeliveryService,
+    private readonly proposalMiscService: ProposalMiscService,
   ) {}
 
   private readonly logger = new Logger(ProposalDataDeliveryService.name);
@@ -159,11 +164,7 @@ export class ProposalDataDeliveryService {
     dto: DeliveryInfoUpdateDto,
     user: IRequestUser,
   ): Promise<DataDeliveryGetDto> => {
-    const deliveryInfo = await this.proposalDataDeliveryCrudService.findDeliveryInfoByProposalId(
-      proposalId,
-      dto._id,
-      user,
-    );
+    const deliveryInfo = await this.findDeliveryInfoValidated(proposalId, dto._id, user);
 
     if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET || dto.status === DeliveryInfoStatus.PENDING) {
       await this.proposalDeliveryInfoService.setToForwardDelivery(deliveryInfo);
@@ -202,17 +203,7 @@ export class ProposalDataDeliveryService {
     dto: DeliveryInfoUpdateDto,
     user: IRequestUser,
   ): Promise<DataDeliveryGetDto> => {
-    const deliveryInfo = await this.proposalDataDeliveryCrudService.findDeliveryInfoByProposalId(
-      proposalId,
-      dto._id,
-      user,
-    );
-
-    if (!deliveryInfo) {
-      const message = `Could not find DeliveryInfo with id '${dto._id}' of proposal '${proposalId}'`;
-      this.logger.error(message);
-      throw new NotFoundException(message);
-    }
+    const deliveryInfo = await this.findDeliveryInfoValidated(proposalId, dto._id, user);
 
     if (![DeliveryInfoStatus.PENDING, DeliveryInfoStatus.WAITING_FOR_DATA_SET].includes(deliveryInfo.status)) {
       const message = `Cannot sync DeliveryInfo with id '${dto._id}' of proposal '${proposalId}' because its status is '${deliveryInfo.status}'`;
@@ -237,15 +228,7 @@ export class ProposalDataDeliveryService {
     newDeliveryDate: Date,
     user: IRequestUser,
   ): Promise<DataDeliveryGetDto> => {
-    const deliveryInfo = await this.proposalDataDeliveryCrudService.findDeliveryInfoByProposalId(
-      proposalId,
-      deliveryInfoId,
-      user,
-    );
-
-    if (!deliveryInfo) {
-      throw new NotFoundException(`DeliveryInfo with Id '${deliveryInfoId}' not found`);
-    }
+    const deliveryInfo = await this.findDeliveryInfoValidated(proposalId, deliveryInfoId, user);
 
     if (newDeliveryDate.getTime() < new Date(deliveryInfo.deliveryDate).getTime()) {
       throw new BadRequestException(
@@ -258,6 +241,66 @@ export class ProposalDataDeliveryService {
     const updatedProposal = await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
 
     return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
+  };
+
+  setStatusToFetched = async (proposalId: string, deliveryInfoId: string, user: IRequestUser) => {
+    const deliveryInfo = await this.findDeliveryInfoValidated(proposalId, deliveryInfoId, user);
+
+    if (!deliveryInfo.manualEntry && deliveryInfo.status !== DeliveryInfoStatus.WAITING_FOR_DATA_SET) {
+      throw new Error(
+        `Status of deliveryInfo '${deliveryInfoId}' of proposal '${proposalId}' cannot be set to ${DeliveryInfoStatus.FETCHED_BY_RESEARCHER} because status is '${deliveryInfo.status}'`,
+      );
+    }
+
+    this.proposalDeliveryInfoService.setStatusToFetched(deliveryInfo);
+    const updatedProposal = await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
+
+    addHistoryItemForDataDeliveryConcluded(updatedProposal, user, deliveryInfo.name);
+    await updatedProposal.save();
+
+    return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
+  };
+
+  researcherStartedAnalysis = async (proposalId: string, user: IRequestUser): Promise<ProposalGetDto> => {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+
+    const dataDelivery = proposal.dataDelivery;
+    await Promise.all(
+      dataDelivery.deliveryInfos.map(async (di) => {
+        this.setFinalDeliveryInfoStateForAnalysis(di);
+        return this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, di);
+      }),
+    );
+
+    return await this.proposalMiscService.setStatus(proposalId, ProposalStatus.DataResearch, user);
+  };
+
+  private setFinalDeliveryInfoStateForAnalysis = async (deliveryInfo: DeliveryInfo): Promise<void> => {
+    if ([DeliveryInfoStatus.WAITING_FOR_DATA_SET, DeliveryInfoStatus.RESULTS_AVAILABLE].includes(deliveryInfo.status)) {
+      this.proposalDeliveryInfoService.setStatusToFetched(deliveryInfo);
+    } else {
+      this.proposalDeliveryInfoService.setToCancelDelivery(deliveryInfo);
+    }
+  };
+
+  private findDeliveryInfoValidated = async (
+    proposalId: string,
+    deliveryInfoId: string,
+    user: IRequestUser,
+  ): Promise<DeliveryInfo> => {
+    const deliveryInfo = await this.proposalDataDeliveryCrudService.findDeliveryInfoByProposalId(
+      proposalId,
+      deliveryInfoId,
+      user,
+    );
+
+    if (!deliveryInfo) {
+      const msg = `DeliveryInfo with Id '${deliveryInfoId}' of proposal '${proposalId}' not found`;
+      this.logger.error(msg);
+      throw new NotFoundException(msg);
+    }
+
+    return deliveryInfo;
   };
 
   private dataDeliveryModelToGetDto = (dataDelivery: DataDelivery): DataDeliveryGetDto => {

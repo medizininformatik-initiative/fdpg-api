@@ -83,4 +83,9 @@ export class DeliveryInfoGetDto extends WithIdForObjectDto {
   @IsDate()
   @IsOptional()
   forwardedOnDate?: Date;
+
+  @Expose()
+  @IsDate()
+  @IsOptional()
+  fetchedResultsOn?: Date;
 }

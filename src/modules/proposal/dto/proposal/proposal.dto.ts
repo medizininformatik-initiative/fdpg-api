@@ -516,7 +516,7 @@ export class ProposalGetDto extends ProposalBaseDto {
   })
   deadlines: SetDeadlinesDto;
 
-  @Expose()
+  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DataManagementOffice, Role.Researcher] })
   @Type(() => DataDeliveryGetDto)
   @IsOptional()
   dataDelivery?: DataDeliveryGetDto | null;

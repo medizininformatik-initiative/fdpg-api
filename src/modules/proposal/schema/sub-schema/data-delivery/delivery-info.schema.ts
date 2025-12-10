@@ -41,6 +41,11 @@ export class DeliveryInfo {
   })
   forwardedOnDate?: Date;
 
+  @Prop({
+    type: Date,
+  })
+  fetchedResultsOn?: Date;
+
   @Prop({ type: [SubDeliverySchema], default: [] })
   subDeliveries: SubDelivery[];
 

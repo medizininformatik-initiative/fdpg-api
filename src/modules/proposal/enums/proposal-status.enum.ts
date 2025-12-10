@@ -8,6 +8,7 @@ export enum ProposalStatus {
   Contracting = 'CONTRACTING',
   ExpectDataDelivery = 'EXPECT_DATA_DELIVERY',
   DataResearch = 'DATA_RESEARCH',
+  DataResearchFinished = 'DATA_RESEARCH_FINISHED',
   DataCorrupt = 'DATA_CORRUPT',
   FinishedProject = 'FINISHED_PROJECT',
   ReadyToArchive = 'READY_TO_ARCHIVE',

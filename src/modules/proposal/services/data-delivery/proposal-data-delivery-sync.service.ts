@@ -70,9 +70,9 @@ export class ProposalDataDeliverySyncService {
     const resultUrl = await this.fhirService.fetchResultUrl(deliveryInfo.fhirTaskId);
     if (resultUrl) {
       this.logger.log(
-        `Found result url for deliveryInfo '${deliveryInfo._id}' of proposal '${proposalId}'. Setting status to ${DeliveryInfoStatus.FINISHED}`,
+        `Found result url for deliveryInfo '${deliveryInfo._id}' of proposal '${proposalId}'. Setting status to ${DeliveryInfoStatus.RESULTS_AVAILABLE}`,
       );
-      deliveryInfo.status = DeliveryInfoStatus.FINISHED;
+      deliveryInfo.status = DeliveryInfoStatus.RESULTS_AVAILABLE;
       deliveryInfo.resultUrl = resultUrl;
     } else {
       this.logger.log(`No results found for '${deliveryInfo._id}' of proposal '${proposalId}'`);
