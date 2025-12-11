@@ -16,6 +16,7 @@ import { StatusReminderService } from './events/status-reminder/status-reminder.
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
+import { Location } from '../location/schema/location.schema';
 
 describe('EventEngineService', () => {
   let eventEngineService: EventEngineService;
@@ -117,7 +118,14 @@ describe('EventEngineService', () => {
             handleParticipatingScientistSummary: jest.fn(),
           },
         },
-        { provide: DataDeliveryEventService, useValue: {} },
+        {
+          provide: DataDeliveryEventService,
+          useValue: {
+            handleDataDeliveryInitiated: jest.fn(),
+            handleDataDeliveryDataReady: jest.fn(),
+            handleDataDeliveryDataReturn: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -133,6 +141,7 @@ describe('EventEngineService', () => {
     reportsService = module.get<ReportsService>(ReportsService);
     publicationsService = module.get<PublicationsService>(PublicationsService);
     configService = module.get<ConfigService>(ConfigService);
+    dataDeliveryEventService = module.get<DataDeliveryEventService>(DataDeliveryEventService);
   });
 
   const proposal = {
@@ -140,6 +149,8 @@ describe('EventEngineService', () => {
     status: 'status',
     statusChangeDate: new Date(),
   };
+
+  const locations = [{ _id: 'loc1' } as Location, { _id: 'loc2' } as Location];
 
   const expectedUrl = `PORTAL_HOST/proposals/${proposal._id}/details`;
 
@@ -249,5 +260,23 @@ describe('EventEngineService', () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationUpdate(proposal as any, publication);
     expect(publicationsService.handlePublicationUpdate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+  });
+
+  it('should call handleDataDeliveryInitiated with the correct arguments', async () => {
+    await eventEngineService.handleDataDeliveryInitiated(proposal as any, locations);
+
+    expect(dataDeliveryEventService.handleDataDeliveryInitiated).toHaveBeenCalledWith(proposal, expectedUrl, locations);
+  });
+
+  it('should call handleDataDeliveryDataReady with the correct arguments', async () => {
+    await eventEngineService.handleDataDeliveryDataReady(proposal as any, locations);
+
+    expect(dataDeliveryEventService.handleDataDeliveryDataReady).toHaveBeenCalledWith(proposal, expectedUrl, locations);
+  });
+
+  it('should call handleDataDeliveryDataReturn with the correct arguments', async () => {
+    await eventEngineService.handleDataDeliveryDataReturn(proposal as any);
+
+    expect(dataDeliveryEventService.handleDataDeliveryDataReturn).toHaveBeenCalledWith(proposal, expectedUrl);
   });
 });

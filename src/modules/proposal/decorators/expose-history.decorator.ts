@@ -53,7 +53,7 @@ export const ExposeHistory = () => (target: object, propertyKey: string) => {
     const user = parseGroupToUser(params.options.groups);
     const isFdpgMember = user.singleKnownRole === Role.FdpgMember;
 
-    const filteredEvents = params.obj[propertyKey].filter((event: HistoryEvent) => {
+    const filteredEvents = (params.obj[propertyKey] || []).filter((event: HistoryEvent) => {
       const isRevertEvent = event.type === HistoryEventType.FdpgLocationVoteReverted;
       const isParticipantEvent = [
         HistoryEventType.ParticipantAdded,
