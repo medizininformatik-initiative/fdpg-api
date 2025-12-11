@@ -4,10 +4,10 @@ import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { ProposalStatus } from '../../../proposal/enums/proposal-status.enum';
 import { ProposalType } from '../../../proposal/enums/proposal-type.enum';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
-import { fdpgEmail, researcherEmail } from 'src/modules/email/proposal.emails';
 import { EmailCategory } from 'src/modules/email/types/email-category.enum';
 import { EmailRoleTargets } from 'src/modules/email/types/email-role-targets.enum';
 import { TemplateProposalEmailConditionKeys } from 'src/modules/email/types/template-email-param-keys.types';
+import { sendMailsUtil } from '../../send-mails.util';
 
 @Injectable()
 export class StatusChangeService {
@@ -16,85 +16,70 @@ export class StatusChangeService {
     private emailService: EmailService,
   ) {}
 
+  private readonly category: EmailCategory.StatusChange;
+
   private async sendMails(
     proposal: Proposal,
     proposalUrl: string,
     targets: EmailRoleTargets[] = [],
     emailParameterMap: Partial<Record<TemplateProposalEmailConditionKeys, boolean>> = {},
+    locations: string[] = [],
   ) {
-    const ownerTask = async () => {
-      if (!targets.includes(EmailRoleTargets.Researcher)) {
-        return Promise.resolve();
-      }
-      const validOwnerContacts = await this.keycloakUtilService.getValidContactsByUserIds([proposal.owner.id]);
-      const mail = researcherEmail(
-        validOwnerContacts,
-        proposal,
-        [EmailCategory.StatusChange],
-        proposalUrl,
-        emailParameterMap,
-      );
-
-      return await this.emailService.send(mail);
-    };
-
-    const fdpgTask = async () => {
-      if (!targets.includes(EmailRoleTargets.Fdpg)) {
-        return Promise.resolve();
-      }
-      const validFdpgContacts = await this.keycloakUtilService
-        .getFdpgMemberLevelContacts(proposal)
-        .then((members) => members.map((member) => member.email));
-      const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.StatusChange], proposalUrl, emailParameterMap);
-      return await this.emailService.send(mail);
-    };
-
-    const emailTasks = [ownerTask(), fdpgTask()];
-
-    await Promise.allSettled(emailTasks);
+    await sendMailsUtil(
+      proposal,
+      proposalUrl,
+      targets,
+      locations,
+      emailParameterMap,
+      this.emailService,
+      this.keycloakUtilService,
+      [this.category],
+    );
   }
 
   async handleStatusChange(proposal: Proposal, proposalUrl: string) {
     switch (proposal.status) {
       case ProposalStatus.FdpgCheck:
         const isRegistrationForm = proposal.type === ProposalType.RegisteringForm;
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher, EmailRoleTargets.Fdpg], {
+        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG], {
           conditionProposalFdpgCheck: !isRegistrationForm,
           conditionProposalRegistrationCreate: isRegistrationForm,
         });
       case ProposalStatus.Rework:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher], {
+        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER], {
           conditionProposalRework: true,
         });
       case ProposalStatus.Rejected:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher, EmailRoleTargets.Fdpg], {
+        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG], {
           conditionProposalRejected: true,
         });
       case ProposalStatus.LocationCheck:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher, EmailRoleTargets.Fdpg], {
+        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG], {
           conditionProposalLocationCheck: true,
           conditionProposalUacCheck: true,
         });
       case ProposalStatus.Contracting:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher], {
+        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER], {
           conditionProposalContracting: true,
         });
       case ProposalStatus.ExpectDataDelivery:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher], {
-          conditionProposalDataDelivery: true,
-        });
+        return Promise.resolve(); // No E-Mail sent here
       case ProposalStatus.DataResearch:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher], {
-          conditionProposalDataResearch: true,
-        });
-      case ProposalStatus.DataResearchFinished:
-        return Promise.resolve();
+        return await this.sendMails(
+          proposal,
+          proposalUrl,
+          [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ],
+          {
+            conditionProposalDataResearch: true,
+          },
+          proposal.signedContracts.map((sc) => sc),
+        );
       case ProposalStatus.FinishedProject:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher, EmailRoleTargets.Fdpg], {
+        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG], {
           conditionProposalFinished: true,
         });
       case ProposalStatus.Archived:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.Researcher, EmailRoleTargets.Fdpg], {
+        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG], {
           conditionProposalArchived: true,
         });
       case ProposalStatus.ReadyToPublish:

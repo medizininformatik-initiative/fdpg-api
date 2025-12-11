@@ -47,7 +47,6 @@ const statusToDueDatesMap: Record<ProposalStatus, DueDateEnum[]> = {
     DueDateEnum.DUE_DAYS_FINISHED_PROJECT,
   ],
   [ProposalStatus.DataCorrupt]: [DueDateEnum.DUE_DAYS_DATA_CORRUPT, DueDateEnum.DUE_DAYS_FINISHED_PROJECT],
-  [ProposalStatus.DataResearchFinished]: [DueDateEnum.DUE_DAYS_FINISHED_PROJECT],
   [ProposalStatus.FinishedProject]: [DueDateEnum.DUE_DAYS_FINISHED_PROJECT],
   [ProposalStatus.Archived]: [],
   [ProposalStatus.Rejected]: [],

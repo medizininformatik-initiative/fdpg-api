@@ -1,6 +1,6 @@
 export enum EmailRoleTargets {
-  Fdpg,
-  Researcher,
-  Diz,
-  Uac,
+  FDPG = 'FDPG',
+  RESEARCHER = 'RESEARCHER',
+  DIZ = 'DIZ',
+  UAC = 'UAC',
 }

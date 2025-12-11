@@ -26,9 +26,9 @@ import { Role } from 'src/shared/enums/role.enum';
 import { DataDelivery } from '../../schema/sub-schema/data-delivery/data-delivery.schema';
 import { DeliveryInfo } from '../../schema/sub-schema/data-delivery/delivery-info.schema';
 import { ProposalGetDto } from '../../dto/proposal/proposal.dto';
-import { ProposalMiscService } from '../proposal-misc.service';
-import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { Proposal } from '../../schema/proposal.schema';
+import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 @Injectable()
 export class ProposalDataDeliveryService {
@@ -38,7 +38,8 @@ export class ProposalDataDeliveryService {
     private readonly proposalDataDeliverySyncService: ProposalDataDeliverySyncService,
     private readonly proposalDeliveryInfoService: ProposalDeliveryInfoService,
     private readonly proposalSubDeliveryService: ProposalSubDeliveryService,
-    private readonly proposalMiscService: ProposalMiscService,
+    private readonly eventEngineService: EventEngineService,
+    private readonly locationService: LocationService,
   ) {}
 
   private readonly logger = new Logger(ProposalDataDeliveryService.name);
@@ -141,6 +142,15 @@ export class ProposalDataDeliveryService {
     );
     await updatedProposal.save();
 
+    if (!dto.manualEntry) {
+      const llm = await this.locationService.findAllLookUpMap();
+
+      await this.eventEngineService.handleDataDeliveryInitiated(
+        updatedProposal,
+        dto.subDeliveries.map((sub) => llm[sub.location]),
+      );
+    }
+
     return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
 
@@ -156,6 +166,10 @@ export class ProposalDataDeliveryService {
       subDeliveryId,
       rating,
     );
+
+    if (rating === SubDeliveryStatus.REPEATED) {
+      await this.eventEngineService.handleDataDeliveryDataReturn(updatedProposal);
+    }
 
     return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
@@ -195,6 +209,15 @@ export class ProposalDataDeliveryService {
     }
 
     updatedProposal.save();
+
+    if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET) {
+      const llm = await this.locationService.findAllLookUpMap();
+      const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+      await this.eventEngineService.handleDataDeliveryDataReady(
+        proposal,
+        deliveryInfo.subDeliveries.map((sub) => llm[sub.location]),
+      );
+    }
 
     return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };

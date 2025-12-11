@@ -20,6 +20,9 @@ export class ParticipantEmailSummaryService {
     HistoryEventType.ProposalDataDelivery, // contracting done
     HistoryEventType.ProposalDataResearch, // move to data research
     HistoryEventType.ProposalFinished, // move to project finished
+    HistoryEventType.ProposalArchived, // move to archived
+
+    HistoryEventType.DataDeliveryStarted, // A new DSF Data Delivery was initiated
   ]);
 
   async handleParticipatingScientistSummary(proposal: ProposalWithoutContent, proposalUrl: string, fromDateTime: Date) {
