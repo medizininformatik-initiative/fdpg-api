@@ -61,10 +61,6 @@ export class ProposalDataDeliveryService {
       user,
     );
 
-    addHistoryItemForDmoRequest(updatedProposal, user, updatedProposal.dataDelivery.dataManagementSite);
-
-    await updatedProposal.save();
-
     return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
 
@@ -73,14 +69,16 @@ export class ProposalDataDeliveryService {
     dto: DataDeliveryUpdateDto,
     user: IRequestUser,
   ): Promise<DataDeliveryGetDto> => {
-    const beforeUpdateProposal = await this.proposalCrudService.find(proposalId, user);
+    const {
+      dataDelivery: { dataManagementSite: beforeUpdateDms, acceptance: beforeUpdateAcceptance },
+    } = await this.proposalCrudService.find(proposalId, user);
     const updatedProposal = await this.proposalDataDeliveryCrudService.updateDataDelivery(proposalId, dto, user);
 
     const isDmsRequest =
       updatedProposal &&
       user.singleKnownRole === Role.FdpgMember &&
-      updatedProposal.dataDelivery.dataManagementSite !== beforeUpdateProposal.dataDelivery?.dataManagementSite &&
-      updatedProposal.dataDelivery.acceptance === DeliveryAcceptance.PENDING;
+      (updatedProposal.dataDelivery.dataManagementSite !== beforeUpdateDms ||
+        updatedProposal.dataDelivery.acceptance !== beforeUpdateAcceptance);
 
     if (isDmsRequest) {
       addHistoryItemForDmoRequest(updatedProposal, user, updatedProposal.dataDelivery.dataManagementSite);
@@ -265,7 +263,10 @@ export class ProposalDataDeliveryService {
   setStatusToFetched = async (proposalId: string, deliveryInfoId: string, user: IRequestUser) => {
     const deliveryInfo = await this.findDeliveryInfoValidated(proposalId, deliveryInfoId, user);
 
-    if (!deliveryInfo.manualEntry && deliveryInfo.status !== DeliveryInfoStatus.WAITING_FOR_DATA_SET) {
+    if (
+      !deliveryInfo.manualEntry &&
+      ![DeliveryInfoStatus.WAITING_FOR_DATA_SET, DeliveryInfoStatus.RESULTS_AVAILABLE].includes(deliveryInfo.status)
+    ) {
       throw new Error(
         `Status of deliveryInfo '${deliveryInfoId}' of proposal '${proposalId}' cannot be set to ${DeliveryInfoStatus.FETCHED_BY_RESEARCHER} because status is '${deliveryInfo.status}'`,
       );

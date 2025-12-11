@@ -25,7 +25,7 @@ export class ProposalDataDeliveryCrudService {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      { dataDelivery: 1 },
+      { dataDelivery: 1, history: 1 },
       /* willBeModified */ false,
     );
 
@@ -41,7 +41,7 @@ export class ProposalDataDeliveryCrudService {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      { dataDelivery: 1 },
+      { dataDelivery: 1, history: 1 },
       /* willBeModified */ true,
     );
 
