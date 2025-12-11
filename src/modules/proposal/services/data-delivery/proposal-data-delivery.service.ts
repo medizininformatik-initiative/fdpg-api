@@ -76,21 +76,11 @@ export class ProposalDataDeliveryService {
     const beforeUpdateProposal = await this.proposalCrudService.find(proposalId, user);
     const updatedProposal = await this.proposalDataDeliveryCrudService.updateDataDelivery(proposalId, dto, user);
 
-    const isDmsAcceptanceAnswer =
-      updatedProposal &&
-      user.singleKnownRole === Role.DataManagementOffice &&
-      updatedProposal.dataDelivery.acceptance !== beforeUpdateProposal.dataDelivery?.acceptance;
-
     const isDmsRequest =
       updatedProposal &&
       user.singleKnownRole === Role.FdpgMember &&
       updatedProposal.dataDelivery.dataManagementSite !== beforeUpdateProposal.dataDelivery?.dataManagementSite &&
       updatedProposal.dataDelivery.acceptance === DeliveryAcceptance.PENDING;
-
-    if (isDmsAcceptanceAnswer) {
-      console.log({ updatedProposal });
-      addHistoryItemForDmoAcceptanceAnswer(updatedProposal, user, updatedProposal.dataDelivery.acceptance);
-    }
 
     if (isDmsRequest) {
       addHistoryItemForDmoRequest(updatedProposal, user, updatedProposal.dataDelivery.dataManagementSite);
@@ -122,7 +112,12 @@ export class ProposalDataDeliveryService {
       groups: [ProposalValidation.IsOutput],
     });
 
-    return await this.updateDataDelivery(proposalId, { ...updateDto, acceptance }, user);
+    const retunDataDelivery = await this.updateDataDelivery(proposalId, { ...updateDto, acceptance }, user);
+
+    addHistoryItemForDmoAcceptanceAnswer(proposalDoc, user, acceptance);
+    await proposalDoc.save();
+
+    return retunDataDelivery;
   };
 
   initDeliveryInfo = async (
