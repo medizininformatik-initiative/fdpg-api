@@ -25,6 +25,7 @@ import { ExposeUpload } from '../../decorators/expose-uploads.decorator';
 import { LocationState } from '../../enums/location-state.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalType } from '../../enums/proposal-type.enum';
+import { DueDateEnum } from '../../enums/due-date.enum';
 import { IProposalGetListSchema } from '../../types/proposal-get-list-schema.interface';
 import { getIsDoneOverview } from '../../utils/is-done-overview.util';
 import { getMostAdvancedState } from '../../utils/validate-access.util';
@@ -539,6 +540,7 @@ export class ProposalGetListDto {
     this.isLocked = dbProjection.isLocked;
     this.submittedAt = dbProjection.submittedAt;
     this.dueDateForStatus = dbProjection.dueDateForStatus;
+    this.deadlines = dbProjection.deadlines;
     this.requestedLocationsCount = dbProjection.numberOfRequestedLocations;
     this.approvedLocationsCount = dbProjection.numberOfApprovedLocations;
     this.contractAcceptedByResearcher = dbProjection.contractAcceptedByResearcher;
@@ -576,6 +578,7 @@ export class ProposalGetListDto {
   isLocked: boolean;
   submittedAt?: Date;
   dueDateForStatus?: Date;
+  deadlines?: Record<DueDateEnum, Date | null>;
 
   contractAcceptedByResearcher: boolean;
   contractRejectedByResearcher: boolean;
