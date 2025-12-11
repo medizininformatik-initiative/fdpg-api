@@ -6,6 +6,7 @@ import { UserProject } from '../schema/sub-schema/user-project.schema';
 import { RegisterInfo } from '../schema/sub-schema/register-info.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
+import { DueDateEnum } from '../enums/due-date.enum';
 export interface IProposalGetListSchema {
   type: ProposalType;
   userProject: Partial<UserProject>;
@@ -18,6 +19,7 @@ export interface IProposalGetListSchema {
   isLocked: boolean;
   submittedAt?: Date;
   dueDateForStatus?: Date;
+  deadlines?: Record<DueDateEnum, Date | null>;
   registerInfo?: Partial<RegisterInfo>;
   registerFormId?: string;
   numberOfRequestedLocations?: number;

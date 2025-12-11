@@ -38,6 +38,9 @@ const FINISHED = {
   type: ProposalType.ApplicationForm,
 };
 const ARCHIVED = { status: ProposalStatus.Archived };
+const FDPG_OVERVIEW = {
+  $or: [REQUESTED_IN_WORK, PENDING_TO_CHECK, ONGOING_IN_WORK],
+};
 
 // FDPG Published page panels (for registering forms)
 const FDPG_PUBLISHED_REQUESTED: FilterQuery<Proposal> = {
@@ -75,4 +78,5 @@ export const FDPG_FILTER: Record<string, FilterQuery<Proposal>> = {
   [PanelQuery.FdpgPublishedPublished]: FDPG_PUBLISHED_PUBLISHED,
   [PanelQuery.FdpgPublishedDraft]: FDPG_PUBLISHED_DRAFT,
   [PanelQuery.Archived]: ARCHIVED,
+  [PanelQuery.FdpgOverview]: FDPG_OVERVIEW,
 };
