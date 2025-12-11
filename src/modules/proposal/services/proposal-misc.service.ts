@@ -183,7 +183,7 @@ export class ProposalMiscService {
     return researchers;
   }
 
-  async setStatus(proposalId: string, status: ProposalStatus, user: IRequestUser): Promise<ProposalGetDto> {
+  async setStatus(proposalId: string, status: ProposalStatus, user: IRequestUser): Promise<void> {
     const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
     const oldStatus = toBeUpdated.status;
     if (status === oldStatus) {
@@ -219,11 +219,6 @@ export class ProposalMiscService {
         this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
       }
     }
-
-    return plainToClass(ProposalGetDto, saveResult.toObject(), {
-      strategy: 'excludeAll',
-      groups: [ProposalValidation.IsOutput],
-    });
   }
 
   async setIsLockedStatus(proposalId: string, isLocked: boolean, user: IRequestUser): Promise<void> {

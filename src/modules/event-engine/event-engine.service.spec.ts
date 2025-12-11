@@ -15,6 +15,7 @@ import { StatusChangeService } from './events/status-change/status-change.servic
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
+import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
 
 describe('EventEngineService', () => {
   let eventEngineService: EventEngineService;
@@ -29,6 +30,7 @@ describe('EventEngineService', () => {
   let reportsService: ReportsService;
   let publicationsService: PublicationsService;
   let configService: ConfigService;
+  let dataDeliveryEventService: DataDeliveryEventService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -115,6 +117,7 @@ describe('EventEngineService', () => {
             handleParticipatingScientistSummary: jest.fn(),
           },
         },
+        { provide: DataDeliveryEventService, useValue: {} },
       ],
     }).compile();
 
@@ -149,7 +152,7 @@ describe('EventEngineService', () => {
     await eventEngineService.handleProposalLockChange(proposal as any);
     expect(proposalLockService.handleProposalLockChange).toHaveBeenCalledWith(proposal, expectedUrl);
   });
-  proposalModel;
+
   it('should handleProposalStatusSchedule', async () => {
     const saveMock = jest.fn();
     jest.spyOn(proposalModel, 'findById').mockResolvedValueOnce({
