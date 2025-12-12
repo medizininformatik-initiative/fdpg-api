@@ -34,9 +34,14 @@ import { ProposalFormModule } from '../proposal-form/proposal-form.module';
 import { LocationModule } from '../location/location.module';
 import { Connection } from 'mongoose';
 import { Location } from '../location/schema/location.schema';
-import { ProposalDataDeliveryService } from './services/proposal-data-delivery.service';
+import { ProposalDataDeliveryService } from './services/data-delivery/proposal-data-delivery.service';
 import { FhirModule } from '../fhir/fhir.module';
-import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info.cron';
+import { ProposalDataDeliveryCrudService } from './services/data-delivery/proposal-data-delivery-crud.service';
+import { ProposalDataDeliveryMappingService } from './services/data-delivery/proposal-data-delivery-mapping.service';
+import { ProposalDeliveryInfoService } from './services/data-delivery/proposal-delivery-info.service';
+import { ProposalSubDeliveryService } from './services/data-delivery/proposal-sub-delivery.service';
+import { ProposalDataDeliverySyncService } from './services/data-delivery/proposal-data-delivery-sync.service';
+import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.service';
 @Module({
   imports: [
     LocationModule,
@@ -80,12 +85,19 @@ import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info.cron';
     ProposalPublicationService,
     ProposalReportService,
     ProposalContractingService,
-    ProposalDataDeliveryService,
     IsUniqueAbbreviationConstraint,
     StatusChangeService,
     ProposalPdfService,
     ProposalSyncService,
     AcptPluginClient,
+
+    // Data Delivery
+    ProposalDataDeliveryService,
+    ProposalDataDeliveryCrudService,
+    ProposalDataDeliveryMappingService,
+    ProposalDeliveryInfoService,
+    ProposalSubDeliveryService,
+    ProposalDataDeliverySyncService,
     SyncDeliveryInfoCronService,
   ],
   exports: [ProposalCrudService, MongooseModule, ProposalSyncService],

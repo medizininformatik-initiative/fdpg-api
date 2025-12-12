@@ -84,7 +84,7 @@ export class ProposalMiscController {
     @Body() { value }: SetProposalStatusDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    return await this.proposalMiscService.setStatus(id, value, user);
+    await this.proposalMiscService.setStatus(id, value, user);
   }
 
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)

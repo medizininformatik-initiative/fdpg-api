@@ -9,4 +9,5 @@ export enum SubDeliveryStatus {
   DELIVERED = 'DELIVERED',
   ACCEPTED = 'ACCEPTED',
   CANCELED = 'CANCELED',
+  REPEATED = 'REPEATED',
 }

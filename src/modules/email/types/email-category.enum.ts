@@ -14,4 +14,5 @@ export enum EmailCategory {
   PublicationDelete = 'PUBLICATION_DELETE',
   DeadlineChange = 'DEADLINE_CHANGE',
   ParticipatingScientistSummary = 'PARTICIPATING_SCIENTIST_SUMMARY',
+  DataDelivery = 'DATA_DELIVERY',
 }

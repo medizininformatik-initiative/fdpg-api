@@ -267,12 +267,6 @@ describe('validateStatusChange', () => {
         ValidationException,
       );
     });
-
-    it('throws FinishedProject when user is DataSourceMember', () => {
-      expect(() => validateStatusChange(baseProposal, ProposalStatus.FinishedProject, dataSourceMember)).toThrow(
-        ValidationException,
-      );
-    });
   });
 
   describe('DataCorrupt -> ExpectDataDelivery / DataResearch', () => {

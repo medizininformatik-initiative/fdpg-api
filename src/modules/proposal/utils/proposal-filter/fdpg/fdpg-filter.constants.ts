@@ -29,6 +29,7 @@ const ONGOING_TO_CHECK = {
   status: { $in: [ProposalStatus.FinishedProject, ProposalStatus.DataCorrupt] },
   type: ProposalType.ApplicationForm,
 };
+
 const ONGOING_IN_WORK = {
   status: { $in: [ProposalStatus.ExpectDataDelivery, ProposalStatus.DataResearch] },
   type: ProposalType.ApplicationForm,

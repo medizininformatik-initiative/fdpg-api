@@ -38,7 +38,7 @@ export class FhirClient {
   private configureClient() {
     this.client = axios.create({
       baseURL: this.fhirBaseUrl,
-      timeout: 60 * 1_000,
+      timeout: 5 * 60 * 1_000,
       headers: {
         ...this.FHIR_JSON_HEADERS,
       },
