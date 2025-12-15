@@ -8,7 +8,6 @@ export class AxiosMonitoringService implements OnModuleInit {
   constructor(private readonly httpService: HttpService) {}
 
   onModuleInit() {
-    // Just apply the monitoring to the default instance
     applyAxiosMonitoring(this.httpService.axiosRef);
   }
 }

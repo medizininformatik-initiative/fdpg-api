@@ -1,5 +1,6 @@
 import { configureTelemetry } from './telemetry';
 import * as dotenv from 'dotenv';
+import { Logger } from 'nestjs-pino';
 
 dotenv.config({ path: `.env.local` });
 dotenv.config();
@@ -110,7 +111,11 @@ function configureCors(app: INestApplication): void {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  app.useLogger(app.get(Logger));
 
   app.setGlobalPrefix(API_PREFIX);
   app.useGlobalFilters(new ValidationExceptionFilter());
@@ -124,17 +129,15 @@ async function bootstrap() {
   }
 
   const configService = app.get(ConfigService);
-  const environment = configService.get('ENV');
+  const environment = configService.get('ENV', 'local');
 
   promClient.register.setDefaultLabels({
-    app: `fdpg-api-${environment}`, // <-- Give your application a unique name
+    app: 'FDPG-API_' + environment,
   });
 
   app.use(
     promMid({
-      // This is the default path, but you can change it
       metricsPath: '/metrics',
-      // We don't need default prom-client metrics (e.g., heap size)
       collectDefaultMetrics: false,
     }),
   );
