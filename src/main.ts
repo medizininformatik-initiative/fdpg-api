@@ -131,16 +131,18 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const environment = configService.get('ENV', 'local');
 
-  promClient.register.setDefaultLabels({
-    app: 'FDPG-API_' + environment,
-  });
+  if ((process.env.ENABLE_TELEMETRY ?? '').toLowerCase() === 'true') {
+    promClient.register.setDefaultLabels({
+      app: 'FDPG-API_' + environment,
+    });
 
-  app.use(
-    promMid({
-      metricsPath: '/metrics',
-      collectDefaultMetrics: false,
-    }),
-  );
+    app.use(
+      promMid({
+        metricsPath: '/metrics',
+        collectDefaultMetrics: false,
+      }),
+    );
+  }
 
   // Adds DI for validators:
   // https://github.com/nestjs/nest/issues/528
