@@ -60,6 +60,7 @@ export const ExposeHistory = () => (target: object, propertyKey: string) => {
         HistoryEventType.ParticipantRemoved,
         HistoryEventType.ParticipantUpdated,
       ].includes(event.type);
+      const isProjectAssigneeChangeEvent = event.type === HistoryEventType.ProjectAssigneChange;
 
       const dataDeliveryEvent = dataDeliveryHistoryVisibility.find(
         (dataDeliveryEventVisibility) => dataDeliveryEventVisibility.event === event.type,
@@ -81,7 +82,7 @@ export const ExposeHistory = () => (target: object, propertyKey: string) => {
         return true;
       }
 
-      if (event.type === HistoryEventType.ProjectAssigneChange) {
+      if (isProjectAssigneeChangeEvent) {
         return [Role.FdpgMember, Role.DataSourceMember].includes(user.singleKnownRole);
       }
 

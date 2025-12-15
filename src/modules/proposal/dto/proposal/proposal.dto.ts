@@ -259,6 +259,9 @@ export class ProposalGetDto extends ProposalBaseDto {
   contractRejectedByResearcherReason: string;
 
   @Expose()
+  contractingSkipped: boolean;
+
+  @Expose()
   isContractingComplete: boolean;
 
   @Expose()

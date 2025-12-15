@@ -31,6 +31,7 @@ import { ProposalCrudService } from '../proposal-crud.service';
 import { ProposalUploadService } from '../proposal-upload.service';
 import { StatusChangeService } from '../status-change.service';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -96,6 +97,7 @@ describe('ProposalContractingService', () => {
   let storageService: jest.Mocked<StorageService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let proposalUploadService: jest.Mocked<ProposalUploadService>;
+  let locationService: jest.Mocked<LocationService>;
 
   const request = {
     user: {
@@ -169,6 +171,7 @@ describe('ProposalContractingService', () => {
             deleteUpload: jest.fn(),
           },
         },
+        { provide: LocationService, useValue: {} },
       ],
       imports: [],
     }).compile();
@@ -181,6 +184,7 @@ describe('ProposalContractingService', () => {
     proposalUploadService = module.get<ProposalUploadService>(
       ProposalUploadService,
     ) as jest.Mocked<ProposalUploadService>;
+    locationService = module.get<LocationService>(LocationService) as jest.Mocked<LocationService>;
   });
 
   it('should be defined', () => {

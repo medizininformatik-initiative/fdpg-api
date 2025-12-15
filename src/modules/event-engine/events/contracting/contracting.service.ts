@@ -48,7 +48,7 @@ export class ContractingService {
     await Promise.allSettled(emailTasks);
   }
 
-  private async handleLocationSign(proposal: Proposal, proposalUrl: string) {
+  async handleLocationSign(proposal: Proposal, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
 
     if (proposal.isContractingComplete) {
