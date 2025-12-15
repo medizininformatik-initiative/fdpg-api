@@ -6,6 +6,7 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   updatedAt: 1,
   submittedAt: 1,
   dueDateForStatus: 1,
+  deadlines: 1,
   ownerName: 1,
   ownerId: 1,
   participants: 1,

@@ -59,6 +59,16 @@ export enum HistoryEventType {
   DataCorruptDeadlineChange = 'DATA_CORRUPTED_DEADLINE_CHANGE',
   FinishedProjectDeadlineChange = 'FINISHED_PROJECT_DEADLINE_CHANGE',
 
+  /** Data Delivery */
+  DmoRequest = 'DMO_REQUEST', // DMS has been requested
+  DmoDeny = 'DMO_DENY', // DMS denied the request
+  DmoAccept = 'DMO_ACCEPT', // DMS accepted the request
+  DataDeliveryStarted = 'DATA_DELIVERY_STARTED', // FDPG created a new data delivery via DSF
+  DataDeliveryManualEntry = 'DATA_DELIVERY_MANUAL_ENTRY', // A manual data delivery was created
+  DataDeliveryForwarded = 'DATA_DELIVERY_FORWARDED', // data delivery was forwarded
+  DataDeliveryCanceled = 'DATA_DELIVERY_CANCELED', // data delivery was canceled
+  DataDeliveryConcluded = 'DATA_DELIVERY_CONCLUDED', // data delivery was finished/concluded
+
   // Misc
   ProjectAssigneChange = 'FDPG_PROJECT_ASSIGNEE_CHANGE',
 }

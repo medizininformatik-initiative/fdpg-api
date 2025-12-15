@@ -23,6 +23,8 @@ import { CommentType } from '../comment/enums/comment-type.enum';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { DueDateEnum } from '../proposal/enums/due-date.enum';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
+import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
+import { Location } from '../location/schema/location.schema';
 
 type MongoDocument = Document<any, any, any> & { _id: any };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
@@ -45,6 +47,7 @@ export class EventEngineService {
     private configService: ConfigService,
     private deadlineEventService: DeadlineEventService,
     private participantEmailSummaryService: ParticipantEmailSummaryService,
+    private dataDeliveryEventService: DataDeliveryEventService,
   ) {
     this.portalHost = this.configService.get('PORTAL_HOST');
   }
@@ -157,6 +160,21 @@ export class EventEngineService {
   async handleDeadlineChange(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>) {
     const proposalUrl = this.getProposalUrl(proposal);
     await this.deadlineEventService.sendForDeadlineChange(proposal, changeList, proposalUrl);
+  }
+
+  async handleDataDeliveryInitiated(proposal: Proposal, locations: Location[]) {
+    const proposalUrl = this.getProposalUrl(proposal);
+    await this.dataDeliveryEventService.handleDataDeliveryInitiated(proposal, proposalUrl, locations);
+  }
+
+  async handleDataDeliveryDataReady(proposal: Proposal, locations: Location[]) {
+    const proposalUrl = this.getProposalUrl(proposal);
+    await this.dataDeliveryEventService.handleDataDeliveryDataReady(proposal, proposalUrl, locations);
+  }
+
+  async handleDataDeliveryDataReturn(proposal: Proposal) {
+    const proposalUrl = this.getProposalUrl(proposal);
+    await this.dataDeliveryEventService.handleDataDeliveryDataReturn(proposal, proposalUrl);
   }
 
   async handleParticipatingResearcherSummarySchedule(event: Schedule) {

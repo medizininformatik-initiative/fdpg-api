@@ -18,6 +18,7 @@ export const getFilterForFdpg = (panelQuery: PanelQuery): FilterQuery<Proposal> 
     PanelQuery.FdpgPublishedPublished,
     PanelQuery.FdpgPublishedDraft,
     PanelQuery.Archived,
+    PanelQuery.FdpgOverview,
   ];
 
   if (allowedQuery.includes(panelQuery)) {

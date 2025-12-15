@@ -71,6 +71,7 @@ import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
 import { HistoryEventType } from '../enums/history-event.enum';
 import { ProposalSyncService } from './proposal-sync.service';
 import { Logger } from '@nestjs/common';
+import { ValidationGroup } from 'src/modules/comment/enums/validation-group.enum';
 
 @Injectable()
 export class ProposalMiscService {

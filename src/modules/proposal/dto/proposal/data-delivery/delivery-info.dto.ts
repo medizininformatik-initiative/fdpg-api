@@ -1,5 +1,5 @@
 import { Expose, Type } from 'class-transformer';
-import { IsArray, IsDate, IsEnum, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { SubDeliveryGetDto, SubDeliveryUpdateDto } from './sub-delivery.dto';
 import { DeliveryInfoStatus } from 'src/modules/proposal/enums/delivery-info-status.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
@@ -24,6 +24,15 @@ export class DeliveryInfoUpdateDto extends WithIdForObjectDto {
   @ValidateNested({ each: true })
   @Type(() => SubDeliveryUpdateDto)
   subDeliveries: SubDeliveryUpdateDto[];
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  dms: string;
+
+  @Expose()
+  @IsBoolean()
+  manualEntry: boolean;
 }
 
 export class DeliveryInfoGetDto extends WithIdForObjectDto {
@@ -55,4 +64,28 @@ export class DeliveryInfoGetDto extends WithIdForObjectDto {
   @Expose()
   @Type(() => Date)
   updatedAt?: Date;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  dms: string;
+
+  @Expose()
+  @IsBoolean()
+  manualEntry: boolean;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  resultUrl?: string;
+
+  @Expose()
+  @IsDate()
+  @IsOptional()
+  forwardedOnDate?: Date;
+
+  @Expose()
+  @IsDate()
+  @IsOptional()
+  fetchedResultsOn?: Date;
 }

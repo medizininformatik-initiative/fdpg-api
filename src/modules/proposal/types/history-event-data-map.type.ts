@@ -6,6 +6,12 @@ type HistoryEventData = {
   [HistoryEventType.ParticipantAdded]: { participantName: string };
   [HistoryEventType.ParticipantRemoved]: { participantName: string };
   [HistoryEventType.ProposalCopyAsInternalRegistration]: { originalProposalAbbreviation: string };
+  [HistoryEventType.DmoRequest]: { requestedDms: string };
+  [HistoryEventType.DataDeliveryManualEntry]: { deliveryName: string; locations: string[] };
+  [HistoryEventType.DataDeliveryStarted]: { deliveryName: string; locations: string[] };
+  [HistoryEventType.DataDeliveryCanceled]: { deliveryName: string; locations: string[] };
+  [HistoryEventType.DataDeliveryForwarded]: { deliveryName: string; locations: string[] };
+  [HistoryEventType.DataDeliveryConcluded]: { deliveryName: string };
 };
 
 export type HistoryEventDataMap<T extends HistoryEventType> = T extends keyof HistoryEventData
