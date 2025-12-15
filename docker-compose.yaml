@@ -26,16 +26,15 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
 
   # PDF Service must be first build in PDF Service Repository
-  # pdf:
-  #   image: fdpgpdfservice:latest
-  #   restart: always
-  #   ports:
-  #     - 8081:3000
-  #   environment:
-  #     ENABLE_TELEMETRY: false
-  #     PRINT_FRONTEND_HOST: http://localhost:3000
+  pdf:
+    image: fdpgpdfservice:latest
+    restart: always
+    ports:
+      - 8081:3000
+    environment:
+      ENABLE_TELEMETRY: false
+      PRINT_FRONTEND_HOST: http://localhost:3000
 
-  # 1. Prometheus Service
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -54,7 +53,6 @@ services:
       - '3100:3100'
     command: -config.file=/etc/loki/local-config.yaml
 
-  # 2. Grafana Service
   grafana:
     image: grafana/grafana:10.3.1-ubuntu
     container_name: grafana
