@@ -33,7 +33,6 @@ import { SyncStatus } from '../enums/sync-status.enum';
 import { ModificationContext } from '../enums/modification-context.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { Location } from 'src/modules/location/schema/location.schema';
-import { CustomTransformFnParams } from 'src/shared/types/custom-class-transform.type';
 
 @Injectable()
 export class ProposalCrudService {
