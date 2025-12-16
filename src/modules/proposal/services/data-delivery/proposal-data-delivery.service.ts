@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformOptions, plainToClass } from 'class-transformer';
 import type { IRequestUser } from 'src/shared/types/request-user.interface';
 import {
   DataDeliveryGetDto,
@@ -297,7 +297,8 @@ export class ProposalDataDeliveryService {
     return plainToClass(ProposalGetDto, proposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(proposal.selectedDataSources ? proposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   };
 
   private setFinalDeliveryInfoStateForAnalysis = async (

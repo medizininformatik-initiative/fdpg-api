@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformOptions, plainToClass, TransformFnParams } from 'class-transformer';
 import { Model } from 'mongoose';
 import { SharedService } from 'src/shared/shared.service';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
@@ -33,6 +33,7 @@ import { SyncStatus } from '../enums/sync-status.enum';
 import { ModificationContext } from '../enums/modification-context.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { Location } from 'src/modules/location/schema/location.schema';
+import { CustomTransformFnParams } from 'src/shared/types/custom-class-transform.type';
 
 @Injectable()
 export class ProposalCrudService {
@@ -72,7 +73,11 @@ export class ProposalCrudService {
 
     const plain = saveResult.toObject();
     this.addParticipatingScientistIndicator(plain, user);
-    return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
+    return plainToClass(ProposalGetDto, plain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+      selectedDataSources: [...(saveResult.selectedDataSources ? saveResult.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   async findDocument(
@@ -140,7 +145,8 @@ export class ProposalCrudService {
     const result = plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],
-    });
+      selectedDataSources: [...(document.selectedDataSources ? document.selectedDataSources : [])],
+    } as ClassTransformOptions);
 
     return result;
   }
@@ -240,7 +246,11 @@ export class ProposalCrudService {
     const plain = saveResult.toObject();
 
     this.addParticipatingScientistIndicator(plain, user);
-    return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
+    return plainToClass(ProposalGetDto, plain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+      selectedDataSources: [...(saveResult.selectedDataSources ? saveResult.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   async delete(proposalId: string, user: IRequestUser): Promise<void> {
