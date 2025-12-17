@@ -1,10 +1,6 @@
-const wordsAndChars = '[\\wÀ-ž\\&\\\\#\\/*\\?\\.\\:\\+\\-\\|\\@]';
-const singleWhiteSpace = '(\\s)?';
-/**
- * Regex should find words and following special character:
- * Single space &/\?.:#*+-_|@
- * https://appsfactory.atlassian.net/browse/ZARS-155
- */
+// allowed chars
+const ALLOWED = `[\\wÀ-ž&\\\\#/*?.:+\\-|@]`;
 
-const wordsAndSpace = `(${wordsAndChars}*${singleWhiteSpace}${wordsAndChars}+)`;
-export const PROPOSAL_SHORTCUT_REGEX = new RegExp(`^(${wordsAndChars}+${wordsAndSpace}*)$`);
+// One or more allowed chars, then zero or more groups of:
+// single space + one or more allowed chars
+export const PROPOSAL_SHORTCUT_REGEX = new RegExp(`^${ALLOWED}+(?:\\s${ALLOWED}+)*$`);
