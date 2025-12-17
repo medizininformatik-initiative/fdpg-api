@@ -220,6 +220,9 @@ export class Proposal {
   contractRejectedByResearcherReason: string;
 
   @Prop({ type: Boolean, default: false })
+  contractingSkipped: boolean;
+
+  @Prop({ type: Boolean, default: false })
   isContractingComplete: boolean;
 
   @Prop({ type: Date })

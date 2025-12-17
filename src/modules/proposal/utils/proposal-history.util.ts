@@ -182,6 +182,12 @@ export const addHistoryItemForContractSign = (
   pushHistoryItem(proposalAfterChanges, user, type, user.miiLocation);
 };
 
+export const addHistoryItemForContractSkipped = (proposalAfterChanges: Proposal, user: IRequestUser): void => {
+  const type = HistoryEventType.ContractingSkipped;
+
+  pushHistoryItem(proposalAfterChanges, user, type);
+};
+
 export const addHistoryItemForContractSystemReject = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,

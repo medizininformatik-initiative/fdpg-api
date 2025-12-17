@@ -102,10 +102,18 @@ export class EventEngineService {
       await this.locationVoteService.handleUacApproval(proposal, vote, location, proposalUrl);
     }
   }
+
   async handleProposalContractSign(proposal: Proposal, vote: boolean, user: IRequestUser) {
     if (proposal) {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.contractingService.handleContractSign(proposal, vote, user, proposalUrl);
+    }
+  }
+
+  async handleProposalContractingSkip(proposal: Proposal) {
+    if (proposal) {
+      const proposalUrl = this.getProposalUrl(proposal);
+      await this.contractingService.handleLocationSign(proposal, proposalUrl);
     }
   }
 

@@ -12,6 +12,7 @@ export enum UseCaseUpload {
   ContractDraft = 'CONTRACT_DRAFT',
   LocationContract = 'LOCATION_CONTRACT',
   ResearcherContract = 'RESEARCHER_CONTRACT',
+  SkipContract = 'SKIP_CONTRACT',
   FeasibilityQuery = 'FEASIBILITY_QUERY',
   ProposalPDF = 'PROPOSAL_PDF',
   ReportUpload = 'REPORT_UPLOAD',

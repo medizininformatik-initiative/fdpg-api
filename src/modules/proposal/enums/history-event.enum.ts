@@ -45,6 +45,7 @@ export enum HistoryEventType {
   ContractLocationRejected = 'CONTRACT_LOCATION_REJECTED',
   ContractSystemRejected = 'CONTRACT_SYSTEM_REJECTED',
   ContractUpdated = 'CONTRACT_UPDATED',
+  ContractingSkipped = 'CONTRACTING_SKIPPED',
 
   /** Participant Changes */
   ParticipantAdded = 'PARTICIPANT_ADDED',
