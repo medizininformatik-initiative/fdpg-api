@@ -64,8 +64,9 @@ export class ProposalDeliveryInfoService {
 
         return {
           ...newDeliveryModel,
-          status: DeliveryInfoStatus.RESULTS_AVAILABLE,
+          status: DeliveryInfoStatus.FETCHED_BY_RESEARCHER,
           forwardedOnDate: newDeliveryModel.deliveryDate ?? new Date(),
+          fetchedResultsOn: newDeliveryModel.deliveryDate ?? new Date(),
           subDeliveries: newDeliveryModel.subDeliveries.map((sd) => ({ ...sd, status: SubDeliveryStatus.ACCEPTED })),
         };
       } else {
@@ -79,7 +80,7 @@ export class ProposalDeliveryInfoService {
 
         const { fhirTaskId, fhirBusinessKey } = await this.fhirService.createCoordinateDataSharingTask(
           proposal._id,
-          proposal.projectAbbreviation,
+          dto.name,
           selectedDms,
           dicLocations,
           researcherEmails,

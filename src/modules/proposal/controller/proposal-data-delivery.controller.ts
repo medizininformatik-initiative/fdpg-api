@@ -163,7 +163,7 @@ export class ProposalDataDeliveryController {
     @Body() dto: DeliveryInfoUpdateDto,
     @Request() { user }: FdpgRequest,
   ): Promise<DataDeliveryGetDto> {
-    if (user.singleKnownRole === Role.Researcher && dto.status === DeliveryInfoStatus.FETCHED_BY_RESEARCHER) {
+    if (dto.status === DeliveryInfoStatus.FETCHED_BY_RESEARCHER) {
       return await this.proposalDataDeliveryService.setStatusToFetched(id, dto._id, user);
     } else if (
       user.singleKnownRole === Role.FdpgMember &&

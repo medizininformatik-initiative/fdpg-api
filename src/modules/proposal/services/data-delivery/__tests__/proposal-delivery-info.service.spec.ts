@@ -160,7 +160,7 @@ describe('ProposalDeliveryInfoService', () => {
 
         expect(fhirService.createCoordinateDataSharingTask).toHaveBeenCalledWith(
           mockProposal._id,
-          mockProposal.projectAbbreviation,
+          dsfDto.name,
           mockDmsLocation,
           [mockDicLocation], // Array of looked-up location objects
           ['res@test.com'], // Researcher emails
