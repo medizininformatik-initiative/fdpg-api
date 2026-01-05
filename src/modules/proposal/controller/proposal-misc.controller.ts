@@ -199,6 +199,26 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getAllProposalFormVersions();
   }
 
+  @Auth(Role.Admin, Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Get(':id/form-schema')
+  @ApiNotFoundResponse({ description: 'Item could not be found.' })
+  @ApiOperation({ summary: 'Returns a list of all proposal form versions' })
+  async getAllProposalFormForProposal(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<any> {
+    console.log({ id });
+    return await this.proposalMiscService.getProposalUiFields(id, user);
+  }
+
+  @Auth(Role.Admin, Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Get('proposal-form/current')
+  @ApiNotFoundResponse({ description: 'Item could not be found.' })
+  @ApiOperation({ summary: 'Returns a list of all proposal form versions' })
+  getAllProposalFormCurrent(): Promise<any> {
+    return this.proposalMiscService.getProposalFormSchema();
+  }
+
   @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Put(':id/cohort/manual')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })

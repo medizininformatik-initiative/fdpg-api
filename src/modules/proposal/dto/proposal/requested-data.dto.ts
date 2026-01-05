@@ -3,6 +3,7 @@ import { IsNumber, IsOptional, MaxLength } from 'class-validator';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
+import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
 
 export class RequestedDataDto extends WithIdForObjectDto {
   @Expose()
@@ -16,6 +17,7 @@ export class RequestedDataDto extends WithIdForObjectDto {
     ],
   })
   @MaxLength(10000)
+  @UiWidget({ type: 'richtext' })
   patientInfo: string;
 
   @Expose()
@@ -29,6 +31,7 @@ export class RequestedDataDto extends WithIdForObjectDto {
     ],
   })
   @MaxLength(10000)
+  @UiWidget({ type: 'richtext' })
   dataInfo: string;
 
   @Expose()
@@ -41,6 +44,7 @@ export class RequestedDataDto extends WithIdForObjectDto {
       ProposalValidation.IsRegister,
     ],
   })
+  @UiWidget({ type: 'textfield', format: 'number' })
   desiredDataAmount: number;
 
   @Expose()
@@ -53,5 +57,6 @@ export class RequestedDataDto extends WithIdForObjectDto {
       ProposalValidation.IsRegister,
     ],
   })
+  @UiWidget({ type: 'textfield', format: 'number' })
   desiredControlDataAmount: number;
 }

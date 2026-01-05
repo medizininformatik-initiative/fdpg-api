@@ -55,6 +55,7 @@ import { defaultDueDateValues } from '../../enums/due-date.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { DataDeliveryGetDto } from './data-delivery/data-delivery.dto';
 import { ProjectAssigneeDto } from './project-assignee.dto';
+import { UiNested, UiWidget } from 'src/shared/decorators/ui-widget.decorator';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -88,41 +89,42 @@ export class ProposalBaseDto {
   @MaxLength(25)
   @Matches(PROPOSAL_SHORTCUT_REGEX)
   @IsUniqueAbbreviation({ context: [BadRequestError.ProjectAbbreviationMustBeUnique] })
+  @UiWidget({ type: 'textfield' })
   projectAbbreviation: string;
 
   @Expose()
   @IsArray()
   @ValidateNested()
-  @Type(() => ParticipantDto)
+  @UiNested(() => ParticipantDto, { isArray: true })
   participants: ParticipantDto[];
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => ApplicantDto)
+  @UiNested(() => ApplicantDto)
   applicant: ApplicantDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => ProjectResponsibleDto)
+  @UiNested(() => ProjectResponsibleDto)
   projectResponsible: ProjectResponsibleDto;
 
   @Expose()
   @ValidateNested()
-  @Type(() => ProjectUserDto)
+  @UiNested(() => ProjectUserDto)
   projectUser: ProjectUserDto;
 
   @Expose()
   @IsObject()
   @ValidateNested()
-  @Type(() => UserProjectDto)
+  @UiNested(() => UserProjectDto)
   userProject: UserProjectDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => RequestedDataDto)
+  @UiNested(() => RequestedDataDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   requestedData: RequestedDataDto;
@@ -144,6 +146,7 @@ export class ProposalBaseDto {
   @Expose()
   @IsArray()
   @IsEnum(PlatformIdentifier, { each: true })
+  @UiWidget({ type: 'select', format: 'multiple' })
   selectedDataSources: PlatformIdentifier[];
 
   @Expose()
@@ -154,6 +157,15 @@ export class ProposalBaseDto {
   @Expose()
   @Type(() => RegisterInfoDto)
   @IsOptional()
+  @Transform(({ value, options }) => {
+    if (
+      options?.groups?.includes(OutputGroup.FormSchemaOnly) ||
+      options?.groups?.includes(OutputGroup.WithFormSchema)
+    ) {
+      return undefined;
+    }
+    return value;
+  })
   registerInfo?: RegisterInfoDto;
 
   @Expose()
