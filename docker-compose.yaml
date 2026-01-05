@@ -26,14 +26,14 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
 
   # PDF Service must be first build in PDF Service Repository
-  pdf:
-    image: fdpgpdfservice:latest
-    restart: always
-    ports:
-      - 8081:3000
-    environment:
-      ENABLE_TELEMETRY: false
-      PRINT_FRONTEND_HOST: http://localhost:3000
+  # pdf:
+  #   image: fdpgpdfservice:latest
+  #   restart: always
+  #   ports:
+  #     - 8081:3000
+  #   environment:
+  #     ENABLE_TELEMETRY: false
+  #     PRINT_FRONTEND_HOST: http://localhost:3000
 
   prometheus:
     image: prom/prometheus:latest

@@ -138,7 +138,7 @@ async function bootstrap() {
 
     app.use(
       promMid({
-        metricsPath: '/metrics',
+        metricsPath: '/api/metrics',
         collectDefaultMetrics: false,
       }),
     );

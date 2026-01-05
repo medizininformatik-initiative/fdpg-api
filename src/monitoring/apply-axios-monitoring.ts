@@ -130,6 +130,9 @@ export function applyAxiosMonitoring(axiosInstance: AxiosInstance) {
 
       const status = error.response?.status || 'NETWORK_ERROR';
 
+      const urlObj = new URL(config.url, config.baseURL);
+      const host = urlObj.hostname;
+
       // Record Metrics
       if (error.response) {
         recordMetrics(error.response.config as AxiosRequestConfigWithMetadata, status, duration);
@@ -146,7 +149,7 @@ export function applyAxiosMonitoring(axiosInstance: AxiosInstance) {
           code: error.code,
           method: config?.method?.toUpperCase(),
           url: config?.url,
-          status,
+          host,
           duration: `${duration.toFixed(3)}s`,
           reqHeaders: config ? sanitizeHeaders(config.headers) : {},
           resHeaders: error.response ? sanitizeHeaders(error.response.headers) : {},

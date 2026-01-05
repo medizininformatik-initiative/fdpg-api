@@ -284,80 +284,23 @@
         "type": "loki",
         "uid": "P8E80F9AEF21F6940"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unitScale": true
-        },
-        "overrides": []
-      },
       "gridPos": {
-        "h": 7,
+        "h": 13,
         "w": 24,
         "x": 0,
         "y": 14
       },
       "id": 7,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Ascending",
+        "wrapLogMessage": false
       },
       "pluginVersion": "12.2.1",
       "targets": [
@@ -368,13 +311,13 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{application=\"$app\"} \n| json \n| context = \"OutboundHTTP\" \n| originalUrl =~ `${host:regex}`\n| line_format \"{{.method}} {{.originalUrl}} ➡ {{.status}} ({{.duration}})\"",
+          "expr": "{application=\"$app\"} \n| json \n| json method=\"req.method\", path=\"req.url\", service=\"context\"\n| context = \"OutboundHTTP\" \n| host =~ `${host:regex}`\n| line_format \"{{.application}} {{.level | ToUpper}} [{{.service}}] ({{.method}} {{.host}}) {{.msg}} ({{.duration}})\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Outgoing logs",
-      "type": "timeseries"
+      "title": "Outgoing Application logs",
+      "type": "logs"
     }
   ],
   "refresh": "",
