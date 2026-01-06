@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { Transform, Expose, Type } from 'class-transformer';
 import { OutputGroup } from '../enums/output-group.enum';
-import { ValidateNested } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
 
 export interface UiWidgetOptions {
   type: 'textfield' | 'datepicker' | 'richtext' | 'checkbox' | 'select';
@@ -39,13 +39,10 @@ export function UiWidget(options: UiWidgetOptions) {
 
 export function UiNested(typeFn: () => any, options?: { isArray: boolean }) {
   return applyDecorators(
-    // 1. Open the "Hallway" for your Form Groups
     Expose({ groups: [OutputGroup.FormSchemaOnly, OutputGroup.WithFormSchema] }),
 
-    // 2. Transformer handles arrays automatically!
     Type(typeFn),
 
-    // 3. Validator needs to know if it should check an array
     ValidateNested({ each: options?.isArray }),
   );
 }

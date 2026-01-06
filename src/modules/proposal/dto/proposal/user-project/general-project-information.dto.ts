@@ -42,7 +42,7 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
   @MaxLength(10000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
-  @UiWidget({ type: 'textfield' })
+  @UiWidget({ type: 'richtext' })
   projectFunding: string;
 
   @Expose()

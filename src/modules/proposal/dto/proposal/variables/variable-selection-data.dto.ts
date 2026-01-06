@@ -26,9 +26,8 @@ export class DifeVariableSelectionDataDto {
 
 export class VariableSelectionDataDto extends WithIdForObjectDto {
   @ExposeForDataSources([PlatformIdentifier.DIFE])
-  @ValidateNested()
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsMiiDataSource] })
-  @UiNested(() => DifeVariableSelectionDataDto)
+  @UiNested(() => DifeVariableSelectionDataDto, { isArray: false })
   @IsObject()
   DIFE?: DifeVariableSelectionDataDto;
 }

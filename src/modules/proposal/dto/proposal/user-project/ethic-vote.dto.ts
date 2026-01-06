@@ -17,7 +17,7 @@ export class EthicVoteDto extends WithIdForObjectDto {
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @ValidateIf((ethicVote: EthicVoteDto) => ethicVote.isExisting)
-  @UiWidget({ type: 'richtext' })
+  @UiWidget({ type: 'textfield' })
   ethicsCommittee: string;
 
   @Expose()

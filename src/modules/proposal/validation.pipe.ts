@@ -88,6 +88,11 @@ export class ProposalValidationPipe implements PipeTransform<any> {
       groups.push(ProposalValidation.IsDIFEDataSource);
     }
 
+    // If MII is selected, add MII validation group
+    if (object.selectedDataSources?.includes(PlatformIdentifier.Mii)) {
+      groups.push(ProposalValidation.IsMiiDataSource);
+    }
+
     // If this is a register proposal, add register validation group
     if (object.type === ProposalType.RegisteringForm) {
       groups.push(ProposalValidation.IsRegister);

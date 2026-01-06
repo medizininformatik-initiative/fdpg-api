@@ -1,15 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ProposalForm, ProposalFormDocument } from './schema/proposal-form.schema';
+import {
+  ApplicationFormSchemaType,
+  ApplicationFormSchemaValueType,
+  ProposalForm,
+  ProposalFormDocument,
+} from './schema/proposal-form.schema';
 import { Model } from 'mongoose';
-import { instanceToPlain, plainToClass, plainToInstance } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import { ProposalFormDto } from './dto/proposal-form.dto';
 import { ProposalBaseDto } from '../proposal/dto/proposal/proposal.dto';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { Proposal } from '../proposal/schema/proposal.schema';
 import { ClassConstructor } from 'class-transformer';
-import { defaultMetadataStorage } from 'class-transformer/cjs/storage'; // Import from storage
-import 'reflect-metadata'; // Ensure this is imported
+import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
+import 'reflect-metadata';
+import { ProposalType } from '../proposal/enums/proposal-type.enum';
+
 @Injectable()
 export class ProposalFormService {
   constructor(
@@ -17,7 +24,7 @@ export class ProposalFormService {
     private proposalFormModel: Model<ProposalFormDocument>,
   ) {}
 
-  currentVersion = undefined;
+  private currentVersion = undefined;
 
   async findAll(): Promise<ProposalFormDto[]> {
     const result = await this.proposalFormModel.find({}).lean();
@@ -45,43 +52,89 @@ export class ProposalFormService {
     return this.currentVersion;
   }
 
-  getProposalUiFields(proposal: Proposal): ProposalBaseDto | any {
-    const form = plainToClass(ProposalBaseDto, proposal, { groups: [OutputGroup.WithFormSchema] });
+  async findMostRecentProposalForm(): Promise<ProposalFormDocument> {
+    const mostRecentVersion = await this.getCurrentVersion();
+    const form = await this.findForVersion(mostRecentVersion);
 
-    return { proposalId: proposal._id, formVersion: proposal.formVersion ?? 1, form };
+    if (!form) {
+      throw new NotFoundException(`Cannot find most current form with version ${mostRecentVersion}`);
+    }
+
+    return form;
   }
 
-  createDeepDummy<T>(cls: ClassConstructor<T>): T {
-    // 1. Create the root instance
-    const instance = new cls();
+  private async findForVersion(formVersion: number): Promise<ProposalFormDocument | null> {
+    return await this.proposalFormModel.findOne({ formVersion });
+  }
 
-    // 2. Get all exposed properties for this class
-    // Since your @UiWidget and @UiNested use @Expose, they will show up here.
+  async getProposalUiFields(proposal: Proposal): Promise<ProposalBaseDto | any> {
+    if (proposal.type !== ProposalType.ApplicationForm) {
+      throw new Error(`Proposal Application Forms Schemas cannot be applied to ${proposal.type}`);
+    }
+
+    const form = (await this.findForVersion(proposal.formVersion)).toObject();
+
+    const proposalFormValues = form?.formSchema ? this.mapFormSchemaToProposal(form.formSchema, proposal) : {};
+
+    return { proposalId: proposal._id, formVersion: form?.formVersion ?? null, proposalFormValues };
+  }
+
+  private mapFormSchemaToProposal(
+    formSchema: ApplicationFormSchemaType,
+    proposal: Partial<Proposal> = {},
+  ): ApplicationFormSchemaValueType {
+    if (!formSchema) return {};
+
+    return Object.entries(formSchema).reduce((acc, [key, schemaValue]) => {
+      const proposalValue = proposal?.[key];
+
+      if (Array.isArray(schemaValue)) {
+        if (Array.isArray(proposalValue) && proposalValue.length === 0) {
+          acc[key] = [];
+        } else {
+          acc[key] = schemaValue.map((schemaItem, index) => {
+            const proposalItem = Array.isArray(proposalValue) ? proposalValue[index] : {};
+            return this.mapFormSchemaToProposal(schemaItem, proposalItem);
+          });
+        }
+
+        return acc;
+      }
+
+      if (schemaValue && typeof schemaValue === 'object' && !('type' in schemaValue)) {
+        if (!proposalValue) {
+          acc[key] = null;
+        } else {
+          acc[key] = this.mapFormSchemaToProposal(schemaValue, proposalValue as any);
+        }
+
+        return acc;
+      }
+
+      acc[key] = {
+        ...schemaValue,
+        value: proposalValue ?? null,
+      };
+
+      return acc;
+    }, {} as ApplicationFormSchemaValueType);
+  }
+
+  private createDeepDummy<T>(cls: ClassConstructor<T>): T {
+    const instance = new cls();
     const exposedMetadatas = defaultMetadataStorage.getExposedMetadatas(cls);
 
-    // 3. Iterate over every exposed property
     exposedMetadatas.forEach((metadata) => {
       const propertyName = metadata.propertyName;
-
-      // 4. Check if this property has a @Type decorator (meaning it's nested)
       const typeMetadata = defaultMetadataStorage.findTypeMetadata(cls, propertyName);
 
       if (typeMetadata) {
-        // 5. Get the Child Class Constructor from the @Type(() => Child) function
-        // typeMetadata.typeFunction returns the class constructor
         const childClass = typeMetadata.typeFunction() as ClassConstructor<any>;
-
-        // 6. Check if it is an Array
-        // We use standard Reflection to see if the TS type is Array
         const reflectionType = Reflect.getMetadata('design:type', instance, propertyName);
         const isArray = reflectionType === Array;
-
-        // 7. Recursive Creation
         const childDummy = this.createDeepDummy(childClass);
 
-        // 8. Assign to the instance
         if (isArray) {
-          // If array, wrap in list so schema generates for children
           (instance as any)[propertyName] = [childDummy];
         } else {
           (instance as any)[propertyName] = childDummy;

@@ -1,5 +1,5 @@
-import { Expose, Type } from 'class-transformer';
-import { ArrayNotEmpty, ValidateNested, IsBoolean, IsString, IsOptional } from 'class-validator';
+import { Expose } from 'class-transformer';
+import { ArrayNotEmpty, IsBoolean, IsString, IsOptional, ValidateNested } from 'class-validator';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { BiosampleDto } from './biosample.dto';
@@ -20,8 +20,8 @@ export class InformationOnRequestedBioSamples extends WithIdForObjectDto {
   @UiWidget({ type: 'richtext' })
   laboratoryResources: string;
 
-  @ValidateNested()
-  @UiNested(() => BiosampleDto)
+  @ValidateNested({ each: true })
+  @UiNested(() => BiosampleDto, { isArray: true })
   @ArrayNotEmpty({ groups: [ProposalValidation.IsNotDraft] })
   @Expose()
   biosamples: BiosampleDto[];

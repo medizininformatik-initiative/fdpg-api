@@ -29,6 +29,7 @@ import { ProposalForm } from '../proposal-form/schema/proposal-form.schema';
 import { ProposalFormService } from '../proposal-form/proposal-form.service';
 import { Location, LocationDocument } from '../location/schema/location.schema';
 import { Comment, CommentDocument } from '../comment/schema/comment.schema';
+import { Migration022 } from './migrations/022.migration';
 
 @Injectable()
 export class MigrationService implements OnModuleInit {
@@ -75,10 +76,11 @@ export class MigrationService implements OnModuleInit {
       19: new Migration019(this.locationModel),
       20: new Migration020(this.proposalModel, this.commentModel),
       21: new Migration021(this.proposalModel),
+      22: new Migration022(this.proposalFormService),
     };
   }
 
-  private readonly desiredDbVersion = 21;
+  private readonly desiredDbVersion = 22;
 
   // Migration downgrades are not supported while downgrading the software version. So it's disabled by default.
   private readonly preventDowngrade = true;

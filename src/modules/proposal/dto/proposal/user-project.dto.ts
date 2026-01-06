@@ -99,12 +99,14 @@ export class UserProjectDto {
   @IsObject({ groups: [ProposalValidation.IsBiosampleType] })
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @Transform((params) => params.obj.informationOnRequestedBioSamples)
   informationOnRequestedBioSamples: InformationOnRequestedBioSamples;
 
   @Expose()
   @IsObject()
   @IsOptional()
   @UiNested(() => VariableSelectionDataDto)
+  @ValidateIf((o) => (o.selectedDataSources?.length ?? 0) > 0)
   @Transform(({ obj }) => obj?.variableSelection)
   variableSelection: VariableSelectionDataDto;
 
