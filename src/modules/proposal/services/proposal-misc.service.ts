@@ -1224,7 +1224,7 @@ export class ProposalMiscService {
     await proposalDoc.save();
   }
 
-  async getProposalUiFields(proposalId: string, user: IRequestUser): Promise<any> {
+  async getProposalWithUiMetaInformation(proposalId: string, user: IRequestUser): Promise<any> {
     const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
     return this.proposalFormService.getProposalUiFields(proposalDoc);
   }

@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { Transform, Expose, Type } from 'class-transformer';
 import { OutputGroup } from '../enums/output-group.enum';
-import { IsOptional, ValidateNested } from 'class-validator';
+import { ValidateNested } from 'class-validator';
 
 export interface UiWidgetOptions {
   type: 'textfield' | 'datepicker' | 'richtext' | 'checkbox' | 'select';
@@ -15,24 +15,18 @@ export function UiWidget(options: UiWidgetOptions) {
     Transform(({ value, options: transformOptions }) => {
       const groups = transformOptions?.groups || [];
 
-      if (groups.includes(OutputGroup.FormSchemaOnly) || groups.includes(OutputGroup.WithFormSchema)) {
-        const isSchemaOnly = transformOptions?.groups?.includes(OutputGroup.FormSchemaOnly);
+      if (groups.includes(OutputGroup.FormSchemaOnly)) {
+        return { ...options };
+      }
 
-        const returnValue = (() => {
-          if (isSchemaOnly) {
-            return undefined;
-          } else {
-            return value ?? null;
-          }
-        })();
-
+      if (groups.includes(OutputGroup.WithFormSchema)) {
         return {
           ...options,
-          value: returnValue,
+          value: value ?? null,
         };
-      } else {
-        return value;
       }
+
+      return value;
     }),
   );
 }
