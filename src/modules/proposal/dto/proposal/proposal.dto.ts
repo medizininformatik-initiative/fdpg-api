@@ -23,7 +23,7 @@ import { ExposeHistory } from '../../decorators/expose-history.decorator';
 import { ExposeLocationStatus } from '../../decorators/expose-location-status.decorator';
 import { ExposeUpload } from '../../decorators/expose-uploads.decorator';
 import { LocationState } from '../../enums/location-state.enum';
-import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { ProposalStatus, ProposalSubstatus } from '../../enums/proposal-status.enum';
 import { ProposalType } from '../../enums/proposal-type.enum';
 import { DueDateEnum } from '../../enums/due-date.enum';
 import { IProposalGetListSchema } from '../../types/proposal-get-list-schema.interface';
@@ -55,6 +55,8 @@ import { defaultDueDateValues } from '../../enums/due-date.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { DataDeliveryGetDto } from './data-delivery/data-delivery.dto';
 import { ProjectAssigneeDto } from './project-assignee.dto';
+import { getSubstatus } from '../../utils/map-sub-status.util';
+import { ProjectAssignee } from '../../schema/sub-schema/project-assignee.schema';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -540,6 +542,7 @@ export class ProposalGetListDto {
     this.createdAt = dbProjection.createdAt;
     this.updatedAt = dbProjection.updatedAt;
     this.status = dbProjection.status;
+    this.substatus = dbProjection.substatus;
     this.isLocked = dbProjection.isLocked;
     this.submittedAt = dbProjection.submittedAt;
     this.dueDateForStatus = dbProjection.dueDateForStatus;
@@ -566,6 +569,8 @@ export class ProposalGetListDto {
       this.totalContractedDataAmount = dbProjection.totalContractedDataAmount;
 
       this.openFdpgTasks = dbProjection.openFdpgTasks || [];
+      this.substatus = getSubstatus(dbProjection);
+      this.projectAssignee = dbProjection.projectAssignee;
     } else if (user.isFromLocation) {
       this.locationState = getMostAdvancedState(dbProjection, user);
     }
@@ -578,6 +583,7 @@ export class ProposalGetListDto {
   createdAt: Date;
   updatedAt: Date;
   status: ProposalStatus;
+  substatus?: ProposalSubstatus;
   isLocked: boolean;
   submittedAt?: Date;
   dueDateForStatus?: Date;
@@ -606,6 +612,8 @@ export class ProposalGetListDto {
   type: ProposalType;
   registerInfo?: RegisterInfoDto;
   registerFormId?: string;
+
+  projectAssignee: ProjectAssignee;
 }
 
 @Exclude()
