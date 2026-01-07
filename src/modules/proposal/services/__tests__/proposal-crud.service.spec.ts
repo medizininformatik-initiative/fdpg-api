@@ -368,6 +368,7 @@ describe('ProposalCrudService', () => {
       const plainToClassConfig = {
         strategy: 'excludeAll',
         groups: [...userGroups, ProposalValidation.IsOutput, request.user.singleKnownRole],
+        selectedDataSources: [],
       };
       expect(plainToClass).toHaveBeenCalledWith(ProposalGetDto, proposalContent, plainToClassConfig);
 

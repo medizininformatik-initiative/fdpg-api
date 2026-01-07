@@ -37,7 +37,7 @@ import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.ser
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
 import { ProposalValidation } from '../enums/porposal-validation.enum';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformOptions, plainToClass } from 'class-transformer';
 import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
@@ -743,7 +743,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
   async removeParticipant(id: string, participantId: string, user: IRequestUser): Promise<ProposalGetDto> {
     const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
@@ -766,7 +767,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
   async createDizDetails(
     proposalId: string,
@@ -1101,7 +1103,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   async makeParticipantResponsible(
@@ -1172,7 +1175,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   private addFormerResponsibleToParticipants(

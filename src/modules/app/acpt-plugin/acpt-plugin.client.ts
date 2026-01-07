@@ -14,6 +14,7 @@ import {
   AcptLocationResponseDto,
 } from '../../proposal/dto/acpt-plugin/acpt-project.dto';
 import { CacheKey } from '../../../shared/enums/cache-key.enum';
+import { applyAxiosMonitoring } from 'src/monitoring/apply-axios-monitoring';
 
 /**
  * Client for interacting with the ACPT WordPress Plugin API
@@ -67,6 +68,8 @@ export class AcptPluginClient {
         'x-api-key': cloudflareApiToken ? cloudflareApiToken : '',
       },
     });
+
+    applyAxiosMonitoring(this.apiClient);
   }
 
   /**
