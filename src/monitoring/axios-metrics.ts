@@ -1,4 +1,3 @@
-// src/monitoring/axios-metrics.ts
 import { Counter, Histogram } from 'prom-client';
 
 const labelNames = ['method', 'host', 'route', 'status'];

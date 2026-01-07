@@ -3,8 +3,6 @@ import { AxiosError, AxiosResponse, AxiosInstance, InternalAxiosRequestConfig } 
 import { axios_client_requests_total, axios_client_request_duration_seconds } from './axios-metrics';
 
 const logger = new Logger('OutboundHTTP');
-
-// 1. Define sensitive headers to scrub from logs
 const SENSITIVE_HEADERS = ['authorization', 'cookie', 'x-api-key', 'apikey', 'password'];
 
 interface AxiosRequestConfigWithMetadata extends InternalAxiosRequestConfig {
