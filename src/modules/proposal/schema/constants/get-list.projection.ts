@@ -36,4 +36,8 @@ export const GetListProjection: Partial<Record<NestedPath<Proposal>, number>> = 
   registerInfo: 1,
   type: 1,
   registerFormId: 1,
+  fdpgChecklist: 1,
+  isContractingComplete: 1,
+  dataDelivery: 1,
+  projectAssignee: 1,
 };

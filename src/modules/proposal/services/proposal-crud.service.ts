@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClassTransformOptions, plainToClass, TransformFnParams } from 'class-transformer';
+import { ClassTransformOptions, plainToClass } from 'class-transformer';
 import { Model } from 'mongoose';
 import { SharedService } from 'src/shared/shared.service';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
