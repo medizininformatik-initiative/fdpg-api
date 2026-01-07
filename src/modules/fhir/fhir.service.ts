@@ -28,7 +28,7 @@ export class FhirService {
 
   async createCoordinateDataSharingTask(
     proposalId: string,
-    projectAbbreviation: string,
+    deliveryName: string,
     dms: Location,
     dicLocations: Location[],
     researcherMails: string[],
@@ -40,7 +40,7 @@ export class FhirService {
 
     const startParams = {
       hrpOrganizationIdentifier: 'forschen-fuer-gesundheit.de',
-      projectIdentifier: projectAbbreviation,
+      projectIdentifier: deliveryName,
       contractUrl: `${this.FRONTEND_URL}/proposals/${proposalId}/details`,
       dmsIdentifier: dms.uri,
       researcherIdentifiers: researcherMails,

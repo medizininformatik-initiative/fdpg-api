@@ -254,10 +254,6 @@ describe('validateStatusChange', () => {
       baseProposal.status = ProposalStatus.DataResearch;
     });
 
-    it('allows DataCorrupt when user is owner', () => {
-      expect(() => validateStatusChange(baseProposal, ProposalStatus.DataCorrupt, ownerUser)).not.toThrow();
-    });
-
     it('allows FinishedProject when user is owner', () => {
       expect(() => validateStatusChange(baseProposal, ProposalStatus.FinishedProject, ownerUser)).not.toThrow();
     });

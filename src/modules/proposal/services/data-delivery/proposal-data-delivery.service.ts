@@ -179,6 +179,11 @@ export class ProposalDataDeliveryService {
       await this.proposalDataDeliverySyncService.syncDeliveryInfoResultWithDsf(proposalId, deliveryInfo);
     } else if (dto.status === DeliveryInfoStatus.CANCELED) {
       this.proposalDeliveryInfoService.setToCancelDelivery(deliveryInfo);
+    } else if (
+      dto.status === DeliveryInfoStatus.RESULTS_AVAILABLE ||
+      dto.status === DeliveryInfoStatus.FETCHED_BY_RESEARCHER
+    ) {
+      await this.setStatusToFetched(proposalId, deliveryInfo._id, user);
     } else {
       throw new ForbiddenException(`Cannot set status ${dto.status}`);
     }
@@ -201,7 +206,7 @@ export class ProposalDataDeliveryService {
       );
     }
 
-    updatedProposal.save();
+    await updatedProposal.save();
 
     if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET) {
       const llm = await this.locationService.findAllLookUpMap();

@@ -60,7 +60,7 @@ export const validateStatusChange = (
       [ProposalStatus.DataResearch]: () => isFdpg(user),
     },
     [ProposalStatus.DataResearch]: {
-      [ProposalStatus.DataCorrupt]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.ExpectDataDelivery]: () => isResearcherOrFdpg(user, toBeUpdated),
       [ProposalStatus.FinishedProject]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
     [ProposalStatus.DataCorrupt]: {

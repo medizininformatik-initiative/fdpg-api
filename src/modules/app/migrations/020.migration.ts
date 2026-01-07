@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
 import { Proposal, ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { Comment, CommentDocument } from 'src/modules/comment/schema/comment.schema';
@@ -17,7 +17,6 @@ export class Migration020 implements IDbMigration {
 
   async up(): Promise<void> {
     console.log('Migration 020: replacing VIRTUAL_ALL entries');
-
     try {
       // PROPOSAL START
       const proposalFilter = {
@@ -77,7 +76,6 @@ export class Migration020 implements IDbMigration {
       console.log(`Updated ${commentAnswerLocationUpdateResult.modifiedCount} comment answer locations.`);
       // COMMENT ANSWER LOCATION END
 
-      // 4. Commit the transaction
       console.log('Migration 020: Successfully replaced VIRTUAL_ALL enties.');
     } catch (error) {
       console.error('Migration 020: Failed to replace VIRTUAL_ALL entrues');
