@@ -2,6 +2,9 @@
   "moduleFileExtensions": ["js", "json", "ts"],
   "testRegex": ".(e2e|int)-spec.ts$",
   "testEnvironment": "node",
+  "testTimeout": 30000,
+  "forceExit": true,
+  "detectOpenHandles": false,
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
@@ -10,8 +13,8 @@
   "modulePathIgnorePatterns": ["<rootDir>/dist/"],
   "setupFilesAfterEnv": ["<rootDir>/src/test/setup.ts"],
   "collectCoverage": true,
-  "coverageReporters": ["text", "cobertura", "html", "lcov"],
-  "coverageDirectory": "reports/coverage",
+  "coverageReporters": ["json", "lcov", "text"],
+  "coverageDirectory": "reports/coverage-e2e",
   "coveragePathIgnorePatterns": [
     "\\.schema\\.ts",
     "\\.dto\\.ts",
@@ -31,7 +34,6 @@
   ],
   "collectCoverageFrom": [
     "src/**/*.{js,jsx,ts,tsx}",
-    // do not cover types declarations
     "!src/**/*.d.ts",
 
     "!**/__mocks__/**",
@@ -46,7 +48,6 @@
     "!**/*.migration.ts",
     "!**/*.migration.constants.ts",
 
-    // Libs where we assume that they are tested by the maintainer
     "!src/libs/**"
   ]
 }

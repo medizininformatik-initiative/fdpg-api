@@ -36,24 +36,35 @@ export function describeWithMongo(
         if (context.app) {
           const connection = context.app.get<Connection>(getConnectionToken());
           await connection.db.dropDatabase();
+          // Explicitly close the Mongoose connection
+          await connection.close();
         }
       } catch (error) {
         console.warn(`[${suiteName}] Error dropping database:`, error);
       }
 
       try {
-        await context.app?.close();
+        if (context.app) {
+          await context.app.close();
+        }
       } catch (error) {
         console.warn(`[${suiteName}] Error closing NestJS app:`, error);
       }
+
       try {
-        await context.container?.stop();
+        if (context.container) {
+          await context.container.stop({ remove: true, removeVolumes: true });
+          console.log(`[${suiteName}] Container stopped and removed`);
+        }
       } catch (error) {
         console.error(`[${suiteName}] FAILED to stop the container:`, error);
       }
 
       try {
-        await context.network?.stop();
+        if (context.network) {
+          await context.network.stop();
+          console.log(`[${suiteName}] Network stopped`);
+        }
       } catch (error) {
         console.error(`[${suiteName}] FAILED to stop the network:`, error);
       }
@@ -127,8 +138,23 @@ export function describeWithMongo(
 
     tests(() => context);
 
+    afterEach(async () => {
+      // Clean all collections after each test to ensure isolation
+      try {
+        if (context.app) {
+          const connection = context.app.get<Connection>(getConnectionToken());
+          const collections = await connection.db.collections();
+
+          // Clear all collections in parallel
+          await Promise.all(collections.map((collection) => collection.deleteMany({})));
+        }
+      } catch (error) {
+        console.warn(`[${suiteName}] Error cleaning collections after test:`, error);
+      }
+    });
+
     afterAll(async () => {
       await tearDownContainer(context);
-    });
+    }, 30000);
   });
 }

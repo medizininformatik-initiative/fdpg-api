@@ -18,29 +18,33 @@ import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { ParticipantRoleType } from '../../enums/participant-role-type.enum';
+import { FhirAuthenticationClient } from 'src/modules/fhir/fhir-authentication.client';
+import { LocationService } from 'src/modules/location/service/location.service';
+import { ProposalCrudService } from '../proposal-crud.service';
 
 describeWithMongo(
   'ProposalCrudServiceIT',
   [forwardRef(() => ProposalModule), LocationModule],
   [
     { provide: FeasibilityAuthenticationClient, useValue: { obtainToken: jest.fn() } },
+    { provide: FhirAuthenticationClient, useValue: { obtainToken: jest.fn() } },
     { provide: KeycloakClient, useValue: { obtainToken: jest.fn() } },
     { provide: StorageService, useValue: {} },
   ],
   (getContext) => {
     let context: MongoTestContext;
-    // let locationService: LocationService;
+    let locationService: LocationService;
     let locationModel: Model<Location>;
-    // let proposalCrudService: ProposalCrudService;
+    let proposalCrudService: ProposalCrudService;
     let proposalModel: Model<Proposal>;
 
     beforeEach(async () => {
       context = getContext();
 
-      //   locationService = context.app.get<LocationService>(LocationService);
+      locationService = context.app.get<LocationService>(LocationService);
       locationModel = context.app.get<Model<Location>>(getModelToken(Location.name));
 
-      //   proposalCrudService = context.app.get<ProposalCrudService>(ProposalCrudService);
+      proposalCrudService = context.app.get<ProposalCrudService>(ProposalCrudService);
       proposalModel = context.app.get<Model<Proposal>>(getModelToken(Proposal.name));
 
       await proposalModel.deleteMany({});
@@ -344,5 +348,5 @@ const getDummyProposal = (): Proposal => {
     numberOfSignedLocations: 0,
     contractRejectedByResearcherReason: '',
     researcherSignedAt: undefined,
-  };
+  } as Proposal;
 };
