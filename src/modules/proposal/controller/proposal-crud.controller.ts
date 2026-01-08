@@ -24,6 +24,7 @@ import { ProposalFilterDto } from '../dto/proposal-filter.dto';
 import { ProposalCreateDto, ProposalGetDto, ProposalGetListDto, ProposalUpdateDto } from '../dto/proposal/proposal.dto';
 import { ProposalCrudService } from '../services/proposal-crud.service';
 import { CheckUniqueProposalDto } from '../dto/check-unique-proposal.dto';
+import { ProposalStatisticsDto } from '../dto/proposal-statistics.dto';
 
 @ApiController('proposals', undefined, 'crud')
 export class ProposalCrudController {
@@ -38,6 +39,13 @@ export class ProposalCrudController {
     @Request() { user }: FdpgRequest,
   ): Promise<ProposalGetDto> {
     return await this.proposalCrudService.create(createProposalDto, user);
+  }
+
+  @Auth(Role.Researcher, Role.RegisteringMember)
+  @Get('statistics')
+  @ApiOperation({ summary: 'Gets proposal counts grouped by status for the current user' })
+  async getStatistics(@Request() { user }: FdpgRequest): Promise<ProposalStatisticsDto> {
+    return await this.proposalCrudService.getStatistics(user);
   }
 
   @ProposalAccess()

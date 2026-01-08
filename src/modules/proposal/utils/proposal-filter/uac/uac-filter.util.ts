@@ -5,20 +5,18 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { FilterQuery } from 'mongoose';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
 import { getRegisterProposalsForUser } from '../proposal-filter.util';
-
+export const uacAllowedQuery = [
+  PanelQuery.UacPending,
+  PanelQuery.UacOngoing,
+  PanelQuery.UacFinished,
+  PanelQuery.UacRequested,
+  PanelQuery.PublishedDraft,
+  PanelQuery.PublishedPending,
+  PanelQuery.PublishedCompleted,
+  PanelQuery.Archived,
+];
 export const getFilterForUac = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
-  const allowedQuery = [
-    PanelQuery.UacPending,
-    PanelQuery.UacOngoing,
-    PanelQuery.UacFinished,
-    PanelQuery.UacRequested,
-    PanelQuery.PublishedDraft,
-    PanelQuery.PublishedPending,
-    PanelQuery.PublishedCompleted,
-    PanelQuery.Archived,
-  ];
-
-  if (allowedQuery.includes(panelQuery)) {
+  if (uacAllowedQuery.includes(panelQuery)) {
     switch (panelQuery) {
       case PanelQuery.UacRequested:
         return getFilterForRequested(user);
