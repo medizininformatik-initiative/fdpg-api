@@ -28,7 +28,7 @@ const getFdpgCheckSubstatus = (proposal: IProposalGetListSchema): ProposalSubsta
 
 const getLocationCheckSubstatus = (proposal: IProposalGetListSchema): ProposalSubstatus => {
   if (
-    proposal.numberOfRequestedLocations <
+    proposal.numberOfRequestedLocations <=
     proposal.numberOfApprovedLocations + proposal.requestedButExcludedLocations.length
   ) {
     return ProposalSubstatus.LocationCheckVotingDone;

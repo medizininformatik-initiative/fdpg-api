@@ -199,6 +199,17 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getAllProposalFormVersions();
   }
 
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Get(':id/form-schema')
+  @ApiNotFoundResponse({ description: 'Item could not be found.' })
+  @ApiOperation({ summary: 'Returns a merged proposal with the corresponding form schema version' })
+  async getProposalWithUiMetaInformation(
+    @Param() { id }: MongoIdParamDto,
+    @Request() { user }: FdpgRequest,
+  ): Promise<any> {
+    return await this.proposalMiscService.getProposalWithUiMetaInformation(id, user);
+  }
+
   @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
   @Put(':id/cohort/manual')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
