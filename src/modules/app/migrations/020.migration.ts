@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
 import { Proposal, ProposalDocument } from 'src/modules/proposal/schema/proposal.schema';
 import { Comment, CommentDocument } from 'src/modules/comment/schema/comment.schema';
@@ -17,11 +17,6 @@ export class Migration020 implements IDbMigration {
 
   async up(): Promise<void> {
     console.log('Migration 020: replacing VIRTUAL_ALL entries');
-
-    // Start a new session for the transaction
-    const session: ClientSession = await this.proposalModel.db.startSession();
-    session.startTransaction();
-
     try {
       // PROPOSAL START
       const proposalFilter = {
@@ -34,7 +29,7 @@ export class Migration020 implements IDbMigration {
         },
       };
 
-      const updateResult = await this.proposalModel.updateMany(proposalFilter, proposalUpdateOperation, { session });
+      const updateResult = await this.proposalModel.updateMany(proposalFilter, proposalUpdateOperation);
       console.log(`Updated ${updateResult.modifiedCount} proposals.`);
       // PROPOSAL END
 
@@ -52,7 +47,6 @@ export class Migration020 implements IDbMigration {
       const commentLocationUpdateResult = await this.commentModel.updateMany(
         commentLocationFilter,
         commentLocationOperation,
-        { session },
       );
 
       console.log(`Updated ${commentLocationUpdateResult.modifiedCount} comment locations.`);
@@ -70,7 +64,6 @@ export class Migration020 implements IDbMigration {
       };
 
       const options = {
-        session,
         arrayFilters: [{ 'elem.locations': 'VIRTUAL_ALL' }],
       };
 
@@ -83,19 +76,13 @@ export class Migration020 implements IDbMigration {
       console.log(`Updated ${commentAnswerLocationUpdateResult.modifiedCount} comment answer locations.`);
       // COMMENT ANSWER LOCATION END
 
-      // 4. Commit the transaction
-      await session.commitTransaction();
       console.log('Migration 020: Successfully replaced VIRTUAL_ALL enties.');
     } catch (error) {
-      await session.abortTransaction();
-
       console.error('Migration 020: Failed to replace VIRTUAL_ALL entrues');
       console.error('Error Message:', error.message);
       console.error('Stack Trace:', error.stack);
 
       throw error;
-    } finally {
-      await session.endSession();
     }
   }
 }

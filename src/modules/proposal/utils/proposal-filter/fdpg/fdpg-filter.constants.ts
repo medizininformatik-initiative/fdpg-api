@@ -34,13 +34,28 @@ const ONGOING_IN_WORK = {
   status: { $in: [ProposalStatus.ExpectDataDelivery, ProposalStatus.DataResearch] },
   type: ProposalType.ApplicationForm,
 };
+
 const FINISHED = {
   status: { $in: [ProposalStatus.Rejected, ProposalStatus.ReadyToArchive] },
   type: ProposalType.ApplicationForm,
 };
+
 const ARCHIVED = { status: ProposalStatus.Archived };
+
 const FDPG_OVERVIEW = {
-  $or: [REQUESTED_IN_WORK, PENDING_TO_CHECK, ONGOING_IN_WORK],
+  status: {
+    $in: [
+      ProposalStatus.FdpgCheck,
+      ProposalStatus.LocationCheck,
+      ProposalStatus.Contracting,
+      ProposalStatus.ExpectDataDelivery,
+      ProposalStatus.DataResearch,
+      ProposalStatus.DataCorrupt,
+      ProposalStatus.FinishedProject,
+      ProposalStatus.ReadyToArchive,
+    ],
+  },
+  type: ProposalType.ApplicationForm,
 };
 
 // FDPG Published page panels (for registering forms)

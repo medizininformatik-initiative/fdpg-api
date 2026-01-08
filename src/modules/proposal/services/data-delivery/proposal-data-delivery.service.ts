@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformOptions, plainToClass } from 'class-transformer';
 import type { IRequestUser } from 'src/shared/types/request-user.interface';
 import {
   DataDeliveryGetDto,
@@ -179,6 +179,11 @@ export class ProposalDataDeliveryService {
       await this.proposalDataDeliverySyncService.syncDeliveryInfoResultWithDsf(proposalId, deliveryInfo);
     } else if (dto.status === DeliveryInfoStatus.CANCELED) {
       this.proposalDeliveryInfoService.setToCancelDelivery(deliveryInfo);
+    } else if (
+      dto.status === DeliveryInfoStatus.RESULTS_AVAILABLE ||
+      dto.status === DeliveryInfoStatus.FETCHED_BY_RESEARCHER
+    ) {
+      await this.setStatusToFetched(proposalId, deliveryInfo._id, user);
     } else {
       throw new ForbiddenException(`Cannot set status ${dto.status}`);
     }
@@ -201,7 +206,7 @@ export class ProposalDataDeliveryService {
       );
     }
 
-    updatedProposal.save();
+    await updatedProposal.save();
 
     if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET) {
       const llm = await this.locationService.findAllLookUpMap();
@@ -297,7 +302,8 @@ export class ProposalDataDeliveryService {
     return plainToClass(ProposalGetDto, proposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(proposal.selectedDataSources ? proposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   };
 
   private setFinalDeliveryInfoStateForAnalysis = async (

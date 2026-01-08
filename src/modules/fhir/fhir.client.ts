@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { FhirAuthenticationClient } from './fhir-authentication.client';
+import { applyAxiosMonitoring } from 'src/monitoring/apply-axios-monitoring';
 
 @Injectable()
 export class FhirClient {
@@ -14,6 +15,8 @@ export class FhirClient {
     this.obtainToken();
     this.configureInterceptors();
   }
+
+  private readonly logger = new Logger(FhirClient.name);
 
   public client: AxiosInstance;
   private fhirBaseUrl: string;
@@ -43,6 +46,8 @@ export class FhirClient {
         ...this.FHIR_JSON_HEADERS,
       },
     });
+
+    applyAxiosMonitoring(this.client);
   }
 
   private async obtainToken() {
