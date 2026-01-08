@@ -33,6 +33,10 @@ import { SyncStatus } from '../enums/sync-status.enum';
 import { ModificationContext } from '../enums/modification-context.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { Location } from 'src/modules/location/schema/location.schema';
+import { researcherAllowedQuery } from '../utils/proposal-filter/researcher/researcher-filter.util';
+import { fdpgAllowedQuery } from '../utils/proposal-filter/fdpg/fdpg-filter.util';
+import { dizAllowedQuery } from '../utils/proposal-filter/diz/diz-filter.util';
+import { uacAllowedQuery } from '../utils/proposal-filter/uac/uac-filter.util';
 
 @Injectable()
 export class ProposalCrudService {
@@ -293,6 +297,101 @@ export class ProposalCrudService {
     }
     const exists = await this.proposalModel.exists(queryFilter);
     return !exists;
+  }
+
+  async getStatistics(user: IRequestUser): Promise<{
+    panels: Record<PanelQuery, { critical: number; high: number; medium: number; low: number; total: number }>;
+    total: number;
+  }> {
+    const calculatePriorityCounts = (proposals: any[]) => {
+      const counts = {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        total: proposals.length,
+      };
+
+      proposals.forEach((proposal) => {
+        if (proposal.dueDateForStatus) {
+          const dueDate = new Date(proposal.dueDateForStatus);
+          const now = new Date();
+          const diffTime = dueDate.getTime() - now.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays < 0) {
+            counts.critical++;
+          } else {
+            counts.high++;
+          }
+        } else {
+          counts.low++;
+        }
+      });
+
+      return counts;
+    };
+
+    const panelQueries = this.getPanelQueriesForUser(user);
+
+    const panelResults = await Promise.all(
+      panelQueries.map(async (panelQuery) => {
+        try {
+          const filter = getProposalFilter(panelQuery, user);
+          const proposals = await this.proposalModel.find(filter, { dueDateForStatus: 1 }).lean();
+          return {
+            panelQuery,
+            counts: calculatePriorityCounts(proposals),
+          };
+        } catch (error) {
+          this.logger.warn(`Failed to get statistics for panel ${panelQuery}: ${error.message}`);
+          return {
+            panelQuery,
+            counts: { critical: 0, high: 0, medium: 0, low: 0, total: 0 },
+          };
+        }
+      }),
+    );
+
+    const panels = {} as Record<
+      PanelQuery,
+      { critical: number; high: number; medium: number; low: number; total: number }
+    >;
+    let total = 0;
+
+    panelResults.forEach(({ panelQuery, counts }) => {
+      panels[panelQuery as PanelQuery] = counts;
+      total += counts.total;
+    });
+
+    return {
+      panels,
+      total,
+    };
+  }
+
+  private getPanelQueriesForUser(user: IRequestUser): PanelQuery[] {
+    switch (user.singleKnownRole) {
+      case Role.Researcher:
+      case Role.RegisteringMember:
+        return researcherAllowedQuery;
+
+      case Role.FdpgMember:
+      case Role.DataSourceMember:
+        return fdpgAllowedQuery;
+
+      case Role.DizMember:
+        return dizAllowedQuery;
+
+      case Role.UacMember:
+        return uacAllowedQuery;
+
+      case Role.DataManagementOffice:
+        return [PanelQuery.DmsPending, PanelQuery.DmsApproved];
+
+      default:
+        return [];
+    }
   }
 
   private addParticipatingScientistIndicator(plain: any, user: IRequestUser) {

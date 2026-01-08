@@ -8,19 +8,18 @@ import { FilterQuery } from 'mongoose';
 import { RESEARCHER_STATUS } from './researcher-filter.constants';
 import { getRegisterProposalsForUser } from '../proposal-filter.util';
 
+export const researcherAllowedQuery = [
+  PanelQuery.Draft,
+  PanelQuery.ResearcherPending,
+  PanelQuery.ResearcherOngoing,
+  PanelQuery.ResearcherFinished,
+  PanelQuery.PublishedDraft,
+  PanelQuery.PublishedPending,
+  PanelQuery.PublishedCompleted,
+  PanelQuery.Archived,
+];
 export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
-  const allowedQuery = [
-    PanelQuery.Draft,
-    PanelQuery.ResearcherPending,
-    PanelQuery.ResearcherOngoing,
-    PanelQuery.ResearcherFinished,
-    PanelQuery.PublishedDraft,
-    PanelQuery.PublishedPending,
-    PanelQuery.PublishedCompleted,
-    PanelQuery.Archived,
-  ];
-
-  if (allowedQuery.includes(panelQuery)) {
+  if (researcherAllowedQuery.includes(panelQuery)) {
     // Special handling for Published page panels
     if (panelQuery === PanelQuery.PublishedDraft) {
       return getRegisterProposalsForUser(user, ProposalStatus.Draft);

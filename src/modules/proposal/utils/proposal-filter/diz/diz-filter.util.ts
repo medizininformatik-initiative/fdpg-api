@@ -8,20 +8,20 @@ import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getRegisterProposalsForUser } from '../proposal-filter.util';
 
-export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
-  const allowedQuery = [
-    PanelQuery.DizComingUp,
-    PanelQuery.DizRequested,
-    PanelQuery.DizPending,
-    PanelQuery.DizOngoing,
-    PanelQuery.DizFinished,
-    PanelQuery.PublishedDraft,
-    PanelQuery.PublishedPending,
-    PanelQuery.PublishedCompleted,
-    PanelQuery.Archived,
-  ];
+export const dizAllowedQuery = [
+  PanelQuery.DizComingUp,
+  PanelQuery.DizRequested,
+  PanelQuery.DizPending,
+  PanelQuery.DizOngoing,
+  PanelQuery.DizFinished,
+  PanelQuery.PublishedDraft,
+  PanelQuery.PublishedPending,
+  PanelQuery.PublishedCompleted,
+  PanelQuery.Archived,
+];
 
-  if (allowedQuery.includes(panelQuery)) {
+export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
+  if (dizAllowedQuery.includes(panelQuery)) {
     switch (panelQuery) {
       case PanelQuery.DizComingUp:
         return getFilterQueryForComingUp(user);
