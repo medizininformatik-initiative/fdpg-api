@@ -28,7 +28,7 @@
       "jest-junit",
       {
         "outputDirectory": "reports",
-        "outputName": "junit.xml"
+        "outputName": "junit-e2e.xml"
       }
     ]
   ],
