@@ -189,6 +189,12 @@ describe('ProposalSyncService', () => {
             findLocationByName: mockFindLocationByName,
             createLocation: mockCreateLocation,
             clearCache: jest.fn(),
+            importFile: jest.fn().mockResolvedValue({
+              id: 123,
+              url: 'https://example.com/file.jpg',
+              title: 'Test File',
+              mime_type: 'image/jpeg',
+            }),
           },
         },
         {
