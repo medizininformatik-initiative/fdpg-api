@@ -502,4 +502,135 @@ describe('ProposalCrudService', () => {
       expect(ProposalModel.exists).toHaveBeenCalledWith(filter);
     });
   });
+
+  describe('getStatistics', () => {
+    it('should calculate statistics with priority counts for researcher', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      const mockProposals = [
+        { dueDateForStatus: yesterday }, // critical (overdue)
+        { dueDateForStatus: tomorrow }, // high (has due date)
+        { dueDateForStatus: null }, // low (no due date)
+      ];
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockProposals),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result).toHaveProperty('panels');
+      expect(result).toHaveProperty('total');
+      expect(result.panels[PanelQuery.Draft]).toEqual({
+        critical: 1,
+        high: 1,
+        medium: 0,
+        low: 1,
+        total: 3,
+      });
+    });
+
+    it('should calculate statistics for multiple panels', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const mockDraftProposals = [{ dueDateForStatus: null }, { dueDateForStatus: null }];
+      const mockPendingProposals = [{ dueDateForStatus: new Date(Date.now() + 24 * 60 * 60 * 1000) }];
+
+      ProposalModel.find = jest.fn().mockImplementation(() => ({
+        lean: jest.fn().mockImplementation(() => {
+          const callCount = (ProposalModel.find as jest.Mock).mock.calls.length;
+          if (callCount === 1) return Promise.resolve(mockDraftProposals);
+          if (callCount === 2) return Promise.resolve(mockPendingProposals);
+          return Promise.resolve([]);
+        }),
+      }));
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.panels[PanelQuery.Draft].total).toBe(2);
+      expect(result.panels[PanelQuery.Draft].low).toBe(2);
+      expect(result.panels[PanelQuery.ResearcherPending].total).toBe(1);
+      expect(result.panels[PanelQuery.ResearcherPending].high).toBe(1);
+    });
+
+    it('should return correct total count', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue([{}, {}, {}]),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.total).toBeGreaterThan(0);
+    });
+
+    it('should handle proposals with no due dates as low priority', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const mockProposals = [{ dueDateForStatus: null }, { dueDateForStatus: undefined }, { dueDateForStatus: null }];
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockProposals),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.panels[PanelQuery.Draft].low).toBe(3);
+      expect(result.panels[PanelQuery.Draft].critical).toBe(0);
+      expect(result.panels[PanelQuery.Draft].high).toBe(0);
+    });
+
+    it('should handle proposals with overdue dates as critical', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const mockProposals = [{ dueDateForStatus: yesterday }, { dueDateForStatus: lastWeek }];
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockProposals),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.panels[PanelQuery.Draft].critical).toBe(2);
+      expect(result.panels[PanelQuery.Draft].high).toBe(0);
+    });
+  });
 });
