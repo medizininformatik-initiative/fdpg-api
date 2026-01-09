@@ -266,4 +266,18 @@ export class KeycloakService {
       handleActionsEmailError(error);
     }
   }
+
+  // for this request to work, add in keycloak admin console:
+  // Clients -> fdpg-api -> add "view-events" to "Service Account Roles"
+  // Client Scopes -> fdpg-api-dedicated -> add "view-events"
+  async getRegistrationEvents(dateFrom: string) {
+    const params = new URLSearchParams();
+    params.append('type', 'REGISTER');
+    params.append('dateFrom', '2025-01-01');
+    params.append('max', '100');
+
+    const { data } = await this.apiClient.get<any>(`/events?${params.toString()}`);
+
+    console.log({ data });
+  }
 }
