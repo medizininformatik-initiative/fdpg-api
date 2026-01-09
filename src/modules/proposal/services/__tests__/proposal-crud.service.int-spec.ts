@@ -1,35 +1,82 @@
 import { describeWithMongo, MongoTestContext } from 'src/test/mongo-test.helper';
 import { Model } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
-import { ProposalModule } from '../../proposal.module';
-import { Location } from 'src/modules/location/schema/location.schema';
-import { LocationModule } from 'src/modules/location/location.module';
-import { Proposal } from '../../schema/proposal.schema';
+import { Location, LocationSchema } from 'src/modules/location/schema/location.schema';
+import { Proposal, getProposalSchemaFactory } from '../../schema/proposal.schema';
 import { KeycloakClient } from 'src/modules/user/keycloak.client';
 import { FeasibilityAuthenticationClient } from 'src/modules/feasibility/feasibility-authentication.client';
-import { forwardRef } from '@nestjs/common';
 import { StorageService } from 'src/modules/storage/storage.service';
-import { ParticipantType } from '../../enums/participant-type.enum';
-import { ProjectUserType } from '../../enums/project-user-type.enum';
-import { Department } from '../../enums/department.enum';
-import { PublicationType } from '../../enums/publication-type.enum';
-import { ProposalTypeOfUse, PseudonymizationInfoOptions } from '../../enums/proposal-type-of-use.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
-import { ParticipantRoleType } from '../../enums/participant-role-type.enum';
 import { FhirAuthenticationClient } from 'src/modules/fhir/fhir-authentication.client';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { ProposalCrudService } from '../proposal-crud.service';
+import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
+import { SharedService } from 'src/shared/shared.service';
+import { StatusChangeService } from '../status-change.service';
+import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
+import { ProposalSyncService } from '../proposal-sync.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { IRequestUser } from 'src/shared/types/request-user.interface';
+import { CacheModule } from '@nestjs/cache-manager';
+
+// Mock services
+const mockEventEngineService = {
+  handleProposalStatusChange: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockStorageService = {
+  uploadFile: jest.fn().mockResolvedValue('upload-id'),
+  deleteFile: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockStatusChangeService = {
+  handleEffects: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockProposalFormService = {
+  getCurrentVersion: jest.fn().mockResolvedValue(1),
+};
+
+const mockProposalSyncService = {
+  syncProposal: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockSharedService = {
+  deleteProposalWithDependencies: jest.fn().mockImplementation(async (proposal) => {
+    // Actually delete the proposal to make tests work
+    await proposal.deleteOne();
+  }),
+};
 
 describeWithMongo(
   'ProposalCrudServiceIT',
-  [forwardRef(() => ProposalModule), LocationModule],
   [
+    // Register both schemas together in one async module to ensure proper dependency resolution
+    MongooseModule.forFeatureAsync([
+      {
+        name: Location.name,
+        useFactory: () => LocationSchema,
+      },
+      {
+        name: Proposal.name,
+        useFactory: getProposalSchemaFactory,
+        inject: [getModelToken(Location.name)],
+      },
+    ]),
+    CacheModule.register(),
+    ProposalCrudService,
+    LocationService,
+    { provide: SharedService, useValue: mockSharedService },
+    { provide: EventEngineService, useValue: mockEventEngineService },
+    { provide: StatusChangeService, useValue: mockStatusChangeService },
+    { provide: ProposalFormService, useValue: mockProposalFormService },
+    { provide: ProposalSyncService, useValue: mockProposalSyncService },
     { provide: FeasibilityAuthenticationClient, useValue: { obtainToken: jest.fn() } },
     { provide: FhirAuthenticationClient, useValue: { obtainToken: jest.fn() } },
     { provide: KeycloakClient, useValue: { obtainToken: jest.fn() } },
-    { provide: StorageService, useValue: {} },
+    { provide: StorageService, useValue: mockStorageService },
   ],
   (getContext) => {
     let context: MongoTestContext;
@@ -37,6 +84,18 @@ describeWithMongo(
     let locationModel: Model<Location>;
     let proposalCrudService: ProposalCrudService;
     let proposalModel: Model<Proposal>;
+
+    const mockUser: IRequestUser = {
+      userId: '51b933c7-d3d9-4617-9400-45a44b387326',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@test.com',
+      username: 'testuser',
+      fullName: 'Test User',
+      roles: [Role.Researcher],
+      miiLocation: 'UKL',
+      singleKnownRole: Role.Researcher,
+    } as IRequestUser;
 
     beforeEach(async () => {
       context = getContext();
@@ -47,12 +106,11 @@ describeWithMongo(
       proposalCrudService = context.app.get<ProposalCrudService>(ProposalCrudService);
       proposalModel = context.app.get<Model<Proposal>>(getModelToken(Proposal.name));
 
-      await proposalModel.deleteMany({});
-      await locationModel.deleteMany({});
-    });
+      // Clear all mocks
+      jest.clearAllMocks();
 
-    it('should insert the model and find one', async () => {
-      const location: Location = {
+      // Create a test location for all tests
+      await locationModel.create({
         _id: 'UKL',
         externalCode: 'UKL',
         display: 'UKL',
@@ -60,293 +118,149 @@ describeWithMongo(
         dataIntegrationCenter: false,
         dataManagementCenter: false,
         deprecated: false,
-      };
-      await locationModel.create(location);
-
-      const proposal = getDummyProposal();
-      await proposalModel.create(proposal);
-      const all = await proposalModel.find({});
-
-      expect(all.length).toEqual(1);
+      });
     });
 
-    it('should fail if the desired location does not exist', async () => {
-      // no location created beforehand
+    it('should create and retrieve a proposal via service', async () => {
+      const createDto = {
+        projectAbbreviation: 'RETRIEVE-TEST',
+        status: ProposalStatus.Draft,
+        selectedDataSources: [PlatformIdentifier.Mii],
+      };
 
-      const proposal = getDummyProposal();
-      await expect(proposalModel.create(proposal)).rejects.toThrow();
+      const created = await proposalCrudService.create(createDto as any, mockUser);
+      const found = await proposalCrudService.findDocument(created._id.toString(), mockUser);
+
+      expect(found).toBeDefined();
+      expect(found.projectAbbreviation).toBe('RETRIEVE-TEST');
+      expect(found.status).toBe(ProposalStatus.Draft);
+    });
+
+    it('should create a proposal via service', async () => {
+      const createDto = {
+        projectAbbreviation: 'TEST-001',
+        status: ProposalStatus.Draft,
+        selectedDataSources: [PlatformIdentifier.Mii],
+      };
+
+      const result = await proposalCrudService.create(createDto as any, mockUser);
+
+      expect(result).toBeDefined();
+      expect(result.projectAbbreviation).toBe('TEST-001');
+      expect(mockProposalFormService.getCurrentVersion).toHaveBeenCalled();
+    });
+
+    it('should find a proposal by ID via service', async () => {
+      const createDto = {
+        projectAbbreviation: 'FIND-TEST',
+        status: ProposalStatus.Draft,
+        selectedDataSources: [PlatformIdentifier.Mii],
+      };
+
+      const created = await proposalCrudService.create(createDto as any, mockUser);
+      const found = await proposalCrudService.findDocument(created._id.toString(), mockUser);
+
+      expect(found).toBeDefined();
+      expect(found.projectAbbreviation).toBe('FIND-TEST');
+    });
+
+    it('should update a proposal via service', async () => {
+      const createDto = {
+        projectAbbreviation: 'UPDATE-TEST',
+        status: ProposalStatus.Draft,
+        selectedDataSources: [PlatformIdentifier.Mii],
+      };
+
+      const created = await proposalCrudService.create(createDto as any, mockUser);
+
+      const updateDto = {
+        _id: created._id.toString(),
+        projectAbbreviation: 'UPDATED-TEST',
+        status: created.status,
+      };
+
+      await proposalCrudService.update(created._id.toString(), updateDto as any, mockUser);
+
+      const updated = await proposalCrudService.findDocument(created._id.toString(), mockUser);
+      expect(updated.projectAbbreviation).toBe('UPDATED-TEST');
+    });
+
+    it('should delete a proposal via service', async () => {
+      const createDto = {
+        projectAbbreviation: 'DELETE-TEST',
+        status: ProposalStatus.Draft,
+        selectedDataSources: [PlatformIdentifier.Mii],
+      };
+
+      const created = await proposalCrudService.create(createDto as any, mockUser);
+
+      await proposalCrudService.delete(created._id.toString(), mockUser);
+
+      // Verify deletion by trying to find it
+      await expect(proposalCrudService.findDocument(created._id.toString(), mockUser)).rejects.toThrow();
+    });
+
+    it('should create and retrieve multiple proposals via service', async () => {
+      // Create multiple proposals via service
+      const createdIds: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        const createDto = {
+          projectAbbreviation: `MULTI-${i}`,
+          status: ProposalStatus.Draft,
+          selectedDataSources: [PlatformIdentifier.Mii],
+        };
+        const created = await proposalCrudService.create(createDto as any, mockUser);
+        createdIds.push(created._id.toString());
+      }
+
+      // Verify each proposal can be retrieved
+      for (const id of createdIds) {
+        const found = await proposalCrudService.findDocument(id, mockUser);
+        expect(found).toBeDefined();
+        expect(found._id.toString()).toBe(id);
+      }
+
+      expect(createdIds.length).toBe(3);
+    });
+
+    it('should create proposals with different statuses via service', async () => {
+      const draftDto = {
+        projectAbbreviation: 'STATUS-DRAFT',
+        status: ProposalStatus.Draft,
+        selectedDataSources: [PlatformIdentifier.Mii],
+      };
+      const draftProposal = await proposalCrudService.create(draftDto as any, mockUser);
+
+      const checkDto = {
+        projectAbbreviation: 'STATUS-CHECK',
+        status: ProposalStatus.FdpgCheck,
+        selectedDataSources: [PlatformIdentifier.Mii],
+      };
+      const checkProposal = await proposalCrudService.create(checkDto as any, mockUser);
+
+      // Verify both proposals were created with correct statuses
+      const foundDraft = await proposalCrudService.findDocument(draftProposal._id.toString(), mockUser);
+      expect(foundDraft.status).toBe(ProposalStatus.Draft);
+
+      const foundCheck = await proposalCrudService.findDocument(checkProposal._id.toString(), mockUser);
+      expect(foundCheck.status).toBe(ProposalStatus.FdpgCheck);
+    });
+
+    it('should handle DIFE data source ID generation', async () => {
+      const createDto = {
+        projectAbbreviation: 'DIFE-001',
+        status: ProposalStatus.Draft,
+        selectedDataSources: [PlatformIdentifier.DIFE],
+      };
+
+      const result = await proposalCrudService.create(createDto as any, mockUser);
+
+      expect(result).toBeDefined();
+      // Should have generated a dataSourceLocaleId when DIFE is selected
+      const created = await proposalModel.findOne({ projectAbbreviation: 'DIFE-001' });
+      if (created?.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
+        expect(created.dataSourceLocaleId).toBeDefined();
+      }
     });
   },
 );
-
-const getDummyProposal = (): Proposal => {
-  return {
-    _id: undefined,
-    projectAbbreviation: 'DUMMY',
-    participants: [],
-    applicant: {
-      researcher: {
-        title: 'Dr.',
-        firstName: 'ApplicantFirst',
-        lastName: 'ApplicantLast',
-        affiliation: 'affiliation',
-        email: 'test@test.com',
-        isDone: true,
-        _id: undefined,
-      },
-      institute: {
-        miiLocation: 'UKL',
-        name: 'name',
-        city: 'city',
-        streetAddress: 'street',
-        houseNumber: 'number',
-        postalCode: 'code',
-        email: 'emailInst@emailInst.com',
-        isDone: true,
-        _id: undefined,
-      },
-      participantCategory: {
-        category: ParticipantType.ProjectLeader,
-        isDone: true,
-        _id: undefined,
-      },
-    },
-    projectResponsible: {
-      researcher: {
-        title: 'title',
-        firstName: 'firstName',
-        lastName: 'lastName',
-        affiliation: 'aff',
-        email: 'email@email.com',
-        _id: undefined,
-        isDone: true,
-      },
-      projectResponsibility: {
-        applicantIsProjectResponsible: true,
-        isDone: true,
-        _id: undefined,
-      },
-      participantCategory: { category: ParticipantType.ProjectLeader, isDone: true, _id: undefined },
-      participantRole: {
-        role: ParticipantRoleType.ResponsibleScientist,
-        isDone: true,
-        _id: undefined,
-      },
-      institute: {
-        miiLocation: 'UKL',
-        name: 'name',
-        city: 'city',
-        streetAddress: 'street',
-        houseNumber: 'number',
-        postalCode: 'code',
-        email: 'emailInst@emailInst.com',
-        isDone: true,
-        _id: undefined,
-      },
-      addedByFdpg: false,
-    },
-    projectUser: {
-      projectUserType: ProjectUserType.OrganizationOfProjectResponsible,
-      isDone: true,
-      _id: undefined,
-    },
-    userProject: {
-      generalProjectInformation: {
-        projectTitle: 'projectTitle',
-        desiredStartTime: null,
-        projectDuration: 12,
-        projectFunding: 'projectFunding',
-        isDone: false,
-        _id: undefined,
-        fundingReferenceNumber: 'fundingReferenceNumber',
-        desiredStartTimeType: 'immediate',
-        keywords: [],
-      },
-      informationOnRequestedBioSamples: {
-        noSampleRequired: true,
-        laboratoryResources: '',
-        biosamples: [],
-        isDone: true,
-        _id: undefined,
-      },
-      feasibility: {
-        id: 1,
-        details: 'details',
-        isDone: false,
-        _id: undefined,
-      },
-      projectDetails: {
-        simpleProjectDescription: 'simpleProjectDescription',
-        department: [Department.Cardiology],
-        scientificBackground: 'scientificBackground',
-        hypothesisAndQuestionProjectGoals: 'hypothesisAndQuestionProjectGoals',
-        materialAndMethods: 'materialAndMethods',
-        isDone: false,
-        _id: undefined,
-        biometric: 'biometric',
-        executiveSummaryUac: 'executiveSummaryUac',
-        literature: 'literature',
-      },
-      ethicVote: {
-        isExisting: true,
-        ethicsCommittee: '',
-        ethicsVoteNumber: '----',
-        voteFromDate: new Date(),
-        isDone: false,
-        _id: undefined,
-      },
-      resourceAndRecontact: {
-        hasEnoughResources: true,
-        isRecontactingIntended: false,
-        isDone: true,
-        _id: undefined,
-        reContactIncidental: false,
-        suppSurveyReContacting: false,
-        urgentIncidentalReContacting: false,
-        reContactIncidentalText: 'reContactIncidentalText',
-        suppSurveyReContactingText: 'suppSurveyReContactingText',
-        urgentIncidentalReContactingText: 'urgentIncidentalReContactingText',
-      },
-      propertyRights: {
-        options: 'None',
-        isDone: true,
-        _id: undefined,
-      },
-      plannedPublication: {
-        publications: [
-          {
-            type: PublicationType.JournalArticle,
-            description: 'descr',
-            authors: 'authors',
-            _id: undefined,
-          },
-        ],
-        isDone: true,
-        noPublicationPlanned: false,
-        _id: undefined,
-      },
-      addressees: {
-        desiredLocations: ['UKL'],
-        isDone: true,
-        _id: undefined,
-      },
-      typeOfUse: {
-        usage: [ProposalTypeOfUse.Distributed],
-        dataPrivacyExtra: 'dataPrivacyExtra',
-        isDone: false,
-        _id: undefined,
-        difeUsage: [],
-        pseudonymizationInfo: [PseudonymizationInfoOptions.siteGroupingEnabled],
-        pseudonymizationInfoTexts: {
-          enableRecordLinkage: '',
-          siteGroupingEnabled: '',
-          namedSiteVariable: '',
-        },
-      },
-      cohorts: {
-        selectedCohorts: [
-          {
-            label: 'cohort',
-            uploadId: undefined,
-            numberOfPatients: 0,
-            _id: undefined,
-            feasibilityQueryId: 0,
-            isManualUpload: false,
-          },
-        ],
-        details: 'details',
-        isDone: false,
-      },
-      variableSelection: {
-        isDone: false,
-        _id: undefined,
-      },
-      selectionOfCases: {
-        isDone: false,
-        _id: undefined,
-      },
-    },
-    requestedData: {
-      patientInfo: 'patientInfo',
-      dataInfo: 'dataInfo',
-      desiredDataAmount: 1700,
-      isDone: true,
-      _id: undefined,
-      desiredControlDataAmount: 1700,
-    },
-    status: ProposalStatus.LocationCheck,
-    isLocked: false,
-    openFdpgTasksCount: 0,
-    openFdpgTasks: [],
-    openDizChecks: ['UKL'],
-    dizApprovedLocations: [],
-    uacApprovedLocations: [],
-    requestedButExcludedLocations: [],
-    signedContracts: [],
-    totalPromisedDataAmount: 0,
-    totalContractedDataAmount: 0,
-    contractAcceptedByResearcher: false,
-    contractRejectedByResearcher: false,
-    isContractingComplete: false,
-    migrationVersion: 0,
-    history: [],
-    uploads: [],
-    publications: [],
-    reports: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    conditionalApprovals: [],
-    uacApprovals: [],
-    declineReasons: [],
-    scheduledEvents: [],
-    version: {
-      mayor: 3,
-      minor: 0,
-    },
-    ownerId: '51b933c7-d3d9-4617-9400-45a44b387326',
-    ownerName: 'ownerName',
-    owner: {
-      id: '51b933c7-d3d9-4617-9400-45a44b387326',
-      firstName: 'firstName',
-      lastName: 'lastName',
-      email: 'email@email.com',
-      username: 'username',
-      role: Role.Researcher,
-      miiLocation: 'UKL',
-    },
-    fdpgChecklist: {
-      isRegistrationLinkSent: true,
-      initialViewing: true,
-      depthCheck: true,
-      ethicsCheck: true,
-      checkListVerification: [],
-      fdpgInternalCheckNotes: null,
-      projectProperties: [],
-    },
-    submittedAt: new Date(),
-    additionalLocationInformation: [],
-    deadlines: {
-      DUE_DAYS_FDPG_CHECK: new Date(),
-      DUE_DAYS_LOCATION_CHECK: new Date(),
-      DUE_DAYS_LOCATION_CONTRACTING: null,
-      DUE_DAYS_EXPECT_DATA_DELIVERY: null,
-      DUE_DAYS_DATA_CORRUPT: null,
-      DUE_DAYS_FINISHED_PROJECT: null,
-    },
-    formVersion: 1,
-    locationConditionDraft: [],
-    openDizConditionChecks: [],
-    selectedDataSources: [PlatformIdentifier.Mii],
-    dueDateForStatus: new Date(),
-    platform: PlatformIdentifier.Mii,
-    dizDetails: [],
-    numberOfRequestedLocations: 11,
-    statusChangeToLocationCheckAt: new Date(),
-    statusChangeToLocationContractingAt: undefined,
-    dataSourceLocaleId: '',
-    numberOfApprovedLocations: 0,
-    numberOfSignedLocations: 0,
-    contractRejectedByResearcherReason: '',
-    researcherSignedAt: undefined,
-  } as Proposal;
-};

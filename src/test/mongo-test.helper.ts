@@ -1,5 +1,5 @@
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
-import { DynamicModule, ForwardReference, INestApplication, Provider, Type } from '@nestjs/common';
+import { DynamicModule, INestApplication, Provider, Type } from '@nestjs/common';
 import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
 import { MongoDBContainer, StartedMongoDBContainer } from '@testcontainers/mongodb';
 import { ConfigModule } from '@nestjs/config';
@@ -15,17 +15,23 @@ export interface MongoTestContext {
   network: StartedNetwork;
 }
 
+export interface ServiceConfig {
+  provide: Type<any>;
+  useValue?: any;
+  useClass?: Type<any>;
+}
+
 /**
  * A higher-order function that wraps a Jest `describe` block to provide
  * a running MongoDB container on a random, available port.
  *
  * @param suiteName The name of the test suite.
+ * @param services Array of services to provide. Can be classes, service configs, or dynamic modules.
  * @param tests A function that contains your tests. It receives the test context.
  */
 export function describeWithMongo(
   suiteName: string,
-  modules: (Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference<any>)[] = [],
-  overrides: Provider[] = [],
+  services: (Type<any> | ServiceConfig | DynamicModule)[] = [],
   tests: (context: () => MongoTestContext) => void,
 ) {
   describe(suiteName, () => {
@@ -94,6 +100,23 @@ export function describeWithMongo(
 
         Object.assign(context, { mongoUri });
 
+        // Separate imports and providers
+        const imports: DynamicModule[] = [];
+        const providers: Provider[] = [];
+
+        services.forEach((service) => {
+          if (typeof service === 'function') {
+            // It's a class - add to providers
+            providers.push(service);
+          } else if ('module' in service) {
+            // It's a DynamicModule - add to imports
+            imports.push(service as DynamicModule);
+          } else {
+            // It's a ServiceConfig - add to providers
+            providers.push(service as Provider);
+          }
+        });
+
         let moduleBuilder: TestingModuleBuilder = Test.createTestingModule({
           imports: [
             ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env.test'] }),
@@ -104,18 +127,10 @@ export function describeWithMongo(
                 appName: 'api-backend',
               }),
             }),
-            ...modules,
+            ...imports,
           ],
+          providers,
         });
-
-        if (overrides && overrides.length > 0) {
-          moduleBuilder = overrides.reduce((builder, provider) => {
-            // A provider can be a class or an object with a `provide` property
-            const token = (provider as any).provide || provider;
-            const value = (provider as any).useValue;
-            return builder.overrideProvider(token).useValue(value);
-          }, moduleBuilder);
-        }
 
         const moduleFixture = await moduleBuilder.compile();
         const app = moduleFixture.createNestApplication();
