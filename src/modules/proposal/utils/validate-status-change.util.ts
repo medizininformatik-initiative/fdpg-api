@@ -36,6 +36,7 @@ export const validateStatusChange = (
     },
     [ProposalStatus.Rework]: {
       [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
+      [ProposalStatus.Rejected]: () => isFdpg(user),
     },
     [ProposalStatus.FdpgCheck]: {
       [ProposalStatus.Rework]: () => isFdpg(user),
