@@ -24,6 +24,7 @@ import { IKeycloakActionsEmail } from './types/keycloak-actions-email.interface'
 import { IKeycloakRole } from './types/keycloak-role-assignment.interface';
 import { IKeycloakUserQuery } from './types/keycloak-user-query.interface';
 import { ICreateKeycloakUser, IGetKeycloakUser } from './types/keycloak-user.interface';
+import { IKeycloakRegistrationEvent } from './types/keycloak-registration-event.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -270,14 +271,22 @@ export class KeycloakService {
   // for this request to work, add in keycloak admin console:
   // Clients -> fdpg-api -> add "view-events" to "Service Account Roles"
   // Client Scopes -> fdpg-api-dedicated -> add "view-events"
-  async getRegistrationEvents(dateFrom: string) {
-    const params = new URLSearchParams();
-    params.append('type', 'REGISTER');
-    params.append('dateFrom', '2025-01-01');
-    params.append('max', '100');
+  async getRegistrationEvents(dateFrom: string): Promise<IKeycloakRegistrationEvent[]> {
+    try {
+      const dateObj = new Date(dateFrom);
+      const epochTimestamp = dateObj.getTime().toString();
 
-    const { data } = await this.apiClient.get<any>(`/events?${params.toString()}`);
+      const params = new URLSearchParams();
+      params.append('type', 'REGISTER');
+      params.append('dateFrom', epochTimestamp);
+      params.append('max', '100');
 
-    console.log({ data });
+      const { data } = await this.apiClient.get<IKeycloakRegistrationEvent[]>(`/events?${params.toString()}`);
+
+      return data || [];
+    } catch (error) {
+      console.error('Failed to fetch registration events from Keycloak:', error);
+      return [];
+    }
   }
 }

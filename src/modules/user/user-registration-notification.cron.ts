@@ -1,18 +1,93 @@
-// src/tasks/event-monitor.task.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { KeycloakService } from '../user/keycloak.service';
+import { Cron } from '@nestjs/schedule';
+import { KeycloakService } from './keycloak.service';
+import { KeycloakUtilService } from './keycloak-util.service';
+import { EmailService } from '../email/email.service';
+import { newUserRegistrationEmail } from '../email/user-registration.emails';
+import { IGetKeycloakUser } from './types/keycloak-user.interface';
 
 @Injectable()
 export class UserRegistrationNotificationCron {
   private readonly logger = new Logger(UserRegistrationNotificationCron.name);
 
-  constructor(private readonly keycloakService: KeycloakService) {}
+  constructor(
+    private readonly keycloakService: KeycloakService,
+    private readonly keycloakUtilService: KeycloakUtilService,
+    private readonly emailService: EmailService,
+  ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  /**
+   * Runs daily at 9:00 AM to check for new user registrations in the last 24 hours
+   * and sends an email notification to FDPG administrators if there are any new registrations
+   */
+  @Cron('0 9 * * *')
   async checkNewRegistrations() {
-    this.logger.log('Checking for new user registrations...');
-    const events = await this.keycloakService.getRegistrationEvents('2025-01-01T00:00:00Z');
-    this.logger.log(`Fetched registration events.`);
+    try {
+      this.logger.log('Checking for new user registrations in the last 24 hours...');
+
+      const oneDayAgo = new Date();
+      oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+      const dateFrom = oneDayAgo.toISOString();
+
+      const registrationEvents = await this.keycloakService.getRegistrationEvents(dateFrom);
+
+      if (!registrationEvents || registrationEvents.length === 0) {
+        this.logger.log('No new user registrations found in the last 24 hours.');
+        return;
+      }
+
+      this.logger.log(`Found ${registrationEvents.length} new registration(s).`);
+
+      const userIds = [...new Set(registrationEvents.map((event) => event.userId))];
+
+      const newUsers = await Promise.all(
+        userIds.map(async (userId) => {
+          try {
+            return await this.keycloakService.getUserById(userId);
+          } catch (error) {
+            this.logger.warn(`Failed to fetch user details for user ID: ${userId}`, error);
+            return null;
+          }
+        }),
+      );
+
+      const validNewUsers = newUsers.filter((user) => user !== null);
+
+      if (validNewUsers.length === 0) {
+        this.logger.warn('Could not retrieve details for any of the registered users.');
+        return;
+      }
+
+      await this.sendRegistrationNotificationMails(validNewUsers);
+
+      this.logger.log(`Successfully processed registration notifications for ${validNewUsers.length} new user(s).`);
+    } catch (error) {
+      this.logger.error('Failed to process user registration notifications:', error);
+    }
+  }
+
+  private async sendRegistrationNotificationMails(validNewUsers: IGetKeycloakUser[]) {
+    const emailTasks: Promise<void>[] = [];
+
+    const fdpgTask = async () => {
+      const fdpgMembers = await this.keycloakUtilService.getFdpgMembers();
+      const validFdpgContacts = fdpgMembers
+        .filter((member) => this.keycloakUtilService.filterForReceivingEmail(member))
+        .map((member) => member.email)
+        .filter((email) => email && email.length > 0);
+
+      if (validFdpgContacts.length === 0) {
+        this.logger.warn('No FDPG member emails found to send notifications.');
+        return Promise.resolve();
+      }
+
+      const mail = newUserRegistrationEmail(validFdpgContacts, validNewUsers);
+
+      return await this.emailService.send(mail);
+    };
+
+    emailTasks.push(fdpgTask());
+
+    await Promise.allSettled(emailTasks);
   }
 }
