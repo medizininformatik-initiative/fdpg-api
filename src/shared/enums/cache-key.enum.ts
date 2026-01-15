@@ -1,4 +1,5 @@
 export enum CacheKey {
+  AllAdmins = 'CACHE_KEY_ALL_ADMINS',
   AllRoles = 'CACHE_KEY_ALL_ROLES',
   AllFdpgMember = 'CACHE_KEY_ALL_FDPG_MEMBER',
   AllDizMember = 'CACHE_KEY_ALL_DIZ_MEMBER',

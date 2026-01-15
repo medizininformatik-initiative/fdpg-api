@@ -69,7 +69,10 @@ export class KeycloakUtilService {
       .filter((user) => (withFilterForReceivingMails ? this.filterForReceivingEmail(user) : true))
       .map((member) => member.email);
   }
-
+  /** Returns all users with role Admin */
+  async getAdminMembers(): Promise<ICachedKeycloakUser[]> {
+    return await this.getMembers(Role.Admin, CacheKey.AllAdmins, false);
+  }
   /** Returns all users with role FdpgMember */
   async getFdpgMembers(): Promise<ICachedKeycloakUser[]> {
     return await this.getMembers(Role.FdpgMember, CacheKey.AllFdpgMember, false);

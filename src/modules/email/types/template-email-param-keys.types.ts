@@ -52,6 +52,9 @@ export type TemplateEmailParamKeys =
   | 'projectLink'
   | 'projectResearchers'
   | 'firstName'
-  | 'lastName';
+  | 'lastName'
+  | 'newUsersList'
+  | 'registrationCount'
+  | 'registrationDate';
 
 export type EmailParameterMap = Partial<Record<TemplateProposalEmailConditionKeys, boolean | string | Date>>;
