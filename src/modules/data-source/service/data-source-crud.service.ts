@@ -4,10 +4,6 @@ import { Model } from 'mongoose';
 import { DataSource, DataSourceDocument } from '../schema/data-source.schema';
 import { DataSourceStatus } from '../enum/data-source-status.enum';
 
-/**
- * Service for managing DataSource entities in the database.
- * Provides encapsulated CRUD operations for data sources.
- */
 @Injectable()
 export class DataSourceCrudService {
   constructor(

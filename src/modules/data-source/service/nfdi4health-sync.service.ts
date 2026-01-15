@@ -17,7 +17,7 @@ export class Nfdi4HealthSyncService {
   private readonly logger = new Logger(Nfdi4HealthSyncService.name);
 
   /**
-   * Synchronizes all data from NFDI4Health to local database.
+   * Synchronizes all data from NFDI4Health to database.
    * - Creates new entries with PENDING status
    * - Updates existing entries while preserving DEACTIVATED status
    * - Returns statistics about the sync operation
@@ -94,42 +94,6 @@ export class Nfdi4HealthSyncService {
     } catch (error) {
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
       this.logger.error(`Synchronization failed after ${duration}s: ${error.message}`, error.stack);
-      throw error;
-    }
-  }
-
-  /**
-   * Synchronizes a single study by its NFDI4Health identifier.
-   * Useful for targeted updates.
-   */
-  async syncSingleStudy(nfdi4healthId: string): Promise<void> {
-    this.logger.log(`Syncing single study: ${nfdi4healthId}`);
-
-    try {
-      // This would require a new method in Nfdi4HealthService to fetch a single study
-      // For now, we'll fetch all and filter (not optimal but works)
-      const allData = await this.nfdi4HealthService.getAll(1000);
-      const study = allData.find((item) => item.resource.identifier === nfdi4healthId);
-
-      if (!study) {
-        this.logger.warn(`Study ${nfdi4healthId} not found in NFDI4Health`);
-        return;
-      }
-
-      const existing = await this.dataSourceCrudService.findByNfdi4HealthId(nfdi4healthId);
-      const mappedData = Nfdi4HealthMapper.mapToDataSource(study, existing?.status);
-
-      const result = await this.dataSourceCrudService.upsertByNfdi4HealthId(nfdi4healthId, mappedData);
-
-      if (result.created) {
-        this.logger.log(`Created study ${nfdi4healthId}`);
-      } else {
-        this.logger.log(
-          `Updated study ${nfdi4healthId}${result.deactivatedPreserved ? ' (preserved DEACTIVATED)' : ''}`,
-        );
-      }
-    } catch (error) {
-      this.logger.error(`Failed to sync study ${nfdi4healthId}: ${error.message}`, error.stack);
       throw error;
     }
   }
