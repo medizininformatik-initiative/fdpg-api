@@ -3,7 +3,10 @@ import { ITemplateEmail } from 'src/modules/email/types/email.interface';
 import { IGetKeycloakUser } from 'src/modules/user/types/keycloak-user.interface';
 import { getLocaleDateString } from 'src/shared/utils/date.utils';
 
-export const newUserRegistrationEmail = (validFdpgContacts: string[], newUsers: IGetKeycloakUser[]): ITemplateEmail => {
+export const newUserRegistrationEmail = (
+  validAdminContacts: string[],
+  newUsers: IGetKeycloakUser[],
+): ITemplateEmail => {
   const newUsersList = newUsers
     .map((user) => {
       const name = `${user.firstName} ${user.lastName}`.trim();
@@ -16,7 +19,7 @@ export const newUserRegistrationEmail = (validFdpgContacts: string[], newUsers: 
   const registrationDate = getLocaleDateString(new Date());
 
   return {
-    to: validFdpgContacts,
+    to: validAdminContacts,
     categories: [EmailCategory.UserRegistration],
     templateId: 14,
     params: {

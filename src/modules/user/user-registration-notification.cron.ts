@@ -17,10 +17,13 @@ export class UserRegistrationNotificationCron {
   ) {}
 
   /**
-   * Runs daily at 9:00 AM to check for new user registrations in the last 24 hours
-   * and sends an email notification to FDPG administrators if there are any new registrations
+   * Runs daily at 9:00 AM (Europe/Berlin timezone) to check for new user registrations in the last 24 hours
+   * and sends an email notification to system administrators if there are any new registrations
    */
-  @Cron('0 9 * * *')
+  @Cron('0 9 * * *', {
+    name: 'UserRegistrationNotificationJob',
+    timeZone: 'Europe/Berlin',
+  })
   async checkNewRegistrations() {
     try {
       this.logger.log('Checking for new user registrations in the last 24 hours...');
@@ -69,24 +72,24 @@ export class UserRegistrationNotificationCron {
   private async sendRegistrationNotificationMails(validNewUsers: IGetKeycloakUser[]) {
     const emailTasks: Promise<void>[] = [];
 
-    const fdpgTask = async () => {
-      const fdpgMembers = await this.keycloakUtilService.getFdpgMembers();
-      const validFdpgContacts = fdpgMembers
+    const adminTask = async () => {
+      const adminMembers = await this.keycloakUtilService.getAdminMembers();
+      const validAdminContacts = adminMembers
         .filter((member) => this.keycloakUtilService.filterForReceivingEmail(member))
         .map((member) => member.email)
         .filter((email) => email && email.length > 0);
 
-      if (validFdpgContacts.length === 0) {
-        this.logger.warn('No FDPG member emails found to send notifications.');
+      if (validAdminContacts.length === 0) {
+        this.logger.warn('No admin member emails found to send notifications.');
         return Promise.resolve();
       }
 
-      const mail = newUserRegistrationEmail(validFdpgContacts, validNewUsers);
+      const mail = newUserRegistrationEmail(validAdminContacts, validNewUsers);
 
       return await this.emailService.send(mail);
     };
 
-    emailTasks.push(fdpgTask());
+    emailTasks.push(adminTask());
 
     await Promise.allSettled(emailTasks);
   }
