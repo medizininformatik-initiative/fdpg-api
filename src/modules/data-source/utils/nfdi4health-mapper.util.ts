@@ -74,7 +74,7 @@ export class Nfdi4HealthMapper {
    * - Otherwise uses existing status or defaults to PENDING
    *
    * @param item - NFDI4Health content item to map
-   * @param existingStatus - Optional existing status to preserve
+   * @param existingDeactivated - Optional existing status to preserve
    * @returns Partial DataSource object ready for database insertion/update
    */
   static mapToDataSource(item: Nfdi4HealthContentItemDto, existingStatus?: DataSourceStatus): Partial<DataSource> {
@@ -90,11 +90,7 @@ export class Nfdi4HealthMapper {
       collection: primaryCollection?.name || 'Unknown',
       collectionId: primaryCollection?.id || 0,
       classification: resource.classification.type,
-      // Preserve DEACTIVATED status, otherwise use existing status or default to PENDING
-      status:
-        existingStatus === DataSourceStatus.DEACTIVATED
-          ? DataSourceStatus.DEACTIVATED
-          : existingStatus || DataSourceStatus.PENDING,
+      status: existingStatus || DataSourceStatus.PENDING,
     };
   }
 }

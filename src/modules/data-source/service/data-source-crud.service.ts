@@ -99,4 +99,58 @@ export class DataSourceCrudService {
 
     return await this.updateByNfdi4HealthId(nfdi4healthId, update);
   }
+
+  /**
+   * Searches data sources by query text and optional status with pagination.
+   * Searches in:
+   * - nfdi4healthId (case-insensitive partial match)
+   * - titles.value (case-insensitive partial match in any language)
+   *
+   * @param query - Search text for identifier or title (optional)
+   * @param status - Optional status filter
+   * @param skip - Number of documents to skip for pagination (optional)
+   * @param limit - Maximum number of documents to return (optional)
+   * @returns Object with data array and total count
+   */
+  async searchByQueryAndStatus(
+    onlyActive: boolean,
+    query?: string,
+    status?: DataSourceStatus,
+    skip?: number,
+    limit?: number,
+  ): Promise<{ data: DataSourceDocument[]; total: number }> {
+    const filter: any = {};
+
+    if (onlyActive) {
+      filter.status = DataSourceStatus.APPROVED;
+      filter.deactivated = false;
+    }
+
+    // Add status filter if provided
+    if (status && !onlyActive) {
+      filter.status = status;
+    }
+
+    // Add text search filter if query provided
+    if (query && query.trim()) {
+      const searchRegex = new RegExp(query.trim(), 'i'); // Case-insensitive
+      filter.$or = [{ nfdi4healthId: searchRegex }, { 'titles.value': searchRegex }];
+    }
+
+    // Build query
+    let dataQuery = this.dataSourceModel.find(filter);
+
+    // Apply pagination if provided
+    if (skip !== undefined) {
+      dataQuery = dataQuery.skip(skip);
+    }
+    if (limit !== undefined) {
+      dataQuery = dataQuery.limit(limit);
+    }
+
+    // Execute query and count in parallel
+    const [data, total] = await Promise.all([dataQuery.exec(), this.dataSourceModel.countDocuments(filter).exec()]);
+
+    return { data, total };
+  }
 }
