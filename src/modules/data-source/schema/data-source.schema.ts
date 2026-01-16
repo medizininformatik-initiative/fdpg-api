@@ -104,7 +104,7 @@ export class DataSource {
     required: true,
     default: false,
   })
-  deactivated: boolean;
+  active: boolean;
 
   /**
    * Date when the data source was approved for display.

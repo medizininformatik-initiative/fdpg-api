@@ -82,4 +82,11 @@ export class DataSourceService {
   async updateStatus(nfdi4healthId: string, status: DataSourceStatus): Promise<boolean> {
     return await this.dataSourceCrudService.updateStatus(nfdi4healthId, status);
   }
+
+  /**
+   * Activates or deactivates a data source.
+   */
+  async setActive(nfdi4healthId: string, active: boolean): Promise<boolean> {
+    return await this.dataSourceCrudService.updateActive(nfdi4healthId, active);
+  }
 }

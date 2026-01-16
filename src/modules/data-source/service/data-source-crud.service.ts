@@ -59,30 +59,22 @@ export class DataSourceCrudService {
 
   /**
    * Upserts a data source (update if exists, create if not).
-   * Preserves DEACTIVATED status if the document already exists.
    */
-  async upsertByNfdi4HealthId(
-    nfdi4healthId: string,
-    dataSource: Partial<DataSource>,
-  ): Promise<{ created: boolean; deactivatedPreserved: boolean }> {
+  async upsertByNfdi4HealthId(nfdi4healthId: string, dataSource: Partial<DataSource>): Promise<{ created: boolean }> {
     const existing = await this.findByNfdi4HealthId(nfdi4healthId);
 
     if (existing) {
-      // Preserve DEACTIVATED status
+      // Preserve active flag
       const updateData = { ...dataSource };
-      if (existing.status === DataSourceStatus.DEACTIVATED) {
-        updateData.status = DataSourceStatus.DEACTIVATED;
-      }
 
       await this.updateByNfdi4HealthId(nfdi4healthId, updateData);
 
       return {
         created: false,
-        deactivatedPreserved: existing.status === DataSourceStatus.DEACTIVATED,
       };
     } else {
       await this.create({ ...dataSource, nfdi4healthId });
-      return { created: true, deactivatedPreserved: false };
+      return { created: true };
     }
   }
 
@@ -92,12 +84,20 @@ export class DataSourceCrudService {
   async updateStatus(nfdi4healthId: string, status: DataSourceStatus): Promise<boolean> {
     const update: Partial<DataSource> = { status };
 
-    // Set approval date when status is changed to APPROVED
+    // Set approval date and active flag when status is changed to APPROVED
     if (status === DataSourceStatus.APPROVED) {
       update.approvalDate = new Date();
+      update.active = true;
     }
 
     return await this.updateByNfdi4HealthId(nfdi4healthId, update);
+  }
+
+  /**
+   * Updates the active flag of a data source.
+   */
+  async updateActive(nfdi4healthId: string, active: boolean): Promise<boolean> {
+    return await this.updateByNfdi4HealthId(nfdi4healthId, { active });
   }
 
   /**
@@ -123,7 +123,7 @@ export class DataSourceCrudService {
 
     if (onlyActive) {
       filter.status = DataSourceStatus.APPROVED;
-      filter.deactivated = false;
+      filter.active = true;
     }
 
     // Add status filter if provided

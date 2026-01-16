@@ -70,11 +70,10 @@ export class Nfdi4HealthMapper {
   /**
    * Maps a single NFDI4Health content item to our DataSource schema.
    * Handles status preservation logic:
-   * - If existing status is DEACTIVATED, keeps it DEACTIVATED
-   * - Otherwise uses existing status or defaults to PENDING
+   * - Uses existing status or defaults to PENDING
    *
    * @param item - NFDI4Health content item to map
-   * @param existingDeactivated - Optional existing status to preserve
+   * @param existingStatus - Optional existing status to preserve
    * @returns Partial DataSource object ready for database insertion/update
    */
   static mapToDataSource(item: Nfdi4HealthContentItemDto, existingStatus?: DataSourceStatus): Partial<DataSource> {

@@ -153,6 +153,25 @@ export class DataSourceController {
     }
   }
 
+  /**
+   * Activate or deactivate a data source.
+   */
+  @Patch(':nfdi4healthId/active')
+  @Auth(Role.FdpgMember)
+  @HttpCode(204)
+  @ApiOperation({
+    summary: 'Activate or deactivate a data source',
+    description: 'Sets the active flag of a data source.',
+  })
+  @ApiNotFoundResponse({ description: 'Data source not found' })
+  async setActive(@Param('nfdi4healthId') nfdi4healthId: string, @Body('active') active: boolean): Promise<void> {
+    const updated = await this.dataSourceService.setActive(nfdi4healthId, active);
+
+    if (!updated) {
+      throw new NotFoundException(`Data source with NFDI4Health ID ${nfdi4healthId} not found`);
+    }
+  }
+
   // ====== Sync Endpoints ======
 
   /**
@@ -163,33 +182,31 @@ export class DataSourceController {
   @ApiOperation({
     summary: 'Synchronize data from NFDI4Health',
     description:
-      'Triggers a full synchronization of data sources from NFDI4Health. ' +
-      'Creates new entries with PENDING status and updates existing ones while preserving DEACTIVATED status. ' +
-      'Admin only.',
+      'Triggers a full synchronization of data sources from NFDI4Health in the background. Returns immediately.',
   })
   @ApiOkResponse({
-    description: 'Synchronization statistics',
+    description: 'Sync started successfully',
     schema: {
       type: 'object',
       properties: {
-        fetched: { type: 'number', description: 'Number of studies fetched from NFDI4Health' },
-        created: { type: 'number', description: 'Number of new data sources created' },
-        updated: { type: 'number', description: 'Number of existing data sources updated' },
-        skipped: { type: 'number', description: 'Number of studies skipped' },
-        deactivatedPreserved: { type: 'number', description: 'Number of deactivated sources preserved' },
-        errors: { type: 'number', description: 'Number of errors encountered' },
+        message: { type: 'string', description: 'Confirmation message' },
+        startedAt: { type: 'string', format: 'date-time', description: 'When the sync started' },
       },
     },
   })
   async syncFromNfdi4Health(): Promise<{
-    fetched: number;
-    created: number;
-    updated: number;
-    skipped: number;
-    deactivatedPreserved: number;
-    errors: number;
+    message: string;
+    startedAt: Date;
   }> {
-    return this.nfdi4HealthSyncService.syncAllData();
+    // Trigger sync in background (fire-and-forget) to prevent an unresponsive backend
+    this.nfdi4HealthSyncService.syncAllData().catch(() => {
+      // Error is already logged in the service, just ensure it doesn't crash
+    });
+
+    return {
+      message: 'Synchronization started in background',
+      startedAt: new Date(),
+    };
   }
 
   /**
@@ -207,7 +224,27 @@ export class DataSourceController {
       type: 'object',
       properties: {
         isRunning: { type: 'boolean', description: 'Whether a sync is currently in progress' },
-        startedAt: { type: 'string', format: 'date-time', description: 'When the sync started (null if not running)' },
+        startedAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'When the current sync started (null if not running)',
+        },
+        lastCompletedAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'When the last sync completed (null if never completed)',
+        },
+        lastStats: {
+          type: 'object',
+          description: 'Statistics from the last completed sync (null if never completed)',
+          properties: {
+            fetched: { type: 'number' },
+            created: { type: 'number' },
+            updated: { type: 'number' },
+            skipped: { type: 'number' },
+            errors: { type: 'number' },
+          },
+        },
       },
     },
   })

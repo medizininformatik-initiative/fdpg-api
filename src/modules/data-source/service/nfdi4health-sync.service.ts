@@ -47,7 +47,7 @@ export class Nfdi4HealthSyncService {
   /**
    * Synchronizes all data from NFDI4Health to database.
    * - Creates new entries with PENDING status
-   * - Updates existing entries while preserving DEACTIVATED status
+   * - Updates existing entries
    * - Returns statistics about the sync operation
    * - Throws ConflictException if sync is already running
    */
@@ -56,7 +56,6 @@ export class Nfdi4HealthSyncService {
     created: number;
     updated: number;
     skipped: number;
-    deactivatedPreserved: number;
     errors: number;
   }> {
     // Check if sync is already running
@@ -81,7 +80,6 @@ export class Nfdi4HealthSyncService {
       created: 0,
       updated: 0,
       skipped: 0,
-      deactivatedPreserved: 0,
       errors: 0,
     };
 
@@ -114,12 +112,7 @@ export class Nfdi4HealthSyncService {
           } else {
             stats.updated++;
 
-            if (result.deactivatedPreserved) {
-              stats.deactivatedPreserved++;
-              this.logger.debug(`Updated ${nfdi4healthId} (preserved DEACTIVATED status)`);
-            } else {
-              this.logger.debug(`Updated ${nfdi4healthId}`);
-            }
+            this.logger.debug(`Updated ${nfdi4healthId}`);
           }
         } catch (error) {
           stats.errors++;
@@ -131,7 +124,7 @@ export class Nfdi4HealthSyncService {
       this.logger.log(
         `Synchronization completed in ${duration}s - ` +
           `Fetched: ${stats.fetched}, Created: ${stats.created}, ` +
-          `Updated: ${stats.updated}, Deactivated preserved: ${stats.deactivatedPreserved}, ` +
+          `Updated: ${stats.updated}` +
           `Errors: ${stats.errors}`,
       );
 
