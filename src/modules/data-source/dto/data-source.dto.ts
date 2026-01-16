@@ -1,6 +1,6 @@
 import { IsArray, IsEnum, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
-import { DataSourceStatus } from '../enum/data-source-status.enum';
+import { DataSourceStatus, DataSourceSortField, SortOrder } from '../enum/data-source-status.enum';
 import { Language } from 'src/shared/enums/language.enum';
 
 /**
@@ -20,10 +20,10 @@ export class DataSourceLanguageDto {
  * Data Transfer Object for DataSource entity
  */
 export class DataSourceDto {
-  @Expose({ name: '_id' })
+  @Expose()
   @Transform(({ value }) => value?.toString())
   @IsString()
-  id: string;
+  _id: string;
 
   @Expose()
   @IsString()
@@ -56,6 +56,9 @@ export class DataSourceDto {
   @Expose()
   @IsEnum(DataSourceStatus)
   status: DataSourceStatus;
+
+  @Expose()
+  active: boolean;
 
   @Expose()
   @IsOptional()
@@ -92,6 +95,18 @@ export class DataSourceSearchParamsDto {
   @IsOptional()
   @IsEnum(DataSourceStatus)
   status?: DataSourceStatus;
+
+  @IsOptional()
+  @IsEnum(DataSourceSortField)
+  sortBy?: DataSourceSortField;
+
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sortOrder?: SortOrder;
+
+  @IsOptional()
+  @IsEnum(Language)
+  language?: Language;
 }
 
 /**

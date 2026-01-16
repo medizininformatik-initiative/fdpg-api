@@ -26,9 +26,9 @@ export class DataSourceService {
 
   /**
    * Searches data sources by NFDI4Health identifier or title with pagination.
-   * Supports optional status filtering.
+   * Supports optional status filtering and sorting.
    *
-   * @param searchParams - Search query and optional status filter
+   * @param searchParams - Search query, status filter, sort parameters, and language preference
    * @param paginationParams - Page number and page size
    * @param onlyActive - If true, only searches active data sources
    * @returns Paginated search results with metadata
@@ -38,19 +38,30 @@ export class DataSourceService {
     paginationParams: DataSourcePaginationParamsDto,
     onlyActive: boolean,
   ): Promise<DataSourcePaginatedResultDto> {
-    const { query, status } = searchParams;
+    const { query, status, sortBy, sortOrder, language } = searchParams;
     const { page, pageSize } = paginationParams;
 
     const skip = (page - 1) * pageSize;
 
-    const result = await this.dataSourceCrudService.searchByQueryAndStatus(onlyActive, query, status, skip, pageSize);
+    const result = await this.dataSourceCrudService.searchByQueryAndStatus(
+      onlyActive,
+      query,
+      status,
+      skip,
+      pageSize,
+      sortBy,
+      sortOrder,
+      language,
+    );
+
+    const totalPages = Math.ceil(result.total / pageSize);
 
     return {
       data: this.mapToDtos(result.data),
       total: result.total,
       page,
       pageSize,
-      totalPages: Math.ceil(result.total / pageSize),
+      totalPages,
     };
   }
 

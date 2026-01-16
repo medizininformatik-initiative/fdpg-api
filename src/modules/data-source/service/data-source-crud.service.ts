@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DataSource, DataSourceDocument } from '../schema/data-source.schema';
-import { DataSourceStatus } from '../enum/data-source-status.enum';
+import { DataSourceStatus, DataSourceSortField, SortOrder } from '../enum/data-source-status.enum';
+import { Language } from 'src/shared/enums/language.enum';
 
 @Injectable()
 export class DataSourceCrudService {
@@ -106,10 +107,14 @@ export class DataSourceCrudService {
    * - nfdi4healthId (case-insensitive partial match)
    * - titles.value (case-insensitive partial match in any language)
    *
+   * @param onlyActive - If true, only returns active and approved data sources
    * @param query - Search text for identifier or title (optional)
    * @param status - Optional status filter
    * @param skip - Number of documents to skip for pagination (optional)
    * @param limit - Maximum number of documents to return (optional)
+   * @param sortBy - Field to sort by (optional, defaults to TITLE)
+   * @param sortOrder - Sort order ASC or DESC (optional, defaults to ASC)
+   * @param language - Preferred language for title sorting (optional, defaults to EN)
    * @returns Object with data array and total count
    */
   async searchByQueryAndStatus(
@@ -118,6 +123,9 @@ export class DataSourceCrudService {
     status?: DataSourceStatus,
     skip?: number,
     limit?: number,
+    sortBy?: DataSourceSortField,
+    sortOrder?: SortOrder,
+    language?: Language,
   ): Promise<{ data: DataSourceDocument[]; total: number }> {
     const filter: any = {};
 
@@ -137,20 +145,97 @@ export class DataSourceCrudService {
       filter.$or = [{ nfdi4healthId: searchRegex }, { 'titles.value': searchRegex }];
     }
 
-    // Build query
-    let dataQuery = this.dataSourceModel.find(filter);
+    // Build sort object
+    const sort: any = {};
+    const sortField = sortBy || DataSourceSortField.TITLE;
+    const order = sortOrder === SortOrder.DESC ? -1 : 1;
+    const preferredLanguage = language || Language.EN;
 
-    // Apply pagination if provided
-    if (skip !== undefined) {
-      dataQuery = dataQuery.skip(skip);
+    switch (sortField) {
+      case DataSourceSortField.TITLE:
+        // For title sorting, we need to fetch all and sort in application layer
+        // to properly handle language preference with fallback
+        break;
+      case DataSourceSortField.NFDI4HEALTH_ID:
+        sort.nfdi4healthId = order;
+        break;
+      case DataSourceSortField.STATUS:
+        sort.status = order;
+        break;
+      case DataSourceSortField.CREATED_AT:
+        sort.createdAt = order;
+        break;
+      case DataSourceSortField.UPDATED_AT:
+        sort.updatedAt = order;
+        break;
+      default:
+        // Default to no DB sort, will be handled in app layer
+        break;
     }
-    if (limit !== undefined) {
-      dataQuery = dataQuery.limit(limit);
+
+    // For title sorting, we need to handle it differently
+    const shouldSortByTitleInApp = sortField === DataSourceSortField.TITLE;
+
+    if (shouldSortByTitleInApp) {
+      // Get total count
+      const total = await this.dataSourceModel.countDocuments(filter).exec();
+
+      // Fetch all matching documents (we'll sort and paginate in memory)
+      // This is necessary for proper language-based sorting
+      const allData = await this.dataSourceModel.find(filter).exec();
+
+      // Sort by title with language preference
+      const sortedData = allData.sort((a, b) => {
+        const titleA = this.getTitleByLanguage(a.titles, preferredLanguage);
+        const titleB = this.getTitleByLanguage(b.titles, preferredLanguage);
+        const comparison = titleA.localeCompare(titleB, 'en', { sensitivity: 'base' });
+        return order === 1 ? comparison : -comparison;
+      });
+
+      // Apply pagination
+      const start = skip || 0;
+      const end = limit ? start + limit : sortedData.length;
+      const paginatedData = sortedData.slice(start, end);
+
+      return { data: paginatedData, total };
+    } else {
+      // Build query with DB-level sorting
+      let dataQuery = this.dataSourceModel.find(filter).sort(sort);
+
+      // Apply pagination if provided
+      if (skip !== undefined) {
+        dataQuery = dataQuery.skip(skip);
+      }
+      if (limit !== undefined) {
+        dataQuery = dataQuery.limit(limit);
+      }
+
+      // Execute query and count in parallel
+      const [data, total] = await Promise.all([dataQuery.exec(), this.dataSourceModel.countDocuments(filter).exec()]);
+
+      return { data, total };
     }
+  }
 
-    // Execute query and count in parallel
-    const [data, total] = await Promise.all([dataQuery.exec(), this.dataSourceModel.countDocuments(filter).exec()]);
+  /**
+   * Gets title in preferred language with fallback logic:
+   * 1. Preferred language
+   * 2. English (EN)
+   * 3. First available title
+   */
+  private getTitleByLanguage(
+    titles: Array<{ language: Language; value: string }>,
+    preferredLanguage: Language,
+  ): string {
+    // Try preferred language
+    const preferredTitle = titles.find((t) => t.language === preferredLanguage);
+    if (preferredTitle) return preferredTitle.value;
 
-    return { data, total };
+    // Fallback to English
+    const enTitle = titles.find((t) => t.language === Language.EN);
+    if (enTitle) return enTitle.value;
+
+    // Fallback to first available
+    return titles[0]?.value || '';
   }
 }

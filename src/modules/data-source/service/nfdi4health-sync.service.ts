@@ -87,7 +87,7 @@ export class Nfdi4HealthSyncService {
 
     try {
       // Fetch all data from NFDI4Health
-      const allData = await this.nfdi4HealthService.getAll(100, maxResults);
+      const allData = await this.nfdi4HealthService.getAll(20, maxResults);
       stats.fetched = allData.length;
 
       this.logger.log(`Processing ${allData.length} studies from NFDI4Health`);
@@ -124,7 +124,7 @@ export class Nfdi4HealthSyncService {
       this.logger.log(
         `Synchronization completed in ${duration}s - ` +
           `Fetched: ${stats.fetched}, Created: ${stats.created}, ` +
-          `Updated: ${stats.updated}` +
+          `Updated: ${stats.updated}, Skipped: ${stats.skipped}, ` +
           `Errors: ${stats.errors}`,
       );
 

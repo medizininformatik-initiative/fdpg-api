@@ -14,9 +14,7 @@ export class Nfdi4HealthService {
   private apiClient: AxiosInstance;
 
   private readonly baseFilter = {
-    fq: '',
     perPage: 10,
-    q: '',
     showFacets: true,
     sortField: 'relevance',
     sortOrder: 'asc',
@@ -47,11 +45,13 @@ export class Nfdi4HealthService {
 
         this.logger.debug(`Fetching page ${currentPage + 1} (start: ${start}, perPage: ${perPage})`);
 
-        const response = await this.apiClient.post<Nfdi4HealthResponseDto>('/api/resources/', {
+        const params = {
           ...this.baseFilter,
           perPage,
           start,
-        });
+        };
+
+        const response = await this.apiClient.post<Nfdi4HealthResponseDto>('/api/resources/', params);
 
         const { content, totalElements: total } = response.data;
 
