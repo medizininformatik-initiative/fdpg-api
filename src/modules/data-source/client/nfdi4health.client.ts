@@ -22,9 +22,14 @@ export class Nfdi4HealthClient {
   }
 
   private configureClient() {
+    const environment = this.configService.get('ENV') || 'DEV';
+
     this.client = axios.create({
       baseURL: this.baseUrl,
       timeout: 5 * 60 * 1_000,
+      headers: {
+        'User-Agent': `FDPG-API-${environment}`,
+      },
     });
 
     applyAxiosMonitoring(this.client);
