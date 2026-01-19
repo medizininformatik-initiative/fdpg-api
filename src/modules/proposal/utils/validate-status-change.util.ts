@@ -4,6 +4,7 @@ import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../enums/proposal-status.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 import { Proposal } from '../schema/proposal.schema';
 
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
@@ -11,6 +12,10 @@ const isOwner = (user: IRequestUser, proposal: Proposal) =>
 
 const isFdpg = (user: IRequestUser) =>
   user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember;
+
+const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
+  proposal.type === ProposalType.RegisteringForm &&
+  ((user.roles.includes(Role.RegisteringMember) && user.userId === proposal.ownerId) || isFdpg(user));
 
 const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) => isOwner(user, proposal) || isFdpg(user);
 
@@ -24,18 +29,23 @@ export const validateStatusChange = (
   const map = {
     [ProposalStatus.Archived]: {},
     [ProposalStatus.Draft]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
     },
     [ProposalStatus.Rejected]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
     [ProposalStatus.Rework]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
+      [ProposalStatus.Rejected]: () => isFdpg(user),
     },
     [ProposalStatus.FdpgCheck]: {
       [ProposalStatus.Rework]: () => isFdpg(user),
       [ProposalStatus.Rejected]: () => isFdpg(user),
       [ProposalStatus.LocationCheck]: () => isFdpg(user),
+      // Only allow ReadyToPublish for register proposals (deprecated - keeping for backwards compatibility)
+      [ProposalStatus.ReadyToPublish]: () => isFdpg(user) && toBeUpdated.type === ProposalType.RegisteringForm,
+      // Allow direct approval to Published for registering forms (auto-sync)
+      [ProposalStatus.Published]: () => isFdpg(user) && toBeUpdated.type === ProposalType.RegisteringForm,
     },
     [ProposalStatus.LocationCheck]: {
       // Contracting is supposed to be started by uploading the contract draft
@@ -51,8 +61,8 @@ export const validateStatusChange = (
       [ProposalStatus.DataResearch]: () => isFdpg(user),
     },
     [ProposalStatus.DataResearch]: {
-      [ProposalStatus.DataCorrupt]: () => isOwner(user, toBeUpdated),
-      [ProposalStatus.FinishedProject]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.ExpectDataDelivery]: () => isResearcherOrFdpg(user, toBeUpdated),
+      [ProposalStatus.FinishedProject]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
     [ProposalStatus.DataCorrupt]: {
       [ProposalStatus.ExpectDataDelivery]: () => isFdpg(user),
@@ -65,6 +75,10 @@ export const validateStatusChange = (
     [ProposalStatus.ReadyToArchive]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
+    [ProposalStatus.ReadyToPublish]: {
+      [ProposalStatus.Published]: () => !forceThrow, // API to Web Page (automated)
+    },
+    [ProposalStatus.Published]: {},
   };
 
   const canSwitch: boolean = map[toBeUpdated.status][newStatus] ? map[toBeUpdated.status][newStatus]() : false;

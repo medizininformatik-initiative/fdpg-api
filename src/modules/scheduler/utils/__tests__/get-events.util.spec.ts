@@ -1,10 +1,9 @@
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { ScheduleType } from '../../enums/schedule-type.enum';
-import { IProposalScheduleEventSet } from '../../types/schedule-event.types';
+import { IProposalScheduleEventSet, ProposalScheduleTypes } from '../../types/schedule-event.types';
 import { defaultDueDateValues, DueDateEnum } from 'src/modules/proposal/enums/due-date.enum';
 import { getEventsFromSet } from '../get-events.util';
 import { Participant } from 'src/modules/proposal/schema/sub-schema/participant.schema';
-import { alterDaysOnDate, alterOnDeadline } from 'src/modules/proposal/utils/due-date.util';
 
 const mockReturnDate = new Date();
 
@@ -78,7 +77,7 @@ describe('getEventUtil', () => {
       ScheduleType.ReminderLocationCheck2,
       ScheduleType.ReminderLocationCheck3,
       ScheduleType.ReminderResearcherPublications,
-    ])('should set due dates correctly for type "%s"', (type: ScheduleType) => {
+    ])('should set due dates correctly for type "%s"', (type: ProposalScheduleTypes) => {
       const eventSet: IProposalScheduleEventSet = {
         proposal: { ...proposal, deadlines: { ...defaultDueDateValues } },
         types: [type],
@@ -144,7 +143,7 @@ describe('getEventUtil', () => {
       ScheduleType.ReminderLocationCheck1,
       ScheduleType.ReminderLocationCheck2,
       ScheduleType.ReminderLocationCheck3,
-    ])('should set due dates correctly using the deadlines for type "%s"', (type: ScheduleType) => {
+    ])('should set due dates correctly using the deadlines for type "%s"', (type: ProposalScheduleTypes) => {
       Object.keys(defaultDueDateValues);
       const eventSet: IProposalScheduleEventSet = {
         proposal: { ...proposal, deadlines: { ...mockDeadlines } as any as Record<DueDateEnum, Date> },

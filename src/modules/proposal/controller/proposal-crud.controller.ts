@@ -14,6 +14,7 @@ import {
 import { ApiNoContentResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
+import { ProposalAccess } from '../decorators/proposal-access.decorator';
 import { MongoIdParamDto, MongoIdQueryDto } from 'src/shared/dto/mongo-id-param.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
@@ -23,12 +24,13 @@ import { ProposalFilterDto } from '../dto/proposal-filter.dto';
 import { ProposalCreateDto, ProposalGetDto, ProposalGetListDto, ProposalUpdateDto } from '../dto/proposal/proposal.dto';
 import { ProposalCrudService } from '../services/proposal-crud.service';
 import { CheckUniqueProposalDto } from '../dto/check-unique-proposal.dto';
+import { ProposalStatisticsDto } from '../dto/proposal-statistics.dto';
 
 @ApiController('proposals', undefined, 'crud')
 export class ProposalCrudController {
   constructor(private readonly proposalCrudService: ProposalCrudService) {}
 
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.RegisteringMember)
   @Post()
   @ProposalValidation(true)
   @ApiOperation({ summary: 'Creates a Proposal' })
@@ -39,7 +41,14 @@ export class ProposalCrudController {
     return await this.proposalCrudService.create(createProposalDto, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.RegisteringMember)
+  @Get('statistics')
+  @ApiOperation({ summary: 'Gets proposal counts grouped by status for the current user' })
+  async getStatistics(@Request() { user }: FdpgRequest): Promise<ProposalStatisticsDto> {
+    return await this.proposalCrudService.getStatistics(user);
+  }
+
+  @ProposalAccess()
   @Get(':id')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiOperation({ summary: 'Gets a Proposal by its id' })
@@ -48,7 +57,14 @@ export class ProposalCrudController {
     return await this.proposalCrudService.find(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(
+    Role.Researcher,
+    Role.FdpgMember,
+    Role.DataSourceMember,
+    Role.DizMember,
+    Role.UacMember,
+    Role.DataManagementOffice,
+  )
   @Get()
   @ApiOperation({ summary: 'Gets all Proposals that are currently accessible for the user' })
   @UsePipes(ValidationPipe)
@@ -60,7 +76,7 @@ export class ProposalCrudController {
     return await this.proposalCrudService.findAll(sortOrder, panelQuery, user);
   }
 
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.RegisteringMember)
   @Put(':id')
   @ApiNotFoundResponse({ description: 'Item to update could not be found' })
   @ProposalValidation()
@@ -73,7 +89,7 @@ export class ProposalCrudController {
     return this.proposalCrudService.update(id, updateProposalDto, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.RegisteringMember)
   @Delete(':id')
   @ApiNoContentResponse({ description: 'Item successfully deleted. No content returns.' })
   @HttpCode(204)
@@ -83,7 +99,7 @@ export class ProposalCrudController {
     await this.proposalCrudService.delete(id, user);
   }
 
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.RegisteringMember)
   @Post(':id/duplicate')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Item to duplicate could not be found' })
@@ -92,7 +108,7 @@ export class ProposalCrudController {
     return await this.proposalCrudService.duplicate(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.RegisteringMember)
   @Post('is-unique')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Checks if the provided projectAbbreviation is unique' })

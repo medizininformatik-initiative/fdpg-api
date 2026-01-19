@@ -6,6 +6,7 @@ import { getErrorMessages, tryPlainToClass } from 'src/shared/utils/validation-p
 import { ProposalBaseDto } from './dto/proposal/proposal.dto';
 import { ProposalValidation } from './enums/porposal-validation.enum';
 import { ProposalStatus } from './enums/proposal-status.enum';
+import { ProposalType } from './enums/proposal-type.enum';
 import { ProposalTypeOfUse } from './enums/proposal-type-of-use.enum';
 import { FileDto } from 'src/shared/dto/file.dto';
 import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
@@ -85,6 +86,19 @@ export class ProposalValidationPipe implements PipeTransform<any> {
     // If DIFE is selected, add DIFE validation group
     if (object.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
       groups.push(ProposalValidation.IsDIFEDataSource);
+    }
+
+    // If MII is selected, add MII validation group
+    if (object.selectedDataSources?.includes(PlatformIdentifier.Mii)) {
+      groups.push(ProposalValidation.IsMiiDataSource);
+    }
+
+    // If this is a register proposal, add register validation group
+    if (object.type === ProposalType.RegisteringForm) {
+      groups.push(ProposalValidation.IsRegister);
+    } else {
+      // Add special group for non-register, non-draft validations
+      groups.push(ProposalValidation.IsNotDraftAndNotRegister);
     }
 
     return groups;

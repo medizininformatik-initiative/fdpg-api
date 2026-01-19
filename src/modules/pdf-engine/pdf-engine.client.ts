@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
+import { applyAxiosMonitoring } from 'src/monitoring/apply-axios-monitoring';
 
 @Injectable()
 export class PdfEngineClient {
@@ -23,5 +24,7 @@ export class PdfEngineClient {
       //   'Content-Type': 'application/json',
       // },
     });
+
+    applyAxiosMonitoring(this.client);
   }
 }

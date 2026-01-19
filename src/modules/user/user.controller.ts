@@ -47,7 +47,7 @@ export class UserController {
   })
   @ApiOkResponse({ description: 'List of email addresses', type: UserEmailResponseDto })
   async getUserEmails(@Query() query: UserQueryDto): Promise<UserEmailResponseDto> {
-    return await this.keycloakService.getUserEmails(query);
+    return await this.keycloakUtilService.getUserEmails(query);
   }
 
   @Get('by-email/:email')

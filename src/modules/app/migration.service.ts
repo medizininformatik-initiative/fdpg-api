@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { TermsConfig, TermsConfigDocument } from '../admin/schema/terms/terms-config.schema';
@@ -19,6 +19,7 @@ import {
   Migration018,
   Migration019,
   Migration020,
+  Migration021,
 } from './migrations';
 import { Migration, MigrationDocument } from './schema/migration.schema';
 import { IDbMigration } from './types/db-migration.interface';
@@ -28,6 +29,7 @@ import { ProposalForm } from '../proposal-form/schema/proposal-form.schema';
 import { ProposalFormService } from '../proposal-form/proposal-form.service';
 import { Location, LocationDocument } from '../location/schema/location.schema';
 import { Comment, CommentDocument } from '../comment/schema/comment.schema';
+import { Migration022 } from './migrations/022.migration';
 
 @Injectable()
 export class MigrationService implements OnModuleInit {
@@ -73,10 +75,14 @@ export class MigrationService implements OnModuleInit {
       18: new Migration018(this.dataPrivacyConfigModel),
       19: new Migration019(this.locationModel),
       20: new Migration020(this.proposalModel, this.commentModel),
+      21: new Migration021(this.proposalModel),
+      22: new Migration022(this.proposalFormService),
     };
   }
 
-  private readonly desiredDbVersion = 20;
+  private readonly logger = new Logger(MigrationService.name);
+
+  private readonly desiredDbVersion = 22;
 
   // Migration downgrades are not supported while downgrading the software version. So it's disabled by default.
   private readonly preventDowngrade = true;
@@ -102,7 +108,7 @@ export class MigrationService implements OnModuleInit {
     const migration = await this.migrationModel.findOne({ id: AppDbIdentifier.Migration });
 
     const newVersion = currentVersion + 1;
-    console.log(`Upgrading DB to Version: ${newVersion}`);
+    this.logger.log(`Upgrading DB to Version: ${newVersion}`);
 
     try {
       if (this.migrations[newVersion]) {
@@ -126,19 +132,19 @@ export class MigrationService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      console.log('Checking DB Migrations...');
+      this.logger.log('Checking DB Migrations...');
       const migration = await this.migrationModel.findOne({ id: AppDbIdentifier.Migration });
-      console.log(`Desired DB Version: ${this.desiredDbVersion}`);
-      console.log(`Current DB Version: ${migration?.dbVersion}`);
+      this.logger.log(`Desired DB Version: ${this.desiredDbVersion}`);
+      this.logger.log(`Current DB Version: ${migration?.dbVersion}`);
 
       if (migration?.dbVersion !== this.desiredDbVersion) {
         await this.runMigration(migration?.dbVersion);
       } else {
-        console.log('No DB Migration needed');
-        console.log(`Last DB Migration at: ${migration?.updatedAt}`);
+        this.logger.log('No DB Migration needed');
+        this.logger.log(`Last DB Migration at: ${migration?.updatedAt}`);
       }
     } catch (error) {
-      console.log(error);
+      this.logger.log(error);
       throw error;
     }
   }

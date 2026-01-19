@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { IDbMigration } from '../types/db-migration.interface';
 import { Location, LocationDocument } from 'src/modules/location/schema/location.schema';
 import { ALL_LOCATIONS, INACTIVE_LOCATIONS, MIGRATION_MII_LOCATIONS } from './constants/019.migration.constants';
@@ -14,10 +14,6 @@ export class Migration019 implements IDbMigration {
 
   async up(): Promise<void> {
     console.log('Migration 019: inserting default locations');
-
-    // Start a new session for the transaction
-    const session: ClientSession = await this.locationModel.db.startSession();
-    session.startTransaction();
 
     try {
       const allDefaultLocations: Location[] = ALL_LOCATIONS.map((code) => ({
@@ -34,20 +30,15 @@ export class Migration019 implements IDbMigration {
         deprecationDate: INACTIVE_LOCATIONS.includes(code) ? new Date() : undefined,
       }));
 
-      await this.locationModel.insertMany(allDefaultLocations, { session });
+      await this.locationModel.insertMany(allDefaultLocations);
 
-      await session.commitTransaction();
       console.log('Migration 019: Successfully inserted default locations.');
     } catch (error) {
-      await session.abortTransaction();
-
       console.error('Migration 019: Failed to insert locations, transaction aborted.');
       console.error('Error Message:', error.message);
       console.error('Stack Trace:', error.stack);
 
       throw error;
-    } finally {
-      await session.endSession();
     }
   }
 }

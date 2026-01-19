@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformOptions, plainToClass } from 'class-transformer';
 import { Model } from 'mongoose';
 import { SharedService } from 'src/shared/shared.service';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
@@ -16,6 +16,7 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { GetListProjection } from '../schema/constants/get-list.projection';
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { StatusChangeService } from './status-change.service';
+import { ProposalSyncService } from './proposal-sync.service';
 import { IProposalGetListSchema } from '../types/proposal-get-list-schema.interface';
 import { mergeProposal } from '../utils/merge-proposal.util';
 import { getProposalFilter } from '../utils/proposal-filter/proposal-filter.util';
@@ -27,9 +28,20 @@ import { Role } from 'src/shared/enums/role.enum';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
 import { PlatformIdentifier } from '../../admin/enums/platform-identifier.enum';
 import { generateDataSourceLocaleId } from '../utils/generate-data-source-locale-id.util';
+import { ProposalType } from '../enums/proposal-type.enum';
+import { SyncStatus } from '../enums/sync-status.enum';
+import { ModificationContext } from '../enums/modification-context.enum';
+import { LocationService } from 'src/modules/location/service/location.service';
+import { Location } from 'src/modules/location/schema/location.schema';
+import { researcherAllowedQuery } from '../utils/proposal-filter/researcher/researcher-filter.util';
+import { fdpgAllowedQuery } from '../utils/proposal-filter/fdpg/fdpg-filter.util';
+import { dizAllowedQuery } from '../utils/proposal-filter/diz/diz-filter.util';
+import { uacAllowedQuery } from '../utils/proposal-filter/uac/uac-filter.util';
 
 @Injectable()
 export class ProposalCrudService {
+  private readonly logger = new Logger(ProposalCrudService.name);
+
   constructor(
     @InjectModel(Proposal.name)
     private proposalModel: Model<ProposalDocument>,
@@ -37,6 +49,8 @@ export class ProposalCrudService {
     private sharedService: SharedService,
     private statusChangeService: StatusChangeService,
     private proposalFormService: ProposalFormService,
+    private proposalSyncService: ProposalSyncService,
+    private locationService: LocationService,
   ) {}
 
   async create(createProposalDto: ProposalCreateDto, user: IRequestUser): Promise<ProposalGetDto> {
@@ -62,7 +76,11 @@ export class ProposalCrudService {
 
     const plain = saveResult.toObject();
     this.addParticipatingScientistIndicator(plain, user);
-    return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
+    return plainToClass(ProposalGetDto, plain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+      selectedDataSources: [...(saveResult.selectedDataSources ? saveResult.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   async findDocument(
@@ -70,6 +88,7 @@ export class ProposalCrudService {
     user: IRequestUser,
     projection?: Record<string, number>,
     willBeModified?: boolean,
+    modificationContext?: ModificationContext,
   ): Promise<ProposalDocument> {
     const dbProjection: Record<string, number> = {
       ...projection,
@@ -106,11 +125,14 @@ export class ProposalCrudService {
       dbProjection.participants = 1;
       dbProjection.deadlines = 1;
       dbProjection.selectedDataSources = 1;
+      dbProjection.dataDelivery = 1;
     }
     const proposal = await this.proposalModel.findById(proposalId, dbProjection);
 
     if (proposal) {
-      validateProposalAccess(proposal, user, willBeModified);
+      const userLocationDoc = await this.locationService.findById(user.miiLocation);
+      const userLocation = userLocationDoc?.toObject() as Location;
+      validateProposalAccess(proposal, user, userLocation, willBeModified, modificationContext);
       return proposal;
     } else {
       throw new NotFoundException();
@@ -126,7 +148,8 @@ export class ProposalCrudService {
     const result = plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],
-    });
+      selectedDataSources: [...(document.selectedDataSources ? document.selectedDataSources : [])],
+    } as ClassTransformOptions);
 
     return result;
   }
@@ -165,6 +188,18 @@ export class ProposalCrudService {
       toBeUpdated.dataSourceLocaleId = undefined;
     }
 
+    // If FDPG edits a Published registering form that was Synced, mark it as OutOfSync
+    const isFdpg = user.roles.includes(Role.FdpgMember) || user.roles.includes(Role.DataSourceMember);
+    if (
+      isFdpg &&
+      !isStatusChange &&
+      toBeUpdated.type === ProposalType.RegisteringForm &&
+      toBeUpdated.status === ProposalStatus.Published &&
+      toBeUpdated.registerInfo?.syncStatus === SyncStatus.Synced
+    ) {
+      toBeUpdated.registerInfo.syncStatus = SyncStatus.OutOfSync;
+    }
+
     await this.statusChangeService.handleEffects(toBeUpdated, oldStatus, user);
     addHistoryItemForStatus(toBeUpdated, user, oldStatus);
 
@@ -172,16 +207,62 @@ export class ProposalCrudService {
 
     if (isStatusChange) {
       await this.eventEngineService.handleProposalStatusChange(saveResult);
+
+      // Update linked registering form's originalProposalStatus when application form status changes
+      if (saveResult.type === ProposalType.ApplicationForm && saveResult.registerFormId) {
+        try {
+          this.logger.log(
+            `Updating registering form ${saveResult.registerFormId} originalProposalStatus to ${saveResult.status}`,
+          );
+          await this.proposalModel.updateOne(
+            { _id: saveResult.registerFormId },
+            {
+              $set: {
+                'registerInfo.originalProposalStatus': saveResult.status,
+                'registerInfo.syncStatus': SyncStatus.OutOfSync,
+              },
+            },
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to update registering form originalProposalStatus for ${saveResult.registerFormId}: ${error.message}`,
+          );
+        }
+      }
+
+      const isApprovalToPublished =
+        oldStatus === ProposalStatus.FdpgCheck &&
+        saveResult.status === ProposalStatus.Published &&
+        saveResult.type === ProposalType.RegisteringForm;
+
+      if (isApprovalToPublished) {
+        this.logger.log(`Auto-syncing registering form ${proposalId} on approval`);
+        try {
+          await this.proposalSyncService.syncProposal(proposalId, user);
+          this.logger.log(`Auto-sync completed successfully for proposal ${proposalId}`);
+        } catch (error) {
+          this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
+        }
+      }
     }
 
     const plain = saveResult.toObject();
 
     this.addParticipatingScientistIndicator(plain, user);
-    return plainToClass(ProposalGetDto, plain, { strategy: 'excludeAll', groups: [ProposalValidation.IsOutput] });
+    return plainToClass(ProposalGetDto, plain, {
+      strategy: 'excludeAll',
+      groups: [ProposalValidation.IsOutput],
+      selectedDataSources: [...(saveResult.selectedDataSources ? saveResult.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   async delete(proposalId: string, user: IRequestUser): Promise<void> {
-    const document = await this.findDocument(proposalId, user, { uploads: 1, reports: 1, owner: 1, status: 1 }, true);
+    const document = await this.findDocument(
+      proposalId,
+      user,
+      { uploads: 1, reports: 1, owner: 1, status: 1, registerInfo: 1, type: 1 },
+      true,
+    );
     await this.sharedService.deleteProposalWithDependencies(document, user);
   }
 
@@ -216,6 +297,101 @@ export class ProposalCrudService {
     }
     const exists = await this.proposalModel.exists(queryFilter);
     return !exists;
+  }
+
+  async getStatistics(user: IRequestUser): Promise<{
+    panels: Record<PanelQuery, { critical: number; high: number; medium: number; low: number; total: number }>;
+    total: number;
+  }> {
+    const calculatePriorityCounts = (proposals: any[]) => {
+      const counts = {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        total: proposals.length,
+      };
+
+      proposals.forEach((proposal) => {
+        if (proposal.dueDateForStatus) {
+          const dueDate = new Date(proposal.dueDateForStatus);
+          const now = new Date();
+          const diffTime = dueDate.getTime() - now.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays < 0) {
+            counts.critical++;
+          } else {
+            counts.high++;
+          }
+        } else {
+          counts.low++;
+        }
+      });
+
+      return counts;
+    };
+
+    const panelQueries = this.getPanelQueriesForUser(user);
+
+    const panelResults = await Promise.all(
+      panelQueries.map(async (panelQuery) => {
+        try {
+          const filter = getProposalFilter(panelQuery, user);
+          const proposals = await this.proposalModel.find(filter, { dueDateForStatus: 1 }).lean();
+          return {
+            panelQuery,
+            counts: calculatePriorityCounts(proposals),
+          };
+        } catch (error) {
+          this.logger.warn(`Failed to get statistics for panel ${panelQuery}: ${error.message}`);
+          return {
+            panelQuery,
+            counts: { critical: 0, high: 0, medium: 0, low: 0, total: 0 },
+          };
+        }
+      }),
+    );
+
+    const panels = {} as Record<
+      PanelQuery,
+      { critical: number; high: number; medium: number; low: number; total: number }
+    >;
+    let total = 0;
+
+    panelResults.forEach(({ panelQuery, counts }) => {
+      panels[panelQuery as PanelQuery] = counts;
+      total += counts.total;
+    });
+
+    return {
+      panels,
+      total,
+    };
+  }
+
+  private getPanelQueriesForUser(user: IRequestUser): PanelQuery[] {
+    switch (user.singleKnownRole) {
+      case Role.Researcher:
+      case Role.RegisteringMember:
+        return researcherAllowedQuery;
+
+      case Role.FdpgMember:
+      case Role.DataSourceMember:
+        return fdpgAllowedQuery;
+
+      case Role.DizMember:
+        return dizAllowedQuery;
+
+      case Role.UacMember:
+        return uacAllowedQuery;
+
+      case Role.DataManagementOffice:
+        return [PanelQuery.DmsPending, PanelQuery.DmsApproved];
+
+      default:
+        return [];
+    }
   }
 
   private addParticipatingScientistIndicator(plain: any, user: IRequestUser) {

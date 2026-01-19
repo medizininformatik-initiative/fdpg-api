@@ -11,6 +11,7 @@ import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.vali
 import { Transform } from 'class-transformer';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
+import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
 
 export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
@@ -24,6 +25,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
+  @UiWidget({ type: 'select', format: 'multiple' })
   usage: ProposalTypeOfUse[];
 
   @Expose()
@@ -35,6 +37,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
+  @UiWidget({ type: 'textfield' })
   dataPrivacyExtra?: string;
 
   @Expose()
@@ -45,6 +48,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
+  @UiWidget({ type: 'textfield' })
   targetFormat?: string;
 
   @Expose()
@@ -55,6 +59,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
+  @UiWidget({ type: 'textfield' })
   targetFormatOther?: string;
 
   @Expose()
@@ -66,6 +71,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.DIFE);
   })
+  @UiWidget({ type: 'select', format: 'multiple' })
   difeUsage: DIFEProposalTypeOfUse[];
 
   @Expose()
@@ -79,6 +85,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
+  @UiWidget({ type: 'select', format: 'multiple' })
   pseudonymizationInfo: PseudonymizationInfoOptions[];
 
   @Expose()
@@ -99,5 +106,6 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @UiWidget({ type: 'richtext', format: 'multiple' })
   pseudonymizationInfoTexts: Record<PseudonymizationInfoOptions, string>;
 }

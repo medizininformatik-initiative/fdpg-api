@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
@@ -9,7 +9,7 @@ import { convertUserToGroups } from 'src/shared/utils/user-group.utils';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { StorageService } from '../../storage/storage.service';
 import { InitContractingDto } from '../dto/proposal/init-contracting.dto';
-import { ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
+import { ProposalGetDto, ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
 import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { SetUacApprovalDto } from '../dto/set-uac-approval.dto';
 import { SignContractDto } from '../dto/sign-contract.dto';
@@ -34,10 +34,11 @@ import {
   addHistoryItemForUacApproval,
   addHistoryItemForUacCondition,
   addHistoryItemForContractUpdate,
+  addHistoryItemForContractSkipped,
 } from '../utils/proposal-history.util';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { revertLocationVote } from '../utils/revert-location-vote.util';
-import { validateContractSign } from '../utils/validate-contract-sign.util';
+import { validateContractSign, validateContractSkip } from '../utils/validate-contract-sign.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
 import {
   validateDizApproval,
@@ -49,6 +50,10 @@ import { ProposalCrudService } from './proposal-crud.service';
 import { ProposalUploadService } from './proposal-upload.service';
 import { StatusChangeService } from './status-change.service';
 import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
+import { SkipContractDto } from '../dto/skip-contract.dto';
+import { addContractSkip } from '../utils/add-contract-skip.util';
+import { validateLocations } from 'src/modules/location/util/validate-location.util';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 @Injectable()
 export class ProposalContractingService {
@@ -58,6 +63,7 @@ export class ProposalContractingService {
     private storageService: StorageService,
     private statusChangeService: StatusChangeService,
     private proposalUploadService: ProposalUploadService,
+    private locationService: LocationService,
   ) {}
 
   async setDizApproval(proposalId: string, vote: SetDizApprovalDto, user: IRequestUser): Promise<void> {
@@ -133,6 +139,7 @@ export class ProposalContractingService {
     file: Express.Multer.File,
     locations: InitContractingDto,
     user: IRequestUser,
+    fileType: UseCaseUpload.ContractDraft | UseCaseUpload.SkipContract = UseCaseUpload.ContractDraft,
   ): Promise<void> {
     const locationList = locations.locations;
     if (locationList.length > 0) {
@@ -142,9 +149,9 @@ export class ProposalContractingService {
       const throwValidation = toBeUpdated.status !== ProposalStatus.LocationCheck;
       validateStatusChange(toBeUpdated, ProposalStatus.Contracting, user, throwValidation);
 
-      const blobName = getBlobName(toBeUpdated.id, UseCaseUpload.ContractDraft);
+      const blobName = getBlobName(toBeUpdated.id, fileType);
       await this.storageService.uploadFile(blobName, file, user);
-      const upload = new UploadDto(blobName, file, UseCaseUpload.ContractDraft, user);
+      const upload = new UploadDto(blobName, file, fileType, user);
 
       addUpload(toBeUpdated, upload);
 
@@ -218,6 +225,34 @@ export class ProposalContractingService {
 
     const saveResult = await toBeUpdated.save();
     await this.eventEngineService.handleProposalContractSign(saveResult, vote.value, user);
+  }
+
+  async skipContract(
+    proposalId: string,
+    dto: SkipContractDto,
+    file: Express.Multer.File,
+    user: IRequestUser,
+  ): Promise<ProposalGetDto> {
+    const { locations } = dto;
+
+    if (!locations || locations.length < 1) {
+      throw new BadRequestException('At least one location has to be given');
+    }
+
+    await this.initContracting(proposalId, file, { locations }, user, UseCaseUpload.SkipContract);
+
+    const toBeUpdated = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    validateContractSkip(toBeUpdated, file);
+
+    await validateLocations(this.locationService, locations);
+
+    addContractSkip(toBeUpdated, locations, user);
+    addHistoryItemForContractSkipped(toBeUpdated, user);
+
+    const saveResult = await toBeUpdated.save();
+    await this.eventEngineService.handleProposalContractingSkip(saveResult);
+
+    return plainToClass(ProposalGetDto, saveResult.toObject(), { groups: [ProposalValidation.IsOutput] });
   }
 
   async markUacConditionAsAccepted(

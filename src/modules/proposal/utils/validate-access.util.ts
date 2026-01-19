@@ -2,21 +2,44 @@ import { ForbiddenException } from '@nestjs/common';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { LocationState } from '../enums/location-state.enum';
+import { ModificationContext } from '../enums/modification-context.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
+import { Location } from 'src/modules/location/schema/location.schema';
 
-export const validateProposalAccess = (proposal: ProposalDocument, user: IRequestUser, willBeModified?: boolean) => {
+export const validateProposalAccess = (
+  proposal: ProposalDocument,
+  user: IRequestUser,
+  userLocation?: Location,
+  willBeModified?: boolean,
+  modificationContext?: ModificationContext,
+) => {
   if (willBeModified && proposal.isLocked) {
     throwForbiddenError('Proposal is currently locked to modifications');
+  }
+
+  if (user.singleKnownRole === Role.FdpgMember) {
+    checkAccessForFdpgMember(proposal, willBeModified);
+    return;
+  }
+
+  if (proposal.type === ProposalType.RegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
+    checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
+    return;
+  }
+
+  if (user.roles?.includes(Role.RegisteringMember)) {
+    return;
   }
 
   if (user.singleKnownRole === Role.Researcher) {
     checkAccessForResearcher(proposal, user);
   }
 
-  if (user.singleKnownRole === Role.FdpgMember) {
-    checkAccessForFdpgMember(proposal, willBeModified);
+  if (user.singleKnownRole === Role.RegisteringMember) {
+    checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
   }
 
   if (user.singleKnownRole === Role.DataSourceMember) {
@@ -30,6 +53,10 @@ export const validateProposalAccess = (proposal: ProposalDocument, user: IReques
   if (user.singleKnownRole === Role.UacMember) {
     checkAccessForUacMember(proposal, user);
   }
+
+  if (user.singleKnownRole === Role.DataManagementOffice) {
+    checkAccessForDmoMember(proposal, user, userLocation);
+  }
 };
 
 const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser) => {
@@ -37,6 +64,44 @@ const checkAccessForResearcher = (proposal: ProposalDocument, user: IRequestUser
   if (!isOwner && !isParticipatingScientist(proposal, user)) {
     throwForbiddenError(
       `Proposal has a different owner than this researcher and is not in the list of participating researchers`,
+    );
+  }
+};
+
+const checkAccessForRegisteringMember = (
+  proposal: ProposalDocument,
+  user: IRequestUser,
+  willBeModified?: boolean,
+  modificationContext?: ModificationContext,
+) => {
+  if (
+    proposal.type === ProposalType.RegisteringForm &&
+    proposal.registerInfo?.isInternalRegistration &&
+    user.singleKnownRole === Role.FdpgMember
+  ) {
+    return;
+  }
+
+  const isOwner = proposal.owner.id === user.userId;
+  if (!isOwner && !isParticipatingScientist(proposal, user)) {
+    throwForbiddenError(
+      `Proposal has a different owner than this registering member and is not in the list of participating researchers`,
+    );
+  }
+
+  // Allow RegisteringMembers to add/edit publications and reports for Published RegisteringForms
+  const isPublicationOrReport =
+    modificationContext === ModificationContext.Publication || modificationContext === ModificationContext.Report;
+
+  // Only FDPG members can edit Published forms (via the sync functionality)
+  if (
+    willBeModified &&
+    proposal.type === ProposalType.RegisteringForm &&
+    proposal.status === ProposalStatus.Published &&
+    !isPublicationOrReport
+  ) {
+    throwForbiddenError(
+      'Published registering forms can only be edited by FDPG members. Changes will be synced to the website.',
     );
   }
 };
@@ -49,7 +114,8 @@ const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser
 };
 
 const checkAccessForFdpgMember = (proposal: ProposalDocument, willBeModified?: boolean) => {
-  if (proposal.status === ProposalStatus.Draft && willBeModified) {
+  // Allow modification of register proposals even in Draft status
+  if (proposal.status === ProposalStatus.Draft && willBeModified && proposal.type !== ProposalType.RegisteringForm) {
     throwForbiddenError(`Proposal is still in status ${ProposalStatus.Draft}`);
   }
 };
@@ -64,6 +130,16 @@ const checkAccessForDataSourceMember = (proposal: ProposalDocument, user: IReque
 
   if (!hasOverlap) {
     throwForbiddenError(`User does not have a data source matching the proposals selected data sources`);
+  }
+};
+
+const checkAccessForDmoMember = (proposal: ProposalDocument, user: IRequestUser, userLocation?: Location) => {
+  if (!userLocation || !userLocation.dataManagementCenter) {
+    throwForbiddenError(`User Location '${userLocation?.dataManagementCenter}' is not a DMS`);
+  }
+
+  if (proposal.dataDelivery?.dataManagementSite !== user.miiLocation) {
+    throwForbiddenError('User location does not match data delivery location');
   }
 };
 

@@ -1,4 +1,4 @@
-import { Expose, Type, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsObject, IsOptional, ValidateNested, ValidateIf } from 'class-validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { AddresseesDto } from './user-project/addressees.dto';
@@ -16,12 +16,14 @@ import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.
 import { SelectionOfCasesDto } from './user-project/selection-of-cases.dto';
 import { CohortDto } from './user-project/cohort.dto';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
+import { UiNested } from 'src/shared/decorators/ui-widget.decorator';
+import { OutputGroup } from 'src/shared/enums/output-group.enum';
 
 export class UserProjectDto {
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => GeneralProjectInformationDto)
+  @UiNested(() => GeneralProjectInformationDto)
   generalProjectInformation: GeneralProjectInformationDto;
 
   @Expose()
@@ -30,18 +32,27 @@ export class UserProjectDto {
   @Type(() => FeasibilityDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
+  @Transform(({ value, options }) => {
+    if (
+      options?.groups?.includes(OutputGroup.FormSchemaOnly) ||
+      options?.groups?.includes(OutputGroup.WithFormSchema)
+    ) {
+      return undefined;
+    }
+    return value;
+  })
   feasibility: FeasibilityDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => ProjectDetailsDto)
+  @UiNested(() => ProjectDetailsDto)
   projectDetails: ProjectDetailsDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => EthicVoteDto)
+  @UiNested(() => EthicVoteDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   ethicVote: EthicVoteDto;
@@ -49,7 +60,7 @@ export class UserProjectDto {
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => ResourceAndRecontact)
+  @UiNested(() => ResourceAndRecontact)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   resourceAndRecontact: ResourceAndRecontact;
@@ -57,7 +68,7 @@ export class UserProjectDto {
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => PropertyRightsDto)
+  @UiNested(() => PropertyRightsDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   propertyRights: PropertyRightsDto;
@@ -65,13 +76,13 @@ export class UserProjectDto {
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => PlannedPublicationDto)
+  @UiNested(() => PlannedPublicationDto)
   plannedPublication: PlannedPublicationDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => AddresseesDto)
+  @UiNested(() => AddresseesDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   addressees: AddresseesDto;
@@ -79,28 +90,30 @@ export class UserProjectDto {
   @Expose()
   @ValidateNested()
   @IsObject()
-  @Type(() => TypeOfUseDto)
+  @UiNested(() => TypeOfUseDto)
   typeOfUse: TypeOfUseDto;
 
   @Expose()
   @ValidateNested()
-  @Type(() => InformationOnRequestedBioSamples)
+  @UiNested(() => InformationOnRequestedBioSamples)
   @IsObject({ groups: [ProposalValidation.IsBiosampleType] })
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   @ExposeForDataSources([PlatformIdentifier.Mii])
+  @Transform((params) => params.obj.informationOnRequestedBioSamples)
   informationOnRequestedBioSamples: InformationOnRequestedBioSamples;
 
   @Expose()
   @IsObject()
   @IsOptional()
-  @Type(() => VariableSelectionDataDto)
+  @UiNested(() => VariableSelectionDataDto)
+  @ValidateIf((o) => (o.selectedDataSources?.length ?? 0) > 0)
   @Transform(({ obj }) => obj?.variableSelection)
   variableSelection: VariableSelectionDataDto;
 
   @Expose()
   @IsObject()
   @IsOptional()
-  @Type(() => SelectionOfCasesDto)
+  @UiNested(() => SelectionOfCasesDto)
   @ValidateNested()
   selectionOfCases: SelectionOfCasesDto;
 
@@ -109,5 +122,14 @@ export class UserProjectDto {
   @Type(() => CohortDto)
   @IsObject()
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
+  @Transform(({ value, options }) => {
+    if (
+      options?.groups?.includes(OutputGroup.FormSchemaOnly) ||
+      options?.groups?.includes(OutputGroup.WithFormSchema)
+    ) {
+      return undefined;
+    }
+    return value;
+  })
   cohorts: CohortDto;
 }

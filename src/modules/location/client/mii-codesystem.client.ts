@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
+import { applyAxiosMonitoring } from 'src/monitoring/apply-axios-monitoring';
 
 export interface MiiLocationInfo {
   code: string;
@@ -28,5 +29,7 @@ export class MiiCodesystemClient {
       timeout: 10000,
       headers: { Accept: 'application/json', 'User-Agent': 'FDPG-API/1.0' },
     });
+
+    applyAxiosMonitoring(this.client);
   }
 }
