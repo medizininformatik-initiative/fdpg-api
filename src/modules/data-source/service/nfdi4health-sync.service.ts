@@ -2,14 +2,17 @@ import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { Nfdi4HealthService } from './nfdi4health.service';
 import { DataSourceCrudService } from './data-source-crud.service';
 import { Nfdi4HealthMapper } from '../utils/nfdi4health-mapper.util';
+import { IExternalSyncService, ISyncStats } from '../interface/external-sync.interface';
+import { DataSourceOrigin } from '../enum/data-source-status.enum';
 
 /**
  * Service responsible for synchronizing NFDI4Health data with local database.
  * Handles orchestration of data fetching, mapping, and persistence.
  * Implements locking mechanism to prevent concurrent sync operations.
+ * Implements IExternalSyncService interface for use with sync coordinator.
  */
 @Injectable()
-export class Nfdi4HealthSyncService {
+export class Nfdi4HealthSyncService implements IExternalSyncService {
   constructor(
     private readonly nfdi4HealthService: Nfdi4HealthService,
     private readonly dataSourceCrudService: DataSourceCrudService,
@@ -45,19 +48,21 @@ export class Nfdi4HealthSyncService {
   }
 
   /**
+   * Gets the origin/source for this sync service.
+   * @returns DataSourceOrigin enum value
+   */
+  getOrigin(): DataSourceOrigin {
+    return DataSourceOrigin.NFDI4HEALTH;
+  }
+
+  /**
    * Synchronizes all data from NFDI4Health to database.
    * - Creates new entries with PENDING status
    * - Updates existing entries
    * - Returns statistics about the sync operation
    * - Throws ConflictException if sync is already running
    */
-  async syncAllData(maxResults?: number): Promise<{
-    fetched: number;
-    created: number;
-    updated: number;
-    skipped: number;
-    errors: number;
-  }> {
+  async syncData(maxResults?: number): Promise<ISyncStats> {
     // Check if sync is already running
     if (this.isSyncRunning) {
       const runningDuration = this.syncStartedAt
@@ -95,24 +100,24 @@ export class Nfdi4HealthSyncService {
       // Process each item
       for (const item of allData) {
         try {
-          const nfdi4healthId = item.resource.identifier;
+          const externalIdentifier = item.resource.identifier;
 
           // Check if entry already exists
-          const existing = await this.dataSourceCrudService.findByNfdi4HealthId(nfdi4healthId);
+          const existing = await this.dataSourceCrudService.findByExternalIdentifier(externalIdentifier);
 
           // Map the data using the mapper util
           const mappedData = Nfdi4HealthMapper.mapToDataSource(item, existing?.status);
 
           // Upsert using DataSourceService
-          const result = await this.dataSourceCrudService.upsertByNfdi4HealthId(nfdi4healthId, mappedData);
+          const result = await this.dataSourceCrudService.upsertByExternalIdentifier(externalIdentifier, mappedData);
 
           if (result.created) {
             stats.created++;
-            this.logger.debug(`Created ${nfdi4healthId} (status: PENDING)`);
+            this.logger.debug(`Created ${externalIdentifier} (status: PENDING)`);
           } else {
             stats.updated++;
 
-            this.logger.debug(`Updated ${nfdi4healthId}`);
+            this.logger.debug(`Updated ${externalIdentifier}`);
           }
         } catch (error) {
           stats.errors++;

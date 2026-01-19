@@ -15,10 +15,10 @@ export class DataSourceCrudService {
   private readonly logger = new Logger(DataSourceCrudService.name);
 
   /**
-   * Finds a data source by its NFDI4Health identifier.
+   * Finds a data source by its external identifier.
    */
-  async findByNfdi4HealthId(nfdi4healthId: string): Promise<DataSourceDocument | null> {
-    return await this.dataSourceModel.findOne({ nfdi4healthId }).exec();
+  async findByExternalIdentifier(externalIdentifier: string): Promise<DataSourceDocument | null> {
+    return await this.dataSourceModel.findOne({ externalIdentifier }).exec();
   }
 
   /**
@@ -50,31 +50,34 @@ export class DataSourceCrudService {
   }
 
   /**
-   * Updates a data source by its NFDI4Health identifier.
+   * Updates a data source by its external identifier.
    * Returns true if the document was found and updated.
    */
-  async updateByNfdi4HealthId(nfdi4healthId: string, update: Partial<DataSource>): Promise<boolean> {
-    const result = await this.dataSourceModel.updateOne({ nfdi4healthId }, { $set: update }).exec();
+  async updateByExternalIdentifier(externalIdentifier: string, update: Partial<DataSource>): Promise<boolean> {
+    const result = await this.dataSourceModel.updateOne({ externalIdentifier }, { $set: update }).exec();
     return result.matchedCount > 0;
   }
 
   /**
    * Upserts a data source (update if exists, create if not).
    */
-  async upsertByNfdi4HealthId(nfdi4healthId: string, dataSource: Partial<DataSource>): Promise<{ created: boolean }> {
-    const existing = await this.findByNfdi4HealthId(nfdi4healthId);
+  async upsertByExternalIdentifier(
+    externalIdentifier: string,
+    dataSource: Partial<DataSource>,
+  ): Promise<{ created: boolean }> {
+    const existing = await this.findByExternalIdentifier(externalIdentifier);
 
     if (existing) {
       // Preserve active flag
       const updateData = { ...dataSource };
 
-      await this.updateByNfdi4HealthId(nfdi4healthId, updateData);
+      await this.updateByExternalIdentifier(externalIdentifier, updateData);
 
       return {
         created: false,
       };
     } else {
-      await this.create({ ...dataSource, nfdi4healthId });
+      await this.create({ ...dataSource, externalIdentifier });
       return { created: true };
     }
   }
@@ -82,7 +85,7 @@ export class DataSourceCrudService {
   /**
    * Updates the status of a data source.
    */
-  async updateStatus(nfdi4healthId: string, status: DataSourceStatus): Promise<boolean> {
+  async updateStatus(externalIdentifier: string, status: DataSourceStatus): Promise<boolean> {
     const update: Partial<DataSource> = { status };
 
     // Set approval date and active flag when status is changed to APPROVED
@@ -91,20 +94,20 @@ export class DataSourceCrudService {
       update.active = true;
     }
 
-    return await this.updateByNfdi4HealthId(nfdi4healthId, update);
+    return await this.updateByExternalIdentifier(externalIdentifier, update);
   }
 
   /**
    * Updates the active flag of a data source.
    */
-  async updateActive(nfdi4healthId: string, active: boolean): Promise<boolean> {
-    return await this.updateByNfdi4HealthId(nfdi4healthId, { active });
+  async updateActive(externalIdentifier: string, active: boolean): Promise<boolean> {
+    return await this.updateByExternalIdentifier(externalIdentifier, { active });
   }
 
   /**
    * Searches data sources by query text and optional status with pagination.
    * Searches in:
-   * - nfdi4healthId (case-insensitive partial match)
+   * - externalIdentifier (case-insensitive partial match)
    * - titles.value (case-insensitive partial match in any language)
    *
    * @param onlyActive - If true, only returns active and approved data sources
@@ -142,7 +145,7 @@ export class DataSourceCrudService {
     // Add text search filter if query provided
     if (query && query.trim()) {
       const searchRegex = new RegExp(query.trim(), 'i'); // Case-insensitive
-      filter.$or = [{ nfdi4healthId: searchRegex }, { 'titles.value': searchRegex }];
+      filter.$or = [{ externalIdentifier: searchRegex }, { 'titles.value': searchRegex }];
     }
 
     // Build sort object
@@ -156,8 +159,8 @@ export class DataSourceCrudService {
         // For title sorting, we need to fetch all and sort in application layer
         // to properly handle language preference with fallback
         break;
-      case DataSourceSortField.NFDI4HEALTH_ID:
-        sort.nfdi4healthId = order;
+      case DataSourceSortField.EXTERNAL_IDENTIFIER:
+        sort.externalIdentifier = order;
         break;
       case DataSourceSortField.STATUS:
         sort.status = order;

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { DataSourceStatus } from '../enum/data-source-status.enum';
+import { DataSourceStatus, DataSourceOrigin } from '../enum/data-source-status.enum';
 import { DataSourceLanguage, DataSourceLanguageSchema } from './sub-schema/data-source-language.schema';
 
 export type DataSourceDocument = DataSource & Document;
@@ -8,7 +8,7 @@ export type DataSourceDocument = DataSource & Document;
 /**
  * DataSource Schema
  *
- * Represents a research study or data resource from NFDI4Health.
+ * Represents a research study or data resource from external sources.
  * Stores metadata about studies including multilingual titles, descriptions,
  * and approval status for integration into the FDPG portal.
  */
@@ -24,7 +24,7 @@ export class DataSource {
   _id?: string;
 
   /**
-   * Original NFDI4Health identifier.
+   * External identifier from the source system.
    * Examples: "NCT03464136", "DRKS00023385"
    */
   @Prop({
@@ -33,7 +33,20 @@ export class DataSource {
     unique: true,
     index: true,
   })
-  nfdi4healthId: string;
+  externalIdentifier: string;
+
+  /**
+   * Origin/source of the data source.
+   * Indicates which external system this data comes from.
+   */
+  @Prop({
+    type: String,
+    enum: Object.values(DataSourceOrigin),
+    required: true,
+    default: DataSourceOrigin.NFDI4HEALTH,
+    index: true,
+  })
+  origin: DataSourceOrigin;
 
   /**
    * Multilingual study titles.

@@ -1,6 +1,6 @@
 import { IsArray, IsEnum, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
-import { DataSourceStatus, DataSourceSortField, SortOrder } from '../enum/data-source-status.enum';
+import { DataSourceStatus, DataSourceSortField, SortOrder, DataSourceOrigin } from '../enum/data-source-status.enum';
 import { Language } from 'src/shared/enums/language.enum';
 
 /**
@@ -27,7 +27,11 @@ export class DataSourceDto {
 
   @Expose()
   @IsString()
-  nfdi4healthId: string;
+  externalIdentifier: string;
+
+  @Expose()
+  @IsEnum(DataSourceOrigin)
+  origin: DataSourceOrigin;
 
   @Expose()
   @IsArray()

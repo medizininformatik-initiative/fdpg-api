@@ -80,8 +80,8 @@ export class DataSourceService {
     return await this.searchWithPagination({ status }, paginationParams, onlyActive);
   }
 
-  async getByNfdi4HealthId(nfdi4healthId: string): Promise<DataSourceDto | null> {
-    const document = await this.dataSourceCrudService.findByNfdi4HealthId(nfdi4healthId);
+  async getByExternalIdentifier(externalIdentifier: string): Promise<DataSourceDto | null> {
+    const document = await this.dataSourceCrudService.findByExternalIdentifier(externalIdentifier);
     return document ? this.mapToDto(document) : null;
   }
 
@@ -90,14 +90,14 @@ export class DataSourceService {
     return document ? this.mapToDto(document) : null;
   }
 
-  async updateStatus(nfdi4healthId: string, status: DataSourceStatus): Promise<boolean> {
-    return await this.dataSourceCrudService.updateStatus(nfdi4healthId, status);
+  async updateStatus(externalIdentifier: string, status: DataSourceStatus): Promise<boolean> {
+    return await this.dataSourceCrudService.updateStatus(externalIdentifier, status);
   }
 
   /**
    * Activates or deactivates a data source.
    */
-  async setActive(nfdi4healthId: string, active: boolean): Promise<boolean> {
-    return await this.dataSourceCrudService.updateActive(nfdi4healthId, active);
+  async setActive(externalIdentifier: string, active: boolean): Promise<boolean> {
+    return await this.dataSourceCrudService.updateActive(externalIdentifier, active);
   }
 }

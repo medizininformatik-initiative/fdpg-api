@@ -5,13 +5,21 @@ import { Nfdi4HealthClient } from './client/nfdi4health.client';
 import { Nfdi4HealthService } from './service/nfdi4health.service';
 import { DataSourceCrudService } from './service/data-source-crud.service';
 import { Nfdi4HealthSyncService } from './service/nfdi4health-sync.service';
+import { DataSourceSyncCoordinatorService } from './service/data-source-sync-coordinator.service';
 import { DataSource, DataSourceSchema } from './schema/data-source.schema';
 import { DataSourceService } from './service/data-source.service';
 import { DataSourceController } from './controller/data-source.controller';
 
 @Module({
   imports: [CacheModule.register(), MongooseModule.forFeature([{ name: DataSource.name, schema: DataSourceSchema }])],
-  providers: [Nfdi4HealthClient, Nfdi4HealthService, DataSourceCrudService, Nfdi4HealthSyncService, DataSourceService],
+  providers: [
+    Nfdi4HealthClient,
+    Nfdi4HealthService,
+    DataSourceCrudService,
+    Nfdi4HealthSyncService,
+    DataSourceService,
+    DataSourceSyncCoordinatorService,
+  ],
   exports: [DataSourceService],
   controllers: [DataSourceController],
 })

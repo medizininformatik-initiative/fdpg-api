@@ -14,6 +14,7 @@ export class Nfdi4HealthService {
   private apiClient: AxiosInstance;
 
   private readonly baseFilter = {
+    q: 'resource.design.dataSharingPlan.requestData:(https\\:\\/\\/antrag.forschen-fuer-gesundheit.de\\/*)',
     perPage: 10,
     showFacets: true,
     sortField: 'relevance',

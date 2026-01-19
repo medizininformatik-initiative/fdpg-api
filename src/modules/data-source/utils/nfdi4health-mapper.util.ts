@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { Language } from 'src/shared/enums/language.enum';
 import { Nfdi4HealthContentItemDto } from '../dto/nfdi4health.dto';
 import { DataSource } from '../schema/data-source.schema';
-import { DataSourceStatus } from '../enum/data-source-status.enum';
+import { DataSourceStatus, DataSourceOrigin } from '../enum/data-source-status.enum';
 
 /**
  * Utility class for mapping NFDI4Health data structures to our DataSource schema.
@@ -83,7 +83,8 @@ export class Nfdi4HealthMapper {
     const primaryCollection = collections[0];
 
     return {
-      nfdi4healthId: resource.identifier,
+      externalIdentifier: resource.identifier,
+      origin: DataSourceOrigin.NFDI4HEALTH,
       titles: this.mapLanguageTexts(resource.titles),
       descriptions: this.mapLanguageTexts(resource.descriptions),
       collection: primaryCollection?.name || 'Unknown',

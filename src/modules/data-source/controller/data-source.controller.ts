@@ -4,19 +4,19 @@ import { ApiController } from 'src/shared/decorators/api-controller.decorator';
 import { Auth } from 'src/shared/decorators/auth.decorator';
 import { Role } from 'src/shared/enums/role.enum';
 import { DataSourceService } from '../service/data-source.service';
-import { Nfdi4HealthSyncService } from '../service/nfdi4health-sync.service';
+import { DataSourceSyncCoordinatorService } from '../service/data-source-sync-coordinator.service';
 import { DataSourceDto, DataSourcePaginatedResultDto } from '../dto/data-source.dto';
 import { DataSourceStatus, DataSourceSortField, SortOrder } from '../enum/data-source-status.enum';
 
 /**
- * Controller for managing data sources from NFDI4Health.
+ * Controller for managing data sources from external sources.
  * Provides endpoints for searching, pagination, and status management.
  */
 @ApiController('data-sources')
 export class DataSourceController {
   constructor(
     private readonly dataSourceService: DataSourceService,
-    private readonly nfdi4HealthSyncService: Nfdi4HealthSyncService,
+    private readonly syncCoordinator: DataSourceSyncCoordinatorService,
   ) {}
 
   /**
@@ -140,21 +140,21 @@ export class DataSourceController {
   }
 
   /**
-   * Get a single data source by NFDI4Health identifier.
+   * Get a single data source by external identifier.
    */
-  @Get('nfdi4health/:nfdi4healthId')
+  @Get('external/:externalIdentifier')
   @Auth(...Object.values(Role))
   @ApiOperation({
-    summary: 'Get data source by NFDI4Health identifier',
-    description: 'Returns a single data source by its NFDI4Health identifier (e.g., NCT number, DRKS ID).',
+    summary: 'Get data source by external identifier',
+    description: 'Returns a single data source by its external identifier (e.g., NCT number, DRKS ID).',
   })
   @ApiOkResponse({ description: 'Data source details', type: DataSourceDto })
   @ApiNotFoundResponse({ description: 'Data source not found' })
-  async getByNfdi4HealthId(@Param('nfdi4healthId') nfdi4healthId: string): Promise<DataSourceDto> {
-    const dataSource = await this.dataSourceService.getByNfdi4HealthId(nfdi4healthId);
+  async getByExternalIdentifier(@Param('externalIdentifier') externalIdentifier: string): Promise<DataSourceDto> {
+    const dataSource = await this.dataSourceService.getByExternalIdentifier(externalIdentifier);
 
     if (!dataSource) {
-      throw new NotFoundException(`Data source with NFDI4Health ID ${nfdi4healthId} not found`);
+      throw new NotFoundException(`Data source with external ID ${externalIdentifier} not found`);
     }
 
     return dataSource;
@@ -163,7 +163,7 @@ export class DataSourceController {
   /**
    * Update the status of a data source.
    */
-  @Patch(':nfdi4healthId/status')
+  @Patch(':externalIdentifier/status')
   @Auth(Role.FdpgMember)
   @HttpCode(204)
   @ApiOperation({
@@ -172,24 +172,24 @@ export class DataSourceController {
   })
   @ApiNotFoundResponse({ description: 'Data source not found' })
   async updateStatus(
-    @Param('nfdi4healthId') nfdi4healthId: string,
+    @Param('externalIdentifier') externalIdentifier: string,
     @Body('status') status: DataSourceStatus,
   ): Promise<void> {
     if (!Object.values(DataSourceStatus).includes(status)) {
       throw new BadRequestException('Invalid status value');
     }
 
-    const updated = await this.dataSourceService.updateStatus(nfdi4healthId, status);
+    const updated = await this.dataSourceService.updateStatus(externalIdentifier, status);
 
     if (!updated) {
-      throw new NotFoundException(`Data source with NFDI4Health ID ${nfdi4healthId} not found`);
+      throw new NotFoundException(`Data source with external ID ${externalIdentifier} not found`);
     }
   }
 
   /**
    * Activate or deactivate a data source.
    */
-  @Patch(':nfdi4healthId/active')
+  @Patch(':externalIdentifier/active')
   @Auth(Role.FdpgMember)
   @HttpCode(204)
   @ApiOperation({
@@ -197,11 +197,14 @@ export class DataSourceController {
     description: 'Sets the active flag of a data source.',
   })
   @ApiNotFoundResponse({ description: 'Data source not found' })
-  async setActive(@Param('nfdi4healthId') nfdi4healthId: string, @Body('active') active: boolean): Promise<void> {
-    const updated = await this.dataSourceService.setActive(nfdi4healthId, active);
+  async setActive(
+    @Param('externalIdentifier') externalIdentifier: string,
+    @Body('active') active: boolean,
+  ): Promise<void> {
+    const updated = await this.dataSourceService.setActive(externalIdentifier, active);
 
     if (!updated) {
-      throw new NotFoundException(`Data source with NFDI4Health ID ${nfdi4healthId} not found`);
+      throw new NotFoundException(`Data source with external ID ${externalIdentifier} not found`);
     }
   }
 
@@ -232,12 +235,12 @@ export class DataSourceController {
     startedAt: Date;
   }> {
     // Trigger sync in background (fire-and-forget) to prevent an unresponsive backend
-    this.nfdi4HealthSyncService.syncAllData(100).catch(() => {
+    this.syncCoordinator.syncAll(100).catch(() => {
       // Error is already logged in the service, just ensure it doesn't crash
     });
 
     return {
-      message: 'Synchronization started in background',
+      message: 'Synchronization started in background for all sources',
       startedAt: new Date(),
     };
   }
@@ -249,48 +252,41 @@ export class DataSourceController {
   @Auth(Role.FdpgMember)
   @ApiOperation({
     summary: 'Get synchronization status',
-    description: 'Returns the current status of the synchronization process.',
+    description: 'Returns the current status of the synchronization process for all sources.',
   })
   @ApiOkResponse({
-    description: 'Synchronization status',
+    description: 'Synchronization status for all sources',
     schema: {
       type: 'object',
       properties: {
-        isRunning: { type: 'boolean', description: 'Whether a sync is currently in progress' },
-        startedAt: {
-          type: 'string',
-          format: 'date-time',
-          description: 'When the current sync started (null if not running)',
-        },
-        lastCompletedAt: {
-          type: 'string',
-          format: 'date-time',
-          description: 'When the last sync completed (null if never completed)',
-        },
-        lastStats: {
-          type: 'object',
-          description: 'Statistics from the last completed sync (null if never completed)',
-          properties: {
-            fetched: { type: 'number' },
-            created: { type: 'number' },
-            updated: { type: 'number' },
-            skipped: { type: 'number' },
-            errors: { type: 'number' },
+        isAnyRunning: { type: 'boolean', description: 'Whether any sync is currently in progress' },
+        sources: {
+          type: 'array',
+          description: 'Status for each registered sync source',
+          items: {
+            type: 'object',
+            properties: {
+              origin: { type: 'string', description: 'Data source origin' },
+              isInProgress: { type: 'boolean', description: 'Whether this source is currently syncing' },
+              startTime: {
+                type: 'string',
+                format: 'date-time',
+                nullable: true,
+                description: 'When the sync started for this source',
+              },
+            },
           },
         },
       },
     },
   })
   async getSyncStatus(): Promise<{
-    isRunning: boolean;
-    startedAt: Date | null;
+    isAnyRunning: boolean;
+    sources: Array<{ origin: string; isInProgress: boolean; startTime: Date | null }>;
   }> {
-    const isRunning = this.nfdi4HealthSyncService.isSyncInProgress();
-    const startedAt = this.nfdi4HealthSyncService.getSyncStartTime();
-
     return {
-      isRunning,
-      startedAt,
+      isAnyRunning: this.syncCoordinator.isAnySyncInProgress(),
+      sources: this.syncCoordinator.getSyncStatuses(),
     };
   }
 }
