@@ -5,15 +5,24 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { DirectUpload, UploadType, UseCaseUpload } from '../enums/upload-type.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
+import { ProposalType } from '../enums/proposal-type.enum';
 
 const generalAccessTypes = [
   DirectUpload.EthicVote,
   DirectUpload.EthicVoteDeclarationOfNonResponsibility,
   DirectUpload.GeneralAppendix,
   DirectUpload.AdditionalDocument,
+  DirectUpload.ProjectLogo,
 ] as UploadType[];
 
 export const validateUploadDeletion = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
+  const hasRegisteringMemberRole = user.roles.includes(Role.RegisteringMember);
+
+  if (hasRegisteringMemberRole) {
+    checkForRegisteringMember(proposal, upload, user);
+    return;
+  }
+
   if (user.singleKnownRole === Role.Researcher) {
     checkForResearcher(proposal, upload, user);
   }
@@ -57,6 +66,14 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
     !isEditable &&
     isEthicSectionDone
   ) {
+    throwForbiddenError();
+  }
+};
+
+const checkForRegisteringMember = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
+  if (proposal.type === ProposalType.RegisteringForm) {
+    checkForResearcher(proposal, upload, user);
+  } else {
     throwForbiddenError();
   }
 };
