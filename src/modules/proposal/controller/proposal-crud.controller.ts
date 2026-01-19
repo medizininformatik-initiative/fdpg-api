@@ -89,7 +89,7 @@ export class ProposalCrudController {
     return this.proposalCrudService.update(id, updateProposalDto, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.RegisteringMember)
   @Delete(':id')
   @ApiNoContentResponse({ description: 'Item successfully deleted. No content returns.' })
   @HttpCode(204)
