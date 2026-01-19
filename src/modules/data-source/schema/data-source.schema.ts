@@ -81,15 +81,6 @@ export class DataSource {
   collection: string;
 
   /**
-   * Numeric collection identifier from NFDI4Health.
-   */
-  @Prop({
-    type: Number,
-    required: true,
-  })
-  collectionId: number;
-
-  /**
    * Study classification type.
    * Typically "Study" but can be other resource types.
    */

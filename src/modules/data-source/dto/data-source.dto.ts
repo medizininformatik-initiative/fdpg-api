@@ -50,10 +50,6 @@ export class DataSourceDto {
   collection: string;
 
   @Expose()
-  @IsNumber()
-  collectionId: number;
-
-  @Expose()
   @IsString()
   classification: string;
 

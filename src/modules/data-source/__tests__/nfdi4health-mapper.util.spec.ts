@@ -126,7 +126,6 @@ describe('Nfdi4HealthMapper', () => {
           { language: Language.DE, value: 'Test Beschreibung' },
         ],
         collection: 'Test Collection',
-        collectionId: 123,
         classification: 'Study',
         status: DataSourceStatus.PENDING,
       });
@@ -154,7 +153,6 @@ describe('Nfdi4HealthMapper', () => {
       const result = Nfdi4HealthMapper.mapToDataSource(item);
 
       expect(result.collection).toBe('Unknown');
-      expect(result.collectionId).toBe(0);
     });
 
     it('should use first collection when multiple exist', () => {
@@ -168,7 +166,6 @@ describe('Nfdi4HealthMapper', () => {
       const result = Nfdi4HealthMapper.mapToDataSource(item);
 
       expect(result.collection).toBe('First Collection');
-      expect(result.collectionId).toBe(1);
     });
 
     it('should filter out unmapped languages in titles and descriptions', () => {

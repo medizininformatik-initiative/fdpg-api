@@ -88,7 +88,6 @@ export class Nfdi4HealthMapper {
       titles: this.mapLanguageTexts(resource.titles),
       descriptions: this.mapLanguageTexts(resource.descriptions),
       collection: primaryCollection?.name || 'Unknown',
-      collectionId: primaryCollection?.id || 0,
       classification: resource.classification.type,
       status: existingStatus || DataSourceStatus.PENDING,
     };

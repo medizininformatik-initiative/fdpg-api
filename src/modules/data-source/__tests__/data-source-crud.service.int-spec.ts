@@ -32,7 +32,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Test Data Source' }],
           descriptions: [{ language: Language.EN, value: 'Test description' }],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: false,
         });
@@ -59,7 +58,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'New Data Source' }],
           descriptions: [{ language: Language.EN, value: 'New description' }],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: false,
         };
@@ -81,7 +79,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Original Title' }],
           descriptions: [{ language: Language.EN, value: 'Original description' }],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: true,
         });
@@ -93,7 +90,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Updated Title' }],
           descriptions: [{ language: Language.EN, value: 'Updated description' }],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: true,
         };
@@ -114,7 +110,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Original Title' }],
           descriptions: [],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: true,
         });
@@ -126,7 +121,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Updated Title' }],
           descriptions: [{ language: Language.EN, value: 'New description' }],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: false,
         };
@@ -150,7 +144,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Original Title' }],
           descriptions: [],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: false,
         });
@@ -185,7 +178,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Test Source' }],
           descriptions: [],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: false,
         });
@@ -213,7 +205,6 @@ describeWithMongo(
           titles: [{ language: Language.EN, value: 'Test Source' }],
           descriptions: [],
           classification: 'Study',
-          collectionId: 1,
           collection: 'Test Collection',
           active: false,
         });
@@ -242,7 +233,6 @@ describeWithMongo(
             titles: [{ language: Language.EN, value: 'First Source' }],
             descriptions: [],
             classification: 'Study',
-            collectionId: 1,
             collection: 'Test Collection',
             active: true,
           },
@@ -253,7 +243,6 @@ describeWithMongo(
             titles: [{ language: Language.EN, value: 'Second Source' }],
             descriptions: [],
             classification: 'Study',
-            collectionId: 1,
             collection: 'Test Collection',
             active: false,
           },
@@ -285,7 +274,6 @@ describeWithMongo(
             ],
             descriptions: [{ language: Language.EN, value: 'Study about cancer' }],
             classification: 'Study',
-            collectionId: 1,
             collection: 'Test Collection',
             active: true,
           },
@@ -299,7 +287,6 @@ describeWithMongo(
             ],
             descriptions: [],
             classification: 'Study',
-            collectionId: 1,
             collection: 'Test Collection',
             active: false,
           },
@@ -313,7 +300,6 @@ describeWithMongo(
             ],
             descriptions: [],
             classification: 'Study',
-            collectionId: 1,
             collection: 'Test Collection',
             active: true,
           },
