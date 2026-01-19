@@ -235,7 +235,7 @@ export class DataSourceController {
     startedAt: Date;
   }> {
     // Trigger sync in background (fire-and-forget) to prevent an unresponsive backend
-    this.syncCoordinator.syncAll(100).catch(() => {
+    this.syncCoordinator.syncAll().catch(() => {
       // Error is already logged in the service, just ensure it doesn't crash
     });
 

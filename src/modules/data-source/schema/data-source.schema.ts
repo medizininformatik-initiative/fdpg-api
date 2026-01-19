@@ -43,7 +43,6 @@ export class DataSource {
     type: String,
     enum: Object.values(DataSourceOrigin),
     required: true,
-    default: DataSourceOrigin.NFDI4HEALTH,
     index: true,
   })
   origin: DataSourceOrigin;

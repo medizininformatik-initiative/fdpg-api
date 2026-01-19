@@ -60,6 +60,7 @@ export class DataSourceCrudService {
 
   /**
    * Upserts a data source (update if exists, create if not).
+   * When updating an existing data source, preserves the status and active flag.
    */
   async upsertByExternalIdentifier(
     externalIdentifier: string,
@@ -68,8 +69,10 @@ export class DataSourceCrudService {
     const existing = await this.findByExternalIdentifier(externalIdentifier);
 
     if (existing) {
-      // Preserve active flag
+      // Preserve status and active flag from existing record
       const updateData = { ...dataSource };
+      delete updateData.status;
+      delete updateData.active;
 
       await this.updateByExternalIdentifier(externalIdentifier, updateData);
 
