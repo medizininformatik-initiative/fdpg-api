@@ -956,9 +956,9 @@ export class ProposalMiscService {
       suffix++;
     }
 
-    // Calculate desiredStartTime: DUE_DAYS_LOCATION_CHECK + 7 days
+    // Calculate startTime for registerInfo: DUE_DAYS_LOCATION_CHECK + 7 days
     const locationCheckDate = originalObj.deadlines?.DUE_DAYS_LOCATION_CHECK;
-    const desiredStartTime = locationCheckDate ? new Date(locationCheckDate.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+    const startTime = locationCheckDate ? new Date(locationCheckDate.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
 
     const copyData = {
       ...originalObj,
@@ -970,6 +970,8 @@ export class ProposalMiscService {
         isInternalRegistration: true,
         originalProposalId: original._id.toString(),
         originalProposalStatus: original.status,
+        startTime,
+        locations: originalObj.signedContracts || [],
       },
       status: ProposalStatus.Draft,
       owner: originalObj.owner,
@@ -982,12 +984,9 @@ export class ProposalMiscService {
         ...originalObj.userProject,
         generalProjectInformation: {
           ...originalObj.userProject?.generalProjectInformation,
-          desiredStartTime,
-          desiredStartTimeType: 'later',
         },
         addressees: {
           ...originalObj.userProject?.addressees,
-          desiredLocations: originalObj.signedContracts || [],
         },
       },
       history: [],

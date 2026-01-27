@@ -1966,6 +1966,8 @@ describe('ProposalMiscService', () => {
         isInternalRegistration: true,
         originalProposalId: proposalId,
         originalProposalStatus: ProposalStatus.Contracting,
+        locations: [],
+        startTime: null,
       });
     });
 
