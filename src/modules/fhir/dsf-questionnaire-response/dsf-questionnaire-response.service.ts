@@ -20,6 +20,7 @@ export class DsfQuestionnaireResponseService {
 
   async getQuetionnairResponseReleaseConsolidateDataSets(
     businessKey: string,
+    paramFilter = {},
   ): Promise<QuestionnaireResponseResource | undefined> {
     if (!businessKey) {
       const msg = 'Business key not provided. Cannot search for QuestionnaireResponse.';
@@ -31,7 +32,7 @@ export class DsfQuestionnaireResponseService {
 
     const initialParams = {
       _sort: '-_lastUpdated',
-      status: 'in-progress',
+      ...paramFilter,
     };
 
     let requestCount = 0;

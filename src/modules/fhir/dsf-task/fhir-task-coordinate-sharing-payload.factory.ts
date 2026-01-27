@@ -34,10 +34,10 @@ export const FhirTaskCoordinateSharingPayloadFactory = {
     intent: 'order',
     authoredOn: dateTime,
     requester: {
-      type: 'Organization',
+      type: 'Practitioner',
       identifier: {
-        system: 'http://dsf.dev/sid/organization-identifier',
-        value: hrpOrganizationIdentifier,
+        system: 'http://dsf.dev/sid/practitioner-identifier',
+        value: 'service-account-fdpg-api-for-feasibility@forschen-fuer-gesundheit.de',
       },
     },
     restriction: {
@@ -164,3 +164,15 @@ export const FhirTaskCoordinateSharingPayloadFactory = {
     ],
   }),
 };
+
+// --- IGNORE ---
+/**
+ * 
+ *     requester: {
+      type: 'Practitioner',
+      identifier: {
+        system: 'http://dsf.dev/sid/practitioner-identifier',
+        value: 'service-account-fdpg-api-for-feasibility@forschen-fuer-gesundheit.de',
+      },
+    },
+ */
