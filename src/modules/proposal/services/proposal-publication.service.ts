@@ -17,6 +17,8 @@ export class ProposalPublicationService {
     private registerFormPublicationService: RegistrationFormPublicationService,
   ) {}
 
+  private readonly projection = { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1 };
+
   async createPublication(
     proposalId: string,
     publicationCreateDto: PublicationCreateDto,
@@ -25,7 +27,7 @@ export class ProposalPublicationService {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      undefined,
+      this.projection,
       true,
       ModificationContext.Publication,
     );
@@ -72,7 +74,7 @@ export class ProposalPublicationService {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      undefined,
+      this.projection,
       true,
       ModificationContext.Publication,
     );

@@ -10,7 +10,7 @@ import { ContractingService } from './events/contracting/contracting.service';
 import { LocationVoteService } from './events/location-vote/location-vote.service';
 import { ProposalLockService } from './events/proposal-lock/proposal-lock.service';
 import { PublicationNotificationService } from './events/publications/publication-notification.service';
-import { ReportsService } from './events/reports/report-notification.service';
+import { ReportNotificationService } from './events/reports/report-notification.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
@@ -28,8 +28,8 @@ describe('EventEngineService', () => {
   let commentAnswerEventService: CommentAnswerEventService;
   let locationVoteService: LocationVoteService;
   let contractingService: ContractingService;
-  let reportsService: ReportsService;
-  let publicationsService: PublicationNotificationService;
+  let reportNotificationService: ReportNotificationService;
+  let publicationNotificationService: PublicationNotificationService;
   let configService: ConfigService;
   let dataDeliveryEventService: DataDeliveryEventService;
 
@@ -88,7 +88,7 @@ describe('EventEngineService', () => {
           },
         },
         {
-          provide: ReportsService,
+          provide: ReportNotificationService,
           useValue: {
             handleReportCreate: jest.fn(),
           },
@@ -138,8 +138,8 @@ describe('EventEngineService', () => {
     commentAnswerEventService = module.get<CommentAnswerEventService>(CommentAnswerEventService);
     locationVoteService = module.get<LocationVoteService>(LocationVoteService);
     contractingService = module.get<ContractingService>(ContractingService);
-    reportsService = module.get<ReportsService>(ReportsService);
-    publicationsService = module.get<PublicationNotificationService>(PublicationNotificationService);
+    reportNotificationService = module.get<ReportNotificationService>(ReportNotificationService);
+    publicationNotificationService = module.get<PublicationNotificationService>(PublicationNotificationService);
     configService = module.get<ConfigService>(ConfigService);
     dataDeliveryEventService = module.get<DataDeliveryEventService>(DataDeliveryEventService);
   });
@@ -247,19 +247,20 @@ describe('EventEngineService', () => {
   it('should handleProposalReportCreate', async () => {
     const report = { content: 'report' } as any;
     await eventEngineService.handleProposalReportCreate(proposal as any, report);
-    expect(reportsService.handleReportCreate).toHaveBeenCalledWith(proposal, report, expectedUrl);
+    expect(reportNotificationService.handleReportCreate).toHaveBeenCalledWith(proposal, report, expectedUrl);
   });
 
   it('should handleProposalPublicationCreate', async () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationCreate(proposal as any, publication);
-    expect(publicationsService.handlePublicationCreate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+    expect(publicationNotificationService.handlePublicationCreate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
   });
 
   it('should handleProposalPublicationUpdate', async () => {
+    const publicationId = 'pub-123';
     const publication = { content: 'publication' } as any;
-    await eventEngineService.handleProposalPublicationUpdate(proposal as any, publication);
-    expect(publicationsService.handlePublicationUpdate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+    await eventEngineService.handleProposalPublicationUpdate(proposal as any, publicationId, publication);
+    expect(publicationNotificationService.handlePublicationUpdate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
   });
 
   it('should call handleDataDeliveryInitiated with the correct arguments', async () => {

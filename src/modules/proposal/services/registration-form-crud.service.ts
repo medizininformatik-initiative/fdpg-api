@@ -22,7 +22,9 @@ export class RegistrationFormCrudService {
     const result = proposal.type === ProposalType.ApplicationForm && !!proposal.registerFormId;
 
     if (!result) {
-      this.logger.log(`Proposal ${proposal.projectAbbreviation} is not an ApplicationForm with registerFormId`);
+      this.logger.log(
+        `Proposal ${proposal.projectAbbreviation} is not an ApplicationForm with registerFormId. ${JSON.stringify({ type: proposal.type, registerFormId: proposal.registerFormId })}`,
+      );
     }
 
     return result;
@@ -49,7 +51,7 @@ export class RegistrationFormCrudService {
     user: IRequestUser,
     modificationContext: ModificationContext,
   ): Promise<ProposalDocument> {
-    const projection = { projectAbbreviation: 1, reports: 1, publications: 1, owner: 1 };
+    const projection = { projectAbbreviation: 1, reports: 1, publications: 1, owner: 1, registerInfo: 1 };
 
     const proposalDoc = await this.proposalCrudService.findDocument(
       proposal._id,
@@ -67,9 +69,9 @@ export class RegistrationFormCrudService {
       modificationContext,
     );
 
-    if (registration.registerInfo?.originalProposalId !== proposal._id) {
+    if (registration.registerInfo?.originalProposalId?.toString?.() !== proposal._id?.toString?.()) {
       throw new Error(
-        `Registration form ${registration.projectAbbreviation} is not linked to proposal ${proposal.projectAbbreviation}`,
+        `Registration form ${registration.projectAbbreviation} is not linked to proposal ${proposal.projectAbbreviation}. (originalId ${registration.registerInfo?.originalProposalId}, expected ${proposal._id})`,
       );
     }
 

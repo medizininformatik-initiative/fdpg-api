@@ -16,8 +16,6 @@ import { DeadlineEventService } from './events/deadlines/deadline-event.service'
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 import { ProposalModule } from '../proposal/proposal.module';
 import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
-import { ReportService } from './events/reports/report.service';
-import { PublicationService } from './events/publications/publication.service';
 
 @Module({
   providers: [
@@ -31,8 +29,6 @@ import { PublicationService } from './events/publications/publication.service';
     ProposalLockService,
     ReportNotificationService,
     PublicationNotificationService,
-    ReportService,
-    PublicationService,
     DeadlineEventService,
     ParticipantEmailSummaryService,
     DataDeliveryEventService,

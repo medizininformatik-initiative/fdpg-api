@@ -23,8 +23,8 @@ import { DueDateEnum } from '../proposal/enums/due-date.enum';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
 import { Location } from '../location/schema/location.schema';
-import { PublicationService } from './events/publications/publication.service';
-import { ReportService } from './events/reports/report.service';
+import { PublicationNotificationService } from './events/publications/publication-notification.service';
+import { ReportNotificationService } from './events/reports/report-notification.service';
 
 type MongoDocument = Document<any, any, any> & { _id: any };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
@@ -42,8 +42,8 @@ export class EventEngineService {
     private commentAnswerEventService: CommentAnswerEventService,
     private locationVoteService: LocationVoteService,
     private contractingService: ContractingService,
-    private reportService: ReportService,
-    private publicationService: PublicationService,
+    private reportNotificationService: ReportNotificationService,
+    private publicationNotificationService: PublicationNotificationService,
     private configService: ConfigService,
     private deadlineEventService: DeadlineEventService,
     private participantEmailSummaryService: ParticipantEmailSummaryService,
@@ -147,21 +147,21 @@ export class EventEngineService {
   async handleProposalReportCreate(proposal: Proposal, report: ReportDto) {
     if (proposal && report) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportService.handleCreate(proposal, report, proposalUrl);
+      await this.reportNotificationService.handleReportCreate(proposal, report, proposalUrl);
     }
   }
 
   async handleProposalPublicationCreate(proposal: Proposal, publication: PublicationCreateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationService.handleCreate(proposal, publication, proposalUrl);
+      await this.publicationNotificationService.handlePublicationCreate(proposal, publication, proposalUrl);
     }
   }
 
   async handleProposalPublicationUpdate(proposal: Proposal, publicationId: string, publication: PublicationUpdateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationService.handleUpdate(proposal, publicationId, publication, proposalUrl);
+      await this.publicationNotificationService.handlePublicationUpdate(proposal, publication, proposalUrl);
     }
   }
 

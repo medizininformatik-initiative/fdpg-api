@@ -36,10 +36,13 @@ export class RegistrationFormReportService {
       user,
       ModificationContext.Report,
     );
+
     const report = new ReportDto(reportCreateDto);
     const uploadTasks = files.map(async (file) => {
       const uploadType = UseCaseUpload.ReportUpload;
       const blobName = getBlobName(proposal._id, uploadType, report._id);
+
+      console.log({ blobName, files });
       await this.publicStorageService.uploadFile(blobName, file);
       const upload = new UploadDto(blobName, file, uploadType, user);
       return upload;
@@ -150,43 +153,6 @@ export class RegistrationFormReportService {
     this.logger.log(
       `Successfully synced report update '${updateDto.title}' (${reportId}) to registration ${registration.projectAbbreviation}`,
     );
-    await this.registrationFormCrudService.setRegistrationOutOfSync(registration._id);
-  }
-
-  async handleReportDelete(proposal: Proposal, reportId: string, user: IRequestUser): Promise<void> {
-    if (!this.registrationFormCrudService.checkProposalType(proposal)) {
-      return;
-    }
-
-    this.logger.log(
-      `Syncing report delete (${reportId}) from proposal ${proposal.projectAbbreviation} to registration`,
-    );
-
-    const registration = await this.registrationFormCrudService.getRegistration(
-      proposal,
-      user,
-      ModificationContext.Report,
-    );
-
-    const reportIdx = registration.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
-
-    if (reportIdx === -1) {
-      this.logger.warn(
-        `Report ${reportId} not found in registration ${registration.projectAbbreviation} for delete sync`,
-      );
-      return;
-    }
-
-    if (registration.reports[reportIdx].uploads.length > 0) {
-      await this.publicStorageService.deleteManyBlobs(
-        registration.reports[reportIdx].uploads.map((upload) => upload.blobName),
-      );
-    }
-
-    registration.reports.splice(reportIdx, 1);
-    await registration.save();
-
-    this.logger.log(`Successfully deleted report (${reportId}) from registration ${registration.projectAbbreviation}`);
     await this.registrationFormCrudService.setRegistrationOutOfSync(registration._id);
   }
 }

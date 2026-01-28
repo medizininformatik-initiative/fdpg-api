@@ -854,6 +854,7 @@ export class ProposalMiscService {
       groups: [ProposalValidation.IsOutput],
     });
   }
+
   async exportAllUploadsAsZip(
     proposalId: string,
     user: IRequestUser,
