@@ -5,6 +5,7 @@ import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { Proposal } from '../schema/proposal.schema';
+import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
@@ -12,7 +13,18 @@ const isOwner = (user: IRequestUser, proposal: Proposal) =>
 const isFdpg = (user: IRequestUser) =>
   user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember;
 
-const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) => isOwner(user, proposal) || isFdpg(user);
+const isEditor = (user: IRequestUser, proposal: Proposal) =>
+  user.singleKnownRole === Role.Researcher &&
+  (proposal.participants || []).some(
+    (participant) =>
+      participant.researcher.email === user.email &&
+      [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
+        participant.participantRole.role,
+      ),
+  );
+
+const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) =>
+  isOwner(user, proposal) || isEditor(user, proposal) || isFdpg(user);
 
 export const validateStatusChange = (
   toBeUpdated: Proposal,
@@ -24,13 +36,13 @@ export const validateStatusChange = (
   const map = {
     [ProposalStatus.Archived]: {},
     [ProposalStatus.Draft]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.Rejected]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
     [ProposalStatus.Rework]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.FdpgCheck]: {
       [ProposalStatus.Rework]: () => isFdpg(user),
@@ -44,15 +56,15 @@ export const validateStatusChange = (
     },
     [ProposalStatus.Contracting]: {
       [ProposalStatus.ExpectDataDelivery]: () => isFdpg(user),
-      [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.ExpectDataDelivery]: {
       // TODO: Automated API CALL
       [ProposalStatus.DataResearch]: () => isFdpg(user),
     },
     [ProposalStatus.DataResearch]: {
-      [ProposalStatus.DataCorrupt]: () => isOwner(user, toBeUpdated),
-      [ProposalStatus.FinishedProject]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.DataCorrupt]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
+      [ProposalStatus.FinishedProject]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.DataCorrupt]: {
       [ProposalStatus.ExpectDataDelivery]: () => isFdpg(user),
