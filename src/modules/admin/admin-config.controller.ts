@@ -76,7 +76,7 @@ export class AdminConfigController {
     return this.adminConfigService.getDataSources();
   }
 
-  @Auth(Role.Admin, Role.Researcher)
+  @Auth(...Object.values(Role))
   @Get('alert')
   @AdminValidation()
   @ApiOperation({ summary: 'Returns the configuration for the Alert banner' })
