@@ -144,29 +144,24 @@ export class EventEngineService {
     }
   }
 
-  async handleProposalReportCreate(
-    proposal: Proposal,
-    report: ReportDto,
-    files: Express.Multer.File[],
-    user: IRequestUser,
-  ) {
+  async handleProposalReportCreate(proposal: Proposal, report: ReportDto) {
     if (proposal && report) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportService.handleCreate(proposal, report, proposalUrl, files, user);
+      await this.reportService.handleCreate(proposal, report, proposalUrl);
     }
   }
 
-  async handleProposalPublicationCreate(proposal: Proposal, publication: PublicationCreateDto, user: IRequestUser) {
+  async handleProposalPublicationCreate(proposal: Proposal, publication: PublicationCreateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationService.handleCreate(proposal, publication, proposalUrl, user);
+      await this.publicationService.handleCreate(proposal, publication, proposalUrl);
     }
   }
 
-  async handleProposalPublicationUpdate(proposal: Proposal, publication: PublicationUpdateDto, user: IRequestUser) {
+  async handleProposalPublicationUpdate(proposal: Proposal, publicationId: string, publication: PublicationUpdateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationService.handleUpdate(proposal, publication, proposalUrl, user);
+      await this.publicationService.handleUpdate(proposal, publicationId, publication, proposalUrl);
     }
   }
 

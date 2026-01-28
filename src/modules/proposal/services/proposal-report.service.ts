@@ -13,6 +13,7 @@ import { ReportDocument } from '../schema/sub-schema/report.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
 import { addReport, addReportUpload, getBlobName } from '../utils/proposal.utils';
 import { validateReportUploads } from '../utils/validate-report.util';
+import { RegistrationFormReportService } from './registration-form-report.service';
 
 @Injectable()
 export class ProposalReportService {
@@ -20,6 +21,7 @@ export class ProposalReportService {
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
     private storageService: StorageService,
+    private registerFormReportService: RegistrationFormReportService,
   ) {}
 
   async createReport(
@@ -68,8 +70,9 @@ export class ProposalReportService {
       downloadTasks.push(task());
     });
 
-    const sendNotifications = this.eventEngineService.handleProposalReportCreate(proposal, report, files, user);
-    await Promise.allSettled([...downloadTasks, sendNotifications]);
+    const sendNotifications = this.eventEngineService.handleProposalReportCreate(proposal, report);
+    const syncRegistration = this.registerFormReportService.handleReportCreate(proposal, report, files, user);
+    await Promise.allSettled([...downloadTasks, sendNotifications, syncRegistration]);
 
     const plain = structuredClone(report);
     return plainToInstance(ReportGetDto, plain, { strategy: 'excludeAll' });
@@ -180,7 +183,14 @@ export class ProposalReportService {
       downloadLinkTasks.push(task());
     });
 
-    await Promise.allSettled(downloadLinkTasks);
+    const syncRegistration = this.registerFormReportService.handleReportUpdate(
+      proposal,
+      reportId,
+      reportUpdateDto,
+      files,
+      user,
+    );
+    await Promise.allSettled([...downloadLinkTasks, syncRegistration]);
 
     return plainToInstance(ReportGetDto, plainReport, { strategy: 'excludeAll' });
   }
@@ -209,5 +219,6 @@ export class ProposalReportService {
     proposal.reports.splice(reportIdx, 1);
 
     await proposal.save();
+    await this.registerFormReportService.handleReportDelete(proposal, reportId, user);
   }
 }

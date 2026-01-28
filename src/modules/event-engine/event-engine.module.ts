@@ -9,7 +9,7 @@ import { LocationVoteService } from './events/location-vote/location-vote.servic
 import { ProposalLockService } from './events/proposal-lock/proposal-lock.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
-import { ReportNotificationService, ReportsService } from './events/reports/report-notification.service';
+import { ReportNotificationService } from './events/reports/report-notification.service';
 import { PublicationNotificationService } from './events/publications/publication-notification.service';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
