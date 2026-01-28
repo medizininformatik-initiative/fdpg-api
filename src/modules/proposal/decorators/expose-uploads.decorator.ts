@@ -11,6 +11,7 @@ const generalAccessTypes = [
   DirectUpload.EthicVoteDeclarationOfNonResponsibility,
   DirectUpload.GeneralAppendix,
   DirectUpload.ContractAppendix,
+  DirectUpload.ProjectLogo,
   UseCaseUpload.SkipContract,
   UseCaseUpload.ContractDraft,
   UseCaseUpload.FeasibilityQuery,

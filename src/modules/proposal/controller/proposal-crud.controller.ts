@@ -41,7 +41,7 @@ export class ProposalCrudController {
     return await this.proposalCrudService.create(createProposalDto, user);
   }
 
-  @Auth(Role.Researcher, Role.RegisteringMember)
+  @Auth(...Object.values(Role))
   @Get('statistics')
   @ApiOperation({ summary: 'Gets proposal counts grouped by status for the current user' })
   async getStatistics(@Request() { user }: FdpgRequest): Promise<ProposalStatisticsDto> {
