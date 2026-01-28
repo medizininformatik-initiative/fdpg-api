@@ -35,7 +35,7 @@ import { ProposalReportService } from '../services/proposal-report.service';
 export class ProposalReportController {
   constructor(private readonly proposalReportService: ProposalReportService) {}
 
-  @Auth(Role.Researcher, Role.RegisteringMember)
+  @Auth(Role.Researcher)
   @Post(':id/reports')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -54,7 +54,7 @@ export class ProposalReportController {
     return this.proposalReportService.createReport(id, reportCreateDto, files, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Get(':id/reports')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -63,7 +63,7 @@ export class ProposalReportController {
     return this.proposalReportService.getAllReports(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Get(':mainId/reports/:subId/content')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -75,7 +75,7 @@ export class ProposalReportController {
     return this.proposalReportService.getReportContent(mainId, subId, user);
   }
 
-  @Auth(Role.Researcher, Role.RegisteringMember)
+  @Auth(Role.Researcher)
   @Put(':mainId/reports/:subId')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item to update could not be found' })
@@ -92,7 +92,7 @@ export class ProposalReportController {
     return this.proposalReportService.updateReport(mainId, subId, reportUpdateDto, files, user);
   }
 
-  @Auth(Role.Researcher, Role.RegisteringMember)
+  @Auth(Role.Researcher)
   @Delete(':mainId/reports/:subId')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Report or proposal could not be found' })

@@ -1,5 +1,4 @@
 import { EmailCategory } from './email-category.enum';
-import { TemplateEmailParamKeys } from './template-email-param-keys.types';
 
 export interface IEmailBase {
   to: string[];
@@ -11,5 +10,5 @@ export type IEmail = IEmailBase & { subject: string } & ({ text: string } | { ht
 export type ITemplateEmail = IEmailBase & {
   subject?: string;
   templateId: number;
-  params: Partial<Record<TemplateEmailParamKeys, string | boolean | string[]>>;
+  params: Record<string, string | boolean | string[]>;
 };

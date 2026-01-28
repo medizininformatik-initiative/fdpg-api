@@ -14,7 +14,6 @@ import {
   excludeAllRequestedLocations,
 } from '../utils/location-flow.util';
 import { ProposalPdfService } from './proposal-pdf.service';
-import { ProposalScheduleTypes } from 'src/modules/scheduler/types/schedule-event.types';
 
 @Injectable()
 export class StatusChangeService {
@@ -33,8 +32,8 @@ export class StatusChangeService {
       return;
     }
     setDueDate(proposalAfterChanges);
-    const scheduleTypesToAdd: ProposalScheduleTypes[] = [];
-    const scheduleTypesToRemove: ProposalScheduleTypes[] = [];
+    const scheduleTypesToAdd: ScheduleType[] = [];
+    const scheduleTypesToRemove: ScheduleType[] = [];
 
     switch (proposalAfterChanges.status) {
       case ProposalStatus.Rework:
@@ -45,12 +44,7 @@ export class StatusChangeService {
         proposalAfterChanges.version.mayor++;
         proposalAfterChanges.version.minor = 0;
         if (!proposalAfterChanges.fdpgChecklist)
-          proposalAfterChanges.fdpgChecklist = initChecklist({
-            isRegistrationLinkSent: false,
-            depthCheck: false,
-            initialViewing: false,
-            ethicsCheck: false,
-          });
+          proposalAfterChanges.fdpgChecklist = initChecklist({ isRegistrationLinkSent: false });
 
         proposalAfterChanges.submittedAt = new Date();
 
@@ -66,10 +60,10 @@ export class StatusChangeService {
         proposalAfterChanges.uacApprovedLocations = [];
         proposalAfterChanges.requestedButExcludedLocations = [];
 
-        const requestedLocations = [...(proposalAfterChanges.userProject.addressees?.desiredLocations || [])];
+        const requestedLocations = [...proposalAfterChanges.userProject.addressees?.desiredLocations];
 
         proposalAfterChanges.openDizChecks = requestedLocations;
-        proposalAfterChanges.numberOfRequestedLocations = proposalAfterChanges.openDizChecks?.length || 0;
+        proposalAfterChanges.numberOfRequestedLocations = proposalAfterChanges.openDizChecks.length;
 
         proposalAfterChanges.statusChangeToLocationCheckAt = new Date();
 
@@ -89,15 +83,15 @@ export class StatusChangeService {
 
         proposalAfterChanges.requestedButExcludedLocations = [
           ...new Set([
-            ...(proposalAfterChanges.requestedButExcludedLocations || []),
-            ...(proposalAfterChanges.openDizChecks || []),
-            ...(proposalAfterChanges.dizApprovedLocations || []),
-            ...(proposalAfterChanges.signedContracts || []),
-            ...(proposalAfterChanges.openDizConditionChecks || []),
+            ...proposalAfterChanges.requestedButExcludedLocations,
+            ...proposalAfterChanges.openDizChecks,
+            ...proposalAfterChanges.dizApprovedLocations,
+            ...proposalAfterChanges.signedContracts,
+            ...proposalAfterChanges.openDizConditionChecks,
           ]),
         ];
 
-        proposalAfterChanges.uacApprovedLocations = (proposalAfterChanges.uacApprovedLocations || []).filter(
+        proposalAfterChanges.uacApprovedLocations = proposalAfterChanges.uacApprovedLocations.filter(
           (approvedLocation) => !proposalAfterChanges.requestedButExcludedLocations.includes(approvedLocation),
         );
 
@@ -105,7 +99,7 @@ export class StatusChangeService {
         proposalAfterChanges.dizApprovedLocations = [];
         proposalAfterChanges.signedContracts = [];
 
-        proposalAfterChanges.numberOfApprovedLocations = proposalAfterChanges.uacApprovedLocations?.length || 0;
+        proposalAfterChanges.numberOfApprovedLocations = proposalAfterChanges.uacApprovedLocations.length;
         removeFdpgTasksForContracting(proposalAfterChanges);
 
         scheduleTypesToRemove.push(
@@ -121,11 +115,11 @@ export class StatusChangeService {
 
         proposalAfterChanges.requestedButExcludedLocations = [
           ...new Set([
-            ...(proposalAfterChanges.requestedButExcludedLocations || []),
-            ...(proposalAfterChanges.openDizChecks || []),
-            ...(proposalAfterChanges.dizApprovedLocations || []),
-            ...(proposalAfterChanges.uacApprovedLocations || []),
-            ...(proposalAfterChanges.openDizConditionChecks || []),
+            ...proposalAfterChanges.requestedButExcludedLocations,
+            ...proposalAfterChanges.openDizChecks,
+            ...proposalAfterChanges.dizApprovedLocations,
+            ...proposalAfterChanges.uacApprovedLocations,
+            ...proposalAfterChanges.openDizConditionChecks,
           ]),
         ];
         proposalAfterChanges.openDizChecks = [];
@@ -135,7 +129,7 @@ export class StatusChangeService {
 
         // We leave untouched: proposalAfterChanges.signedContracts
 
-        proposalAfterChanges.numberOfSignedLocations = proposalAfterChanges.signedContracts?.length || 0;
+        proposalAfterChanges.numberOfSignedLocations = proposalAfterChanges.signedContracts.length;
 
         removeFdpgTasksForDataDelivery(proposalAfterChanges);
         scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
@@ -153,11 +147,7 @@ export class StatusChangeService {
         break;
 
       case ProposalStatus.FinishedProject:
-        scheduleTypesToRemove.push(
-          ScheduleType.ReminderResearcherPublications,
-          ScheduleType.ReminderFinishedProject1,
-          ScheduleType.ReminderFinishedProject2,
-        );
+        scheduleTypesToRemove.push(ScheduleType.ReminderResearcherPublications);
         scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
         break;
 

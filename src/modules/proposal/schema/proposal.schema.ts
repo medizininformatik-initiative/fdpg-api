@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Model, Schema as MongooseSchema } from 'mongoose';
+import mongoose, { Document, Model, Schema as MongooseSchema } from 'mongoose';
 import { Owner, OwnerSchema } from 'src/shared/schema/owner.schema';
 import { Version, VersionSchema } from 'src/shared/schema/version.schema';
 import { ProposalStatus } from '../enums/proposal-status.enum';
@@ -25,15 +25,10 @@ import {
   AdditionalLocationInformationSchema,
 } from './sub-schema/additional-location-information.schema';
 import { DizDetails, DizDetailsSchema } from './sub-schema/diz-details.schema';
-import { RegisterInfo, RegisterInfoSchema } from './sub-schema/register-info.schema';
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
-import { ProposalType } from '../enums/proposal-type.enum';
 import { addLocationPreSaveHook, Location } from 'src/modules/location/schema/location.schema';
 import { InstituteSchema } from './sub-schema/participants/institute.schema';
 import { AddresseesSchema } from './sub-schema/user-project/addressees.schema';
-import { DataDelivery, DataDeliverySchema } from './sub-schema/data-delivery/data-delivery.schema';
-import { SubDeliverySchema } from './sub-schema/data-delivery/sub-delivery.schema';
-import { ProjectAssignee, ProjectAssigneeSchema } from './sub-schema/project-assignee.schema';
 
 export type ProposalDocument = Proposal & Document;
 @Schema()
@@ -73,22 +68,6 @@ export class Proposal {
 
   @Prop({ type: Boolean, default: false })
   isLocked: boolean;
-
-  @Prop({
-    type: String,
-    enum: ProposalType,
-    default: ProposalType.ApplicationForm,
-  })
-  type: ProposalType;
-
-  @Prop({
-    type: RegisterInfoSchema,
-    default: () => ({}),
-  })
-  registerInfo: RegisterInfo;
-
-  @Prop({ type: String })
-  registerFormId: string;
 
   @Prop({ type: Number, default: 0 })
   formVersion: number;
@@ -220,9 +199,6 @@ export class Proposal {
   contractRejectedByResearcherReason: string;
 
   @Prop({ type: Boolean, default: false })
-  contractingSkipped: boolean;
-
-  @Prop({ type: Boolean, default: false })
   isContractingComplete: boolean;
 
   @Prop({ type: Date })
@@ -242,12 +218,6 @@ export class Proposal {
 
   @Prop({ type: Object, default: () => ({ ...defaultDueDateValues }) })
   deadlines: Record<DueDateEnum, Date | null>;
-
-  @Prop({ type: DataDeliverySchema, default: null })
-  dataDelivery?: DataDelivery | null;
-
-  @Prop({ type: ProjectAssigneeSchema })
-  projectAssignee?: ProjectAssignee;
 }
 
 let ProposalSchema: MongooseSchema = undefined;
@@ -338,8 +308,6 @@ const getProposalSchemaFactory = (LocationModel: Model<Location>) => {
   addLocationPreSaveHook(ConditionalApprovalSchema, ['location'], LocationModel);
   addLocationPreSaveHook(UacApprovalSchema, ['location'], LocationModel);
   addLocationPreSaveHook(AdditionalLocationInformationSchema, ['location'], LocationModel);
-  addLocationPreSaveHook(DataDeliverySchema, ['dataManagementSite'], LocationModel);
-  addLocationPreSaveHook(SubDeliverySchema, ['location'], LocationModel);
 
   return ProposalSchema;
 };

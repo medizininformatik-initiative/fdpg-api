@@ -10,8 +10,8 @@ module.exports = {
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   collectCoverage: true,
-  coverageReporters: ['json', 'lcov', 'text', 'cobertura', 'html'],
-  coverageDirectory: 'reports/coverage-unit',
+  coverageReporters: ['text', 'cobertura', 'html', 'lcov'],
+  coverageDirectory: 'reports/coverage',
   coveragePathIgnorePatterns: [
     '\\.schema\\.ts',
     '\\.dto\\.ts',
@@ -25,7 +25,7 @@ module.exports = {
       'jest-junit',
       {
         outputDirectory: 'reports',
-        outputName: 'junit-unit.xml',
+        outputName: 'junit.xml',
       },
     ],
   ],

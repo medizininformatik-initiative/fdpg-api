@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { LocationSyncChangelog, LocationSyncChangelogDocument } from '../schema/location-sync-changelog.schema';
 import { Model } from 'mongoose';
@@ -16,8 +16,6 @@ export class LocationSyncChangelogService {
     @InjectModel(LocationSyncChangelog.name)
     private locationSyncChangelogModel: Model<LocationSyncChangelogDocument>,
   ) {}
-
-  private readonly logger = new Logger(LocationSyncChangelogService.name);
 
   async findById(id: string): Promise<LocationSyncChangelogDocument> {
     return await this.locationSyncChangelogModel.findById(id);

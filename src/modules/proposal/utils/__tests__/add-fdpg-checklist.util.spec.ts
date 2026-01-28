@@ -22,9 +22,6 @@ describe('updateFdpgChecklist', () => {
     status: ProposalStatus.FdpgCheck,
     fdpgChecklist: {
       isRegistrationLinkSent: true,
-      depthCheck: true,
-      ethicsCheck: true,
-      initialViewing: true,
       isUnique: true,
       isAttachmentsChecked: true,
       isChecked: true,
@@ -41,9 +38,6 @@ describe('updateFdpgChecklist', () => {
     const proposal = getProposalDocument();
     const fdpgChecklistUpdateDto = {
       isRegistrationLinkSent: false,
-      initialViewing: false,
-      depthCheck: false,
-      ethicsCheck: false,
       fdpgInternalCheckNotes: null,
     } as FdpgChecklistUpdateDto;
 
@@ -51,9 +45,6 @@ describe('updateFdpgChecklist', () => {
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
-      initialViewing: false,
-      depthCheck: false,
-      ethicsCheck: false,
       isUnique: true,
       isAttachmentsChecked: true,
       isChecked: true,
@@ -66,9 +57,6 @@ describe('updateFdpgChecklist', () => {
     proposal.fdpgChecklist = undefined;
     const fdpgChecklistUpdateDto = {
       isRegistrationLinkSent: false,
-      initialViewing: false,
-      depthCheck: false,
-      ethicsCheck: false,
       fdpgInternalCheckNotes: null,
     } as FdpgChecklistUpdateDto;
 
@@ -76,9 +64,6 @@ describe('updateFdpgChecklist', () => {
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
-      initialViewing: false,
-      depthCheck: false,
-      ethicsCheck: false,
       fdpgInternalCheckNotes: null,
       checkListVerification: expect.any(Array),
       projectProperties: expect.any(Array),
@@ -90,9 +75,6 @@ describe('updateFdpgChecklist', () => {
     const note = 'test note';
     const fdpgChecklistUpdateDto = {
       isRegistrationLinkSent: false,
-      initialViewing: false,
-      depthCheck: false,
-      ethicsCheck: false,
       fdpgInternalCheckNotes: note,
     } as FdpgChecklistUpdateDto;
 
@@ -100,9 +82,6 @@ describe('updateFdpgChecklist', () => {
 
     expect(proposal.fdpgChecklist).toEqual({
       isRegistrationLinkSent: false,
-      initialViewing: false,
-      depthCheck: false,
-      ethicsCheck: false,
       isUnique: true,
       isAttachmentsChecked: true,
       isChecked: true,

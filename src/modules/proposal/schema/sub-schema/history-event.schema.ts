@@ -22,7 +22,7 @@ export class HistoryEvent {
   proposalVersion: Version;
 
   @Prop({ type: Object, required: false })
-  data?: Record<string, string | number | string[]>;
+  data?: Record<string, string | number>;
 
   @Prop({ type: Date, default: Date.now, immutable: true })
   createdAt: Date;

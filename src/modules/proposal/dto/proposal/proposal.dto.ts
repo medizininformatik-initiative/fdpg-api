@@ -23,9 +23,7 @@ import { ExposeHistory } from '../../decorators/expose-history.decorator';
 import { ExposeLocationStatus } from '../../decorators/expose-location-status.decorator';
 import { ExposeUpload } from '../../decorators/expose-uploads.decorator';
 import { LocationState } from '../../enums/location-state.enum';
-import { ProposalStatus, ProposalSubstatus } from '../../enums/proposal-status.enum';
-import { ProposalType } from '../../enums/proposal-type.enum';
-import { DueDateEnum } from '../../enums/due-date.enum';
+import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { IProposalGetListSchema } from '../../types/proposal-get-list-schema.interface';
 import { getIsDoneOverview } from '../../utils/is-done-overview.util';
 import { getMostAdvancedState } from '../../utils/validate-access.util';
@@ -38,7 +36,6 @@ import { DeclineReasonDto } from './decline-reason.dto';
 import { FdpgChecklistGetDto, initChecklist } from './fdpg-checklist.dto';
 import { FdpgTaskGetDto } from './fdpg-task.dto';
 import { HistoryEventGetDto } from './history-event.dto';
-import { RegisterInfoDto } from './register-info.dto';
 import { ParticipantDto } from './participant.dto';
 import { ProjectResponsibleDto } from './project-responsible.dto';
 import { ProjectUserDto } from './project-user.dto';
@@ -53,11 +50,6 @@ import { DizDetailsGetDto } from './diz-details.dto';
 import { SetDeadlinesDto } from '../set-deadlines.dto';
 import { defaultDueDateValues } from '../../enums/due-date.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
-import { DataDeliveryGetDto } from './data-delivery/data-delivery.dto';
-import { ProjectAssigneeDto } from './project-assignee.dto';
-import { UiNested, UiWidget } from 'src/shared/decorators/ui-widget.decorator';
-import { getSubstatus } from '../../utils/map-sub-status.util';
-import { ProjectAssignee } from '../../schema/sub-schema/project-assignee.schema';
 
 const getRoleFromTransform = (options: ClassTransformOptions) => {
   const [role] = options.groups
@@ -91,42 +83,41 @@ export class ProposalBaseDto {
   @MaxLength(25)
   @Matches(PROPOSAL_SHORTCUT_REGEX)
   @IsUniqueAbbreviation({ context: [BadRequestError.ProjectAbbreviationMustBeUnique] })
-  @UiWidget({ type: 'textfield' })
   projectAbbreviation: string;
 
   @Expose()
   @IsArray()
   @ValidateNested()
-  @UiNested(() => ParticipantDto, { isArray: true })
+  @Type(() => ParticipantDto)
   participants: ParticipantDto[];
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @UiNested(() => ApplicantDto)
+  @Type(() => ApplicantDto)
   applicant: ApplicantDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @UiNested(() => ProjectResponsibleDto)
+  @Type(() => ProjectResponsibleDto)
   projectResponsible: ProjectResponsibleDto;
 
   @Expose()
   @ValidateNested()
-  @UiNested(() => ProjectUserDto)
+  @Type(() => ProjectUserDto)
   projectUser: ProjectUserDto;
 
   @Expose()
   @IsObject()
   @ValidateNested()
-  @UiNested(() => UserProjectDto)
+  @Type(() => UserProjectDto)
   userProject: UserProjectDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @UiNested(() => RequestedDataDto)
+  @Type(() => RequestedDataDto)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   requestedData: RequestedDataDto;
@@ -136,11 +127,6 @@ export class ProposalBaseDto {
   status: ProposalStatus;
 
   @Expose()
-  @IsEnum(ProposalType)
-  @IsOptional()
-  type: ProposalType;
-
-  @Expose()
   @IsEnum(PlatformIdentifier)
   @IsOptional()
   platform: PlatformIdentifier;
@@ -148,32 +134,12 @@ export class ProposalBaseDto {
   @Expose()
   @IsArray()
   @IsEnum(PlatformIdentifier, { each: true })
-  @UiWidget({ type: 'select', format: 'multiple' })
   selectedDataSources: PlatformIdentifier[];
 
   @Expose()
   @IsString()
   @IsOptional()
   dataSourceLocaleId: string;
-
-  @Expose()
-  @Type(() => RegisterInfoDto)
-  @IsOptional()
-  @Transform(({ value, options }) => {
-    if (
-      options?.groups?.includes(OutputGroup.FormSchemaOnly) ||
-      options?.groups?.includes(OutputGroup.WithFormSchema)
-    ) {
-      return undefined;
-    }
-    return value;
-  })
-  registerInfo?: RegisterInfoDto;
-
-  @Expose()
-  @IsString()
-  @IsOptional()
-  registerFormId?: string;
 }
 
 export class ProposalCreateDto extends ProposalBaseDto {}
@@ -271,9 +237,6 @@ export class ProposalGetDto extends ProposalBaseDto {
 
   @Expose()
   contractRejectedByResearcherReason: string;
-
-  @Expose()
-  contractingSkipped: boolean;
 
   @Expose()
   isContractingComplete: boolean;
@@ -533,16 +496,6 @@ export class ProposalGetDto extends ProposalBaseDto {
     return obj.deadlines; // Ensure object is returned as-is
   })
   deadlines: SetDeadlinesDto;
-
-  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember, Role.DataManagementOffice, Role.Researcher] })
-  @Type(() => DataDeliveryGetDto)
-  @IsOptional()
-  dataDelivery?: DataDeliveryGetDto | null;
-
-  @Expose({ groups: [Role.FdpgMember, Role.DataSourceMember] })
-  @Type(() => ProjectAssigneeDto)
-  @IsOptional()
-  projectAssignee?: ProjectAssigneeDto;
 }
 
 export class ProposalGetListDto {
@@ -554,20 +507,15 @@ export class ProposalGetListDto {
     this.createdAt = dbProjection.createdAt;
     this.updatedAt = dbProjection.updatedAt;
     this.status = dbProjection.status;
-    this.substatus = dbProjection.substatus;
     this.isLocked = dbProjection.isLocked;
     this.submittedAt = dbProjection.submittedAt;
     this.dueDateForStatus = dbProjection.dueDateForStatus;
-    this.deadlines = dbProjection.deadlines;
     this.requestedLocationsCount = dbProjection.numberOfRequestedLocations;
     this.approvedLocationsCount = dbProjection.numberOfApprovedLocations;
     this.contractAcceptedByResearcher = dbProjection.contractAcceptedByResearcher;
     this.contractRejectedByResearcher = dbProjection.contractRejectedByResearcher;
     this._id = dbProjection._id;
     this.selectedDataSources = dbProjection.selectedDataSources;
-    this.type = dbProjection.type;
-    this.registerInfo = dbProjection.registerInfo;
-    this.registerFormId = dbProjection.registerFormId;
 
     if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole == Role.DataSourceMember) {
       this.openDizChecksCount = dbProjection.openDizChecks.length;
@@ -581,8 +529,6 @@ export class ProposalGetListDto {
       this.totalContractedDataAmount = dbProjection.totalContractedDataAmount;
 
       this.openFdpgTasks = dbProjection.openFdpgTasks || [];
-      this.substatus = getSubstatus(dbProjection);
-      this.projectAssignee = dbProjection.projectAssignee;
     } else if (user.isFromLocation) {
       this.locationState = getMostAdvancedState(dbProjection, user);
     }
@@ -595,11 +541,9 @@ export class ProposalGetListDto {
   createdAt: Date;
   updatedAt: Date;
   status: ProposalStatus;
-  substatus?: ProposalSubstatus;
   isLocked: boolean;
   submittedAt?: Date;
   dueDateForStatus?: Date;
-  deadlines?: Record<DueDateEnum, Date | null>;
 
   contractAcceptedByResearcher: boolean;
   contractRejectedByResearcher: boolean;
@@ -621,11 +565,6 @@ export class ProposalGetListDto {
 
   _id: string;
   selectedDataSources: PlatformIdentifier[];
-  type: ProposalType;
-  registerInfo?: RegisterInfoDto;
-  registerFormId?: string;
-
-  projectAssignee: ProjectAssignee;
 }
 
 @Exclude()

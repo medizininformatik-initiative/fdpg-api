@@ -130,27 +130,6 @@ export class CommentEventService {
     }
   }
 
-  private async handleProposalMessageToDmsCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
-    if (!this.PREVENT_MESSAGE_TO_FDPG_CREATION) {
-      const dmsLocation = proposal.dataDelivery?.dataManagementSite;
-
-      if (!dmsLocation) {
-        throw Error(`DMS Location of proposal ${proposal._id} is undefined`);
-      }
-
-      const validDmsContacts = await this.keycloakUtilService
-        .getDmsMembers()
-        .then((members) => this.keycloakUtilService.getLocationContacts([dmsLocation], members));
-
-      console.log('TODO implement e-mail for dms on comment');
-
-      // const email = getProposalMessageCreationEmailForFdpg(validFdpgContacts, proposal, comment, proposalUrl);
-      // await this.emailService.send(email);
-
-      return Promise.resolve();
-    }
-  }
-
   private async handleProposalMessageToLocationCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
     const commentLocation = comment.locations ?? [];
 
@@ -209,13 +188,6 @@ export class CommentEventService {
           return await this.handleProposalMessageToOwnerCreation(proposal, comment, proposalUrl);
         } else {
           return await this.handleProposalMessageToFdpgCreation(proposal, comment, proposalUrl);
-        }
-
-      case CommentType.ProposalMessageToDmst:
-        if (user.singleKnownRole === Role.DataManagementOffice) {
-          return await this.handleProposalMessageToFdpgCreation(proposal, comment, proposalUrl);
-        } else {
-          return await this.handleProposalMessageToDmsCreation(proposal, comment, proposalUrl);
         }
     }
   }

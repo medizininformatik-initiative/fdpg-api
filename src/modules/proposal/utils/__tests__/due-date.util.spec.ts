@@ -28,7 +28,6 @@ const getProposalDocument = () => {
         desiredStartTime: new Date(2030, 1, 1),
       },
     },
-    markModified: jest.fn(),
   };
   return proposalDocument as any as ProposalDocument;
 };

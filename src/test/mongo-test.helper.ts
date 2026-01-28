@@ -1,5 +1,5 @@
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
-import { DynamicModule, INestApplication, Provider, Type } from '@nestjs/common';
+import { DynamicModule, ForwardReference, INestApplication, Provider, Type } from '@nestjs/common';
 import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
 import { MongoDBContainer, StartedMongoDBContainer } from '@testcontainers/mongodb';
 import { ConfigModule } from '@nestjs/config';
@@ -15,23 +15,17 @@ export interface MongoTestContext {
   network: StartedNetwork;
 }
 
-export interface ServiceConfig {
-  provide: Type<any>;
-  useValue?: any;
-  useClass?: Type<any>;
-}
-
 /**
  * A higher-order function that wraps a Jest `describe` block to provide
  * a running MongoDB container on a random, available port.
  *
  * @param suiteName The name of the test suite.
- * @param services Array of services to provide. Can be classes, service configs, or dynamic modules.
  * @param tests A function that contains your tests. It receives the test context.
  */
 export function describeWithMongo(
   suiteName: string,
-  services: (Type<any> | ServiceConfig | DynamicModule)[] = [],
+  modules: (Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference<any>)[] = [],
+  overrides: Provider[] = [],
   tests: (context: () => MongoTestContext) => void,
 ) {
   describe(suiteName, () => {
@@ -42,35 +36,24 @@ export function describeWithMongo(
         if (context.app) {
           const connection = context.app.get<Connection>(getConnectionToken());
           await connection.db.dropDatabase();
-          // Explicitly close the Mongoose connection
-          await connection.close();
         }
       } catch (error) {
         console.warn(`[${suiteName}] Error dropping database:`, error);
       }
 
       try {
-        if (context.app) {
-          await context.app.close();
-        }
+        await context.app?.close();
       } catch (error) {
         console.warn(`[${suiteName}] Error closing NestJS app:`, error);
       }
-
       try {
-        if (context.container) {
-          await context.container.stop({ remove: true, removeVolumes: true });
-          console.log(`[${suiteName}] Container stopped and removed`);
-        }
+        await context.container?.stop();
       } catch (error) {
         console.error(`[${suiteName}] FAILED to stop the container:`, error);
       }
 
       try {
-        if (context.network) {
-          await context.network.stop();
-          console.log(`[${suiteName}] Network stopped`);
-        }
+        await context.network?.stop();
       } catch (error) {
         console.error(`[${suiteName}] FAILED to stop the network:`, error);
       }
@@ -100,23 +83,6 @@ export function describeWithMongo(
 
         Object.assign(context, { mongoUri });
 
-        // Separate imports and providers
-        const imports: DynamicModule[] = [];
-        const providers: Provider[] = [];
-
-        services.forEach((service) => {
-          if (typeof service === 'function') {
-            // It's a class - add to providers
-            providers.push(service);
-          } else if ('module' in service) {
-            // It's a DynamicModule - add to imports
-            imports.push(service as DynamicModule);
-          } else {
-            // It's a ServiceConfig - add to providers
-            providers.push(service as Provider);
-          }
-        });
-
         let moduleBuilder: TestingModuleBuilder = Test.createTestingModule({
           imports: [
             ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env.test'] }),
@@ -127,10 +93,18 @@ export function describeWithMongo(
                 appName: 'api-backend',
               }),
             }),
-            ...imports,
+            ...modules,
           ],
-          providers,
         });
+
+        if (overrides && overrides.length > 0) {
+          moduleBuilder = overrides.reduce((builder, provider) => {
+            // A provider can be a class or an object with a `provide` property
+            const token = (provider as any).provide || provider;
+            const value = (provider as any).useValue;
+            return builder.overrideProvider(token).useValue(value);
+          }, moduleBuilder);
+        }
 
         const moduleFixture = await moduleBuilder.compile();
         const app = moduleFixture.createNestApplication();
@@ -153,23 +127,8 @@ export function describeWithMongo(
 
     tests(() => context);
 
-    afterEach(async () => {
-      // Clean all collections after each test to ensure isolation
-      try {
-        if (context.app) {
-          const connection = context.app.get<Connection>(getConnectionToken());
-          const collections = await connection.db.collections();
-
-          // Clear all collections in parallel
-          await Promise.all(collections.map((collection) => collection.deleteMany({})));
-        }
-      } catch (error) {
-        console.warn(`[${suiteName}] Error cleaning collections after test:`, error);
-      }
-    });
-
     afterAll(async () => {
       await tearDownContainer(context);
-    }, 30000);
+    });
   });
 }

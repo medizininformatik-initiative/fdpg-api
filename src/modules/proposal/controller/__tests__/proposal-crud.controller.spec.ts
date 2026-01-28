@@ -4,7 +4,6 @@ import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalFilterDto } from '../../dto/proposal-filter.dto';
 import { ProposalGetDto, ProposalGetListDto, ProposalUpdateDto } from '../../dto/proposal/proposal.dto';
-import { ProposalStatisticsDto } from '../../dto/proposal-statistics.dto';
 import { ProposalCrudController } from '../proposal-crud.controller';
 import { ProposalCrudService } from '../../services/proposal-crud.service';
 
@@ -122,21 +121,6 @@ describe('ProposalCrudController', () => {
       const call = proposalCrudController.duplicate(params, request);
       expect(await call).toBe(result);
       expect(proposalCrudService.duplicate).toHaveBeenCalledWith(params.id, request.user);
-    });
-  });
-
-  describe('getStatistics', () => {
-    it('should return proposal statistics', async () => {
-      const result = {
-        panels: {},
-        total: 0,
-      } as unknown as ProposalStatisticsDto;
-
-      jest.spyOn(proposalCrudService, 'getStatistics').mockResolvedValue(result);
-
-      const call = proposalCrudController.getStatistics(request);
-      expect(await call).toBe(result);
-      expect(proposalCrudService.getStatistics).toHaveBeenCalledWith(request.user);
     });
   });
 });

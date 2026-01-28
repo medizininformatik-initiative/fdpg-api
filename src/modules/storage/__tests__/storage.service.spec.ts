@@ -17,7 +17,6 @@ describe('StorageService', () => {
     removeObject: jest.fn(),
     removeObjects: jest.fn(),
     presignedGetObject: jest.fn(),
-    copyObject: jest.fn(),
   };
 
   const configService = {
@@ -102,26 +101,6 @@ describe('StorageService', () => {
     it('should call the blobBatchClient to delete many blobs', async () => {
       await storageService.deleteManyBlobs(['blobName1', 'blobName2']);
       expect(clientMock.removeObjects).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('copyToPublicBucket', () => {
-    it('should throw NotFoundException if blob does not exist', async () => {
-      clientMock.statObject.mockRejectedValueOnce('doesnotexist');
-      
-      const call = storageService.copyToPublicBucket(blobName);
-      const error = await getError(async () => await call);
-      
-      expect(error).toBeInstanceOf(NotFoundException);
-    });
-
-    it('should copy blob to public bucket', async () => {
-      clientMock.statObject.mockResolvedValueOnce('exists');
-      clientMock.copyObject.mockResolvedValueOnce({});
-      
-      await storageService.copyToPublicBucket(blobName);
-      
-      expect(clientMock.copyObject).toHaveBeenCalledTimes(1);
     });
   });
 });

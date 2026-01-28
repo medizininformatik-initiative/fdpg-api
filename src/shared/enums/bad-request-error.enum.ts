@@ -16,5 +16,4 @@ export enum BadRequestError {
   MaximumCohortSizeReached = '400-015',
   FeasibilityError = '400-016',
   NotInContractingStatus = '400-017',
-  FhirQuestionnairResponseNotFound = '400-018',
 }

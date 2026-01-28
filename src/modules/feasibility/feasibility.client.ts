@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { FeasibilityAuthenticationClient } from './feasibility-authentication.client';
-import { applyAxiosMonitoring } from 'src/monitoring/apply-axios-monitoring';
 
 @Injectable()
 export class FeasibilityClient {
@@ -33,8 +32,6 @@ export class FeasibilityClient {
         'Content-Type': 'application/json',
       },
     });
-
-    applyAxiosMonitoring(this.client);
   }
 
   private async obtainToken() {

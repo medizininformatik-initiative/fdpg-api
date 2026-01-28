@@ -85,5 +85,9 @@ describe('PublicationsService', () => {
       await publicationsService.handlePublicationUpdate(proposal, mockPublication, proposalUrl);
       expect(emailService.send).toHaveBeenCalled();
     });
+    it('on delete', async () => {
+      await publicationsService.handlePublicationDelete(proposal, mockPublication, proposalUrl);
+      expect(emailService.send).toHaveBeenCalled();
+    });
   });
 });

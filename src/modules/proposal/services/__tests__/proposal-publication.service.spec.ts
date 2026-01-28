@@ -5,7 +5,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProposalPublicationService } from '../proposal-publication.service';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { Role } from 'src/shared/enums/role.enum';
-import { ModificationContext } from '../../enums/modification-context.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { PublicationCreateDto, PublicationUpdateDto } from '../../dto/proposal/publication.dto';
@@ -91,6 +90,7 @@ describe('ProposalPublicationService', () => {
           useValue: {
             handleProposalPublicationCreate: jest.fn(),
             handleProposalPublicationUpdate: jest.fn(),
+            handleProposalPublicationDelete: jest.fn(),
           },
         },
       ],
@@ -180,13 +180,7 @@ describe('ProposalPublicationService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
-        proposalId,
-        request.user,
-        undefined,
-        true,
-        ModificationContext.Publication,
-      );
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
       expect(result.length).toEqual(1);
       expect(result[0].title).toEqual(publicationUpdateDto.title);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
@@ -219,13 +213,7 @@ describe('ProposalPublicationService', () => {
 
       expect(error).toBeInstanceOf(NotFoundException);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
-        proposalId,
-        request.user,
-        undefined,
-        true,
-        ModificationContext.Publication,
-      );
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
 
       expect(proposalDocument.save).not.toHaveBeenCalledTimes(1);
       expect(eventEngineService.handleProposalPublicationUpdate).not.toHaveBeenCalledWith(
@@ -248,14 +236,9 @@ describe('ProposalPublicationService', () => {
 
       await proposalPublicationService.deletePublication(proposalId, 'publicationId', request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
-        proposalId,
-        request.user,
-        undefined,
-        true,
-        ModificationContext.Publication,
-      );
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
+      expect(eventEngineService.handleProposalPublicationDelete).toHaveBeenCalledWith(proposalDocument, publication);
     });
 
     it('should not save if a publication is not found to be deleted', async () => {
@@ -270,15 +253,13 @@ describe('ProposalPublicationService', () => {
 
       const call = proposalPublicationService.deletePublication(proposalId, 'publicationIdNotExisting', request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
-        proposalId,
-        request.user,
-        undefined,
-        true,
-        ModificationContext.Publication,
-      );
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
 
       expect(proposalDocument.save).not.toHaveBeenCalledTimes(1);
+      expect(eventEngineService.handleProposalPublicationDelete).not.toHaveBeenCalledWith(
+        proposalDocument,
+        publication,
+      );
     });
   });
 });

@@ -68,9 +68,8 @@ export const addLocationPreSaveHook = <TClass, ModelClass extends Document>(
           let expectedCount = 0;
 
           if (Array.isArray(value)) {
-            // Exclude 'DIFE' from validation as it is a special case
-            idsToCheck = value.filter((id) => id !== 'DIFE');
-            expectedCount = idsToCheck.length;
+            idsToCheck = value;
+            expectedCount = value.length;
           } else if (typeof value === 'string' && value.length > 0) {
             idsToCheck = [value];
             expectedCount = 1;

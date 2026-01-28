@@ -6,7 +6,6 @@ import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validati
 import { ParticipantCategory } from 'src/modules/proposal/schema/sub-schema/participants/participant-category.schema';
 import { ParticipantRole } from 'src/modules/proposal/schema/sub-schema/participants/participant-role.schema';
 import { Researcher } from 'src/modules/proposal/schema/sub-schema/participants/researcher.schema';
-import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 
@@ -15,34 +14,29 @@ export class ResearcherDto extends WithIdForObjectDto {
   @IsString()
   @MaxLength(100)
   @IsOptional()
-  @UiWidget({ type: 'textfield' })
   title: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(250)
-  @UiWidget({ type: 'textfield' })
   firstName: string;
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   @MaxLength(250)
-  @UiWidget({ type: 'textfield' })
   lastName: string;
 
   @Expose()
   @IsString()
   @MaxLength(1000)
   @IsOptional()
-  @UiWidget({ type: 'textfield' })
   affiliation: string;
 
   @Expose()
   @IsEmail()
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
-  @UiWidget({ type: 'textfield', format: 'email' })
+  @IsOptional({ groups: [ProposalValidation.IsDraft] })
   email: string;
 }
 

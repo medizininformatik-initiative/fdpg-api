@@ -4,8 +4,7 @@ import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
-import { dizEmail, fdpgEmail } from 'src/modules/email/proposal.emails';
-import { EmailCategory } from 'src/modules/email/types/email-category.enum';
+import { getSigningCompleteEmailForFdpgMember, getResearcherSignedEmailForFdpgMembers } from './contracting.emails';
 
 @Injectable()
 export class ContractingService {
@@ -14,41 +13,37 @@ export class ContractingService {
     private emailService: EmailService,
   ) {}
 
-  private async handleResearcherSign(proposal: Proposal, vote: boolean, proposalUrl: string) {
+  private async handleResearcherSign(proposal: Proposal, vote: boolean, proposalUrl: string, signUserName: string) {
     const emailTasks: Promise<void>[] = [];
     if (vote === true) {
-      const dizTask = async () => {
-        const locations = [...proposal.uacApprovedLocations];
-        const validUacContacts = await this.keycloakUtilService
-          .getDizMembers()
-          .then((members) => this.keycloakUtilService.getLocationContacts(locations, members));
+      // diz deactivated for now
 
-        const mail = dizEmail(validUacContacts, proposal, [EmailCategory.ContractSign], proposalUrl, {
-          conditionProposalContractSignedUser: true,
-        });
-
-        return await this.emailService.send(mail);
-      };
+      // const dizTask = async () => {
+      //   const locations = [...proposal.uacApprovedLocations];
+      //   const validUacContacts = await this.keycloakUtilService
+      //     .getDizMembers()
+      //     .then((members) => this.keycloakUtilService.getLocationContacts(locations, members));
+      //   const mail = getResearcherSignedEmailForDizMembers(validUacContacts, proposal, proposalUrl);
+      //   return await this.emailService.send(mail);
+      // };
 
       const fdpgTask = async () => {
         const validFdpgContacts = await this.keycloakUtilService
           .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
-
-        const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.ContractSign], proposalUrl, {
-          conditionProposalContractSignedUser: true,
-        });
+        const mail = getResearcherSignedEmailForFdpgMembers(validFdpgContacts, proposal, proposalUrl, signUserName);
 
         return await this.emailService.send(mail);
       };
 
-      emailTasks.push(dizTask(), fdpgTask());
+      // emailTasks.push(dizTask(), fdpgTask());
+      emailTasks.push(fdpgTask());
     }
 
     await Promise.allSettled(emailTasks);
   }
 
-  async handleLocationSign(proposal: Proposal, proposalUrl: string) {
+  private async handleLocationSign(proposal: Proposal, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
 
     if (proposal.isContractingComplete) {
@@ -56,11 +51,7 @@ export class ContractingService {
         const validFdpgContacts = await this.keycloakUtilService
           .getFdpgMemberLevelContacts(proposal)
           .then((members) => members.map((member) => member.email));
-
-        const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.ContractSign], proposalUrl, {
-          conditionProposalContractSignedLocations: true,
-        });
-
+        const mail = getSigningCompleteEmailForFdpgMember(validFdpgContacts, proposal, proposalUrl);
         return await this.emailService.send(mail);
       };
 
@@ -72,7 +63,7 @@ export class ContractingService {
 
   async handleContractSign(proposal: Proposal, vote: boolean, user: IRequestUser, proposalUrl: string) {
     if (user.singleKnownRole === Role.Researcher) {
-      await this.handleResearcherSign(proposal, vote, proposalUrl);
+      await this.handleResearcherSign(proposal, vote, proposalUrl, user.fullName);
     } else if (user.isFromLocation) {
       await this.handleLocationSign(proposal, proposalUrl);
     }

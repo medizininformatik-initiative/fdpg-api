@@ -24,14 +24,7 @@ import { CommentCreateReferenceDto, CommentReferenceDto } from './dto/comment-qu
 import { CommentCreateDto, CommentGetDto, CommentUpdateDto } from './dto/comment.dto';
 import { MarkAsDoneDto } from './dto/mark-as-done.dto';
 
-@Auth(
-  Role.Researcher,
-  Role.FdpgMember,
-  Role.DataSourceMember,
-  Role.DizMember,
-  Role.UacMember,
-  Role.DataManagementOffice,
-)
+@Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
 @ApiController('comments')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}

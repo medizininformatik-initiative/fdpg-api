@@ -27,14 +27,14 @@ jobs:
       - name: 'Installing Modules'
         run: yarn install
 
-      - name: 'Run All Tests (Unit + E2E) and Merge Coverage'
-        run: yarn test:all
+      - name: 'Jest Unit Testing'
+        run: yarn test
 
       - name: 'Publish Test Results'
         uses: mikepenz/action-junit-report@v3
         if: success() || failure() # always run even if the previous step fails
         with:
-          report_paths: '**/reports/junit-*.xml'
+          report_paths: '**/reports/junit.xml'
           fail_on_failure: true
 
       - name: 'Publish Code Coverage'

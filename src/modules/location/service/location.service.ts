@@ -24,7 +24,7 @@ export class LocationService {
 
   private CACHE_DURATION_MS = 15 * 60 * 1000;
 
-  async findById(id: string): Promise<LocationDocument | null> {
+  async findById(id: string): Promise<LocationDocument> {
     return await this.locationModel.findById(id);
   }
 
@@ -36,13 +36,6 @@ export class LocationService {
     return await this.getOrCreateCached(CacheKey.MiiLocations, async () =>
       (await this.findAllDocuments()).map((model) => model.toObject() as Location).map(this.modelToDto),
     );
-  }
-
-  async findAllLookUpMap(): Promise<Record<string, Location>> {
-    const all = await this.findAllDocuments();
-    const allModels = all.map((model) => model.toObject());
-
-    return Object.fromEntries(allModels.map((location) => [location._id, location]));
   }
 
   async findAllKeyLabel(): Promise<LocationKeyLabelDto[]> {

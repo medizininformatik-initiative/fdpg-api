@@ -17,9 +17,6 @@ export interface IChecklistItem {
 
 export interface IChecklist {
   isRegistrationLinkSent: boolean;
-  initialViewing: boolean;
-  depthCheck: boolean;
-  ethicsCheck: boolean;
   fdpgInternalCheckNotes: string | null;
   checkListVerification: IChecklistItem[];
   projectProperties: IChecklistItem[];

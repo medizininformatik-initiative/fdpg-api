@@ -346,8 +346,6 @@ describe('StatusChangeService', () => {
         expect(setDueDate).toHaveBeenCalledWith(proposalDocument);
         expect(schedulerService.cancelEventsByTypesForProposal).toHaveBeenCalledWith(proposalDocument, [
           ScheduleType.ReminderResearcherPublications,
-          ScheduleType.ReminderFinishedProject1,
-          ScheduleType.ReminderFinishedProject2,
         ]);
         expect(schedulerService.createEvents).toHaveBeenCalledWith({
           proposal: proposalDocument,

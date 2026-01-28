@@ -71,9 +71,6 @@ export const DEFAULT_PROJECT_PROPERTIES: IChecklistItem[] = [
 
 export const initChecklist = (dbChecklist: Partial<IChecklist> = {}): IChecklist => ({
   isRegistrationLinkSent: false,
-  initialViewing: false,
-  depthCheck: false,
-  ethicsCheck: false,
   fdpgInternalCheckNotes: null,
   checkListVerification: DEFAULT_CHECKLIST_ITEMS,
   projectProperties: DEFAULT_PROJECT_PROPERTIES,

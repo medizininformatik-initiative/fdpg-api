@@ -4,23 +4,19 @@ import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { FDPG_FILTER } from './fdpg-filter.constants';
 
-export const fdpgAllowedQuery = [
-  PanelQuery.FdpgRequestedToCheck,
-  PanelQuery.FdpgRequestedInWork,
-  PanelQuery.FdpgPendingToCheck,
-  PanelQuery.FdpgPendingInWork,
-  PanelQuery.FdpgOngoingToCheck,
-  PanelQuery.FdpgOngoingInWork,
-  PanelQuery.FdpgFinished,
-  PanelQuery.FdpgPublishedRequested,
-  PanelQuery.FdpgPublishedReady,
-  PanelQuery.FdpgPublishedPublished,
-  PanelQuery.FdpgPublishedDraft,
-  PanelQuery.Archived,
-  PanelQuery.FdpgOverview,
-];
 export const getFilterForFdpg = (panelQuery: PanelQuery): FilterQuery<Proposal> => {
-  if (fdpgAllowedQuery.includes(panelQuery)) {
+  const allowedQuery = [
+    PanelQuery.FdpgRequestedToCheck,
+    PanelQuery.FdpgRequestedInWork,
+    PanelQuery.FdpgPendingToCheck,
+    PanelQuery.FdpgPendingInWork,
+    PanelQuery.FdpgOngoingToCheck,
+    PanelQuery.FdpgOngoingInWork,
+    PanelQuery.FdpgFinished,
+    PanelQuery.Archived,
+  ];
+
+  if (allowedQuery.includes(panelQuery)) {
     return FDPG_FILTER[panelQuery];
   } else {
     throw new ForbiddenException();

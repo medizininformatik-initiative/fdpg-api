@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
 import axios, { AxiosInstance } from 'axios';
 import { ITokenResult } from '../../shared/types/token-result.interface';
-import { applyAxiosMonitoring } from 'src/monitoring/apply-axios-monitoring';
 
 @Injectable()
 export class FeasibilityAuthenticationClient {
@@ -29,8 +28,6 @@ export class FeasibilityAuthenticationClient {
 
   private configureClient() {
     this.client = axios.create();
-
-    applyAxiosMonitoring(this.client);
   }
 
   async obtainToken(): Promise<ITokenResult | undefined> {

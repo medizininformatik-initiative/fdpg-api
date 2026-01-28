@@ -15,7 +15,6 @@ import { CommentAnswerEventService } from './events/comments/comment-answer-even
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 import { ProposalModule } from '../proposal/proposal.module';
-import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
 
 @Module({
   providers: [
@@ -31,7 +30,6 @@ import { DataDeliveryEventService } from './events/data-delivery/data-delivery-e
     PublicationsService,
     DeadlineEventService,
     ParticipantEmailSummaryService,
-    DataDeliveryEventService,
   ],
   imports: [forwardRef(() => ProposalModule), UserModule, EmailModule, CacheModule.register()],
   exports: [EventEngineService],

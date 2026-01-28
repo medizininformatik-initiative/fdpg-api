@@ -4,19 +4,17 @@ import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { FilterQuery } from 'mongoose';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
-import { getRegisterProposalsForUser } from '../proposal-filter.util';
-export const uacAllowedQuery = [
-  PanelQuery.UacPending,
-  PanelQuery.UacOngoing,
-  PanelQuery.UacFinished,
-  PanelQuery.UacRequested,
-  PanelQuery.PublishedDraft,
-  PanelQuery.PublishedPending,
-  PanelQuery.PublishedCompleted,
-  PanelQuery.Archived,
-];
+
 export const getFilterForUac = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
-  if (uacAllowedQuery.includes(panelQuery)) {
+  const allowedQuery = [
+    PanelQuery.UacPending,
+    PanelQuery.UacOngoing,
+    PanelQuery.UacFinished,
+    PanelQuery.UacRequested,
+    PanelQuery.Archived,
+  ];
+
+  if (allowedQuery.includes(panelQuery)) {
     switch (panelQuery) {
       case PanelQuery.UacRequested:
         return getFilterForRequested(user);
@@ -26,16 +24,6 @@ export const getFilterForUac = (panelQuery: PanelQuery, user: IRequestUser): Fil
         return getFilterForOngoing(user);
       case PanelQuery.UacFinished:
         return getFilterForFinished(user);
-      case PanelQuery.PublishedDraft:
-        return getRegisterProposalsForUser(user, ProposalStatus.Draft);
-      case PanelQuery.PublishedPending:
-        return getRegisterProposalsForUser(user, [
-          ProposalStatus.Rework,
-          ProposalStatus.FdpgCheck,
-          ProposalStatus.ReadyToPublish,
-        ]);
-      case PanelQuery.PublishedCompleted:
-        return getRegisterProposalsForUser(user, [ProposalStatus.Published, ProposalStatus.Rejected]);
       case PanelQuery.Archived:
         return getFilterForArchived(user);
     }

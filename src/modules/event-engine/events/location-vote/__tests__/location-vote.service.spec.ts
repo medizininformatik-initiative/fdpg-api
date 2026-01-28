@@ -4,7 +4,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
 import { LocationVoteService } from '../location-vote.service';
-import { defaultDueDateValues } from 'src/modules/proposal/enums/due-date.enum';
 
 describe('LocationVoteService', () => {
   let locationVoteService: LocationVoteService;
@@ -18,8 +17,6 @@ describe('LocationVoteService', () => {
     },
     uacApprovedLocations: ['UKL'],
     requestedButExcludedLocations: [],
-    dueDateForStatus: new Date(),
-    deadlines: { ...defaultDueDateValues },
   } as any as Proposal;
 
   const proposalUrl = 'proposalUrl';

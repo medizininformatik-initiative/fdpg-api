@@ -4,31 +4,30 @@ import InstituteDto from './participants/institute.dto';
 import { ParticipantCategoryOptionalDto } from './participants/participant-category.dto';
 import { ResearcherDto } from './participants/researcher.dto';
 import { ParticipantRoleDto } from './participants/participant-role.dto';
-import { UiNested } from 'src/shared/decorators/ui-widget.decorator';
 
 export class ApplicantDto {
   @Expose()
   @ValidateNested()
   @IsObject()
-  @UiNested(() => ResearcherDto)
+  @Type(() => ResearcherDto)
   researcher: ResearcherDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @UiNested(() => InstituteDto)
+  @Type(() => InstituteDto)
   institute: InstituteDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
-  @UiNested(() => ParticipantCategoryOptionalDto)
+  @Type(() => ParticipantCategoryOptionalDto)
   participantCategory: ParticipantCategoryOptionalDto;
 
   @Expose()
   @ValidateNested()
   @IsObject()
   @IsOptional()
-  @UiNested(() => ParticipantRoleDto)
+  @Type(() => ParticipantRoleDto)
   participantRole: ParticipantRoleDto;
 }

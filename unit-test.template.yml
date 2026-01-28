@@ -1,7 +1,7 @@
 parameters:
-  - name: YARN_CACHE_FOLDER
-    type: string
-    default: $(Build.SourcesDirectory)/node_modules
+- name: YARN_CACHE_FOLDER
+  type: string
+  default: $(Build.SourcesDirectory)/node_modules
 
 steps:
   - task: Cache@2
@@ -27,10 +27,10 @@ steps:
   - task: PublishTestResults@2
     displayName: 'Publish Test Results'
     inputs:
-      testResultsFiles: '**/reports/junit-*.xml'
+      testResultsFiles: '**/reports/junit.xml'
       mergeTestResults: true
       failTaskOnFailedTests: true
-      testRunTitle: 'Unit and E2E Tests'
+      testRunTitle: 'Unit Tests'
 
   - task: PublishCodeCoverageResults@1
     displayName: 'Publish Code Coverage'

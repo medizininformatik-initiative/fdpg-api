@@ -3,7 +3,6 @@ import { plainToClass } from 'class-transformer';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { PublicationCreateDto, PublicationGetDto, PublicationUpdateDto } from '../dto/proposal/publication.dto';
-import { ModificationContext } from '../enums/modification-context.enum';
 import { ProposalCrudService } from './proposal-crud.service';
 import { getAllPublicationsProjection } from '../schema/constants/get-all-publications.projection';
 import { Publication, PublicationDocument } from '../schema/sub-schema/publication.schema';
@@ -20,13 +19,7 @@ export class ProposalPublicationService {
     publicationCreateDto: PublicationCreateDto,
     user: IRequestUser,
   ): Promise<PublicationGetDto[]> {
-    const proposal = await this.proposalCrudService.findDocument(
-      proposalId,
-      user,
-      undefined,
-      true,
-      ModificationContext.Publication,
-    );
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     proposal.publications = [
       ...proposal.publications,
@@ -66,13 +59,7 @@ export class ProposalPublicationService {
     publicationUpdateDto: PublicationUpdateDto,
     user: IRequestUser,
   ): Promise<PublicationGetDto[]> {
-    const proposal = await this.proposalCrudService.findDocument(
-      proposalId,
-      user,
-      undefined,
-      true,
-      ModificationContext.Publication,
-    );
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     const publicationIdx = proposal.publications.findIndex(
       (publication: PublicationDocument) => publication._id.toString() === publicationId,
@@ -104,13 +91,7 @@ export class ProposalPublicationService {
   }
 
   async deletePublication(proposalId: string, publicationId: string, user: IRequestUser): Promise<void> {
-    const proposal = await this.proposalCrudService.findDocument(
-      proposalId,
-      user,
-      undefined,
-      true,
-      ModificationContext.Publication,
-    );
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
 
     const publicationIdx = proposal.publications.findIndex(
       (publication: Publication) => publication._id.toString() === publicationId,
@@ -120,7 +101,9 @@ export class ProposalPublicationService {
       return;
     }
 
-    proposal.publications.splice(publicationIdx, 1);
+    const deletedPublications = proposal.publications.splice(publicationIdx, 1);
+
+    await this.eventEngineService.handleProposalPublicationDelete(proposal, deletedPublications[0]);
 
     await proposal.save();
   }

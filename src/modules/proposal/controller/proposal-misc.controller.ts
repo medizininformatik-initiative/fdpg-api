@@ -19,7 +19,6 @@ import {
 import {
   ApiBody,
   ApiConsumes,
-  ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -54,7 +53,6 @@ import { Participant } from '../schema/sub-schema/participant.schema';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
-import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
@@ -72,7 +70,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getResearcherInfo(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Put(':id/status')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Item could not be found' })
@@ -84,7 +82,7 @@ export class ProposalMiscController {
     @Body() { value }: SetProposalStatusDto,
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
-    await this.proposalMiscService.setStatus(id, value, user);
+    return await this.proposalMiscService.setStatus(id, value, user);
   }
 
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
@@ -199,18 +197,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getAllProposalFormVersions();
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
-  @Get(':id/form-schema')
-  @ApiNotFoundResponse({ description: 'Item could not be found.' })
-  @ApiOperation({ summary: 'Returns a merged proposal with the corresponding form schema version' })
-  async getProposalWithUiMetaInformation(
-    @Param() { id }: MongoIdParamDto,
-    @Request() { user }: FdpgRequest,
-  ): Promise<any> {
-    return await this.proposalMiscService.getProposalWithUiMetaInformation(id, user);
-  }
-
-  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember)
   @Put(':id/cohort/manual')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a manual upload cohort on a proposal' })
@@ -228,7 +215,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.addManualUploadCohort(id, newCohort, file, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember)
   @Put(':id/cohort/automatic')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Creates a cohort on a proposal' })
@@ -242,7 +229,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.automaticCohortAdd(id, newCohort, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember)
   @Delete(':mainId/cohort/:subId')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Deletes the upload and cohort on a proposal' })
@@ -254,7 +241,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.deleteCohort(mainId, subId, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
   @Post('query/csv')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: "Returns a queries zipped csv's" })
@@ -292,7 +279,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.generateLocationCsvDownloadLink(id, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.RegisteringMember)
+  @Auth(Role.Researcher, Role.FdpgMember)
   @Patch(':id/participants')
   @UsePipes(ValidationPipe)
   @ApiOperation({ summary: 'Updates the participants of a proposal' })
@@ -342,19 +329,6 @@ export class ProposalMiscController {
     return this.proposalMiscService.updateDizDetails(id, dizDetailsId, updateDto, user);
   }
 
-  @Auth(Role.FdpgMember)
-  @Post(':id/copy-for-registration')
-  @UsePipes(ValidationPipe)
-  @ApiOperation({ summary: 'Copy proposal as internal registration for publication' })
-  @ApiCreatedResponse({ description: 'Copy created, returns new proposal ID' })
-  @HttpCode(201)
-  async copyForRegistration(
-    @Param() { id }: MongoIdParamDto,
-    @Request() { user }: FdpgRequest,
-  ): Promise<{ id: string }> {
-    const newProposalId = await this.proposalMiscService.copyAsInternalRegistration(id, user);
-    return { id: newProposalId };
-  }
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Put(':id/applicant/participant-role')
   @UsePipes(ValidationPipe)
@@ -382,19 +356,5 @@ export class ProposalMiscController {
     @Request() { user }: FdpgRequest,
   ): Promise<void> {
     await this.proposalMiscService.makeParticipantResponsible(id, participantId, user);
-  }
-
-  @Auth(Role.FdpgMember)
-  @Put(':id/assignee')
-  @ApiOperation({ summary: 'Updates the project assignee' })
-  @ApiNotFoundResponse({ description: 'Proposal could not be found' })
-  @ApiNoContentResponse({ description: 'Successfully set project assignee' })
-  @HttpCode(204)
-  async updateProjectAssignee(
-    @Param() { id }: MongoIdParamDto,
-    @Request() { user }: FdpgRequest,
-    @Body() { projectAssignee }: { projectAssignee?: ProjectAssigneeDto },
-  ): Promise<void> {
-    await this.proposalMiscService.updateProjectAssignee(id, user, projectAssignee);
   }
 }

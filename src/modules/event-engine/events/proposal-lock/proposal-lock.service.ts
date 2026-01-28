@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
-import { researcherEmail } from 'src/modules/email/proposal.emails';
-import { EmailCategory } from 'src/modules/email/types/email-category.enum';
+import { getProposalLockedEmailForOwner, getProposalUnlockedEmailForOwner } from './proposal-lock.emails';
 
 @Injectable()
 export class ProposalLockService {
@@ -15,9 +14,7 @@ export class ProposalLockService {
   private async handleProposalLock(proposal: Proposal, proposalUrl: string) {
     const ownerTask = async () => {
       const validOwnerContacts = await this.keycloakUtilService.getValidContactsByUserIds([proposal.owner.id]);
-      const mail = researcherEmail(validOwnerContacts, proposal, [EmailCategory.ProposalLock], proposalUrl, {
-        conditionProposalLocked: true,
-      });
+      const mail = getProposalLockedEmailForOwner(validOwnerContacts, proposal, proposalUrl);
       return await this.emailService.send(mail);
     };
 
@@ -29,9 +26,7 @@ export class ProposalLockService {
   private async handleProposalUnlock(proposal: Proposal, proposalUrl: string) {
     const ownerTask = async () => {
       const validOwnerContacts = await this.keycloakUtilService.getValidContactsByUserIds([proposal.owner.id]);
-      const mail = researcherEmail(validOwnerContacts, proposal, [EmailCategory.ProposalLock], proposalUrl, {
-        conditionProposalUnlocked: true,
-      });
+      const mail = getProposalUnlockedEmailForOwner(validOwnerContacts, proposal, proposalUrl);
       return await this.emailService.send(mail);
     };
 

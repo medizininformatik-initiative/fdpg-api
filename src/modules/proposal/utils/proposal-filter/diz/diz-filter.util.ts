@@ -2,29 +2,20 @@ import { ForbiddenException } from '@nestjs/common';
 import { FilterQuery } from 'mongoose';
 import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
-import { ProposalType } from 'src/modules/proposal/enums/proposal-type.enum';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
-import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
-import { getRegisterProposalsForUser } from '../proposal-filter.util';
-
-export const dizAllowedQuery = [
-  PanelQuery.DizComingUp,
-  PanelQuery.DizRequested,
-  PanelQuery.DizPending,
-  PanelQuery.DizOngoing,
-  PanelQuery.DizFinished,
-  PanelQuery.PublishedDraft,
-  PanelQuery.PublishedPending,
-  PanelQuery.PublishedCompleted,
-  PanelQuery.Archived,
-];
 
 export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): FilterQuery<Proposal> => {
-  if (dizAllowedQuery.includes(panelQuery)) {
+  const allowedQuery = [
+    PanelQuery.DizRequested,
+    PanelQuery.DizPending,
+    PanelQuery.DizOngoing,
+    PanelQuery.DizFinished,
+    PanelQuery.Archived,
+  ];
+
+  if (allowedQuery.includes(panelQuery)) {
     switch (panelQuery) {
-      case PanelQuery.DizComingUp:
-        return getFilterQueryForComingUp(user);
       case PanelQuery.DizRequested:
         return getFilterForRequested(user);
       case PanelQuery.DizPending:
@@ -33,31 +24,12 @@ export const getFilterForDiz = (panelQuery: PanelQuery, user: IRequestUser): Fil
         return getFilterForOngoing(user);
       case PanelQuery.DizFinished:
         return getFilterForFinished(user);
-      case PanelQuery.PublishedDraft:
-        return getRegisterProposalsForUser(user, ProposalStatus.Draft);
-      case PanelQuery.PublishedPending:
-        return getRegisterProposalsForUser(user, [
-          ProposalStatus.Rework,
-          ProposalStatus.FdpgCheck,
-          ProposalStatus.ReadyToPublish,
-        ]);
-      case PanelQuery.PublishedCompleted:
-        return getRegisterProposalsForUser(user, [ProposalStatus.Published, ProposalStatus.Rejected]);
       case PanelQuery.Archived:
         return getFilterForArchived(user);
     }
   } else {
     throw new ForbiddenException();
   }
-};
-
-const getFilterQueryForComingUp = (user: IRequestUser): FilterQuery<Proposal> => {
-  return {
-    status: ProposalStatus.FdpgCheck,
-    'userProject.addressees.desiredLocations': user.miiLocation,
-    'fdpgChecklist.initialViewing': true,
-    'fdpgChecklist.depthCheck': true,
-  };
 };
 
 const getFilterForRequested = (user: IRequestUser): FilterQuery<Proposal> => {
@@ -114,31 +86,16 @@ const getFilterForFinished = (user: IRequestUser): FilterQuery<Proposal> => {
 
 const getFilterForArchived = (user: IRequestUser): FilterQuery<Proposal> => {
   return {
-    $or: [
+    $and: [
       {
-        $and: [
-          {
-            status: ProposalStatus.Archived,
-          },
-          {
-            $or: [
-              { requestedButExcludedLocations: user.miiLocation },
-              { uacApprovedLocations: user.miiLocation },
-              { signedContracts: user.miiLocation },
-            ],
-          },
-        ],
+        status: ProposalStatus.Archived,
       },
       {
         $or: [
-          { ownerId: user.userId },
-          { participants: { $elemMatch: { 'researcher.email': user.email } } },
-          { 'projectResponsible.researcher.email': user.email },
+          { requestedButExcludedLocations: user.miiLocation },
+          { uacApprovedLocations: user.miiLocation },
+          { signedContracts: user.miiLocation },
         ],
-        type: ProposalType.RegisteringForm,
-        'registerInfo.isInternalRegistration': { $ne: true },
-        'owner.role': { $ne: Role.FdpgMember },
-        status: ProposalStatus.Archived,
       },
     ],
   };

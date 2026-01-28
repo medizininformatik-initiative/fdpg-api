@@ -3,5 +3,4 @@ export enum CommentType {
   ProposalTaskFdpg = 'PROPOSAL_TASK_FOR_FDPG',
   ProposalMessageToOwner = 'PROPOSAL_MESSAGE_TO_OWNER',
   ProposalMessageToLocation = 'PROPOSAL_MESSAGE_TO_LOCATION',
-  ProposalMessageToDmst = 'PROPOSAL_MESSAGE_TO_DMST',
 }

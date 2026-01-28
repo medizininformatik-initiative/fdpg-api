@@ -21,7 +21,7 @@ import { createMulterOptions } from 'src/shared/utils/multer-options.util';
 import { MarkAsDoneDto } from '../../comment/dto/mark-as-done.dto';
 import { ProposalValidation } from '../decorators/validation.decorator';
 import { ContractingUploadDto } from '../dto/contracting-upload.dto';
-import { ProposalGetDto, ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
+import { ProposalMarkConditionAcceptedReturnDto } from '../dto/proposal/proposal.dto';
 import { SetDizApprovalDto } from '../dto/set-diz-approval.dto';
 import { SetUacApprovalDto, SetUacApprovalWithFileDto } from '../dto/set-uac-approval.dto';
 import { RevertLocationVoteDto } from '../dto/revert-location-vote.dto';
@@ -29,7 +29,6 @@ import { SignContractDto, SignContractWithFileDto } from '../dto/sign-contract.d
 import { InitContractingDto, UpdateContractingDto } from '../dto/proposal/init-contracting.dto';
 import { ProposalContractingService } from '../services/proposal-contracting.service';
 import { SetDizConditionApprovalDto } from '../dto/set-diz-condition-approval.dto';
-import { SkipContractDto, SkipContractWithFileDto } from '../dto/skip-contract.dto';
 
 @ApiController('proposals', undefined, 'contracting')
 export class ProposalContractingController {
@@ -169,24 +168,5 @@ export class ProposalContractingController {
     @Request() { user }: FdpgRequest,
   ): Promise<ProposalMarkConditionAcceptedReturnDto> {
     return await this.proposalContractingService.markUacConditionAsAccepted(mainId, subId, value, user);
-  }
-
-  @Auth(Role.FdpgMember, Role.DataSourceMember)
-  @Post(':id/skip-contract')
-  @ProposalValidation()
-  @ApiNotFoundResponse({ description: 'Item could not be found' })
-  @ApiNoContentResponse({ description: 'Contract successfully skipped.' })
-  @HttpCode(200)
-  @UseInterceptors(FileInterceptor('file', createMulterOptions()))
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ type: SkipContractWithFileDto })
-  @ApiOperation({ summary: 'Skips a contract of a proposal' })
-  async skipContract(
-    @Param() { id }: MongoIdParamDto,
-    @UploadedFile() file: Express.Multer.File,
-    @Body() dto: SkipContractDto,
-    @Request() { user }: FdpgRequest,
-  ): Promise<ProposalGetDto> {
-    return await this.proposalContractingService.skipContract(id, dto, file, user);
   }
 }
