@@ -37,6 +37,7 @@ import { researcherAllowedQuery } from '../utils/proposal-filter/researcher/rese
 import { fdpgAllowedQuery } from '../utils/proposal-filter/fdpg/fdpg-filter.util';
 import { dizAllowedQuery } from '../utils/proposal-filter/diz/diz-filter.util';
 import { uacAllowedQuery } from '../utils/proposal-filter/uac/uac-filter.util';
+import { RegisterFormService } from './register-form.service';
 
 @Injectable()
 export class ProposalCrudService {
@@ -51,6 +52,7 @@ export class ProposalCrudService {
     private proposalFormService: ProposalFormService,
     private proposalSyncService: ProposalSyncService,
     private locationService: LocationService,
+    private registerFormService: RegisterFormService,
   ) {}
 
   async create(createProposalDto: ProposalCreateDto, user: IRequestUser): Promise<ProposalGetDto> {

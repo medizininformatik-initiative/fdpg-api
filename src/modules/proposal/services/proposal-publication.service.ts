@@ -44,7 +44,7 @@ export class ProposalPublicationService {
       return plainToClass(PublicationGetDto, plain, { strategy: 'excludeAll' });
     });
 
-    await this.eventEngineService.handleProposalPublicationCreate(proposal, publicationCreateDto);
+    await this.eventEngineService.handleProposalPublicationCreate(proposal, publicationCreateDto, user);
 
     return allPublicationsReturn;
   }
@@ -98,7 +98,7 @@ export class ProposalPublicationService {
       return plainToClass(PublicationGetDto, plain, { strategy: 'excludeAll' });
     });
 
-    await this.eventEngineService.handleProposalPublicationUpdate(proposal, publicationUpdateDto);
+    await this.eventEngineService.handleProposalPublicationUpdate(proposal, publicationUpdateDto, user);
 
     return allPublicationsReturn;
   }

@@ -3,7 +3,7 @@ import { EmailService } from 'src/modules/email/email.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { ReportsService } from '../reports.service';
+import { ReportsService } from '../report-notification.service';
 import { ReportBaseDto, ReportDto } from 'src/modules/proposal/dto/proposal/report.dto';
 
 describe('ReportsService', () => {

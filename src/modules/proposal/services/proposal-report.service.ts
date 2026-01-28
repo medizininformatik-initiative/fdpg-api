@@ -68,7 +68,7 @@ export class ProposalReportService {
       downloadTasks.push(task());
     });
 
-    const sendNotifications = this.eventEngineService.handleProposalReportCreate(proposal, report);
+    const sendNotifications = this.eventEngineService.handleProposalReportCreate(proposal, report, files, user);
     await Promise.allSettled([...downloadTasks, sendNotifications]);
 
     const plain = structuredClone(report);

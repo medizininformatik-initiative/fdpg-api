@@ -7,7 +7,7 @@ import { fdpgEmail } from 'src/modules/email/proposal.emails';
 import { EmailCategory } from 'src/modules/email/types/email-category.enum';
 
 @Injectable()
-export class ReportsService {
+export class ReportNotificationService {
   constructor(
     private keycloakUtilService: KeycloakUtilService,
     private emailService: EmailService,

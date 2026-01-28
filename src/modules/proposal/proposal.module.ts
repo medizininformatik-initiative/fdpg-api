@@ -42,6 +42,7 @@ import { ProposalDeliveryInfoService } from './services/data-delivery/proposal-d
 import { ProposalSubDeliveryService } from './services/data-delivery/proposal-sub-delivery.service';
 import { ProposalDataDeliverySyncService } from './services/data-delivery/proposal-data-delivery-sync.service';
 import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.service';
+import { RegisterFormService } from './services/register-form.service';
 @Module({
   imports: [
     LocationModule,
@@ -90,6 +91,7 @@ import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.serv
     ProposalPdfService,
     ProposalSyncService,
     AcptPluginClient,
+    RegisterFormService,
 
     // Data Delivery
     ProposalDataDeliveryService,
@@ -100,6 +102,6 @@ import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.serv
     ProposalDataDeliverySyncService,
     SyncDeliveryInfoCronService,
   ],
-  exports: [ProposalCrudService, MongooseModule, ProposalSyncService],
+  exports: [ProposalCrudService, MongooseModule, ProposalSyncService, RegisterFormService],
 })
 export class ProposalModule {}

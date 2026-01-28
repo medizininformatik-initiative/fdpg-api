@@ -9,8 +9,8 @@ import { CommentEventService } from './events/comments/comment-event.service';
 import { ContractingService } from './events/contracting/contracting.service';
 import { LocationVoteService } from './events/location-vote/location-vote.service';
 import { ProposalLockService } from './events/proposal-lock/proposal-lock.service';
-import { PublicationsService } from './events/publications/publications.service';
-import { ReportsService } from './events/reports/reports.service';
+import { PublicationNotificationService } from './events/publications/publication-notification.service';
+import { ReportsService } from './events/reports/report-notification.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
@@ -29,7 +29,7 @@ describe('EventEngineService', () => {
   let locationVoteService: LocationVoteService;
   let contractingService: ContractingService;
   let reportsService: ReportsService;
-  let publicationsService: PublicationsService;
+  let publicationsService: PublicationNotificationService;
   let configService: ConfigService;
   let dataDeliveryEventService: DataDeliveryEventService;
 
@@ -94,7 +94,7 @@ describe('EventEngineService', () => {
           },
         },
         {
-          provide: PublicationsService,
+          provide: PublicationNotificationService,
           useValue: {
             handlePublicationCreate: jest.fn(),
             handlePublicationUpdate: jest.fn(),
@@ -139,7 +139,7 @@ describe('EventEngineService', () => {
     locationVoteService = module.get<LocationVoteService>(LocationVoteService);
     contractingService = module.get<ContractingService>(ContractingService);
     reportsService = module.get<ReportsService>(ReportsService);
-    publicationsService = module.get<PublicationsService>(PublicationsService);
+    publicationsService = module.get<PublicationNotificationService>(PublicationNotificationService);
     configService = module.get<ConfigService>(ConfigService);
     dataDeliveryEventService = module.get<DataDeliveryEventService>(DataDeliveryEventService);
   });
