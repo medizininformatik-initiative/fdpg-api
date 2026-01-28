@@ -25,6 +25,8 @@ import { validateMatchingId } from 'src/shared/utils/validate-matching-ids.util'
 import { validateStatusChange } from '../../utils/validate-status-change.util';
 import { CheckUniqueProposalDto } from '../../dto/check-unique-proposal.dto';
 import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.service';
+import { ProposalSyncService } from '../proposal-sync.service';
+import { LocationService } from 'src/modules/location/service/location.service';
 
 class ProposalModel {
   constructor(data) {
@@ -96,6 +98,8 @@ describe('ProposalCrudService', () => {
   let sharedService: jest.Mocked<SharedService>;
   let statusChangeService: jest.Mocked<StatusChangeService>;
   let proposalFormService: jest.Mocked<ProposalFormService>;
+  let proposalSyncService: jest.Mocked<ProposalSyncService>;
+  let locationService: jest.Mocked<LocationService>;
 
   const request = {
     user: {
@@ -146,6 +150,20 @@ describe('ProposalCrudService', () => {
             getCurrentVersion: jest.fn(),
           },
         },
+        {
+          provide: ProposalSyncService,
+          useValue: {
+            syncProposal: jest.fn(),
+            retrySync: jest.fn(),
+            syncAllProposals: jest.fn(),
+          },
+        },
+        {
+          provide: LocationService,
+          useValue: {
+            findById: jest.fn().mockImplementation(() => undefined),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -157,6 +175,8 @@ describe('ProposalCrudService', () => {
     sharedService = module.get<SharedService>(SharedService) as jest.Mocked<SharedService>;
     statusChangeService = module.get<StatusChangeService>(StatusChangeService) as jest.Mocked<StatusChangeService>;
     proposalFormService = module.get<ProposalFormService>(ProposalFormService) as jest.Mocked<ProposalFormService>;
+    proposalSyncService = module.get<ProposalSyncService>(ProposalSyncService) as jest.Mocked<ProposalSyncService>;
+    locationService = module.get<LocationService>(LocationService) as jest.Mocked<LocationService>;
   });
 
   it('should be defined', () => {
@@ -228,7 +248,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with projection', async () => {
@@ -240,6 +260,7 @@ describe('ProposalCrudService', () => {
         participants: 1,
         deadlines: 1,
         selectedDataSources: 1,
+        dataDelivery: 1,
       };
       const desiredProjection = { ['reports.content']: 1 };
       const willBeModified = true;
@@ -256,7 +277,7 @@ describe('ProposalCrudService', () => {
       );
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, request.user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with diz member projection', async () => {
@@ -286,7 +307,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified, undefined);
     });
 
     it('should find a proposal with uac member projection', async () => {
@@ -315,7 +336,7 @@ describe('ProposalCrudService', () => {
       const result = await proposalCrudService.findDocument(proposalId, user, desiredProjection, willBeModified);
       expect(result).toEqual(proposal);
       expect(ProposalModel.findById).toHaveBeenCalledWith(proposalId, expectedProjection);
-      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, willBeModified);
+      expect(validateProposalAccess).toHaveBeenCalledWith(proposal, user, undefined, willBeModified, undefined);
     });
 
     it('should throw 404 if not found', async () => {
@@ -347,6 +368,7 @@ describe('ProposalCrudService', () => {
       const plainToClassConfig = {
         strategy: 'excludeAll',
         groups: [...userGroups, ProposalValidation.IsOutput, request.user.singleKnownRole],
+        selectedDataSources: [],
       };
       expect(plainToClass).toHaveBeenCalledWith(ProposalGetDto, proposalContent, plainToClassConfig);
 
@@ -478,6 +500,137 @@ describe('ProposalCrudService', () => {
 
       expect(result).toEqual(false);
       expect(ProposalModel.exists).toHaveBeenCalledWith(filter);
+    });
+  });
+
+  describe('getStatistics', () => {
+    it('should calculate statistics with priority counts for researcher', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      const mockProposals = [
+        { dueDateForStatus: yesterday }, // critical (overdue)
+        { dueDateForStatus: tomorrow }, // high (has due date)
+        { dueDateForStatus: null }, // low (no due date)
+      ];
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockProposals),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result).toHaveProperty('panels');
+      expect(result).toHaveProperty('total');
+      expect(result.panels[PanelQuery.Draft]).toEqual({
+        critical: 1,
+        high: 1,
+        medium: 0,
+        low: 1,
+        total: 3,
+      });
+    });
+
+    it('should calculate statistics for multiple panels', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const mockDraftProposals = [{ dueDateForStatus: null }, { dueDateForStatus: null }];
+      const mockPendingProposals = [{ dueDateForStatus: new Date(Date.now() + 24 * 60 * 60 * 1000) }];
+
+      ProposalModel.find = jest.fn().mockImplementation(() => ({
+        lean: jest.fn().mockImplementation(() => {
+          const callCount = (ProposalModel.find as jest.Mock).mock.calls.length;
+          if (callCount === 1) return Promise.resolve(mockDraftProposals);
+          if (callCount === 2) return Promise.resolve(mockPendingProposals);
+          return Promise.resolve([]);
+        }),
+      }));
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.panels[PanelQuery.Draft].total).toBe(2);
+      expect(result.panels[PanelQuery.Draft].low).toBe(2);
+      expect(result.panels[PanelQuery.ResearcherPending].total).toBe(1);
+      expect(result.panels[PanelQuery.ResearcherPending].high).toBe(1);
+    });
+
+    it('should return correct total count', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue([{}, {}, {}]),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.total).toBeGreaterThan(0);
+    });
+
+    it('should handle proposals with no due dates as low priority', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const mockProposals = [{ dueDateForStatus: null }, { dueDateForStatus: undefined }, { dueDateForStatus: null }];
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockProposals),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.panels[PanelQuery.Draft].low).toBe(3);
+      expect(result.panels[PanelQuery.Draft].critical).toBe(0);
+      expect(result.panels[PanelQuery.Draft].high).toBe(0);
+    });
+
+    it('should handle proposals with overdue dates as critical', async () => {
+      const researcherRequest = {
+        user: {
+          userId: 'userId',
+          singleKnownRole: Role.Researcher,
+          email: 'researcher@test.com',
+        },
+      } as FdpgRequest;
+
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const mockProposals = [{ dueDateForStatus: yesterday }, { dueDateForStatus: lastWeek }];
+
+      ProposalModel.find = jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockProposals),
+      });
+
+      const result = await proposalCrudService.getStatistics(researcherRequest.user);
+
+      expect(result.panels[PanelQuery.Draft].critical).toBe(2);
+      expect(result.panels[PanelQuery.Draft].high).toBe(0);
     });
   });
 });

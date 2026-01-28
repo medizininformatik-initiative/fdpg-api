@@ -1,10 +1,10 @@
 import { defaultDueDateValues, DueDateEnum } from '../enums/due-date.enum';
 import { ProposalStatus } from '../enums/proposal-status.enum';
-import { Proposal } from '../schema/proposal.schema';
+import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 
 const DUE_DAYS_FDPG_CHECK = 1 * 7;
 const DUE_DAYS_DATA_CORRUPT = 1 * 7;
-const DUE_DAYS_FINISHED_PROJECT = 1 * 7;
+const DUE_DAYS_FINISHED_PROJECT = 1 * 7 * 4 * 2; // 2 Months
 
 const DUE_DAYS_LOCATION_CHECK = 8 * 7;
 const DUE_DAYS_EXPECT_DATA_DELIVERY = 2 * 7;
@@ -137,6 +137,7 @@ export const setDueDate = (proposal: Proposal, setContracting?: boolean) => {
           proposal.deadlines = { ...defaultDueDateValues };
         }
         Object.keys(defaultDueDateValues).forEach((key) => (proposal.deadlines[key] = null));
+        (proposal as ProposalDocument).markModified?.('deadlines');
         return undefined;
       }
 

@@ -7,6 +7,7 @@ import { HistoryEvent } from '../schema/sub-schema/history-event.schema';
 import { DueDateEnum } from '../enums/due-date.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { HistoryEventDataMap } from '../types/history-event-data-map.type';
+import { DeliveryAcceptance } from '../enums/data-delivery.enum';
 
 const pushHistoryItem = <T extends HistoryEventType>(
   proposalAfterChanges: Proposal,
@@ -181,6 +182,12 @@ export const addHistoryItemForContractSign = (
   pushHistoryItem(proposalAfterChanges, user, type, user.miiLocation);
 };
 
+export const addHistoryItemForContractSkipped = (proposalAfterChanges: Proposal, user: IRequestUser): void => {
+  const type = HistoryEventType.ContractingSkipped;
+
+  pushHistoryItem(proposalAfterChanges, user, type);
+};
+
 export const addHistoryItemForContractSystemReject = (
   proposalAfterChanges: Proposal,
   user: IRequestUser,
@@ -289,4 +296,67 @@ export const addHistoryItemForParticipantsUpdated = (
     const type = HistoryEventType.ParticipantUpdated;
     pushHistoryItem(proposal, user, type);
   }
+};
+
+export const addHistoryItemForCopyAsInternalRegistration = (
+  proposal: Proposal,
+  user: IRequestUser,
+  originalProposalAbbreviation: string,
+): void => {
+  const type = HistoryEventType.ProposalCopyAsInternalRegistration;
+  pushHistoryItem(proposal, user, type, undefined, { originalProposalAbbreviation });
+};
+
+export const addHistoryItemForDmoRequest = (proposal: Proposal, user: IRequestUser, requestedDms: string): void => {
+  const type = HistoryEventType.DmoRequest;
+  pushHistoryItem(proposal, user, type, undefined, { requestedDms });
+};
+
+export const addHistoryItemForDmoAcceptanceAnswer = (
+  proposal: Proposal,
+  user: IRequestUser,
+  answer: DeliveryAcceptance,
+): void => {
+  const type = answer === DeliveryAcceptance.ACCEPTED ? HistoryEventType.DmoAccept : HistoryEventType.DmoDeny;
+  pushHistoryItem(proposal, user, type, user.miiLocation);
+};
+
+export const addHistoryItemForInitiateDelivery = (
+  proposal: Proposal,
+  user: IRequestUser,
+  deliveryName: string,
+  isManual: boolean,
+  locations: string[],
+): void => {
+  const type = isManual ? HistoryEventType.DataDeliveryManualEntry : HistoryEventType.DataDeliveryStarted;
+  pushHistoryItem(proposal, user, type, undefined, { deliveryName, locations });
+};
+
+export const addHistoryItemForCanceledDelivery = (
+  proposal: Proposal,
+  user: IRequestUser,
+  deliveryName: string,
+  locations: string[],
+): void => {
+  const type = HistoryEventType.DataDeliveryCanceled;
+  pushHistoryItem(proposal, user, type, undefined, { deliveryName, locations });
+};
+
+export const addHistoryItemForForwardedDelivery = (
+  proposal: Proposal,
+  user: IRequestUser,
+  deliveryName: string,
+  locations: string[],
+): void => {
+  const type = HistoryEventType.DataDeliveryForwarded;
+  pushHistoryItem(proposal, user, type, undefined, { deliveryName, locations });
+};
+
+export const addHistoryItemForDataDeliveryConcluded = (
+  proposal: Proposal,
+  user: IRequestUser,
+  deliveryName: string,
+): void => {
+  const type = HistoryEventType.DataDeliveryConcluded;
+  pushHistoryItem(proposal, user, type, undefined, { deliveryName });
 };

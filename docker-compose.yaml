@@ -1,5 +1,10 @@
 # Docker compose environment for local development
 version: '3'
+
+volumes:
+  grafana_data: {}
+  prometheus_data: {}
+
 services:
   s3:
     image: quay.io/minio/minio:latest
@@ -21,11 +26,45 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
 
   # PDF Service must be first build in PDF Service Repository
-  pdf:
-    image: fdpgpdfservice:latest
-    restart: always
+  # pdf:
+  #   image: fdpgpdfservice:latest
+  #   restart: always
+  #   ports:
+  #     - 8081:3000
+  #   environment:
+  #     ENABLE_TELEMETRY: false
+  #     PRINT_FRONTEND_HOST: http://localhost:3000
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
     ports:
-      - 8081:3000
+      - '9090:9090'
+    volumes:
+      - ./docker_compose_files/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
+
+  grafana:
+    image: grafana/grafana:10.3.1-ubuntu
+    container_name: grafana
+    ports:
+      - '3099:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker_compose_files/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker_compose_files/grafana/dashboards:/var/lib/grafana/dashboards
     environment:
-      ENABLE_TELEMETRY: false
-      PRINT_FRONTEND_HOST: http://localhost:3000
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      - loki
+      - prometheus
