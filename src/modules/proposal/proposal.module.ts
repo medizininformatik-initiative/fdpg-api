@@ -43,6 +43,9 @@ import { ProposalDeliveryInfoService } from './services/data-delivery/proposal-d
 import { ProposalSubDeliveryService } from './services/data-delivery/proposal-sub-delivery.service';
 import { ProposalDataDeliverySyncService } from './services/data-delivery/proposal-data-delivery-sync.service';
 import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.service';
+import { RegistrationFormCrudService } from './services/registration-form-crud.service';
+import { RegistrationFormPublicationService } from './services/registration-form-publication.service';
+import { RegistrationFormReportService } from './services/registration-form-report.service';
 @Module({
   imports: [
     LocationModule,
@@ -91,6 +94,9 @@ import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.serv
     ProposalPdfService,
     ProposalSyncService,
     AcptPluginClient,
+    RegistrationFormCrudService,
+    RegistrationFormPublicationService,
+    RegistrationFormReportService,
     RegistrationFormCopyService,
 
     // Data Delivery

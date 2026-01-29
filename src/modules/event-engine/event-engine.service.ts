@@ -13,10 +13,8 @@ import { LocationVoteService } from './events/location-vote/location-vote.servic
 import { ProposalLockService } from './events/proposal-lock/proposal-lock.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
-import { ReportsService } from './events/reports/reports.service';
 import { ReportDto } from '../proposal/dto/proposal/report.dto';
 import { PublicationCreateDto, PublicationUpdateDto } from '../proposal/dto/proposal/publication.dto';
-import { PublicationsService } from './events/publications/publications.service';
 import { Answer } from '../comment/schema/answer.schema';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
 import { CommentType } from '../comment/enums/comment-type.enum';
@@ -25,6 +23,8 @@ import { DueDateEnum } from '../proposal/enums/due-date.enum';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
 import { Location } from '../location/schema/location.schema';
+import { PublicationNotificationService } from './events/publications/publication-notification.service';
+import { ReportNotificationService } from './events/reports/report-notification.service';
 
 type MongoDocument = Document<any, any, any> & { _id: any };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
@@ -42,8 +42,8 @@ export class EventEngineService {
     private commentAnswerEventService: CommentAnswerEventService,
     private locationVoteService: LocationVoteService,
     private contractingService: ContractingService,
-    private reportsService: ReportsService,
-    private publicationsService: PublicationsService,
+    private reportNotificationService: ReportNotificationService,
+    private publicationNotificationService: PublicationNotificationService,
     private configService: ConfigService,
     private deadlineEventService: DeadlineEventService,
     private participantEmailSummaryService: ParticipantEmailSummaryService,
@@ -147,21 +147,21 @@ export class EventEngineService {
   async handleProposalReportCreate(proposal: Proposal, report: ReportDto) {
     if (proposal && report) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportsService.handleReportCreate(proposal, report, proposalUrl);
+      await this.reportNotificationService.handleReportCreate(proposal, report, proposalUrl);
     }
   }
 
   async handleProposalPublicationCreate(proposal: Proposal, publication: PublicationCreateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationsService.handlePublicationCreate(proposal, publication, proposalUrl);
+      await this.publicationNotificationService.handlePublicationCreate(proposal, publication, proposalUrl);
     }
   }
 
-  async handleProposalPublicationUpdate(proposal: Proposal, publication: PublicationUpdateDto) {
+  async handleProposalPublicationUpdate(proposal: Proposal, publicationId: string, publication: PublicationUpdateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationsService.handlePublicationUpdate(proposal, publication, proposalUrl);
+      await this.publicationNotificationService.handlePublicationUpdate(proposal, publication, proposalUrl);
     }
   }
 

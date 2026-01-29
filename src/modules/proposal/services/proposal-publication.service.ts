@@ -7,13 +7,17 @@ import { ModificationContext } from '../enums/modification-context.enum';
 import { ProposalCrudService } from './proposal-crud.service';
 import { getAllPublicationsProjection } from '../schema/constants/get-all-publications.projection';
 import { Publication, PublicationDocument } from '../schema/sub-schema/publication.schema';
+import { RegistrationFormPublicationService } from './registration-form-publication.service';
 
 @Injectable()
 export class ProposalPublicationService {
   constructor(
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
+    private registerFormPublicationService: RegistrationFormPublicationService,
   ) {}
+
+  private readonly projection = { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1 };
 
   async createPublication(
     proposalId: string,
@@ -23,7 +27,7 @@ export class ProposalPublicationService {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      undefined,
+      this.projection,
       true,
       ModificationContext.Publication,
     );
@@ -44,7 +48,8 @@ export class ProposalPublicationService {
       return plainToClass(PublicationGetDto, plain, { strategy: 'excludeAll' });
     });
 
-    await this.eventEngineService.handleProposalPublicationCreate(proposal, publicationCreateDto);
+    await this.eventEngineService.handleProposalPublicationCreate(saveResult, publicationCreateDto);
+    await this.registerFormPublicationService.handlePublicationCreate(saveResult, publicationCreateDto, user);
 
     return allPublicationsReturn;
   }
@@ -69,7 +74,7 @@ export class ProposalPublicationService {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      undefined,
+      this.projection,
       true,
       ModificationContext.Publication,
     );
@@ -98,7 +103,14 @@ export class ProposalPublicationService {
       return plainToClass(PublicationGetDto, plain, { strategy: 'excludeAll' });
     });
 
-    await this.eventEngineService.handleProposalPublicationUpdate(proposal, publicationUpdateDto);
+    await this.eventEngineService.handleProposalPublicationUpdate(saveResult, publicationId, publicationUpdateDto);
+
+    await this.registerFormPublicationService.handlePublicationUpdate(
+      saveResult,
+      publicationId,
+      publicationUpdateDto,
+      user,
+    );
 
     return allPublicationsReturn;
   }
@@ -123,5 +135,6 @@ export class ProposalPublicationService {
     proposal.publications.splice(publicationIdx, 1);
 
     await proposal.save();
+    await this.registerFormPublicationService.handlePublicationDelete(proposal, publicationId, user);
   }
 }

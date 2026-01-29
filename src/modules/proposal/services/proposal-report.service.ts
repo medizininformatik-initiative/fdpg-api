@@ -13,6 +13,9 @@ import { ReportDocument } from '../schema/sub-schema/report.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
 import { addReport, addReportUpload, getBlobName } from '../utils/proposal.utils';
 import { validateReportUploads } from '../utils/validate-report.util';
+import { RegistrationFormReportService } from './registration-form-report.service';
+import { ProposalType } from '../enums/proposal-type.enum';
+import { PublicStorageService } from 'src/modules/storage';
 
 @Injectable()
 export class ProposalReportService {
@@ -20,7 +23,11 @@ export class ProposalReportService {
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
     private storageService: StorageService,
+    private publicStorageService: PublicStorageService,
+    private registrationFormReportService: RegistrationFormReportService,
   ) {}
+
+  private readonly projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
 
   async createReport(
     proposalId: string,
@@ -28,15 +35,17 @@ export class ProposalReportService {
     files: Express.Multer.File[],
     user: IRequestUser,
   ): Promise<ReportGetDto> {
-    // The owner is necessary for access control
-    const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      projection,
+      this.projection,
       true,
       ModificationContext.Report,
     );
+
+    if (proposal.type === ProposalType.RegisteringForm) {
+      return await this.registrationFormReportService.handleReportCreate(proposal, reportCreateDto, files, user);
+    }
 
     const report = new ReportDto(reportCreateDto);
     const uploadTasks = files.map(async (file) => {
@@ -69,7 +78,8 @@ export class ProposalReportService {
     });
 
     const sendNotifications = this.eventEngineService.handleProposalReportCreate(proposal, report);
-    await Promise.allSettled([...downloadTasks, sendNotifications]);
+    const syncRegistration = this.registrationFormReportService.handleReportCreate(proposal, report, files, user);
+    await Promise.allSettled([...downloadTasks, sendNotifications, syncRegistration]);
 
     const plain = structuredClone(report);
     return plainToInstance(ReportGetDto, plain, { strategy: 'excludeAll' });
@@ -77,6 +87,7 @@ export class ProposalReportService {
 
   async getAllReports(proposalId: string, user: IRequestUser): Promise<ReportGetDto[]> {
     const projection = {
+      type: 1,
       'reports._id': 1,
       'reports.uploads': 1,
       'reports.title': 1,
@@ -89,7 +100,14 @@ export class ProposalReportService {
     proposal.reports.forEach((report) => {
       report.uploads.forEach((upload) => {
         const task = async () => {
-          const downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
+          let downloadUrl: string;
+
+          if (proposal.type === ProposalType.RegisteringForm) {
+            downloadUrl = await this.publicStorageService.getPublicUrl(upload.blobName);
+          } else {
+            downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
+          }
+
           (upload as UploadGetDto).downloadUrl = downloadUrl;
         };
         tasks.push(task());
@@ -125,15 +143,23 @@ export class ProposalReportService {
     const { keepUploads, ...updateDto } = reportUpdateDto;
     validateReportUploads(keepUploads, files);
 
-    // The owner is necessary for access control
-    const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      projection,
+      this.projection,
       true,
       ModificationContext.Report,
     );
+
+    if (proposal.type === ProposalType.RegisteringForm) {
+      return await this.registrationFormReportService.handleReportUpdate(
+        proposal,
+        reportId,
+        reportUpdateDto,
+        files,
+        user,
+      );
+    }
 
     const reportIdx = proposal.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
 
@@ -174,27 +200,37 @@ export class ProposalReportService {
     const plainReport = report.toObject();
     plainReport.uploads.forEach((upload) => {
       const task = async () => {
-        const downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
+        let downloadUrl: string;
+        downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
         (upload as UploadGetDto).downloadUrl = downloadUrl;
       };
       downloadLinkTasks.push(task());
     });
 
-    await Promise.allSettled(downloadLinkTasks);
+    const syncRegistration = this.registrationFormReportService.handleReportUpdate(
+      proposal,
+      reportId,
+      reportUpdateDto,
+      files,
+      user,
+    );
+    await Promise.allSettled([...downloadLinkTasks, syncRegistration]);
 
     return plainToInstance(ReportGetDto, plainReport, { strategy: 'excludeAll' });
   }
 
   async deleteReport(proposalId: string, reportId: string, user: IRequestUser): Promise<void> {
-    // The owner is necessary for access control
-    const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      projection,
+      this.projection,
       true,
       ModificationContext.Report,
     );
+
+    if (proposal.type === ProposalType.RegisteringForm) {
+      return this.registrationFormReportService.handleReportDelete(proposal, reportId, user);
+    }
 
     const reportIdx = proposal.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
 
@@ -209,5 +245,6 @@ export class ProposalReportService {
     proposal.reports.splice(reportIdx, 1);
 
     await proposal.save();
+    await this.registrationFormReportService.handleReportDelete(proposal, reportId, user);
   }
 }
