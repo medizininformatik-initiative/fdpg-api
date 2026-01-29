@@ -23,7 +23,7 @@ export class RegistrationFormCrudService {
 
     if (!result) {
       this.logger.log(
-        `Proposal ${proposal.projectAbbreviation} is not an ApplicationForm with registerFormId. ${JSON.stringify({ type: proposal.type, registerFormId: proposal.registerFormId })}`,
+        `Proposal ${proposal.projectAbbreviation} is not a ApplicationForm with registerFormId. ${JSON.stringify({ type: proposal.type, registerFormId: proposal.registerFormId })}`,
       );
     }
 

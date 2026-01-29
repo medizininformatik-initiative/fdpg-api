@@ -21,41 +21,35 @@ export const validateProposalAccess = (
   }
 
   if (user.singleKnownRole === Role.FdpgMember) {
-    checkAccessForFdpgMember(proposal, willBeModified);
-    return;
+    return checkAccessForFdpgMember(proposal, willBeModified);
   }
 
   if (proposal.type === ProposalType.RegisteringForm && user.roles?.includes(Role.RegisteringMember)) {
-    checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
-    return;
-  }
-
-  if (user.roles?.includes(Role.RegisteringMember)) {
-    return;
+    return checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
   }
 
   if (user.singleKnownRole === Role.Researcher) {
-    checkAccessForResearcher(proposal, user);
+    return checkAccessForResearcher(proposal, user);
   }
 
   if (user.singleKnownRole === Role.RegisteringMember) {
-    checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
+    return checkAccessForRegisteringMember(proposal, user, willBeModified, modificationContext);
   }
 
   if (user.singleKnownRole === Role.DataSourceMember) {
-    checkAccessForDataSourceMember(proposal, user, willBeModified);
+    return checkAccessForDataSourceMember(proposal, user, willBeModified);
   }
 
   if (user.singleKnownRole === Role.DizMember) {
-    checkAccessForDizMember(proposal, user);
+    return checkAccessForDizMember(proposal, user);
   }
 
   if (user.singleKnownRole === Role.UacMember) {
-    checkAccessForUacMember(proposal, user);
+    return checkAccessForUacMember(proposal, user);
   }
 
   if (user.singleKnownRole === Role.DataManagementOffice) {
-    checkAccessForDmoMember(proposal, user, userLocation);
+    return checkAccessForDmoMember(proposal, user, userLocation);
   }
 };
 
