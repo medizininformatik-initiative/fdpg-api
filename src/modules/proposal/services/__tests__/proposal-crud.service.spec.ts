@@ -261,6 +261,7 @@ describe('ProposalCrudService', () => {
         deadlines: 1,
         selectedDataSources: 1,
         dataDelivery: 1,
+        type: 1,
       };
       const desiredProjection = { ['reports.content']: 1 };
       const willBeModified = true;
@@ -289,6 +290,8 @@ describe('ProposalCrudService', () => {
         projectResponsible: 1,
         additionalLocationInformation: 1,
         conditionalApprovals: 1,
+        contractAcceptedByResearcher: 1,
+        contractRejectedByResearcher: 1,
         locationConditionDraft: 1,
         openDizChecks: 1,
         dizApprovedLocations: 1,
@@ -296,6 +299,7 @@ describe('ProposalCrudService', () => {
         openDizConditionChecks: 1,
         signedContracts: 1,
         requestedButExcludedLocations: 1,
+        type: 1,
       };
       const desiredProjection = { ['reports.content']: 1 };
       const willBeModified = true;
@@ -319,12 +323,16 @@ describe('ProposalCrudService', () => {
         projectResponsible: 1,
         additionalLocationInformation: 1,
         conditionalApprovals: 1,
+        contractAcceptedByResearcher: 1,
+        contractRejectedByResearcher: 1,
         dizApprovedLocations: 1,
         locationConditionDraft: 1,
         openDizConditionChecks: 1,
         uacApprovedLocations: 1,
         signedContracts: 1,
         requestedButExcludedLocations: 1,
+        openDizChecks: 1,
+        type: 1,
       };
       const desiredProjection = { ['reports.content']: 1 };
       const willBeModified = true;
