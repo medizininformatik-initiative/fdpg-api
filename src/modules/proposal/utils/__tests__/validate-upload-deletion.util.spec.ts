@@ -28,31 +28,37 @@ describe('validateUploadDeletion', () => {
     researcherUser = {
       singleKnownRole: Role.Researcher,
       userId: 'owner-1',
+      roles: [Role.Researcher],
     } as IRequestUser;
 
     otherResearcher = {
       singleKnownRole: Role.Researcher,
       userId: 'someone-else',
+      roles: [Role.Researcher],
     } as IRequestUser;
 
     fdpgUser = {
       singleKnownRole: Role.FdpgMember,
       userId: 'fdpg-1',
+      roles: [Role.FdpgMember],
     } as IRequestUser;
 
     dataSourceUser = {
       singleKnownRole: Role.DataSourceMember,
       userId: 'ds-1',
+      roles: [Role.DataSourceMember],
     } as IRequestUser;
 
     dizUser = {
       singleKnownRole: Role.DizMember,
       userId: 'diz-1',
+      roles: [Role.DizMember],
     } as IRequestUser;
 
     uacUser = {
       singleKnownRole: Role.UacMember,
       userId: 'uac-1',
+      roles: [Role.UacMember],
     } as IRequestUser;
   });
 
