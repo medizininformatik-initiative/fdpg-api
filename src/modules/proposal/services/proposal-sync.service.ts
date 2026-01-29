@@ -200,9 +200,9 @@ export class ProposalSyncService {
 
       // Step 2: Sync locations (they need to exist before project)
       this.logger.log(`[2/5] Syncing locations for project ${proposal.projectAbbreviation}...`);
-      const { desiredLocationIds, participantInstituteIds } = await this.syncLocations(proposal);
+      const { locationIds, participantInstituteIds } = await this.syncLocations(proposal);
       this.logger.log(
-        `✓ Synced ${desiredLocationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
+        `✓ Synced ${locationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
       );
 
       // Step 3: Upload project logo if available
@@ -255,7 +255,7 @@ export class ProposalSyncService {
       const projectData: AcptProjectDto = await this.buildAcptPayload(
         proposal,
         researcherIds,
-        desiredLocationIds,
+        locationIds,
         participantInstituteIds,
         projectLogoWPId,
         reportAttachmentIds,
@@ -382,12 +382,14 @@ export class ProposalSyncService {
 
   private async syncLocations(
     proposal: ProposalDocument,
-  ): Promise<{ desiredLocationIds: string[]; participantInstituteIds: string[] }> {
-    const desiredLocationIds: string[] = [];
+  ): Promise<{ locationIds: string[]; participantInstituteIds: string[] }> {
+    const locationIds: string[] = [];
     const participantInstituteIds: string[] = [];
 
     const desiredLocationCodes = new Set<string>();
-    proposal.userProject?.addressees?.desiredLocations?.forEach((loc) => {
+
+    const locationSource = proposal.registerInfo?.locations;
+    locationSource?.forEach((loc) => {
       if (loc && loc !== 'VIRTUAL_ALL') {
         desiredLocationCodes.add(loc);
       }
@@ -401,7 +403,7 @@ export class ProposalSyncService {
       try {
         const locationId = await this.ensureLocationExists(locationCode, 'miiLocation');
         if (locationId) {
-          desiredLocationIds.push(locationId);
+          locationIds.push(locationId);
         }
       } catch (error) {
         this.logger.error(`Failed to sync desired location ${locationCode}: ${error.message}`);
@@ -432,7 +434,7 @@ export class ProposalSyncService {
       }
     }
 
-    return { desiredLocationIds, participantInstituteIds };
+    return { locationIds, participantInstituteIds };
   }
 
   private async ensureLocationExists(
@@ -536,7 +538,7 @@ export class ProposalSyncService {
   private async buildAcptPayload(
     proposal: ProposalDocument,
     researcherIds: string[],
-    desiredLocationIds: string[],
+    locationIds: string[],
     participantInstituteIds: string[],
     projectLogoWPId: number | undefined = undefined,
     reportAttachmentIds: number[] = [],
@@ -551,11 +553,11 @@ export class ProposalSyncService {
       });
     }
 
-    if (desiredLocationIds.length > 0) {
+    if (locationIds.length > 0) {
       meta.push({
         box: 'project-fields',
         field: 'fdpgx-location',
-        value: desiredLocationIds,
+        value: locationIds,
       });
     }
 
@@ -599,8 +601,10 @@ export class ProposalSyncService {
       });
     }
 
-    if (proposal.userProject?.generalProjectInformation?.desiredStartTime) {
-      const startDate = new Date(proposal.userProject.generalProjectInformation.desiredStartTime);
+    const startTimeSource = proposal.registerInfo?.startTime;
+
+    if (startTimeSource) {
+      const startDate = new Date(startTimeSource);
       meta.push({
         box: 'project-fields',
         field: 'fdpgx-projectstart',
@@ -615,13 +619,13 @@ export class ProposalSyncService {
         value: String(proposal.userProject.generalProjectInformation.projectDuration),
       });
 
-      if (proposal.userProject?.generalProjectInformation?.desiredStartTime) {
+      if (startTimeSource) {
         let endDate: Date;
         if (proposal.registerInfo?.isInternalRegistration && proposal.deadlines.DUE_DAYS_FINISHED_PROJECT) {
           // For internal registrations with a finished project deadline, set end date to that deadline
           endDate = new Date(proposal.deadlines.DUE_DAYS_FINISHED_PROJECT);
         } else {
-          const startDate = new Date(proposal.userProject.generalProjectInformation.desiredStartTime);
+          const startDate = new Date(startTimeSource);
           const duration = proposal.userProject.generalProjectInformation.projectDuration;
           endDate = new Date(startDate);
           endDate.setMonth(endDate.getMonth() + duration);

@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsArray, IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
@@ -50,6 +50,22 @@ export class RegisterInfoDto extends WithIdForObjectDto {
   @IsOptional()
   @IsNotEmptyString({ each: true, groups: [ProposalValidation.IsRegister] })
   procedures?: string[];
+
+  @Expose()
+  @IsArray()
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft],
+  })
+  @UiWidget({ type: 'select', format: 'multiple' })
+  locations?: string[];
+
+  @Expose()
+  @IsDate()
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft],
+  })
+  @UiWidget({ type: 'datepicker' })
+  startTime?: Date;
 
   // Sync fields (managed by system, not user input)
   @Expose()

@@ -18,7 +18,6 @@ import {
   addHistoryItemForStatus,
   addHistoryItemForParticipantsUpdated,
   addHistoryItemForParticipantRemoved,
-  addHistoryItemForCopyAsInternalRegistration,
 } from '../utils/proposal-history.util';
 import { validateFdpgCheckStatus } from '../utils/validate-fdpg-check-status.util';
 import { validateStatusChange } from '../utils/validate-status-change.util';
@@ -913,125 +912,6 @@ export class ProposalMiscService {
     return { zipBuffer, projectAbbreviation: proposal.projectAbbreviation };
   }
 
-  async copyAsInternalRegistration(proposalId: string, user: IRequestUser): Promise<string> {
-    const original = await this.proposalCrudService.findDocument(proposalId, user);
-
-    const validStatuses = [
-      ProposalStatus.Contracting,
-      ProposalStatus.ExpectDataDelivery,
-      ProposalStatus.DataResearch,
-      ProposalStatus.DataCorrupt,
-      ProposalStatus.FinishedProject,
-    ];
-
-    if (!validStatuses.includes(original.status)) {
-      throw new BadRequestException('Proposal must be in Contracting or later status to register');
-    }
-
-    const originalObj = original.toObject();
-
-    this.resetIsDoneFlags(originalObj);
-
-    // If applicant is also the responsible scientist, copy their data to projectResponsible
-    let projectResponsible = originalObj.projectResponsible;
-    if (originalObj.projectResponsible?.projectResponsibility?.applicantIsProjectResponsible && originalObj.applicant) {
-      // When applicantIsProjectResponsible is true, copy applicant data to projectResponsible
-      projectResponsible = {
-        ...originalObj.projectResponsible,
-        researcher: originalObj.applicant.researcher,
-        institute: originalObj.applicant.institute,
-        participantCategory: originalObj.applicant.participantCategory,
-        // Keep the projectResponsibility but set applicantIsProjectResponsible to false for the registration
-        projectResponsibility: {
-          ...originalObj.projectResponsible.projectResponsibility,
-          applicantIsProjectResponsible: false,
-        },
-      };
-    }
-
-    let newAbbreviation = `${original.projectAbbreviation}-REG`;
-    let suffix = 1;
-
-    while (await this.proposalModel.findOne({ projectAbbreviation: newAbbreviation })) {
-      newAbbreviation = `${original.projectAbbreviation}-REG${suffix}`;
-      suffix++;
-    }
-
-    // Calculate desiredStartTime: DUE_DAYS_LOCATION_CHECK + 7 days
-    const locationCheckDate = originalObj.deadlines?.DUE_DAYS_LOCATION_CHECK;
-    const desiredStartTime = locationCheckDate ? new Date(locationCheckDate.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
-
-    const copyData = {
-      ...originalObj,
-      _id: undefined,
-      projectAbbreviation: newAbbreviation,
-      dataSourceLocaleId: undefined, // Clear DIFE ID - not needed for registration and must be unique
-      type: ProposalType.RegisteringForm,
-      registerInfo: {
-        isInternalRegistration: true,
-        originalProposalId: original._id.toString(),
-        originalProposalStatus: original.status,
-      },
-      status: ProposalStatus.Draft,
-      owner: originalObj.owner,
-      ownerId: originalObj.ownerId,
-      ownerName: originalObj.ownerName,
-      applicant: originalObj.applicant,
-      projectResponsible: projectResponsible,
-      participants: originalObj.participants,
-      userProject: {
-        ...originalObj.userProject,
-        generalProjectInformation: {
-          ...originalObj.userProject?.generalProjectInformation,
-          desiredStartTime,
-          desiredStartTimeType: 'later',
-        },
-        addressees: {
-          ...originalObj.userProject?.addressees,
-          desiredLocations: originalObj.signedContracts || [],
-        },
-      },
-      history: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      version: { mayor: 0, minor: 0 },
-    } as ProposalDocument;
-
-    const newProposal = new this.proposalModel(copyData);
-    const formVersion = await this.proposalFormService.getCurrentVersion();
-    newProposal.formVersion = formVersion;
-
-    addHistoryItemForCopyAsInternalRegistration(newProposal, user, original.projectAbbreviation);
-
-    await this.statusChangeService.handleEffects(newProposal, null, user);
-    const saveResult = await newProposal.save();
-    original.registerFormId = saveResult._id.toString();
-    await original.save();
-    return saveResult._id.toString();
-  }
-
-  private resetIsDoneFlags(proposal: any): void {
-    const resetInObject = (obj: any) => {
-      if (!obj || typeof obj !== 'object') return;
-
-      if (Array.isArray(obj)) {
-        obj.forEach((item) => resetInObject(item));
-        return;
-      }
-
-      if ('isDone' in obj) {
-        obj.isDone = false;
-      }
-
-      Object.values(obj).forEach((value) => {
-        if (value && typeof value === 'object') {
-          resetInObject(value);
-        }
-      });
-    };
-
-    resetInObject(proposal);
-  }
   async updateApplicantParticipantRole(
     proposalId: string,
     updateDto: ApplicantDto,
