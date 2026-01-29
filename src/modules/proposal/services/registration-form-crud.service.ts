@@ -19,11 +19,11 @@ export class RegistrationFormCrudService {
   ) {}
 
   checkProposalType(proposal: Proposal): boolean {
-    const result = proposal.type === ProposalType.ApplicationForm && !!proposal.registerFormId;
+    const result = proposal.type === ProposalType.RegisteringForm && !!proposal.registerFormId;
 
     if (!result) {
       this.logger.log(
-        `Proposal ${proposal.projectAbbreviation} is not an ApplicationForm with registerFormId. ${JSON.stringify({ type: proposal.type, registerFormId: proposal.registerFormId })}`,
+        `Proposal ${proposal.projectAbbreviation} is not a RegisteringForm with registerFormId. ${JSON.stringify({ type: proposal.type, registerFormId: proposal.registerFormId })}`,
       );
     }
 

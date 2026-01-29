@@ -90,43 +90,43 @@ export class ProposalCrudService {
     willBeModified?: boolean,
     modificationContext?: ModificationContext,
   ): Promise<ProposalDocument> {
-    const dbProjection: Record<string, number> = {
-      ...projection,
-    };
+    let dbProjection: Record<string, number> = {};
 
     if (projection === undefined) {
+      // Use exclusion projection (only exclude reports.content)
       dbProjection['reports.content'] = 0;
-    } else if (user.singleKnownRole === Role.DizMember) {
-      dbProjection.owner = 1;
-      dbProjection.projectResponsible = 1;
-      dbProjection.locationConditionDraft = 1;
-      dbProjection.conditionalApprovals = 1;
-      dbProjection.openDizChecks = 1;
-      dbProjection.dizApprovedLocations = 1;
-      dbProjection.openDizConditionChecks = 1;
-      dbProjection.uacApprovedLocations = 1;
-      dbProjection.signedContracts = 1;
-      dbProjection.requestedButExcludedLocations = 1;
-      dbProjection.additionalLocationInformation = 1;
-    } else if (user.singleKnownRole === Role.UacMember) {
-      dbProjection.owner = 1;
-      dbProjection.projectResponsible = 1;
-      dbProjection.locationConditionDraft = 1;
-      dbProjection.conditionalApprovals = 1;
-      dbProjection.dizApprovedLocations = 1;
-      dbProjection.openDizConditionChecks = 1;
-      dbProjection.uacApprovedLocations = 1;
-      dbProjection.signedContracts = 1;
-      dbProjection.requestedButExcludedLocations = 1;
-      dbProjection.additionalLocationInformation = 1;
     } else {
-      dbProjection.owner = 1;
-      dbProjection.projectResponsible = 1;
-      dbProjection.participants = 1;
-      dbProjection.deadlines = 1;
-      dbProjection.selectedDataSources = 1;
-      dbProjection.dataDelivery = 1;
+      // When projection is provided, start with it
+      dbProjection = { ...projection };
+
+      // Add role-specific fields for access validation
+      if ([Role.DizMember, Role.UacMember].includes(user.singleKnownRole)) {
+        dbProjection.owner = 1;
+        dbProjection.projectResponsible = 1;
+        dbProjection.locationConditionDraft = 1;
+        dbProjection.conditionalApprovals = 1;
+        dbProjection.openDizChecks = 1;
+        dbProjection.dizApprovedLocations = 1;
+        dbProjection.openDizConditionChecks = 1;
+        dbProjection.uacApprovedLocations = 1;
+        dbProjection.signedContracts = 1;
+        dbProjection.requestedButExcludedLocations = 1;
+        dbProjection.additionalLocationInformation = 1;
+        dbProjection.contractAcceptedByResearcher = 1;
+        dbProjection.contractRejectedByResearcher = 1;
+      } else {
+        dbProjection.owner = 1;
+        dbProjection.projectResponsible = 1;
+        dbProjection.participants = 1;
+        dbProjection.deadlines = 1;
+        dbProjection.selectedDataSources = 1;
+        dbProjection.dataDelivery = 1;
+      }
+
+      // Only add type when using inclusion projection
+      dbProjection.type = 1;
     }
+
     const proposal = await this.proposalModel.findById(proposalId, dbProjection);
 
     if (proposal) {
@@ -144,7 +144,6 @@ export class ProposalCrudService {
     const plain = document.toObject();
     this.addParticipatingScientistIndicator(plain, user);
     const userGroups = convertUserToGroups(user);
-
     const result = plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [...userGroups, ProposalValidation.IsOutput, user.singleKnownRole],
