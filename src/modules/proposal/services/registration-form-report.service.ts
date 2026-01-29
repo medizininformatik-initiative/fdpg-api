@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Proposal } from '../schema/proposal.schema';
-import { ReportCreateDto, ReportDto, ReportUpdateDto } from '../dto/proposal/report.dto';
+import { ReportCreateDto, ReportDto, ReportGetDto, ReportUpdateDto } from '../dto/proposal/report.dto';
 import { PublicStorageService } from 'src/modules/storage';
 import { addReport, addReportUpload, getBlobName } from '../utils/proposal.utils';
 import { UseCaseUpload } from '../enums/upload-type.enum';
@@ -11,6 +11,7 @@ import { RegistrationFormCrudService } from './registration-form-crud.service';
 import { ReportDocument } from '../schema/sub-schema/report.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
 import { removeInPlaceAndReturnRemoved } from 'src/shared/utils/array.utils';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class RegistrationFormReportService {
@@ -26,7 +27,7 @@ export class RegistrationFormReportService {
     reportCreateDto: ReportCreateDto,
     files: Express.Multer.File[],
     user: IRequestUser,
-  ): Promise<void> {
+  ): Promise<ReportGetDto> {
     if (!this.registrationFormCrudService.checkProposalType(proposal)) {
       return;
     }
@@ -71,6 +72,9 @@ export class RegistrationFormReportService {
 
     await Promise.allSettled([...downloadTasks]);
     await this.registrationFormCrudService.setRegistrationOutOfSync(registration._id);
+
+    const plain = structuredClone(report);
+    return plainToInstance(ReportGetDto, plain, { strategy: 'excludeAll' });
   }
 
   async handleReportUpdate(
@@ -79,7 +83,7 @@ export class RegistrationFormReportService {
     reportUpdateDto: ReportUpdateDto,
     files: Express.Multer.File[],
     user: IRequestUser,
-  ): Promise<void> {
+  ): Promise<ReportGetDto> {
     if (!this.registrationFormCrudService.checkProposalType(proposal)) {
       return;
     }
@@ -152,6 +156,51 @@ export class RegistrationFormReportService {
 
     this.logger.log(
       `Successfully synced report update '${updateDto.title}' (${reportId}) to registration ${registration.projectAbbreviation}`,
+    );
+    await this.registrationFormCrudService.setRegistrationOutOfSync(registration._id);
+
+    const plainReport = registration.reports[reportIdx];
+    return plainToInstance(ReportGetDto, plainReport, { strategy: 'excludeAll' });
+  }
+
+  async handleReportDelete(proposal: Proposal, reportId: string, user: IRequestUser): Promise<void> {
+    if (!this.registrationFormCrudService.checkProposalType(proposal)) {
+      return;
+    }
+
+    this.logger.log(
+      `Syncing report deletion (${reportId}) from proposal ${proposal.projectAbbreviation} to registration`,
+    );
+
+    const registration = await this.registrationFormCrudService.getRegistration(
+      proposal,
+      user,
+      ModificationContext.Report,
+    );
+
+    const reportIdx = registration.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
+
+    if (reportIdx === -1) {
+      this.logger.warn(
+        `Report ${reportId} not found in registration ${registration.projectAbbreviation} for delete sync`,
+      );
+      return;
+    }
+
+    // Delete uploads from storage
+    if (registration.reports[reportIdx].uploads.length > 0) {
+      await this.publicStorageService.deleteManyBlobs(
+        registration.reports[reportIdx].uploads.map((upload) => upload.blobName),
+      );
+    }
+
+    // Remove report from registration
+    registration.reports.splice(reportIdx, 1);
+
+    await registration.save();
+
+    this.logger.log(
+      `Successfully synced report deletion (${reportId}) to registration ${registration.projectAbbreviation}`,
     );
     await this.registrationFormCrudService.setRegistrationOutOfSync(registration._id);
   }

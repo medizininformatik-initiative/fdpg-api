@@ -24,7 +24,7 @@ export class ProposalReportService {
     private eventEngineService: EventEngineService,
     private storageService: StorageService,
     private publicStorageService: PublicStorageService,
-    private registerFormReportService: RegistrationFormReportService,
+    private registrationFormReportService: RegistrationFormReportService,
   ) {}
 
   private readonly projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
@@ -42,6 +42,10 @@ export class ProposalReportService {
       true,
       ModificationContext.Report,
     );
+
+    if (proposal.type === ProposalType.RegisteringForm) {
+      return await this.registrationFormReportService.handleReportCreate(proposal, reportCreateDto, files, user);
+    }
 
     const report = new ReportDto(reportCreateDto);
     const uploadTasks = files.map(async (file) => {
@@ -74,7 +78,7 @@ export class ProposalReportService {
     });
 
     const sendNotifications = this.eventEngineService.handleProposalReportCreate(proposal, report);
-    const syncRegistration = this.registerFormReportService.handleReportCreate(proposal, report, files, user);
+    const syncRegistration = this.registrationFormReportService.handleReportCreate(proposal, report, files, user);
     await Promise.allSettled([...downloadTasks, sendNotifications, syncRegistration]);
 
     const plain = structuredClone(report);
@@ -147,6 +151,16 @@ export class ProposalReportService {
       ModificationContext.Report,
     );
 
+    if (proposal.type === ProposalType.RegisteringForm) {
+      return await this.registrationFormReportService.handleReportUpdate(
+        proposal,
+        reportId,
+        reportUpdateDto,
+        files,
+        user,
+      );
+    }
+
     const reportIdx = proposal.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
 
     if (reportIdx === -1) {
@@ -187,19 +201,13 @@ export class ProposalReportService {
     plainReport.uploads.forEach((upload) => {
       const task = async () => {
         let downloadUrl: string;
-
-        if (proposal.type === ProposalType.RegisteringForm) {
-          downloadUrl = await this.publicStorageService.getPublicUrl(upload.blobName);
-        } else {
-          downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
-        }
-
+        downloadUrl = await this.storageService.getSasUrl(upload.blobName, true);
         (upload as UploadGetDto).downloadUrl = downloadUrl;
       };
       downloadLinkTasks.push(task());
     });
 
-    const syncRegistration = this.registerFormReportService.handleReportUpdate(
+    const syncRegistration = this.registrationFormReportService.handleReportUpdate(
       proposal,
       reportId,
       reportUpdateDto,
@@ -220,6 +228,10 @@ export class ProposalReportService {
       ModificationContext.Report,
     );
 
+    if (proposal.type === ProposalType.RegisteringForm) {
+      return this.registrationFormReportService.handleReportDelete(proposal, reportId, user);
+    }
+
     const reportIdx = proposal.reports.findIndex((report: ReportDocument) => report._id.toString() === reportId);
 
     if (reportIdx === -1) {
@@ -227,17 +239,12 @@ export class ProposalReportService {
     }
 
     if (proposal.reports[reportIdx].uploads.length > 0) {
-      if (proposal.type === ProposalType.RegisteringForm) {
-        await this.publicStorageService.deleteManyBlobs(
-          proposal.reports[reportIdx].uploads.map((upload) => upload.blobName),
-        );
-      } else {
-        await this.storageService.deleteManyBlobs(proposal.reports[reportIdx].uploads.map((upload) => upload.blobName));
-      }
+      await this.storageService.deleteManyBlobs(proposal.reports[reportIdx].uploads.map((upload) => upload.blobName));
     }
 
     proposal.reports.splice(reportIdx, 1);
 
     await proposal.save();
+    await this.registrationFormReportService.handleReportDelete(proposal, reportId, user);
   }
 }
