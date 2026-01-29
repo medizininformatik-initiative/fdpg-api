@@ -4,6 +4,8 @@ import { PublicationCreateDto, PublicationUpdateDto } from '../dto/proposal/publ
 import { ModificationContext } from '../enums/modification-context.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { RegistrationFormCrudService } from './registration-form-crud.service';
+import { SyncStatus } from '../enums/sync-status.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 
 @Injectable()
 export class RegistrationFormPublicationService {
@@ -130,5 +132,12 @@ export class RegistrationFormPublicationService {
         `Publication ${publicationId} not found in registration ${registration.projectAbbreviation} for delete sync`,
       );
     }
+  }
+
+  async setRegistrationOutOfSync(proposal: Proposal): Promise<void> {
+    if (proposal.type === ProposalType.RegisteringForm) {
+      proposal.registerInfo.syncStatus = SyncStatus.OutOfSync;
+    }
+    return;
   }
 }

@@ -27,7 +27,14 @@ export class ProposalReportService {
     private registrationFormReportService: RegistrationFormReportService,
   ) {}
 
-  private readonly projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
+  private readonly projection = {
+    projectAbbreviation: 1,
+    reports: 1,
+    owner: 1,
+    type: 1,
+    registerFormId: 1,
+    registerInfo: 1,
+  };
 
   async createReport(
     proposalId: string,
@@ -64,7 +71,7 @@ export class ProposalReportService {
     });
 
     addReport(proposal, report);
-
+    this.registrationFormReportService.setRegistrationOutOfSync(proposal);
     await proposal.save();
 
     const downloadTasks: Promise<void>[] = [];
@@ -93,6 +100,7 @@ export class ProposalReportService {
       'reports.title': 1,
       'reports.createdAt': 1,
       'reports.updatedAt': 1,
+      registerInfo: 1,
     };
     const proposal = await this.proposalCrudService.findDocument(proposalId, user, projection, false);
 
@@ -192,6 +200,8 @@ export class ProposalReportService {
     proposal.reports[reportIdx].title = updateDto.title;
     proposal.reports[reportIdx].content = updateDto.content;
 
+    this.registrationFormReportService.setRegistrationOutOfSync(proposal);
+
     const saveResult = await proposal.save();
     const report = saveResult.reports.find((report) => report._id.toString() === reportId) as ReportDocument;
 
@@ -243,6 +253,8 @@ export class ProposalReportService {
     }
 
     proposal.reports.splice(reportIdx, 1);
+
+    this.registrationFormReportService.setRegistrationOutOfSync(proposal);
 
     await proposal.save();
     await this.registrationFormReportService.handleReportDelete(proposal, reportId, user);
