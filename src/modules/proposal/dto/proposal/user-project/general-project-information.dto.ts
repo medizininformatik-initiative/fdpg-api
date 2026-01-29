@@ -53,7 +53,9 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
 
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
-  @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
+  @IsOptional({
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRegister],
+  })
   @UiWidget({ type: 'select', format: 'single' })
   desiredStartTimeType: string;
 
