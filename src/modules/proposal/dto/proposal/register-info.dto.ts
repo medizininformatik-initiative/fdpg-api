@@ -5,6 +5,7 @@ import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { SyncStatus } from '../../enums/sync-status.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
 
 export class RegisterInfoDto extends WithIdForObjectDto {
   @Expose()
