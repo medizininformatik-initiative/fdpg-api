@@ -12,6 +12,8 @@ import { ReportDocument } from '../schema/sub-schema/report.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
 import { removeInPlaceAndReturnRemoved } from 'src/shared/utils/array.utils';
 import { plainToInstance } from 'class-transformer';
+import { ProposalType } from '../enums/proposal-type.enum';
+import { SyncStatus } from '../enums/sync-status.enum';
 
 @Injectable()
 export class RegistrationFormReportService {
@@ -203,5 +205,12 @@ export class RegistrationFormReportService {
       `Successfully synced report deletion (${reportId}) to registration ${registration.projectAbbreviation}`,
     );
     await this.registrationFormCrudService.setRegistrationOutOfSync(registration._id);
+  }
+
+  async setRegistrationOutOfSync(proposal: Proposal): Promise<void> {
+    if (proposal.type === ProposalType.RegisteringForm) {
+      proposal.registerInfo.syncStatus = SyncStatus.OutOfSync;
+    }
+    return;
   }
 }

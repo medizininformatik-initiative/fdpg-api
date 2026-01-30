@@ -120,6 +120,7 @@ describe('ProposalReportService', () => {
             handleReportCreate: jest.fn(),
             handleReportUpdate: jest.fn(),
             handleReportDelete: jest.fn(),
+            setRegistrationOutOfSync: jest.fn(),
           },
         },
       ],
@@ -164,7 +165,7 @@ describe('ProposalReportService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 },
+        { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
         true,
         ModificationContext.Report,
       );
@@ -213,6 +214,7 @@ describe('ProposalReportService', () => {
         'reports.createdAt': 1,
         'reports.updatedAt': 1,
         type: 1,
+        registerInfo: 1,
       };
 
       const result = await proposalReportService.getAllReports(proposalId, request.user);
@@ -336,7 +338,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       const result = await proposalReportService.updateReport(
         proposalId,
@@ -399,7 +401,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       const result = await proposalReportService.updateReport(
         proposalId,
@@ -460,7 +462,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       const call = proposalReportService.updateReport(
         proposalId,
@@ -502,7 +504,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       await proposalReportService.deleteReport(proposalId, reportId, request.user);
 
@@ -536,7 +538,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       await proposalReportService.deleteReport(proposalId, notFoundReportId, request.user);
 

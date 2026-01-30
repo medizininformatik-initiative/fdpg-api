@@ -17,7 +17,14 @@ export class ProposalPublicationService {
     private registerFormPublicationService: RegistrationFormPublicationService,
   ) {}
 
-  private readonly projection = { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1 };
+  private readonly projection = {
+    projectAbbreviation: 1,
+    publications: 1,
+    owner: 1,
+    type: 1,
+    registerFormId: 1,
+    registerInfo: 1,
+  };
 
   async createPublication(
     proposalId: string,
@@ -40,6 +47,7 @@ export class ProposalPublicationService {
         updatedAt: new Date(),
       },
     ];
+    await this.registerFormPublicationService.setRegistrationOutOfSync(proposal);
 
     const saveResult = await proposal.save();
 
@@ -95,6 +103,7 @@ export class ProposalPublicationService {
       updatedAt: new Date(),
       createdAt,
     };
+    await this.registerFormPublicationService.setRegistrationOutOfSync(proposal);
 
     const saveResult = await proposal.save();
 
@@ -119,7 +128,7 @@ export class ProposalPublicationService {
     const proposal = await this.proposalCrudService.findDocument(
       proposalId,
       user,
-      undefined,
+      this.projection,
       true,
       ModificationContext.Publication,
     );
@@ -133,6 +142,7 @@ export class ProposalPublicationService {
     }
 
     proposal.publications.splice(publicationIdx, 1);
+    await this.registerFormPublicationService.setRegistrationOutOfSync(proposal);
 
     await proposal.save();
     await this.registerFormPublicationService.handlePublicationDelete(proposal, publicationId, user);

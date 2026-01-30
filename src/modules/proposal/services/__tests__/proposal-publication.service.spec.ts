@@ -100,6 +100,7 @@ describe('ProposalPublicationService', () => {
             handlePublicationCreate: jest.fn(),
             handlePublicationUpdate: jest.fn(),
             handlePublicationDelete: jest.fn(),
+            setRegistrationOutOfSync: jest.fn(),
           },
         },
       ],
@@ -195,7 +196,7 @@ describe('ProposalPublicationService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1 },
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
         true,
         ModificationContext.Publication,
       );
@@ -238,7 +239,7 @@ describe('ProposalPublicationService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1 },
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
         true,
         ModificationContext.Publication,
       );
@@ -267,7 +268,7 @@ describe('ProposalPublicationService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        undefined,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
         true,
         ModificationContext.Publication,
       );
@@ -289,7 +290,7 @@ describe('ProposalPublicationService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        undefined,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
         true,
         ModificationContext.Publication,
       );
