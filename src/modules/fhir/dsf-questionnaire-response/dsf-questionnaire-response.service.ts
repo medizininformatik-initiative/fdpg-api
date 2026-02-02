@@ -32,6 +32,7 @@ export class DsfQuestionnaireResponseService {
 
     const initialParams = {
       _sort: '-_lastUpdated',
+      status: 'in-progress',
       ...paramFilter,
     };
 
