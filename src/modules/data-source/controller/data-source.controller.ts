@@ -56,8 +56,8 @@ export class DataSourceController {
     const numPage = Number(page);
     const numPageSize = Number(pageSize);
 
-    if (numPage < 1) {
-      throw new BadRequestException('Page must be greater than 0');
+    if (numPage < 1 || numPageSize > 100) {
+      throw new BadRequestException('page size must be between 1 and 100');
     }
 
     return this.dataSourceService.searchWithPagination(
@@ -107,8 +107,8 @@ export class DataSourceController {
     const numPage = Number(page);
     const numPageSize = Number(pageSize);
 
-    if (numPage < 1) {
-      throw new BadRequestException('Page must be greater than 0');
+    if (numPage < 1 || numPageSize > 100) {
+      throw new BadRequestException('page size must be between 1 and 100');
     }
 
     return this.dataSourceService.searchWithPagination(
