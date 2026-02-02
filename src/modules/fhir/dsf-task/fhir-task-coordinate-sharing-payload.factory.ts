@@ -165,15 +165,3 @@ export const FhirTaskCoordinateSharingPayloadFactory = {
     ],
   }),
 };
-
-// --- IGNORE ---
-/**
- * 
- *     requester: {
-      type: 'Practitioner',
-      identifier: {
-        system: 'http://dsf.dev/sid/practitioner-identifier',
-        value: 'service-account-fdpg-api-for-feasibility@forschen-fuer-gesundheit.de',
-      },
-    },
- */
