@@ -29,6 +29,7 @@ describe('DsfQuestionnaireResponseService', () => {
           provide: FhirClient,
           useValue: {
             client: apiClientMock,
+            getServiceAccountEmail: jest.fn().mockReturnValue('service-account@example.com'),
           },
         },
       ],

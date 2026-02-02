@@ -20,6 +20,7 @@ export class DsfQuestionnaireResponseService {
 
   async getQuetionnairResponseReleaseConsolidateDataSets(
     businessKey: string,
+    paramFilter = {},
   ): Promise<QuestionnaireResponseResource | undefined> {
     if (!businessKey) {
       const msg = 'Business key not provided. Cannot search for QuestionnaireResponse.';
@@ -32,6 +33,7 @@ export class DsfQuestionnaireResponseService {
     const initialParams = {
       _sort: '-_lastUpdated',
       status: 'in-progress',
+      ...paramFilter,
     };
 
     let requestCount = 0;
@@ -163,6 +165,13 @@ export class DsfQuestionnaireResponseService {
       status: 'completed',
       authored: new Date().toISOString(),
       item: newItems,
+      author: {
+        type: 'Practitioner',
+        identifier: {
+          system: 'http://dsf.dev/sid/practitioner-identifier',
+          value: this.fhirClient.getServiceAccountEmail(),
+        },
+      },
     };
 
     try {

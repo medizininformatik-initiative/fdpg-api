@@ -9,6 +9,13 @@ export interface QuestionnaireResponseResource {
   id: string;
   status: string;
   item: QuestionnaireResponseItem[];
+  author?: {
+    type: string;
+    identifier: {
+      system: string;
+      value: string;
+    };
+  };
   authored?: string;
 }
 

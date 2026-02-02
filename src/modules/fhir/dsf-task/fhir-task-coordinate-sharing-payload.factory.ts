@@ -24,6 +24,7 @@ export const FhirTaskCoordinateSharingPayloadFactory = {
     dicIdentifiers = [],
     extractionPeriod = 'P28D',
     dateTime = new Date().toISOString(),
+    practicionerIdentifier,
   }) => ({
     resourceType: 'Task',
     meta: {
@@ -34,10 +35,10 @@ export const FhirTaskCoordinateSharingPayloadFactory = {
     intent: 'order',
     authoredOn: dateTime,
     requester: {
-      type: 'Organization',
+      type: 'Practitioner',
       identifier: {
-        system: 'http://dsf.dev/sid/organization-identifier',
-        value: hrpOrganizationIdentifier,
+        system: 'http://dsf.dev/sid/practitioner-identifier',
+        value: practicionerIdentifier,
       },
     },
     restriction: {
