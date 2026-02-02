@@ -12,26 +12,29 @@ export class ProposalAccessGuard implements CanActivate {
       .startSpan('Proposal Access Guard', {
         attributes: {
           ['proposal.accessGuard.requiredCondition']:
-            'Researcher OR RegisteringMember OR FdpgMember OR DataSourceMember OR DataManagementOffice in roles',
+            'Researcher OR RegisteringMember OR FdpgMember OR DataSourceMember OR DataManagementOffice OR DizMember OR UacMember in roles',
           ['proposal.accessGuard.userSingleRole']: user.singleKnownRole,
           ['proposal.accessGuard.userRoles']: user.roles?.join(', ') || 'none',
         },
       })
       .end();
 
-    const allowedRoles = [
+    const hasToBeSelected = [
       Role.Researcher,
-      Role.RegisteringMember,
       Role.FdpgMember,
       Role.DataSourceMember,
       Role.DataManagementOffice,
+      Role.DizMember,
+      Role.UacMember,
     ];
 
-    if (user.singleKnownRole && allowedRoles.includes(user.singleKnownRole)) {
+    const passiveAssigned = [Role.RegisteringMember];
+
+    if (user.singleKnownRole && hasToBeSelected.includes(user.singleKnownRole)) {
       return true;
     }
 
-    if (user.roles?.some((role: Role) => allowedRoles.includes(role))) {
+    if ((user.roles || []).some((role: Role) => passiveAssigned.includes(role))) {
       return true;
     }
 

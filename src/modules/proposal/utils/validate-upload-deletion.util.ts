@@ -5,15 +5,25 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { DirectUpload, UploadType, UseCaseUpload } from '../enums/upload-type.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
+import { ParticipantRoleType } from '../enums/participant-role-type.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 
 const generalAccessTypes = [
   DirectUpload.EthicVote,
   DirectUpload.EthicVoteDeclarationOfNonResponsibility,
   DirectUpload.GeneralAppendix,
   DirectUpload.AdditionalDocument,
+  DirectUpload.ProjectLogo,
 ] as UploadType[];
 
 export const validateUploadDeletion = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
+  const hasRegisteringMemberRole = user.roles.includes(Role.RegisteringMember);
+
+  if (hasRegisteringMemberRole) {
+    checkForRegisteringMember(proposal, upload, user);
+    return;
+  }
+
   if (user.singleKnownRole === Role.Researcher) {
     checkForResearcher(proposal, upload, user);
   }
@@ -33,10 +43,18 @@ export const validateUploadDeletion = (proposal: ProposalDocument, upload: Uploa
 
 const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
   const isOwner = proposal.owner.id === user.userId;
+  const isEditor = (proposal.participants || []).some(
+    (participant) =>
+      participant.researcher.email === user.email &&
+      [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
+        participant.participantRole.role,
+      ),
+  );
+  const hasEditRights = isOwner || isEditor;
   const isGeneralAccessType = generalAccessTypes.includes(upload.type);
   const isEditable = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.Rework;
 
-  if ((!isOwner || !isGeneralAccessType) && upload.type !== UseCaseUpload.FeasibilityQuery) {
+  if (!hasEditRights || (!isGeneralAccessType && upload.type !== UseCaseUpload.FeasibilityQuery)) {
     throwForbiddenError();
   }
 
@@ -57,6 +75,14 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
     !isEditable &&
     isEthicSectionDone
   ) {
+    throwForbiddenError();
+  }
+};
+
+const checkForRegisteringMember = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
+  if (proposal.type === ProposalType.RegisteringForm) {
+    checkForResearcher(proposal, upload, user);
+  } else {
     throwForbiddenError();
   }
 };

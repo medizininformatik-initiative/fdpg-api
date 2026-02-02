@@ -36,6 +36,7 @@ import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.d
 import { SetBooleanStatusDto, SetProposalStatusDto } from '../dto/set-status.dto';
 import { SetFdpgCheckNotesDto } from '../dto/set-fdpg-check-notes.dto';
 import { ProposalMiscService } from '../services/proposal-misc.service';
+import { RegistrationFormCopyService } from '../services/registration-form-copy.service';
 import { SetAdditionalLocationInformationDto } from '../dto/set-additional-location-information.dto';
 import { FdpgChecklistUpdateDto } from '../dto/proposal/fdpg-checklist.dto';
 import { DueDateEnum } from '../enums/due-date.enum';
@@ -58,7 +59,10 @@ import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
 
 @ApiController('proposals', undefined, 'misc')
 export class ProposalMiscController {
-  constructor(private readonly proposalMiscService: ProposalMiscService) {}
+  constructor(
+    private readonly proposalMiscService: ProposalMiscService,
+    private readonly registrationFormCopyService: RegistrationFormCopyService,
+  ) {}
 
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
   @Get(':id/researcherInfo')
@@ -352,7 +356,7 @@ export class ProposalMiscController {
     @Param() { id }: MongoIdParamDto,
     @Request() { user }: FdpgRequest,
   ): Promise<{ id: string }> {
-    const newProposalId = await this.proposalMiscService.copyAsInternalRegistration(id, user);
+    const newProposalId = await this.registrationFormCopyService.copyAsInternalRegistration(id, user);
     return { id: newProposalId };
   }
   @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)

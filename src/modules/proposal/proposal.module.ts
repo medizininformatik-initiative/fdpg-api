@@ -26,6 +26,7 @@ import { ProposalReportService } from './services/proposal-report.service';
 import { ProposalUploadService } from './services/proposal-upload.service';
 import { ProposalDownloadService } from './services/proposal-download.service';
 import { StatusChangeService } from './services/status-change.service';
+import { RegistrationFormCopyService } from './services/registration-form-copy.service';
 import { IsUniqueAbbreviationConstraint } from './validators/is-unique-abbreviation.validator';
 import { ProposalPdfService } from './services/proposal-pdf.service';
 import { ProposalSyncService } from './services/proposal-sync.service';
@@ -42,6 +43,9 @@ import { ProposalDeliveryInfoService } from './services/data-delivery/proposal-d
 import { ProposalSubDeliveryService } from './services/data-delivery/proposal-sub-delivery.service';
 import { ProposalDataDeliverySyncService } from './services/data-delivery/proposal-data-delivery-sync.service';
 import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.service';
+import { RegistrationFormCrudService } from './services/registration-form-crud.service';
+import { RegistrationFormPublicationService } from './services/registration-form-publication.service';
+import { RegistrationFormReportService } from './services/registration-form-report.service';
 @Module({
   imports: [
     LocationModule,
@@ -90,6 +94,10 @@ import { SyncDeliveryInfoCronService } from './cron/sync-delivery-info-cron.serv
     ProposalPdfService,
     ProposalSyncService,
     AcptPluginClient,
+    RegistrationFormCrudService,
+    RegistrationFormPublicationService,
+    RegistrationFormReportService,
+    RegistrationFormCopyService,
 
     // Data Delivery
     ProposalDataDeliveryService,

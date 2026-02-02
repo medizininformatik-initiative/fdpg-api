@@ -3,12 +3,11 @@ import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
 import { PublicationCreateDto, PublicationUpdateDto } from 'src/modules/proposal/dto/proposal/publication.dto';
-import { Publication } from 'src/modules/proposal/schema/sub-schema/publication.schema';
 import { fdpgEmail } from 'src/modules/email/proposal.emails';
 import { EmailCategory } from 'src/modules/email/types/email-category.enum';
 
 @Injectable()
-export class PublicationsService {
+export class PublicationNotificationService {
   constructor(
     private keycloakUtilService: KeycloakUtilService,
     private emailService: EmailService,

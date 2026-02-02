@@ -58,6 +58,8 @@ describe('ProposalSyncService', () => {
       procedures: ['P456'],
       isDone: true,
       _id: 'register-info-123',
+      locations: ['Charité'],
+      startTime: null,
     },
     projectResponsible: {
       researcher: {

@@ -6,6 +6,7 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../enums/proposal-status.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
 import { Proposal } from '../schema/proposal.schema';
+import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
@@ -17,7 +18,18 @@ const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
   proposal.type === ProposalType.RegisteringForm &&
   ((user.roles.includes(Role.RegisteringMember) && user.userId === proposal.ownerId) || isFdpg(user));
 
-const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) => isOwner(user, proposal) || isFdpg(user);
+const isEditor = (user: IRequestUser, proposal: Proposal) =>
+  user.singleKnownRole === Role.Researcher &&
+  (proposal.participants || []).some(
+    (participant) =>
+      participant.researcher.email === user.email &&
+      [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
+        participant.participantRole.role,
+      ),
+  );
+
+const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) =>
+  isOwner(user, proposal) || isEditor(user, proposal) || isFdpg(user);
 
 export const validateStatusChange = (
   toBeUpdated: Proposal,
@@ -29,13 +41,15 @@ export const validateStatusChange = (
   const map = {
     [ProposalStatus.Archived]: {},
     [ProposalStatus.Draft]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () =>
+        isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
     },
     [ProposalStatus.Rejected]: {
       [ProposalStatus.Archived]: () => isResearcherOrFdpg(user, toBeUpdated),
     },
     [ProposalStatus.Rework]: {
-      [ProposalStatus.FdpgCheck]: () => isOwner(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
+      [ProposalStatus.FdpgCheck]: () =>
+        isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated) || canSubmitRegisterForm(user, toBeUpdated),
       [ProposalStatus.Rejected]: () => isFdpg(user),
     },
     [ProposalStatus.FdpgCheck]: {
@@ -54,7 +68,7 @@ export const validateStatusChange = (
     },
     [ProposalStatus.Contracting]: {
       [ProposalStatus.ExpectDataDelivery]: () => isFdpg(user),
-      [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated),
+      [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.ExpectDataDelivery]: {
       // TODO: Automated API CALL

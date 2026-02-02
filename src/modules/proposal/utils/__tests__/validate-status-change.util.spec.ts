@@ -344,6 +344,8 @@ describe('validateStatusChange', () => {
           _id: 'internal-registration-123',
           syncStatus: SyncStatus.NotSynced,
           syncRetryCount: 0,
+          locations: [],
+          startTime: null,
         };
         registeringMemberUser.userId = 'owner-123';
         baseProposal.ownerId = 'owner-123';
@@ -392,6 +394,8 @@ describe('validateStatusChange', () => {
           _id: 'internal-registration-123',
           syncStatus: SyncStatus.NotSynced,
           syncRetryCount: 0,
+          locations: [],
+          startTime: null,
         };
       });
 
@@ -439,6 +443,8 @@ describe('validateStatusChange', () => {
           _id: 'internal-registration-123',
           syncStatus: SyncStatus.NotSynced,
           syncRetryCount: 0,
+          locations: [],
+          startTime: null,
         };
       });
 
@@ -465,6 +471,8 @@ describe('validateStatusChange', () => {
           _id: 'internal-registration-123',
           syncStatus: SyncStatus.NotSynced,
           syncRetryCount: 0,
+          locations: [],
+          startTime: null,
         };
         registeringMemberUser.userId = 'owner-123';
         baseProposal.ownerId = 'owner-123';
@@ -502,6 +510,8 @@ describe('validateStatusChange', () => {
           _id: 'internal-registration-123',
           syncStatus: SyncStatus.NotSynced,
           syncRetryCount: 0,
+          locations: [],
+          startTime: null,
         };
       });
 
@@ -530,6 +540,8 @@ describe('validateStatusChange', () => {
           _id: 'internal-registration-123',
           syncStatus: SyncStatus.NotSynced,
           syncRetryCount: 0,
+          locations: [],
+          startTime: null,
         };
         // Internal registrations keep the original owner, so FDPG creates them but owner submits
         baseProposal.ownerId = 'owner-123';

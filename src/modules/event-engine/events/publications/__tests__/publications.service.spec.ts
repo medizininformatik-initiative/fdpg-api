@@ -3,12 +3,12 @@ import { EmailService } from 'src/modules/email/email.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { PublicationsService } from '../publications.service';
+import { PublicationNotificationService } from '../publication-notification.service';
 import { PublicationCreateDto } from 'src/modules/proposal/dto/proposal/publication.dto';
 import { Publication } from 'src/modules/proposal/schema/sub-schema/publication.schema';
 
 describe('PublicationsService', () => {
-  let publicationsService: PublicationsService;
+  let publicationsService: PublicationNotificationService;
   let keycloakUtilService: KeycloakUtilService;
   let emailService: EmailService;
 
@@ -50,7 +50,7 @@ describe('PublicationsService', () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PublicationsService,
+        PublicationNotificationService,
         {
           provide: KeycloakUtilService,
           useValue: {
@@ -71,7 +71,7 @@ describe('PublicationsService', () => {
       imports: [],
     }).compile();
 
-    publicationsService = module.get<PublicationsService>(PublicationsService);
+    publicationsService = module.get<PublicationNotificationService>(PublicationNotificationService);
     keycloakUtilService = module.get<KeycloakUtilService>(KeycloakUtilService) as jest.Mocked<KeycloakUtilService>;
     emailService = module.get<EmailService>(EmailService) as jest.Mocked<EmailService>;
   });

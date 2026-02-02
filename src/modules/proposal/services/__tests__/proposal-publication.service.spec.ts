@@ -1,8 +1,8 @@
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { ProposalCrudService } from '../proposal-crud.service';
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProposalPublicationService } from '../proposal-publication.service';
+import { RegistrationFormPublicationService } from '../registration-form-publication.service';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { Role } from 'src/shared/enums/role.enum';
 import { ModificationContext } from '../../enums/modification-context.enum';
@@ -74,6 +74,7 @@ describe('ProposalPublicationService', () => {
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
+  let registrationFormPublicationService: jest.Mocked<RegistrationFormPublicationService>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -93,6 +94,14 @@ describe('ProposalPublicationService', () => {
             handleProposalPublicationUpdate: jest.fn(),
           },
         },
+        {
+          provide: RegistrationFormPublicationService,
+          useValue: {
+            handlePublicationCreate: jest.fn(),
+            handlePublicationUpdate: jest.fn(),
+            handlePublicationDelete: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -100,6 +109,9 @@ describe('ProposalPublicationService', () => {
     proposalPublicationService = module.get<ProposalPublicationService>(ProposalPublicationService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
+    registrationFormPublicationService = module.get<RegistrationFormPublicationService>(
+      RegistrationFormPublicationService,
+    ) as jest.Mocked<RegistrationFormPublicationService>;
   });
 
   it('should be defined', () => {
@@ -183,7 +195,7 @@ describe('ProposalPublicationService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        undefined,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1 },
         true,
         ModificationContext.Publication,
       );
@@ -191,7 +203,11 @@ describe('ProposalPublicationService', () => {
       expect(result[0].title).toEqual(publicationUpdateDto.title);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(eventEngineService.handleProposalPublicationUpdate).toHaveBeenCalledWith(
-        proposalDocument,
+        expect.objectContaining({
+          _id: proposalId,
+          status: ProposalStatus.FdpgCheck,
+        }),
+        'publicationId',
         publicationUpdateDto,
       );
     });
@@ -222,7 +238,7 @@ describe('ProposalPublicationService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        undefined,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1 },
         true,
         ModificationContext.Publication,
       );

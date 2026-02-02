@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SyncStatus } from '../../enums/sync-status.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
+import { Location } from 'src/modules/location/schema/location.schema';
 
 @Schema({ _id: false })
 export class RegisterInfo {
@@ -52,6 +53,12 @@ export class RegisterInfo {
     default: [],
   })
   procedures: string[];
+
+  @Prop({ type: [String], ref: () => Location })
+  locations: string[];
+
+  @Prop()
+  startTime: Date;
 
   // Sync fields for ACPT-Plugin integration
   @Prop({

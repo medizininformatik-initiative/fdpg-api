@@ -3,11 +3,11 @@ import { EmailService } from 'src/modules/email/email.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
-import { ReportsService } from '../reports.service';
+import { ReportNotificationService } from '../report-notification.service';
 import { ReportBaseDto, ReportDto } from 'src/modules/proposal/dto/proposal/report.dto';
 
-describe('ReportsService', () => {
-  let reportsService: ReportsService;
+describe('ReportNotificationService', () => {
+  let reportNotificationService: ReportNotificationService;
   let keycloakUtilService: KeycloakUtilService;
   let emailService: EmailService;
 
@@ -49,7 +49,7 @@ describe('ReportsService', () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ReportsService,
+        ReportNotificationService,
         {
           provide: KeycloakUtilService,
           useValue: {
@@ -70,14 +70,14 @@ describe('ReportsService', () => {
       imports: [],
     }).compile();
 
-    reportsService = module.get<ReportsService>(ReportsService);
+    reportNotificationService = module.get<ReportNotificationService>(ReportNotificationService);
     keycloakUtilService = module.get<KeycloakUtilService>(KeycloakUtilService) as jest.Mocked<KeycloakUtilService>;
     emailService = module.get<EmailService>(EmailService) as jest.Mocked<EmailService>;
   });
 
   describe('it should send mails', () => {
     it('on create', async () => {
-      await reportsService.handleReportCreate(proposal, mockReport as ReportDto, proposalUrl);
+      await reportNotificationService.handleReportCreate(proposal, mockReport as ReportDto, proposalUrl);
       expect(emailService.send).toHaveBeenCalled();
     });
   });
