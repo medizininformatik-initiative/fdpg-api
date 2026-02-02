@@ -24,6 +24,7 @@ export const FhirTaskCoordinateSharingPayloadFactory = {
     dicIdentifiers = [],
     extractionPeriod = 'P28D',
     dateTime = new Date().toISOString(),
+    practicionerIdentifier,
   }) => ({
     resourceType: 'Task',
     meta: {
@@ -37,7 +38,7 @@ export const FhirTaskCoordinateSharingPayloadFactory = {
       type: 'Practitioner',
       identifier: {
         system: 'http://dsf.dev/sid/practitioner-identifier',
-        value: 'service-account-fdpg-api-for-feasibility@forschen-fuer-gesundheit.de',
+        value: practicionerIdentifier,
       },
     },
     restriction: {

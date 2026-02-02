@@ -164,6 +164,13 @@ export class DsfQuestionnaireResponseService {
       status: 'completed',
       authored: new Date().toISOString(),
       item: newItems,
+      author: {
+        type: 'Practitioner',
+        identifier: {
+          system: 'http://dsf.dev/sid/practitioner-identifier',
+          value: this.fhirClient.getServiceAccountEmail(),
+        },
+      },
     };
 
     try {

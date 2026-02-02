@@ -40,6 +40,7 @@ export class DsfTaskService {
       dicIdentifiers,
       extractionPeriod,
       dateTime,
+      practicionerIdentifier: this.fhirClient.getServiceAccountEmail(),
     };
 
     const task = FhirTaskCoordinateSharingPayloadFactory.createStartProcessPayload(payloadArgs);

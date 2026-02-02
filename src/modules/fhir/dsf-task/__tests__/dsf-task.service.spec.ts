@@ -31,6 +31,7 @@ describe('DsfTaskService', () => {
           provide: FhirClient,
           useValue: {
             client: apiClientMock, // Inject the mocked axios instance
+            getServiceAccountEmail: jest.fn().mockReturnValue('service-account@example.com'),
           },
         },
       ],
