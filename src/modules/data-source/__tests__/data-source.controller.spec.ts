@@ -117,7 +117,7 @@ describe('DataSourceController', () => {
 
     it('should throw BadRequestException for invalid page number', async () => {
       await expect(controller.search(undefined, 0)).rejects.toThrow(BadRequestException);
-      await expect(controller.search(undefined, 0)).rejects.toThrow('Page must be greater than 0');
+      await expect(controller.search(undefined, 0)).rejects.toThrow('page size must be between 1 and 100');
     });
 
     it('should pass sort parameters', async () => {
