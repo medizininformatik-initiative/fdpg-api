@@ -191,97 +191,151 @@ export class ProposalSyncService {
     return plainToClass(BulkSyncResultsDto, results, { excludeExtraneousValues: true });
   }
 
+  private async logStep<T>(
+    stepNumber: string,
+    stepName: string,
+    operation: () => Promise<T>,
+    onSuccess?: (result: T) => string,
+  ): Promise<T> {
+    this.logger.log(`${stepNumber} ${stepName} - STARTING`);
+    const startTime = Date.now();
+
+    try {
+      const result = await operation();
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+      const successMsg = onSuccess ? onSuccess(result) : `${stepNumber} ${stepName} - COMPLETED in ${duration}s`;
+
+      this.logger.log(successMsg);
+      return result;
+    } catch (error) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      this.logger.error(`${stepNumber} ${stepName} - FAILED after ${duration}s: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
   private async callAcptPlugin(proposal: ProposalDocument, isUpdate: boolean): Promise<string> {
     try {
       // Step 1: Sync researchers first (they need to exist before project)
-      this.logger.log(`[1/5] Syncing researchers for project ${proposal.projectAbbreviation}...`);
-      const researcherIds = await this.syncResearchers(proposal);
-      this.logger.log(`✓ Synced ${researcherIds.length} researchers for project ${proposal.projectAbbreviation}`);
+      const researcherIds = await this.logStep(
+        '[1/5]',
+        `Syncing researchers for project ${proposal.projectAbbreviation}`,
+        () => this.syncResearchers(proposal),
+        (ids) => `[1/5] ✓ Synced ${ids.length} researcher(s) for project ${proposal.projectAbbreviation}`,
+      );
 
       // Step 2: Sync locations (they need to exist before project)
-      this.logger.log(`[2/5] Syncing locations for project ${proposal.projectAbbreviation}...`);
-      const { locationIds, participantInstituteIds } = await this.syncLocations(proposal);
-      this.logger.log(
-        `✓ Synced ${locationIds.length} desired locations and ${participantInstituteIds.length} participant institutes for project ${proposal.projectAbbreviation}`,
+      const { locationIds, participantInstituteIds } = await this.logStep(
+        '[2/5]',
+        `Syncing locations for project ${proposal.projectAbbreviation}`,
+        () => this.syncLocations(proposal),
+        (result) =>
+          `[2/5] ✓ Synced ${result.locationIds.length} desired location(s) and ${result.participantInstituteIds.length} participant institute(s) for project ${proposal.projectAbbreviation}`,
       );
 
       // Step 3: Upload project logo if available
-      let projectLogoWPId: number | undefined = undefined;
-      const projectLogo = proposal.uploads?.find((upload) => upload.type === DirectUpload.ProjectLogo);
+      const projectLogoWPId = await this.logStep(
+        '[3/5]',
+        `Processing project logo for project ${proposal.projectAbbreviation}`,
+        async () => {
+          const projectLogo = proposal.uploads?.find((upload) => upload.type === DirectUpload.ProjectLogo);
 
-      this.logger.log(`[3/5] Processing project logo for project ${proposal.projectAbbreviation}...`);
-      if (projectLogo?.blobName) {
-        try {
-          this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
-          const publicLogoUrl = await this.storageService.copyToPublicBucket(projectLogo.blobName);
-          const result = await this.acptPluginClient.importFile({
-            fileUrl: publicLogoUrl,
-            title: projectLogo.fileName,
-            altText: proposal.projectAbbreviation + ' Logo',
-          });
-          projectLogoWPId = result.id;
-        } catch (error) {
-          this.logger.error(`Failed to copy project logo to public bucket: ${error.message}`);
-        }
-      }
+          if (!projectLogo?.blobName) {
+            this.logger.log('No project logo to process');
+            return undefined;
+          }
 
-      // step 4: Upload attachments if available
-      let reportAttachmentIds: number[] = [];
-      const reportAttachments = proposal.reports?.flatMap((report) => report.uploads) || [];
-      this.logger.log(`[4/5] Processing report attachments for project ${proposal.projectAbbreviation}...`);
-      if (reportAttachments.length > 0) {
-        for (const attachment of reportAttachments) {
-          if (attachment?.blobName) {
-            try {
-              this.logger.log(`Copying report attachment to public bucket: ${attachment.fileName}`);
-              const publicAttachmentUrl = await this.storageService.copyToPublicBucket(attachment.blobName);
-              const result = await this.acptPluginClient.importFile({
-                fileUrl: publicAttachmentUrl,
-                title: attachment.fileName,
-                altText: proposal.projectAbbreviation + ' Report Attachment',
-              });
-              reportAttachmentIds.push(result.id);
-            } catch (error) {
-              this.logger.error(`Failed to copy report attachment to public bucket: ${error.message}`);
+          try {
+            this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
+            const publicLogoUrl = await this.storageService.copyToPublicBucket(projectLogo.blobName);
+            const result = await this.acptPluginClient.importFile({
+              fileUrl: publicLogoUrl,
+              title: projectLogo.fileName,
+              altText: proposal.projectAbbreviation + ' Logo',
+            });
+            return result.id;
+          } catch (error) {
+            this.logger.error(`Failed to upload project logo: ${error.message}`, error.stack);
+            return undefined;
+          }
+        },
+        (wpId) =>
+          wpId ? `[3/5] ✓ Project logo uploaded (WordPress ID: ${wpId})` : `[3/5] ✓ No project logo processed`,
+      );
+
+      // Step 4: Upload attachments if available
+      const reportAttachmentIds = await this.logStep(
+        '[4/5]',
+        `Processing report attachments for project ${proposal.projectAbbreviation}`,
+        async () => {
+          const ids: number[] = [];
+          const reportAttachments = proposal.reports?.flatMap((report) => report.uploads) || [];
+
+          if (reportAttachments.length === 0) {
+            this.logger.log('No report attachments to process');
+            return ids;
+          }
+
+          this.logger.log(`Found ${reportAttachments.length} report attachment(s) to process`);
+
+          for (const attachment of reportAttachments) {
+            if (attachment?.blobName) {
+              try {
+                this.logger.log(`Copying report attachment to public bucket: ${attachment.fileName}`);
+                const publicAttachmentUrl = await this.storageService.copyToPublicBucket(attachment.blobName);
+                const result = await this.acptPluginClient.importFile({
+                  fileUrl: publicAttachmentUrl,
+                  title: attachment.fileName,
+                  altText: proposal.projectAbbreviation + ' Report Attachment',
+                });
+                ids.push(result.id);
+                this.logger.log(`✓ Uploaded attachment: ${attachment.fileName} (WordPress ID: ${result.id})`);
+              } catch (error) {
+                this.logger.error(`Failed to upload attachment ${attachment.fileName}: ${error.message}`, error.stack);
+              }
             }
           }
-        }
-      }
-      // Step 5: Build project payload with researcher and location IDs
-      this.logger.log(
-        `[5/5] ${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}...`,
+          return ids;
+        },
+        (ids) => `[4/5] ✓ Uploaded ${ids.length} report attachment(s)`,
       );
 
-      const projectData: AcptProjectDto = await this.buildAcptPayload(
-        proposal,
-        researcherIds,
-        locationIds,
-        participantInstituteIds,
-        projectLogoWPId,
-        reportAttachmentIds,
-      );
-
-      try {
-        const projectResponse = isUpdate
-          ? await this.acptPluginClient.updateProject(proposal.registerInfo?.acptPluginId, projectData)
-          : await this.acptPluginClient.createProject(projectData);
-
-        this.logger.log(
-          `✓ Project ${isUpdate ? 'updated' : 'created'} successfully with WordPress ID: ${projectResponse.id}`,
-        );
-        return projectResponse.id;
-      } catch (error) {
-        if (isUpdate && error.message?.includes('404')) {
-          this.logger.warn(
-            `Update failed with 404 for ID ${proposal.registerInfo?.acptPluginId}. Falling back to CREATE.`,
+      // Step 5: Build project payload and create/update in WordPress
+      return await this.logStep(
+        '[5/5]',
+        `${isUpdate ? 'Updating' : 'Creating'} project in ACPT Plugin for ${proposal.projectAbbreviation}`,
+        async () => {
+          const projectData: AcptProjectDto = await this.buildAcptPayload(
+            proposal,
+            researcherIds,
+            locationIds,
+            participantInstituteIds,
+            projectLogoWPId,
+            reportAttachmentIds,
           );
-          const projectResponse = await this.acptPluginClient.createProject(projectData);
-          this.logger.log(`✓ Project created successfully with WordPress ID: ${projectResponse.id}`);
-          return projectResponse.id;
-        }
 
-        throw error;
-      }
+          try {
+            const projectResponse = isUpdate
+              ? await this.acptPluginClient.updateProject(proposal.registerInfo?.acptPluginId, projectData)
+              : await this.acptPluginClient.createProject(projectData);
+
+            return projectResponse.id;
+          } catch (error) {
+            if (isUpdate && error.message?.includes('404')) {
+              this.logger.warn(
+                `Update failed with 404 for ID ${proposal.registerInfo?.acptPluginId}. Falling back to CREATE.`,
+              );
+              const projectResponse = await this.acptPluginClient.createProject(projectData);
+              return projectResponse.id;
+            }
+
+            throw error;
+          }
+        },
+        (wpId) =>
+          `[5/5] ✓ Project ${isUpdate ? 'updated' : 'created'} successfully for ${proposal.projectAbbreviation} (WordPress ID: ${wpId})`,
+      );
     } catch (error) {
       const errorMessage = error.message || 'Unknown error';
       const isTimeout =
