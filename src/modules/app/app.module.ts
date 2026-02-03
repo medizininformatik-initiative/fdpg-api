@@ -23,6 +23,7 @@ import { LocationModule } from '../location/location.module';
 import { Location, LocationSchema } from '../location/schema/location.schema';
 import { FhirModule } from '../fhir/fhir.module';
 import { LoggerModule } from 'nestjs-pino';
+import { DataSourcesModule } from '../data-source/data-source.module';
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { LoggerModule } from 'nestjs-pino';
 
     /** Modules */
     LocationModule,
+    DataSourcesModule,
     AuthModule,
     AdminModule,
     ProposalModule,
