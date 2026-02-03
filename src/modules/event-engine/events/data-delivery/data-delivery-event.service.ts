@@ -21,7 +21,7 @@ export class DataDeliveryEventService {
     await this.sendMails(
       proposal,
       proposalUrl,
-      [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ],
+      [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ, EmailRoleTargets.FDPG],
       { conditionProposalDataDelivery: true },
       locations.map((loc) => loc._id),
     );
@@ -31,7 +31,7 @@ export class DataDeliveryEventService {
     await this.sendMails(
       proposal,
       proposalUrl,
-      [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ],
+      [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ, EmailRoleTargets.FDPG],
       { conditionProposalDataReady: true },
       locations.map((loc) => loc._id),
     );

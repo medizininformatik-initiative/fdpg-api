@@ -4,12 +4,18 @@ import { DeliveryInfoStatus } from '../../enums/delivery-info-status.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { FhirService } from 'src/modules/fhir/fhir.service';
 import { SubDeliveryStatus } from '../../enums/data-delivery.enum';
+import { ProposalCrudService } from '../proposal-crud.service';
+import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
+import { Proposal } from '../../schema/proposal.schema';
+import { IRequestUser } from 'src/shared/types/request-user.interface';
 
 @Injectable()
 export class ProposalDataDeliverySyncService {
   constructor(
     private readonly locationService: LocationService,
     private readonly fhirService: FhirService,
+    private readonly proposalCrudService: ProposalCrudService,
+    private readonly eventEngineService: EventEngineService,
   ) {}
 
   private readonly logger = new Logger(ProposalDataDeliverySyncService.name);
@@ -79,5 +85,24 @@ export class ProposalDataDeliverySyncService {
     }
 
     deliveryInfo.lastSynced = new Date();
+  };
+
+  sendDeliveryDataReadyEventWithUser = async (
+    proposalId: string,
+    deliveryInfo: DeliveryInfo,
+    user: IRequestUser,
+  ): Promise<void> => {
+    const proposal = await this.proposalCrudService.findDocument(proposalId, user);
+    await this.sendDeliveryDataReadyEvent(proposal, deliveryInfo);
+  };
+
+  sendDeliveryDataReadyEvent = async (proposal: Proposal, deliveryInfo: DeliveryInfo): Promise<void> => {
+    if (deliveryInfo.status === DeliveryInfoStatus.RESULTS_AVAILABLE) {
+      const llm = await this.locationService.findAllLookUpMap();
+      await this.eventEngineService.handleDataDeliveryDataReady(
+        proposal,
+        deliveryInfo.subDeliveries.map((sub) => llm[sub.location]),
+      );
+    }
   };
 }

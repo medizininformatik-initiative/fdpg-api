@@ -70,6 +70,8 @@ describe('ProposalDataDeliveryService', () => {
           useValue: {
             syncDeliveryInfoResultWithDsf: jest.fn(),
             syncSubDeliveryStatusesWithDsf: jest.fn(),
+            sendDeliveryDataReadyEventWithUser: jest.fn(),
+            sendDeliveryDataReadyEvent: jest.fn(),
           },
         },
         {
@@ -254,7 +256,6 @@ describe('ProposalDataDeliveryService', () => {
       expect(deliveryInfoService.setToForwardDelivery).toHaveBeenCalledWith(mockInfo);
       expect(syncService.syncDeliveryInfoResultWithDsf).toHaveBeenCalledWith(mockProposalId, mockInfo);
       expect(crudService.updateDeliveryInfo).toHaveBeenCalled();
-      expect(eventEngineService.handleDataDeliveryDataReady).toHaveBeenCalled();
       expect(mockUpdated.save).toHaveBeenCalled();
     });
 
