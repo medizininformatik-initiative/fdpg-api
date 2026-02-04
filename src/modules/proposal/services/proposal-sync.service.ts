@@ -248,7 +248,11 @@ export class ProposalSyncService {
 
           try {
             this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
-            const publicLogoUrl = await this.storageService.copyToPublicBucket(projectLogo.blobName);
+            const targetBlobName = `${projectLogo.blobName}_${projectLogo.fileName}`;
+            const publicLogoUrl = await this.storageService.copyToPublicBucketWithName(
+              projectLogo.blobName,
+              targetBlobName,
+            );
             const result = await this.acptPluginClient.importFile({
               fileUrl: publicLogoUrl,
               title: projectLogo.fileName,
@@ -283,7 +287,12 @@ export class ProposalSyncService {
             if (attachment?.blobName) {
               try {
                 this.logger.log(`Copying report attachment to public bucket: ${attachment.fileName}`);
-                const publicAttachmentUrl = await this.storageService.copyToPublicBucket(attachment.blobName);
+                // Use fileName (with extension) as the target name in public bucket
+                const targetBlobName = `${attachment.blobName}_${attachment.fileName}`;
+                const publicAttachmentUrl = await this.storageService.copyToPublicBucketWithName(
+                  attachment.blobName,
+                  targetBlobName,
+                );
                 const result = await this.acptPluginClient.importFile({
                   fileUrl: publicAttachmentUrl,
                   title: attachment.fileName,
@@ -898,7 +907,7 @@ export class ProposalSyncService {
 
     return {
       title: proposal.userProject?.generalProjectInformation?.projectTitle || proposal.projectAbbreviation,
-      status: 'publish', // WordPress post status
+      status: 'pending', // WordPress post status
       content: proposal.userProject?.projectDetails?.simpleProjectDescription || '',
       acpt: {
         meta,
