@@ -132,24 +132,18 @@ export class CommentEventService {
   }
 
   private async handleProposalMessageToDmsCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
-    if (!this.PREVENT_MESSAGE_TO_FDPG_CREATION) {
-      const dmsLocation = proposal.dataDelivery?.dataManagementSite;
+    const dmsLocation = proposal.dataDelivery?.dataManagementSite;
 
-      if (!dmsLocation) {
-        throw Error(`DMS Location of proposal ${proposal._id} is undefined`);
-      }
-
-      const validDmsContacts = await this.keycloakUtilService
-        .getDmsMembers()
-        .then((members) => this.keycloakUtilService.getLocationContacts([dmsLocation], members));
-
-      console.log('TODO implement e-mail for dms on comment');
-
-      const email = getProposalMessageCreationEmailForDmst(validDmsContacts, proposal, comment, proposalUrl);
-      await this.emailService.send(email);
-
-      return Promise.resolve();
+    if (!dmsLocation) {
+      throw Error(`DMS Location of proposal ${proposal._id} is undefined`);
     }
+
+    const validDmsContacts = await this.keycloakUtilService
+      .getDmsMembers()
+      .then((members) => this.keycloakUtilService.getLocationContacts([dmsLocation], members));
+
+    const email = getProposalMessageCreationEmailForDmst(validDmsContacts, proposal, comment, proposalUrl);
+    await this.emailService.send(email);
   }
 
   private async handleProposalMessageToLocationCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
