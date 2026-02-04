@@ -10,6 +10,7 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
 import {
   getProposalMessageCreationEmailForDiz,
+  getProposalMessageCreationEmailForDmst,
   getProposalMessageCreationEmailForFdpg,
   getProposalMessageCreationEmailForOwner,
   getProposalMessageCreationEmailForUac,
@@ -144,8 +145,8 @@ export class CommentEventService {
 
       console.log('TODO implement e-mail for dms on comment');
 
-      // const email = getProposalMessageCreationEmailForFdpg(validFdpgContacts, proposal, comment, proposalUrl);
-      // await this.emailService.send(email);
+      const email = getProposalMessageCreationEmailForDmst(validDmsContacts, proposal, comment, proposalUrl);
+      await this.emailService.send(email);
 
       return Promise.resolve();
     }
