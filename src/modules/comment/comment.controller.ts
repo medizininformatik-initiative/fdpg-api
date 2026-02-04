@@ -31,6 +31,7 @@ import { MarkAsDoneDto } from './dto/mark-as-done.dto';
   Role.DizMember,
   Role.UacMember,
   Role.DataManagementOffice,
+  Role.RegisteringMember,
 )
 @ApiController('comments')
 export class CommentController {

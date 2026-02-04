@@ -64,6 +64,7 @@ export class ProposalCrudController {
     Role.DizMember,
     Role.UacMember,
     Role.DataManagementOffice,
+    Role.RegisteringMember,
   )
   @Get()
   @ApiOperation({ summary: 'Gets all Proposals that are currently accessible for the user' })

@@ -64,7 +64,7 @@ export class ProposalMiscController {
     private readonly registrationFormCopyService: RegistrationFormCopyService,
   ) {}
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.RegisteringMember)
   @Get(':id/researcherInfo')
   @ApiNotFoundResponse({ description: 'Item could not be found' })
   @ApiOperation({ summary: 'Gets participating researcher info by proposal id' })
@@ -91,7 +91,7 @@ export class ProposalMiscController {
     await this.proposalMiscService.setStatus(id, value, user);
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.RegisteringMember)
   @Get(':id/proposalPdfFile')
   @ApiNotFoundResponse({ description: 'Proposal file could not be created' })
   @HttpCode(200)
@@ -195,7 +195,15 @@ export class ProposalMiscController {
     await this.proposalMiscService.setDeadlines(id, dto, user);
   }
 
-  @Auth(Role.Admin, Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(
+    Role.Admin,
+    Role.Researcher,
+    Role.FdpgMember,
+    Role.DataSourceMember,
+    Role.DizMember,
+    Role.UacMember,
+    Role.RegisteringMember,
+  )
   @Get('proposal-form/versions')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Returns a list of all proposal form versions' })
@@ -203,7 +211,7 @@ export class ProposalMiscController {
     return await this.proposalMiscService.getAllProposalFormVersions();
   }
 
-  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember)
+  @Auth(Role.Researcher, Role.FdpgMember, Role.DataSourceMember, Role.DizMember, Role.UacMember, Role.RegisteringMember)
   @Get(':id/form-schema')
   @ApiNotFoundResponse({ description: 'Item could not be found.' })
   @ApiOperation({ summary: 'Returns a merged proposal with the corresponding form schema version' })
