@@ -248,7 +248,7 @@ export class ProposalSyncService {
 
           try {
             this.logger.log(`Copying project logo to public bucket: ${projectLogo.fileName}`);
-            const targetBlobName = `${projectLogo.blobName}_${projectLogo.fileName}`;
+            const targetBlobName = `${projectLogo.blobName}-${projectLogo.fileName}`;
             const publicLogoUrl = await this.storageService.copyToPublicBucketWithName(
               projectLogo.blobName,
               targetBlobName,
@@ -287,8 +287,7 @@ export class ProposalSyncService {
             if (attachment?.blobName) {
               try {
                 this.logger.log(`Copying report attachment to public bucket: ${attachment.fileName}`);
-                // Use fileName (with extension) as the target name in public bucket
-                const targetBlobName = `${attachment.blobName}_${attachment.fileName}`;
+                const targetBlobName = `${attachment.blobName}-${attachment.fileName}`;
                 const publicAttachmentUrl = await this.storageService.copyToPublicBucketWithName(
                   attachment.blobName,
                   targetBlobName,

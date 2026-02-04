@@ -63,6 +63,7 @@ export class PublicStorageService {
 
     const metadata: ItemBucketMetadata = {
       'Content-Type': file.mimetype,
+      'x-amz-acl': 'public-read', // Make file publicly readable
     };
 
     try {
