@@ -20,13 +20,15 @@ const canSubmitRegisterForm = (user: IRequestUser, proposal: Proposal) =>
 
 const isEditor = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher &&
-  (proposal.participants || []).some(
+  ((proposal.participants || []).some(
     (participant) =>
       participant.researcher.email === user.email &&
       [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
         participant.participantRole.role,
       ),
-  );
+  ) ||
+    (proposal.projectResponsible?.researcher?.email === user.email &&
+      !!proposal.projectResponsible?.researcher?.email));
 
 const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) =>
   isOwner(user, proposal) || isEditor(user, proposal) || isFdpg(user);

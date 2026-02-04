@@ -44,13 +44,15 @@ export const validateUploadDeletion = (proposal: ProposalDocument, upload: Uploa
 
 const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
   const isOwner = proposal.owner.id === user.userId;
-  const isEditor = (proposal.participants || []).some(
-    (participant) =>
-      participant.researcher.email === user.email &&
-      [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
-        participant.participantRole.role,
-      ),
-  );
+  const isEditor =
+    (proposal.participants || []).some(
+      (participant) =>
+        participant.researcher.email === user.email &&
+        [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
+          participant.participantRole.role,
+        ),
+    ) ||
+    (proposal.projectResponsible?.researcher?.email === user.email && !!proposal.projectResponsible?.researcher?.email);
   const hasEditRights = isOwner || isEditor;
   const isGeneralAccessType = generalAccessTypes.includes(upload.type);
   const isEditable = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.Rework;
