@@ -6,6 +6,7 @@ import { DirectUpload, UseCaseUpload } from '../../enums/upload-type.enum';
 import { Upload } from '../../schema/sub-schema/upload.schema';
 import { ForbiddenException } from '@nestjs/common';
 import { validateUploadDeletion } from '../validate-upload-deletion.util';
+import { ProposalType } from '../../enums/proposal-type.enum';
 
 describe('validateUploadDeletion', () => {
   let baseProposal: ProposalDocument;
@@ -20,6 +21,7 @@ describe('validateUploadDeletion', () => {
     baseProposal = {
       owner: { id: 'owner-1' },
       status: ProposalStatus.Draft,
+      type: ProposalType.ApplicationForm,
       userProject: {
         ethicVote: { isDone: false },
       },

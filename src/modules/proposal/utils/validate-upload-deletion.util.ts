@@ -19,37 +19,40 @@ const generalAccessTypes = [
 export const validateUploadDeletion = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
   const hasRegisteringMemberRole = user.roles.includes(Role.RegisteringMember);
 
-  if (hasRegisteringMemberRole) {
-    checkForRegisteringMember(proposal, upload, user);
-    return;
-  }
-
-  if (user.singleKnownRole === Role.Researcher) {
-    checkForResearcher(proposal, upload, user);
+  if (user.singleKnownRole === Role.Researcher && proposal.type === ProposalType.ApplicationForm) {
+    return checkForResearcher(proposal, upload, user);
   }
 
   if (user.singleKnownRole === Role.FdpgMember || user.singleKnownRole === Role.DataSourceMember) {
-    checkForFdpgMember(proposal);
+    return checkForFdpgMember(proposal);
   }
 
   if (user.singleKnownRole === Role.DizMember) {
-    checkForLocationMember(proposal, upload);
+    return checkForLocationMember(proposal, upload);
   }
 
   if (user.singleKnownRole === Role.UacMember) {
-    checkForLocationMember(proposal, upload);
+    return checkForLocationMember(proposal, upload);
   }
+
+  if (hasRegisteringMemberRole && proposal.type === ProposalType.RegisteringForm) {
+    return checkForResearcher(proposal, upload, user);
+  }
+
+  throwForbiddenError();
 };
 
 const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
   const isOwner = proposal.owner.id === user.userId;
-  const isEditor = (proposal.participants || []).some(
-    (participant) =>
-      participant.researcher.email === user.email &&
-      [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
-        participant.participantRole.role,
-      ),
-  );
+  const isEditor =
+    (proposal.participants || []).some(
+      (participant) =>
+        participant.researcher.email === user.email &&
+        [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
+          participant.participantRole.role,
+        ),
+    ) ||
+    (proposal.projectResponsible?.researcher?.email === user.email && !!proposal.projectResponsible?.researcher?.email);
   const hasEditRights = isOwner || isEditor;
   const isGeneralAccessType = generalAccessTypes.includes(upload.type);
   const isEditable = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.Rework;
@@ -75,14 +78,6 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
     !isEditable &&
     isEthicSectionDone
   ) {
-    throwForbiddenError();
-  }
-};
-
-const checkForRegisteringMember = (proposal: ProposalDocument, upload: Upload, user: IRequestUser) => {
-  if (proposal.type === ProposalType.RegisteringForm) {
-    checkForResearcher(proposal, upload, user);
-  } else {
     throwForbiddenError();
   }
 };
