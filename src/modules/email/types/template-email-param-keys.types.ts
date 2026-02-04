@@ -44,7 +44,8 @@ export type TemplateProposalEmailConditionKeys =
   | 'conditionDeadlineFinishedProjectChanged'
   | 'deadlineFinishedProjectNewDate'
   | 'conditionProposalRegistrationCreate'
-  | 'conditionProposalFinishedReminderForFdpg';
+  | 'conditionProposalFinishedReminderForFdpg'
+  | 'conditionProposalDataDeliveryStarted';
 
 export type TemplateEmailParamKeys =
   | Partial<TemplateProposalEmailConditionKeys>

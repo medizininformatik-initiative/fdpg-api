@@ -80,12 +80,14 @@ export class SyncDeliveryInfoCronService {
       .flatMap((proposal) =>
         proposal.dataDelivery.deliveryInfos
           .filter((deliveryInfo) => !deliveryInfo.manualEntry)
-          .map((deliveryInfo) => ({ proposalId: proposal._id, deliveryInfo })),
+          .map((deliveryInfo) => ({ proposal: proposal, deliveryInfo })),
       )
-      .map(async ({ proposalId, deliveryInfo }) => {
+      .map(async ({ proposal, deliveryInfo }) => {
+        const proposalId = proposal._id;
         try {
           await this.proposalDataDeliverySyncService.syncDeliveryInfoResultWithDsf(proposalId, deliveryInfo);
           await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);
+          await this.proposalDataDeliverySyncService.sendDeliveryDataReadyEvent(proposal, deliveryInfo);
         } catch (e) {
           this.logger.error(
             `CRON job ${jobType}: could not sync proposalId ${proposalId} deliveryInfoId ${deliveryInfo._id}. Error:`,

@@ -68,7 +68,7 @@ export class StatusChangeService {
         return await this.sendMails(
           proposal,
           proposalUrl,
-          [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ],
+          [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ, EmailRoleTargets.FDPG],
           {
             conditionProposalDataResearch: true,
           },

@@ -49,13 +49,13 @@ describe('DataDeliveryEventService', () => {
   });
 
   describe('handleDataDeliveryInitiated', () => {
-    it('should call sendMailsUtil with RESEARCHER, DIZ and conditionProposalDataDelivery', async () => {
+    it('should call sendMailsUtil with RESEARCHER, DIZ, FDPG and conditionProposalDataDelivery', async () => {
       await service.handleDataDeliveryInitiated(mockProposal, mockUrl, mockLocations);
 
       expect(sendMailsUtil).toHaveBeenCalledWith(
         mockProposal,
         mockUrl,
-        [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ],
+        [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ, EmailRoleTargets.FDPG],
         ['loc1', 'loc2'],
         { conditionProposalDataDelivery: true },
         emailService,
@@ -66,13 +66,13 @@ describe('DataDeliveryEventService', () => {
   });
 
   describe('handleDataDeliveryDataReady', () => {
-    it('should call sendMailsUtil with RESEARCHER, DIZ and conditionProposalDataReady', async () => {
+    it('should call sendMailsUtil with RESEARCHER, DIZ, FDPG and conditionProposalDataReady', async () => {
       await service.handleDataDeliveryDataReady(mockProposal, mockUrl, mockLocations);
 
       expect(sendMailsUtil).toHaveBeenCalledWith(
         mockProposal,
         mockUrl,
-        [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ],
+        [EmailRoleTargets.RESEARCHER, EmailRoleTargets.DIZ, EmailRoleTargets.FDPG],
         ['loc1', 'loc2'],
         { conditionProposalDataReady: true },
         emailService,

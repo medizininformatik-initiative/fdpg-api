@@ -5,11 +5,15 @@ import { FhirService } from 'src/modules/fhir/fhir.service';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { DeliveryInfoStatus } from '../../../enums/delivery-info-status.enum';
 import { SubDeliveryStatus } from '../../../enums/data-delivery.enum';
+import { ProposalCrudService } from '../../proposal-crud.service';
+import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 
 describe('ProposalDataDeliverySyncService', () => {
   let service: ProposalDataDeliverySyncService;
   let locationService: LocationService;
   let fhirService: FhirService;
+  let proposalCrudService: ProposalCrudService;
+  let eventEngineService: EventEngineService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -28,12 +32,21 @@ describe('ProposalDataDeliverySyncService', () => {
             fetchResultUrl: jest.fn(),
           },
         },
+        { provide: ProposalCrudService, useValue: { findDocument: jest.fn() } },
+        {
+          provide: EventEngineService,
+          useValue: {
+            handleDataDeliveryDataReady: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<ProposalDataDeliverySyncService>(ProposalDataDeliverySyncService);
     locationService = module.get<LocationService>(LocationService);
     fhirService = module.get<FhirService>(FhirService);
+    proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService);
+    eventEngineService = module.get<EventEngineService>(EventEngineService);
 
     // Silence Logger
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});

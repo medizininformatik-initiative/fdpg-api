@@ -177,6 +177,7 @@ export class ProposalDataDeliveryService {
     if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET || dto.status === DeliveryInfoStatus.PENDING) {
       await this.proposalDeliveryInfoService.setToForwardDelivery(deliveryInfo);
       await this.proposalDataDeliverySyncService.syncDeliveryInfoResultWithDsf(proposalId, deliveryInfo);
+      await this.proposalDataDeliverySyncService.sendDeliveryDataReadyEventWithUser(proposalId, deliveryInfo, user);
     } else if (dto.status === DeliveryInfoStatus.CANCELED) {
       this.proposalDeliveryInfoService.setToCancelDelivery(deliveryInfo);
     } else if (
@@ -208,15 +209,6 @@ export class ProposalDataDeliveryService {
 
     await updatedProposal.save();
 
-    if (dto.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET) {
-      const llm = await this.locationService.findAllLookUpMap();
-      const proposal = await this.proposalCrudService.findDocument(proposalId, user);
-      await this.eventEngineService.handleDataDeliveryDataReady(
-        proposal,
-        deliveryInfo.subDeliveries.map((sub) => llm[sub.location]),
-      );
-    }
-
     return this.dataDeliveryModelToGetDto(updatedProposal.dataDelivery);
   };
 
@@ -237,6 +229,7 @@ export class ProposalDataDeliveryService {
       await this.proposalDataDeliverySyncService.syncSubDeliveryStatusesWithDsf(proposalId, deliveryInfo);
     } else if (deliveryInfo.status === DeliveryInfoStatus.WAITING_FOR_DATA_SET) {
       await this.proposalDataDeliverySyncService.syncDeliveryInfoResultWithDsf(proposalId, deliveryInfo);
+      await this.proposalDataDeliverySyncService.sendDeliveryDataReadyEventWithUser(proposalId, deliveryInfo, user);
     }
 
     const updatedProposal = await this.proposalDataDeliveryCrudService.updateDeliveryInfo(proposalId, deliveryInfo);

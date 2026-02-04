@@ -39,6 +39,7 @@ export const buildParticipatingEmailSummary = (
       conditionProposalFinished: changes.includes(HistoryEventType.ProposalFinished),
       conditionProposalConcluded: false, // changes.includes(HistoryEventType.Concluded),
       conditionProposalArchived: changes.includes(HistoryEventType.ProposalArchived),
+      conditionProposalDataDeliveryStarted: changes.includes(HistoryEventType.DataDeliveryStarted),
     },
   };
 };

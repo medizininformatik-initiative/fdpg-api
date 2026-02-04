@@ -145,6 +145,7 @@ export class CommentService {
   async findForItem(commentReference: CommentReferenceDto, user: IRequestUser): Promise<CommentGetDto[]> {
     const filter: FilterQuery<Comment> = { ...commentReference };
     const projection = { status: 1 };
+
     const proposal = await this.proposalCrudService.findDocument(
       commentReference.referenceDocumentId,
       user,
