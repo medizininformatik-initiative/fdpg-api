@@ -484,7 +484,7 @@ describe('ProposalSyncService', () => {
         'existing-wp-id',
         expect.objectContaining({
           title: 'Test Project',
-          status: 'publish',
+          status: 'pending',
         }),
       );
       expect(mockCreateProject).not.toHaveBeenCalled();
