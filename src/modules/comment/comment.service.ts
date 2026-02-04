@@ -146,7 +146,6 @@ export class CommentService {
     const filter: FilterQuery<Comment> = { ...commentReference };
     const projection = { status: 1 };
 
-    console.log('USER ROLE IN COMMENT SERVICE:', { commentReference, user });
     const proposal = await this.proposalCrudService.findDocument(
       commentReference.referenceDocumentId,
       user,
