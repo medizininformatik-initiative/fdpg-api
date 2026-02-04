@@ -105,14 +105,18 @@ export class StorageService {
    * @returns The permanent public URL
    */
   async copyToPublicBucket(blobName: string): Promise<string> {
-    const exists = await this.blobExists(blobName);
+    return this.copyToPublicBucketWithName(blobName, blobName);
+  }
+
+  async copyToPublicBucketWithName(sourceBlobName: string, targetBlobName: string): Promise<string> {
+    const exists = await this.blobExists(sourceBlobName);
     if (!exists) {
       throw new NotFoundException('File does not exist in private bucket');
     }
 
     // If PublicStorageService is configured and available, upload to IONOS Cloud
     if (this.publicStorageService?.isAvailable()) {
-      const stream = await this.getObject(blobName);
+      const stream = await this.getObject(sourceBlobName);
       const chunks: Buffer[] = [];
 
       for await (const chunk of stream) {
@@ -120,23 +124,28 @@ export class StorageService {
       }
 
       const buffer = Buffer.concat(chunks);
-      const metadata = await this.minioClient.statObject(this.bucketName, blobName);
+      const metadata = await this.minioClient.statObject(this.bucketName, sourceBlobName);
 
       // Create a mock file object for PublicStorageService
       const file = {
         buffer,
         size: buffer.length,
         mimetype: metadata.metaData['content-type'] || 'application/octet-stream',
-        originalname: blobName,
+        originalname: targetBlobName,
       } as Express.Multer.File;
 
-      await this.publicStorageService.uploadFile(blobName, file);
-      return this.publicStorageService.getPublicUrl(blobName);
+      await this.publicStorageService.uploadFile(targetBlobName, file);
+      return this.publicStorageService.getPublicUrl(targetBlobName);
     }
 
     // Fallback: Copy to local MinIO public bucket
-    await this.minioClient.copyObject(this.publicBucketName, blobName, `/${this.bucketName}/${blobName}`, null);
-    return this.getPublicUrl(blobName);
+    await this.minioClient.copyObject(
+      this.publicBucketName,
+      targetBlobName,
+      `/${this.bucketName}/${sourceBlobName}`,
+      null,
+    );
+    return this.getPublicUrl(targetBlobName);
   }
 
   /**
