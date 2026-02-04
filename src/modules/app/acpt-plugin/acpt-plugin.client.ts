@@ -398,8 +398,35 @@ export class AcptPluginClient {
     try {
       this.logger.log(`Importing file to WordPress: ${params.fileUrl}`);
 
+      // Validate URL accessibility before sending to WordPress
+      try {
+        this.logger.log('🔍 Testing URL accessibility...');
+        const testResponse = await axios.head(params.fileUrl, { timeout: 10000 });
+        this.logger.log(
+          `✅ URL is accessible (status: ${testResponse.status}, content-type: ${testResponse.headers['content-type']})`,
+        );
+        this.logger.log(`Content-Length: ${testResponse.headers['content-length']} bytes`);
+      } catch (accessError) {
+        this.logger.warn(`⚠️ URL accessibility test failed: ${accessError.message}`);
+        if (accessError.response) {
+          this.logger.warn(`Status: ${accessError.response.status}`);
+        } else {
+          this.logger.warn('No response received - likely network/connectivity issue');
+        }
+      }
+
+      const urlObj = new URL(params.fileUrl);
+      const encodedPathname = urlObj.pathname
+        .split('/')
+        .map((segment) => encodeURIComponent(segment))
+        .join('/');
+      const encodedUrl = `${urlObj.protocol}//${urlObj.host}${encodedPathname}`;
+
+      this.logger.log(`Original URL: ${params.fileUrl}`);
+      this.logger.log(`Encoded URL: ${encodedUrl}`);
+
       const payload = {
-        file_url: params.fileUrl,
+        file_url: encodedUrl,
         ...(params.title && { title: params.title }),
         ...(params.altText && { alt_text: params.altText }),
         ...(params.caption && { caption: params.caption }),
@@ -433,9 +460,15 @@ export class AcptPluginClient {
       this.logger.error(`Failed to import file: ${error.message}`);
       if (error.response) {
         this.logger.error(`Response status: ${error.response.status}`);
-        this.logger.error(`Response data: ${JSON.stringify(error.response.data)}`);
+        this.logger.error(`Response data: ${JSON.stringify(error.response.data, null, 2)}`);
+        this.logger.error(`Response headers: ${JSON.stringify(error.response.headers, null, 2)}`);
+      } else if (error.request) {
+        this.logger.error('No response received from WordPress');
+        this.logger.error(`Request details: ${JSON.stringify({ url: params.fileUrl, method: 'POST' })}`);
       }
-      throw new Error(`ACPT Plugin file import error: ${error.message}`);
+
+      const errorDetail = error.response?.data?.message || error.response?.data?.error || error.message;
+      throw new Error(`ACPT Plugin file import error: ${errorDetail}`);
     }
   }
 
