@@ -10,9 +10,11 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { Proposal } from '../../../proposal/schema/proposal.schema';
 import {
   getProposalMessageCreationEmailForDiz,
+  getProposalMessageCreationEmailForDmst,
   getProposalMessageCreationEmailForFdpg,
   getProposalMessageCreationEmailForOwner,
   getProposalMessageCreationEmailForUac,
+  getProposalMessageCreationEmailFromDmoForFdpg,
 } from './proposal-message-creation.emails';
 import {
   getProposalTaskCompletionEmailForDiz,
@@ -130,25 +132,30 @@ export class CommentEventService {
     }
   }
 
-  private async handleProposalMessageToDmsCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
+  private async handleProposalMessageDmoToFdpgCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
     if (!this.PREVENT_MESSAGE_TO_FDPG_CREATION) {
-      const dmsLocation = proposal.dataDelivery?.dataManagementSite;
+      const validFdpgContacts = await this.keycloakUtilService
+        .getFdpgMemberLevelContacts(proposal)
+        .then((members) => members.map((member) => member.email));
 
-      if (!dmsLocation) {
-        throw Error(`DMS Location of proposal ${proposal._id} is undefined`);
-      }
-
-      const validDmsContacts = await this.keycloakUtilService
-        .getDmsMembers()
-        .then((members) => this.keycloakUtilService.getLocationContacts([dmsLocation], members));
-
-      console.log('TODO implement e-mail for dms on comment');
-
-      // const email = getProposalMessageCreationEmailForFdpg(validFdpgContacts, proposal, comment, proposalUrl);
-      // await this.emailService.send(email);
-
-      return Promise.resolve();
+      const email = getProposalMessageCreationEmailFromDmoForFdpg(validFdpgContacts, proposal, comment, proposalUrl);
+      await this.emailService.send(email);
     }
+  }
+
+  private async handleProposalMessageToDmsCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
+    const dmsLocation = proposal.dataDelivery?.dataManagementSite;
+
+    if (!dmsLocation) {
+      throw Error(`DMS Location of proposal ${proposal._id} is undefined`);
+    }
+
+    const validDmsContacts = await this.keycloakUtilService
+      .getDmsMembers()
+      .then((members) => this.keycloakUtilService.getLocationContacts([dmsLocation], members));
+
+    const email = getProposalMessageCreationEmailForDmst(validDmsContacts, proposal, comment, proposalUrl);
+    await this.emailService.send(email);
   }
 
   private async handleProposalMessageToLocationCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
@@ -213,7 +220,7 @@ export class CommentEventService {
 
       case CommentType.ProposalMessageToDmst:
         if (user.singleKnownRole === Role.DataManagementOffice) {
-          return await this.handleProposalMessageToFdpgCreation(proposal, comment, proposalUrl);
+          return await this.handleProposalMessageDmoToFdpgCreation(proposal, comment, proposalUrl);
         } else {
           return await this.handleProposalMessageToDmsCreation(proposal, comment, proposalUrl);
         }
