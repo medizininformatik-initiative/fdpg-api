@@ -44,7 +44,7 @@ export const getProposalMessageCreationEmailFromDmoForFdpg = (
 ): ITemplateEmail => ({
   to: validContacts,
   categories: [EmailCategory.CommentTask],
-  templateId: 26,
+  templateId: 68,
   params: {
     projectAbbreviation: proposal.projectAbbreviation,
     timestamp: comment.createdAt.toISOString(),
