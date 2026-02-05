@@ -14,6 +14,7 @@ import {
   getProposalMessageCreationEmailForFdpg,
   getProposalMessageCreationEmailForOwner,
   getProposalMessageCreationEmailForUac,
+  getProposalMessageCreationEmailFromDmoForFdpg,
 } from './proposal-message-creation.emails';
 import {
   getProposalTaskCompletionEmailForDiz,
@@ -131,6 +132,17 @@ export class CommentEventService {
     }
   }
 
+  private async handleProposalMessageDmoToFdpgCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
+    if (!this.PREVENT_MESSAGE_TO_FDPG_CREATION) {
+      const validFdpgContacts = await this.keycloakUtilService
+        .getFdpgMemberLevelContacts(proposal)
+        .then((members) => members.map((member) => member.email));
+
+      const email = getProposalMessageCreationEmailFromDmoForFdpg(validFdpgContacts, proposal, comment, proposalUrl);
+      await this.emailService.send(email);
+    }
+  }
+
   private async handleProposalMessageToDmsCreation(proposal: Proposal, comment: Comment, proposalUrl: string) {
     const dmsLocation = proposal.dataDelivery?.dataManagementSite;
 
@@ -208,7 +220,7 @@ export class CommentEventService {
 
       case CommentType.ProposalMessageToDmst:
         if (user.singleKnownRole === Role.DataManagementOffice) {
-          return await this.handleProposalMessageToFdpgCreation(proposal, comment, proposalUrl);
+          return await this.handleProposalMessageDmoToFdpgCreation(proposal, comment, proposalUrl);
         } else {
           return await this.handleProposalMessageToDmsCreation(proposal, comment, proposalUrl);
         }

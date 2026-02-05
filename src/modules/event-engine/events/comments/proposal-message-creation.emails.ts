@@ -36,6 +36,22 @@ export const getProposalMessageCreationEmailForFdpg = (
   },
 });
 
+export const getProposalMessageCreationEmailFromDmoForFdpg = (
+  validContacts: string[],
+  proposal: Proposal,
+  comment: Comment,
+  proposalUrl: string,
+): ITemplateEmail => ({
+  to: validContacts,
+  categories: [EmailCategory.CommentTask],
+  templateId: 26,
+  params: {
+    projectAbbreviation: proposal.projectAbbreviation,
+    timestamp: comment.createdAt.toISOString(),
+    projectLink: proposalUrl,
+  },
+});
+
 export const getProposalMessageCreationEmailForDiz = (
   validContacts: string[],
   proposal: Proposal,
