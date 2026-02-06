@@ -415,18 +415,10 @@ export class AcptPluginClient {
         }
       }
 
-      const urlObj = new URL(params.fileUrl);
-      const encodedPathname = urlObj.pathname
-        .split('/')
-        .map((segment) => encodeURIComponent(segment))
-        .join('/');
-      const encodedUrl = `${urlObj.protocol}//${urlObj.host}${encodedPathname}`;
-
-      this.logger.log(`Original URL: ${params.fileUrl}`);
-      this.logger.log(`Encoded URL: ${encodedUrl}`);
+      this.logger.log(`Sending URL to WordPress: ${params.fileUrl}`);
 
       const payload = {
-        file_url: encodedUrl,
+        file_url: params.fileUrl,
         ...(params.title && { title: params.title }),
         ...(params.altText && { alt_text: params.altText }),
         ...(params.caption && { caption: params.caption }),
