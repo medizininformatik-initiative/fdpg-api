@@ -449,14 +449,24 @@ export class AcptPluginClient {
 
       return response.data;
     } catch (error) {
-      this.logger.error(`Failed to import file: ${error.message}`);
+      this.logger.error('❌ File import failed!');
+      this.logger.error(`Error type: ${error.constructor.name}`);
+      this.logger.error(`Error message: ${error.message}`);
+
+      // Log full error object for debugging
+      this.logger.error(`Full error object: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`);
+
       if (error.response) {
-        this.logger.error(`Response status: ${error.response.status}`);
-        this.logger.error(`Response data: ${JSON.stringify(error.response.data, null, 2)}`);
-        this.logger.error(`Response headers: ${JSON.stringify(error.response.headers, null, 2)}`);
+        this.logger.error('📥 WordPress returned an error response:');
+        this.logger.error(`   Status: ${error.response.status} ${error.response.statusText || ''}`);
+        this.logger.error(`   Data: ${JSON.stringify(error.response.data, null, 2)}`);
+        this.logger.error(`   Headers: ${JSON.stringify(error.response.headers, null, 2)}`);
       } else if (error.request) {
-        this.logger.error('No response received from WordPress');
-        this.logger.error(`Request details: ${JSON.stringify({ url: params.fileUrl, method: 'POST' })}`);
+        this.logger.error('📤 Request was sent but no response received');
+        this.logger.error(`   URL: ${params.fileUrl}`);
+        this.logger.error(`   Method: POST`);
+      } else {
+        this.logger.error('⚠️ Error occurred before request was sent');
       }
 
       const errorDetail = error.response?.data?.message || error.response?.data?.error || error.message;
