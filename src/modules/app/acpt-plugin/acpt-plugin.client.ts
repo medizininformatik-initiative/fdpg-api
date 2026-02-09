@@ -441,7 +441,6 @@ export class AcptPluginClient {
         mime_type: string;
       }>(importFileUrl, payload, {
         timeout: 15000,
-        baseURL: '',
       });
 
       this.logger.log(`✅ File imported successfully with media ID: ${response.data.id}`);
