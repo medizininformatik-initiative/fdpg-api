@@ -27,7 +27,7 @@ export class GeneralProjectInformationDto extends WithIdForObjectDto {
     groups: [ProposalValidation.IsNotDraftAndNotRegister],
   })
   @IsOptional({
-    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource],
+    groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource, ProposalValidation.IsRegister],
   })
   @UiWidget({ type: 'datepicker' })
   desiredStartTime: Date;
