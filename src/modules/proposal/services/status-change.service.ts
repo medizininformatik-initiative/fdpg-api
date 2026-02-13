@@ -161,6 +161,10 @@ export class StatusChangeService {
         scheduleTypesToAdd.push(ScheduleType.ParticipatingResearcherSummary);
         break;
 
+      case ProposalStatus.Published:
+        scheduleTypesToRemove.push(ScheduleType.ReminderFdpgCheck);
+        break;
+
       case ProposalStatus.ReadyToArchive:
       case ProposalStatus.Archived:
       case ProposalStatus.Draft:

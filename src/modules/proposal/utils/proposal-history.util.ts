@@ -82,6 +82,9 @@ export const addHistoryItemForStatus = (
     case ProposalStatus.Archived:
       type = HistoryEventType.ProposalArchived;
       break;
+    case ProposalStatus.Published:
+      type = HistoryEventType.ProposalPublished;
+      break;
   }
 
   if (type) {
