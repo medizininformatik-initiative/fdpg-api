@@ -5,10 +5,11 @@ import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { ResendInvitationDto } from '../dto/resend-invitation.dto';
 
-export const handleActionsEmailError = (error: any) => {
+export const handleActionsEmailError = (error: unknown) => {
   if (axios.isAxiosError(error)) {
-    let isKeycloakErrorMessage = (error.response.data as any).errorMessage !== undefined;
-    let isKeycloakError = (error.response.data as any).error !== undefined;
+    const responseData = error.response?.data as Record<string, unknown>;
+    let isKeycloakErrorMessage = responseData?.errorMessage !== undefined;
+    let isKeycloakError = responseData?.error !== undefined;
 
     if (isKeycloakErrorMessage) {
       let errorInfo: ValidationErrorInfo;

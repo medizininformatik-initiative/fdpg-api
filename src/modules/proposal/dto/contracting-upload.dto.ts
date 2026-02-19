@@ -9,5 +9,5 @@ export class ContractingUploadDto extends InitContractingDto {
     name: 'file',
     format: 'binary',
   })
-  file: any;
+  file: Express.Multer.File;
 }

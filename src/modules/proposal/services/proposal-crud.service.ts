@@ -302,7 +302,7 @@ export class ProposalCrudService {
     panels: Record<PanelQuery, { critical: number; high: number; medium: number; low: number; total: number }>;
     total: number;
   }> {
-    const calculatePriorityCounts = (proposals: any[]) => {
+    const calculatePriorityCounts = (proposals: Array<{ priority?: string; dueDateForStatus?: Date | string }>) => {
       const counts = {
         critical: 0,
         high: 0,
@@ -393,9 +393,12 @@ export class ProposalCrudService {
     }
   }
 
-  private addParticipatingScientistIndicator(plain: any, user: IRequestUser) {
+  private addParticipatingScientistIndicator(plain: Record<string, unknown>, user: IRequestUser) {
+    const participants = plain.participants as Array<{ researcher?: { email?: string } }> | undefined;
+    const projectResponsible = plain.projectResponsible as { researcher?: { email?: string } } | undefined;
+    
     plain.isParticipatingScientist =
-      (plain.participants || []).filter((participant) => participant.researcher.email === user.email).length > 0 ||
-      plain.projectResponsible?.researcher?.email === user.email;
+      (participants || []).filter((participant) => participant.researcher?.email === user.email).length > 0 ||
+      projectResponsible?.researcher?.email === user.email;
   }
 }

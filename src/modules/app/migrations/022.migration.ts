@@ -12,7 +12,7 @@ export class Migration022 implements IDbMigration {
       const recentForm = await this.proposalFormService.findMostRecentProposalForm();
       const currentSchemaFromDto = this.proposalFormService.getProposalUiSchema();
 
-      recentForm.formSchema = currentSchemaFromDto;
+      recentForm.formSchema = currentSchemaFromDto as any;
 
       await recentForm.save();
 

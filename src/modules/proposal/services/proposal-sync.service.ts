@@ -914,7 +914,8 @@ export class ProposalSyncService {
     };
   }
 
-  private async handleSyncFailure(proposalId: string, error: any): Promise<void> {
+  private async handleSyncFailure(proposalId: string, error: unknown): Promise<void> {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const proposal = await this.proposalModel.findById(proposalId);
     if (!proposal) {
       this.logger.error(`Proposal ${proposalId} not found when trying to mark sync as failed`);
@@ -925,7 +926,7 @@ export class ProposalSyncService {
       proposal.registerInfo = {} as any;
     }
     proposal.registerInfo.syncStatus = SyncStatus.SyncFailed;
-    proposal.registerInfo.lastSyncError = error.message || 'Unknown error';
+    proposal.registerInfo.lastSyncError = errorMessage;
     await proposal.save();
   }
 

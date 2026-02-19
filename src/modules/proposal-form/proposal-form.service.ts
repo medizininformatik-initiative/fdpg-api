@@ -145,7 +145,7 @@ export class ProposalFormService {
     return instance;
   }
 
-  getProposalUiSchema(): any {
+  getProposalUiSchema(): Record<string, unknown> {
     const dummy = this.createDeepDummy(ProposalBaseDto);
     return instanceToPlain(dummy, { groups: [OutputGroup.FormSchemaOnly], excludeExtraneousValues: true });
   }

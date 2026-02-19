@@ -10,11 +10,11 @@ export function IsPostalCodeOf(property: string, validationOptions?: ValidationO
       constraints: [property],
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value: unknown, args: ValidationArguments) {
           const [countryCodeField] = args.constraints;
-          const countryCode = (args.object as any)[countryCodeField];
+          const countryCode = (args.object as Record<string, unknown>)[countryCodeField];
 
-          return isEnum(countryCode, CountryCode) && isPostalCode(value, countryCode);
+          return isEnum(countryCode, CountryCode) && isPostalCode(value, countryCode as any);
         },
         defaultMessage: (validationArguments?: ValidationArguments): string =>
           `${validationArguments.property} should be a valid postal code for a known country`,

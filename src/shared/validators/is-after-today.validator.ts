@@ -14,7 +14,7 @@ export function IsAfterToday(validationOptions?: ValidationOptions) {
       propertyName,
       options: validationOptions,
       validator: {
-        validate: (value: any): boolean => isAfterToday(value),
+        validate: (value: unknown): boolean => isAfterToday(value as string),
         defaultMessage: (validationArguments?: ValidationArguments): string =>
           `${validationArguments.value} should be after start of today in utc`,
       },
