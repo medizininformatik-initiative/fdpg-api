@@ -32,6 +32,8 @@ describe('EventEngineService', () => {
   let publicationNotificationService: PublicationNotificationService;
   let configService: ConfigService;
   let dataDeliveryEventService: DataDeliveryEventService;
+  let deadlineEventService: DeadlineEventService;
+  let participantEmailSummaryService: ParticipantEmailSummaryService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -85,6 +87,7 @@ describe('EventEngineService', () => {
           provide: ContractingService,
           useValue: {
             handleContractSign: jest.fn(),
+            handleLocationSign: jest.fn(),
           },
         },
         {
@@ -142,6 +145,8 @@ describe('EventEngineService', () => {
     publicationNotificationService = module.get<PublicationNotificationService>(PublicationNotificationService);
     configService = module.get<ConfigService>(ConfigService);
     dataDeliveryEventService = module.get<DataDeliveryEventService>(DataDeliveryEventService);
+    deadlineEventService = module.get<DeadlineEventService>(DeadlineEventService);
+    participantEmailSummaryService = module.get<ParticipantEmailSummaryService>(ParticipantEmailSummaryService);
   });
 
   const proposal = {
@@ -279,5 +284,57 @@ describe('EventEngineService', () => {
     await eventEngineService.handleDataDeliveryDataReturn(proposal as any);
 
     expect(dataDeliveryEventService.handleDataDeliveryDataReturn).toHaveBeenCalledWith(proposal, expectedUrl);
+  });
+
+  it('should handleProposalContractingSkip', async () => {
+    await eventEngineService.handleProposalContractingSkip(proposal as any);
+    expect(contractingService.handleLocationSign).toHaveBeenCalledWith(proposal, expectedUrl);
+  });
+
+  it('should handleDeadlineChange', async () => {
+    const changeList = {
+      FEASIBILITY_PANEL_REVIEW: new Date('2024-01-01'),
+      UAC_REVIEW: null,
+    } as any;
+    await eventEngineService.handleDeadlineChange(proposal as any, changeList);
+    expect(deadlineEventService.sendForDeadlineChange).toHaveBeenCalledWith(proposal, changeList, expectedUrl);
+  });
+
+  it('should handleParticipatingResearcherSummarySchedule', async () => {
+    const saveMock = jest.fn();
+    const dueAfter = new Date('2024-01-15T10:00:00Z');
+    jest.spyOn(proposalModel, 'findById').mockResolvedValueOnce({
+      ...proposal,
+      save: saveMock,
+      scheduledEvents: [
+        {
+          scheduleId: 'scheduleId',
+        },
+        {
+          scheduleId: 'scheduleId2',
+        },
+      ],
+    });
+
+    const event = {
+      referenceDocumentId: 'proposalId',
+      dueAfter: dueAfter,
+      _id: {
+        toString: () => 'scheduleId',
+      },
+    } as any;
+
+    await eventEngineService.handleParticipatingResearcherSummarySchedule(event);
+
+    const expectedFromDate = new Date(dueAfter);
+    expectedFromDate.setDate(expectedFromDate.getDate() - 1);
+    expectedFromDate.setHours(0, 0, 0, 0);
+
+    expect(participantEmailSummaryService.handleParticipatingScientistSummary).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'proposalId' }),
+      expectedUrl,
+      expectedFromDate,
+    );
+    expect(saveMock).toHaveBeenCalled();
   });
 });
