@@ -16,7 +16,7 @@ export const throwInvalidLocation = () => {
   throw new ValidationException([errorInfo]);
 };
 
-export const handleRegisterErrors = (error: any) => {
+export const handleRegisterErrors = (error: unknown) => {
   if (axios.isAxiosError(error) && error.response.status === 409) {
     throw new ConflictException(error.response.data);
   }

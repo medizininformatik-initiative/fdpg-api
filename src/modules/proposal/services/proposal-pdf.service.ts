@@ -134,7 +134,7 @@ export class ProposalPdfService {
 
   async createPdfBuffer(
     proposal: ProposalDocument,
-    dataPrivacyTextForUsage: any[],
+    dataPrivacyTextForUsage: Array<{ headline: string; text: string; usageType: string }>,
     dataSources: PlatformIdentifier[],
   ): Promise<Buffer> {
     const plain = proposal.toObject();

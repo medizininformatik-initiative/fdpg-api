@@ -2,9 +2,9 @@ import { registerDecorator, ValidationArguments, ValidationOptions } from 'class
 
 interface IValidateWhenEmpty {
   otherField: string;
-  validation: (...args: any) => boolean;
-  otherFieldValidation: (...args: any) => boolean;
-  defaultResetValue: any;
+  validation: (...args: unknown[]) => boolean;
+  otherFieldValidation: (...args: unknown[]) => boolean;
+  defaultResetValue: unknown;
   validationOptions?: ValidationOptions;
 }
 
@@ -17,10 +17,10 @@ export function ValidateWhenEmpty(property: IValidateWhenEmpty, validationOption
       constraints: [property],
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value: unknown, args: ValidationArguments) {
           const { otherField, validation, otherFieldValidation, defaultResetValue } = args
             .constraints[0] as IValidateWhenEmpty;
-          const otherValue = (args.object as any)[otherField];
+          const otherValue = (args.object as Record<string, unknown>)[otherField];
           const isOtherValueValid = otherFieldValidation(otherValue);
 
           if (isOtherValueValid) {

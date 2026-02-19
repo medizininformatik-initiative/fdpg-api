@@ -6,7 +6,7 @@ import { ValidateNested } from 'class-validator';
 export interface UiWidgetOptions {
   type: 'textfield' | 'datepicker' | 'richtext' | 'checkbox' | 'select';
   format?: 'email' | 'number' | 'single' | 'multiple';
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function UiWidget(options: UiWidgetOptions) {
@@ -31,7 +31,7 @@ export function UiWidget(options: UiWidgetOptions) {
   );
 }
 
-export function UiNested(typeFn: () => any, options?: { isArray: boolean }) {
+export function UiNested(typeFn: () => new (...args: unknown[]) => unknown, options?: { isArray: boolean }) {
   return applyDecorators(
     Expose({ groups: [OutputGroup.FormSchemaOnly, OutputGroup.WithFormSchema] }),
 

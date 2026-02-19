@@ -21,14 +21,15 @@ export class ProposalValidationPipe implements PipeTransform<any> {
     this.isCreation = isCreation;
   }
 
-  async transform(value: any, argumentMetadata: ArgumentMetadata) {
-    let object: ProposalBaseDto | MongoIdParamDto | any;
-    const transformGroups = this.getValidationGroups(object);
+  async transform(value: unknown, argumentMetadata: ArgumentMetadata) {
+    let object = tryPlainToClass(value, argumentMetadata, { groups: [], excludeExtraneousValues: true });
+    
+    const transformGroups = this.getValidationGroups(object as ProposalBaseDto | MongoIdParamDto);
     object = tryPlainToClass(value, argumentMetadata, { groups: transformGroups, excludeExtraneousValues: true });
 
-    const groups = this.getValidationGroups(object);
+    const groups = this.getValidationGroups(object as ProposalBaseDto | MongoIdParamDto);
 
-    const errors = await validate(object, { always: true, groups });
+    const errors = await validate(object as object, { always: true, groups });
     const errorMessages = getErrorMessages(errors);
 
     if (errors.length > 0) {

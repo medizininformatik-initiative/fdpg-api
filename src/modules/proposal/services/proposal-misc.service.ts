@@ -669,7 +669,7 @@ export class ProposalMiscService {
     return { downloadUrl, filename, expiresAt };
   }
 
-  private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
+  private canUpdateParticipants(proposal: ProposalDocument, user: IRequestUser): boolean {
     const isEditableStatus = [ProposalStatus.Draft, ProposalStatus.Rework, ProposalStatus.FdpgCheck].includes(
       proposal.status,
     );

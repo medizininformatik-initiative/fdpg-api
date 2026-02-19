@@ -8,6 +8,19 @@ import { JwksProvider } from './jwks.provider';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { LocationService } from 'src/modules/location/service/location.service';
 
+interface JwtPayload {
+  sub: string;
+  given_name?: string;
+  family_name?: string;
+  name?: string;
+  email?: string;
+  preferred_username?: string;
+  email_verified?: boolean;
+  MII_LOCATION?: string;
+  assignedDataSources?: string;
+  realm_access?: { roles?: Role[] };
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -25,7 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(req: Request, payload: any): Promise<IRequestUser> {
+  async validate(req: Request, payload: JwtPayload): Promise<IRequestUser> {
     // Validation is performed in jwt-auth.guard.ts
 
     const locations = await this.locationService.findAll();

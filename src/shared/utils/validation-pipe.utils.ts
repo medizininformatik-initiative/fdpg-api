@@ -6,7 +6,7 @@ import { ValidationErrorInfo } from '../dto/validation/validation-error-info.dto
 import { FileDto } from '../dto/file.dto';
 
 export const transForm = (
-  objectToTransform: Record<string, any>,
+  objectToTransform: Record<string, unknown>,
   cls: ClassConstructor<unknown>,
   options?: ClassTransformOptions,
 ) => {
@@ -17,16 +17,21 @@ export const transForm = (
   return object;
 };
 
-export const tryPlainToClass = (value: any, argumentMetadata: ArgumentMetadata, options?: ClassTransformOptions) => {
+export const tryPlainToClass = (
+  value: unknown,
+  argumentMetadata: ArgumentMetadata,
+  options?: ClassTransformOptions,
+) => {
   try {
-    if (value?.fieldname && value?.encoding && value?.size && value?.mimetype) {
+    const valueAsRecord = value as Record<string, unknown>;
+    if (valueAsRecord?.fieldname && valueAsRecord?.encoding && valueAsRecord?.size && valueAsRecord?.mimetype) {
       // We assume we have a file and return it without transformation
-      return transForm(value, FileDto, options);
+      return transForm(valueAsRecord, FileDto, options);
     }
 
     if (Array.isArray(value) && value[0]?.encoding && value[0]?.size && value[0]?.mimetype) {
       // We assume we have an array of files and return it without transformation
-      return value.map((file) => transForm(file, FileDto, options));
+      return value.map((file) => transForm(file as Record<string, unknown>, FileDto, options));
     }
 
     if (!value && argumentMetadata.type === 'custom') {
@@ -39,8 +44,8 @@ export const tryPlainToClass = (value: any, argumentMetadata: ArgumentMetadata, 
       return [];
     }
 
-    return transForm(value, argumentMetadata.metatype, options);
-  } catch (error) {
+    return transForm(valueAsRecord, argumentMetadata.metatype, options);
+  } catch (error: unknown) {
     const errorInfo = new ValidationErrorInfo({
       constraint: 'transform',
       message: 'it was not possible to convert the plain JSON to Class Object: ' + argumentMetadata.metatype.name,

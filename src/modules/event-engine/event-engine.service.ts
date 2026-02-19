@@ -26,7 +26,7 @@ import { Location } from '../location/schema/location.schema';
 import { PublicationNotificationService } from './events/publications/publication-notification.service';
 import { ReportNotificationService } from './events/reports/report-notification.service';
 
-type MongoDocument = Document<any, any, any> & { _id: any };
+type MongoDocument = Document<unknown, unknown, unknown> & { _id: unknown };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
 type ProposalMetaDocument = Promise<ProposalMeta & MongoDocument>;
 

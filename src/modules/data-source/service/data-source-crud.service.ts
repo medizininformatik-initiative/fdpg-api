@@ -133,7 +133,7 @@ export class DataSourceCrudService {
     sortOrder?: SortOrder,
     language?: Language,
   ): Promise<{ data: DataSourceDocument[]; total: number }> {
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
 
     if (onlyActive) {
       filter.status = DataSourceStatus.APPROVED;
@@ -152,7 +152,7 @@ export class DataSourceCrudService {
     }
 
     // Build sort object
-    const sort: any = {};
+    const sort: { [key: string]: 1 | -1 } = {};
     const sortField = sortBy || DataSourceSortField.TITLE;
     const order = sortOrder === SortOrder.DESC ? -1 : 1;
     const preferredLanguage = language || Language.EN;

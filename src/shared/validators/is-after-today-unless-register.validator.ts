@@ -8,8 +8,8 @@ export function IsAfterTodayUnlessRegister(validationOptions?: ValidationOptions
       propertyName,
       options: validationOptions,
       validator: {
-        validate: (value: any, args: ValidationArguments): boolean => {
-          const validationGroups = (args as any).groups || [];
+        validate: (value: Date, args: ValidationArguments): boolean => {
+          const validationGroups = (args as { groups?: string[] }).groups || [];
           const isRegisterValidation = validationGroups.includes('GROUP_IS_REGISTER');
 
           if (isRegisterValidation) {
