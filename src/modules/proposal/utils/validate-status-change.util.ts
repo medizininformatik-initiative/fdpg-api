@@ -73,8 +73,6 @@ export const validateStatusChange = (
       [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.ExpectDataDelivery]: {
-      // TODO: Implement automated API call to trigger data delivery notification
-      // This should automatically notify researchers when data is ready for delivery
       [ProposalStatus.DataResearch]: () => isFdpg(user),
     },
     [ProposalStatus.DataResearch]: {
