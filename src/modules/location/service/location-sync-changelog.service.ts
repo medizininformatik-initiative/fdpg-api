@@ -183,7 +183,7 @@ export class LocationSyncChangelogService {
 
     try {
       if (operations.length === 0) {
-        console.log('No changelogs to process.');
+        this.logger.log('No changelogs to process.');
         return;
       }
 

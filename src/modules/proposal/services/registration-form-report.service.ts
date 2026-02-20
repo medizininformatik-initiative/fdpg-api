@@ -45,7 +45,7 @@ export class RegistrationFormReportService {
       const uploadType = UseCaseUpload.ReportUpload;
       const blobName = getBlobName(proposal._id, uploadType, report._id);
 
-      console.log({ blobName, files });
+      this.logger.debug(`Uploading report file - blobName: ${blobName}, files count: ${files.length}`);
       await this.publicStorageService.uploadFile(blobName, file);
       const upload = new UploadDto(blobName, file, uploadType, user);
       return upload;

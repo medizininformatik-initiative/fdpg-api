@@ -1,5 +1,5 @@
 import { Client, ItemBucketMetadata } from 'minio';
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { validateMimetype } from 'src/shared/utils/validate-mimetype.util';
@@ -8,6 +8,7 @@ import { PublicStorageService } from './public-storage.service';
 
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private readonly minioClient: Client;
   private readonly bucketName: string;
   private readonly publicBucketName: string;
@@ -55,8 +56,8 @@ export class StorageService {
     try {
       await this.minioClient.putObject(this.bucketName, blobName, file.buffer, file.size, metadata);
     } catch (error) {
-      console.log('Failed to upload Blob: ', error);
-      console.log('Failed blob options: ', metadata);
+      this.logger.error('Failed to upload Blob', error);
+      this.logger.error('Failed blob options', metadata);
       throw new Error();
     }
   }

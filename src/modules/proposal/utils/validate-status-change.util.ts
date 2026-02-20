@@ -73,7 +73,6 @@ export const validateStatusChange = (
       [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.ExpectDataDelivery]: {
-      // TODO: Automated API CALL
       [ProposalStatus.DataResearch]: () => isFdpg(user),
     },
     [ProposalStatus.DataResearch]: {

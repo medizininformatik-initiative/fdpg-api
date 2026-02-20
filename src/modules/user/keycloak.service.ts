@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
@@ -29,6 +30,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class KeycloakService {
+  private readonly logger = new Logger(KeycloakService.name);
+
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private keycloakClient: KeycloakClient,
@@ -122,7 +125,7 @@ export class KeycloakService {
       }
 
       keycloakUser.attributes.MII_LOCATION = [location];
-      console.log(keycloakUser.attributes.MII_LOCATION);
+      this.logger.debug(`Setting MII_LOCATION for user: ${keycloakUser.attributes.MII_LOCATION}`);
     }
 
     const userId = await this.registerUser(keycloakUser);
@@ -199,7 +202,7 @@ export class KeycloakService {
 
       return roleMap;
     } catch (error) {
-      console.log(error);
+      this.logger.error('Failed to fetch available roles from keycloak', error);
       throw new InternalServerErrorException('Failed to fetch available roles from keycloak');
     }
   }
@@ -210,7 +213,7 @@ export class KeycloakService {
     try {
       await this.apiClient.post<never>(`/users/${userId}/role-mappings/realm`, roleAssignments);
     } catch (error) {
-      console.log(error);
+      this.logger.error('Failed to assign role to user in keycloak', error);
       throw new InternalServerErrorException('Failed to assign role to user in keycloak');
     }
   }

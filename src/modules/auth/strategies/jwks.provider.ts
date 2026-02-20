@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ExpressJwtOptions, passportJwtSecret } from 'jwks-rsa';
 
 @Injectable()
 export class JwksProvider {
+  private readonly logger = new Logger(JwksProvider.name);
+
   private handleSigningKeyError = (error: Error, cb) => {
-    console.log('Unable to verify jwt signing', error);
+    this.logger.error('Unable to verify jwt signing', error);
     cb(error);
   };
 

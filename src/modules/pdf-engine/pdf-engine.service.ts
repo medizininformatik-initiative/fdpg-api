@@ -1,4 +1,4 @@
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { ProposalGetDto } from '../proposal/dto/proposal/proposal.dto';
 import { PdfEngineClient } from './pdf-engine.client';
@@ -7,6 +7,8 @@ import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
 import { LocationService } from '../location/service/location.service';
 @Injectable()
 export class PdfEngineService {
+  private readonly logger = new Logger(PdfEngineService.name);
+
   constructor(
     private pdfEngineClient: PdfEngineClient,
     private locationService: LocationService,
@@ -35,7 +37,7 @@ export class PdfEngineService {
       const buffer = Buffer.from(response.data.data);
       return buffer;
     } catch (error) {
-      console.log(error);
+      this.logger.error('Failed to generate PDF from external service', error);
       const isAxiosError = axios.isAxiosError(error);
       const gatewayError = {
         message: 'Failed to generate pdf from external service',

@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as SendInBlue from '@sendinblue/client';
 import { EmailCategory } from './types/email-category.enum';
 import { IEmail, ITemplateEmail } from './types/email.interface';
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
   private apiInstance: SendInBlue.TransactionalEmailsApi;
   constructor(private readonly configService: ConfigService) {
     this.apiInstance = new SendInBlue.TransactionalEmailsApi();
@@ -32,7 +33,7 @@ export class EmailService {
       email.to = [this.forwardAllMailsTo];
     }
     if (this.preventEmailSending && this.environment === 'local') {
-      console.log('Prevent sending emails to: ', email.to);
+      this.logger.log('Prevent sending emails to: ', email.to);
     }
     if (email.to.length <= 0 || this.preventEmailSending) {
       return;
@@ -68,10 +69,7 @@ export class EmailService {
     try {
       await this.apiInstance.sendTransacEmail(transactionalEmail);
     } catch (error) {
-      console.log('Failed sending email');
-      console.log(error);
-
-      console.log(JSON.stringify(error));
+      this.logger.error('Failed sending email', error);
     }
   }
 }

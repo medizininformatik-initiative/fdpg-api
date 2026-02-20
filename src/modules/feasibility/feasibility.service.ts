@@ -1,4 +1,10 @@
-import { BadGatewayException, ForbiddenException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios, { AxiosInstance, isAxiosError } from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { FeasibilityUserQueryDetailDto } from './dto/feasibility-user-query-detail.dto';
@@ -12,6 +18,8 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class FeasibilityService {
+  private readonly logger = new Logger(FeasibilityService.name);
+
   constructor(
     private feasibilityClient: FeasibilityClient,
     private configService: ConfigService,
@@ -30,7 +38,7 @@ export class FeasibilityService {
       const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`);
       return response.data.map((detail) => plainToInstance(FeasibilityUserQueryDetailDto, detail));
     } catch (error) {
-      console.log(error);
+      this.logger.error('Failed to fetch feasibility queries by user', error);
       const isAxiosError = axios.isAxiosError(error);
       const gatewayError = {
         message: 'Failed to fetch feasibility queries by user from external service',
@@ -113,7 +121,7 @@ export class FeasibilityService {
         return { error: 'No content for feasibility query' };
       }
     } catch (error) {
-      console.error('Failed to fetch the feasibility', error);
+      this.logger.error('Failed to fetch the feasibility', error);
       const errorInfo = new ValidationErrorInfo({
         constraint: 'feasibilityError',
         message: 'Something went wrong calling the feasibility API',
@@ -144,13 +152,13 @@ export class FeasibilityService {
         const status = error.response?.status;
 
         if (status === 403) {
-          console.error(`Forbidden access to API for user ${userId}. Details:`, error.response?.data);
+          this.logger.error(`Forbidden access to API for user ${userId}. Details:`, error.response?.data);
           throw new ForbiddenException('Access to the external resource is forbidden.');
         } else if (status) {
-          console.error(`API returned status ${status} for user ${userId}.`, error.response?.data);
+          this.logger.error(`API returned status ${status} for user ${userId}.`, error.response?.data);
           throw new InternalServerErrorException(`External API request failed with status: ${status}`);
         } else {
-          console.error(`Network or connection error during API call for user ${userId}.`, error.message);
+          this.logger.error(`Network or connection error during API call for user ${userId}.`, error.message);
           throw new InternalServerErrorException('External API is unreachable or timed out.');
         }
       }

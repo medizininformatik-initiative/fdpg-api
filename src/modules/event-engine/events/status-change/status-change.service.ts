@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EmailService } from 'src/modules/email/email.service';
 import { KeycloakUtilService } from 'src/modules/user/keycloak-util.service';
 import { ProposalStatus } from '../../../proposal/enums/proposal-status.enum';
@@ -11,6 +11,8 @@ import { sendMailsUtil } from '../../send-mails.util';
 
 @Injectable()
 export class StatusChangeService {
+  private readonly logger = new Logger(StatusChangeService.name);
+
   constructor(
     private keycloakUtilService: KeycloakUtilService,
     private emailService: EmailService,
@@ -95,12 +97,12 @@ export class StatusChangeService {
   private async handleProposalReadyToPublish(proposal: Proposal, proposalUrl: string) {
     // Handle ready to publish status - could send notifications
     // For now, this is a placeholder for future implementation
-    console.log(`Proposal ${proposal.projectAbbreviation} is ready to publish`);
+    this.logger.log(`Proposal ${proposal.projectAbbreviation} is ready to publish`);
   }
 
   private async handleProposalPublished(proposal: Proposal, proposalUrl: string) {
     // Handle published status - could send notifications
     // For now, this is a placeholder for future implementation
-    console.log(`Proposal ${proposal.projectAbbreviation} has been published`);
+    this.logger.log(`Proposal ${proposal.projectAbbreviation} has been published`);
   }
 }
