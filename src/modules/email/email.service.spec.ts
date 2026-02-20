@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EmailService } from './email.service';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import * as SendInBlue from '@sendinblue/client';
 import { EmailCategory } from './types/email-category.enum';
 import { NoErrorThrownError, getError } from 'test/get-error';
@@ -34,6 +35,10 @@ describe('EmailService', () => {
     }).compile();
 
     emailService = module.get<EmailService>(EmailService);
+
+    // Mock the logger
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
   });
 
   describe('constructor', () => {
@@ -98,7 +103,7 @@ describe('EmailService', () => {
 
     it('should log error if sendInBlue.send throws an error', async () => {
       emailService['preventEmailSending'] = false;
-      jest.spyOn(console, 'log');
+      const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error');
       jest.spyOn(new SendInBlue.TransactionalEmailsApi(), 'sendTransacEmail').mockRejectedValueOnce('error');
 
       const email = {
@@ -113,7 +118,7 @@ describe('EmailService', () => {
       expect(error).toBeDefined();
       expect(error).toBeInstanceOf(NoErrorThrownError);
 
-      expect(console.log).toHaveBeenCalledWith('Failed sending email');
+      expect(loggerErrorSpy).toHaveBeenCalledWith('Failed sending email', 'error');
     });
   });
 });
