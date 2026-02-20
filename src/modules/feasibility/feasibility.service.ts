@@ -121,7 +121,7 @@ export class FeasibilityService {
         return { error: 'No content for feasibility query' };
       }
     } catch (error) {
-      console.error('Failed to fetch the feasibility', error);
+      this.logger.error('Failed to fetch the feasibility', error);
       const errorInfo = new ValidationErrorInfo({
         constraint: 'feasibilityError',
         message: 'Something went wrong calling the feasibility API',
@@ -152,13 +152,13 @@ export class FeasibilityService {
         const status = error.response?.status;
 
         if (status === 403) {
-          console.error(`Forbidden access to API for user ${userId}. Details:`, error.response?.data);
+          this.logger.error(`Forbidden access to API for user ${userId}. Details:`, error.response?.data);
           throw new ForbiddenException('Access to the external resource is forbidden.');
         } else if (status) {
-          console.error(`API returned status ${status} for user ${userId}.`, error.response?.data);
+          this.logger.error(`API returned status ${status} for user ${userId}.`, error.response?.data);
           throw new InternalServerErrorException(`External API request failed with status: ${status}`);
         } else {
-          console.error(`Network or connection error during API call for user ${userId}.`, error.message);
+          this.logger.error(`Network or connection error during API call for user ${userId}.`, error.message);
           throw new InternalServerErrorException('External API is unreachable or timed out.');
         }
       }
