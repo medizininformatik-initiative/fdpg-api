@@ -190,7 +190,8 @@ export class ProposalMiscService {
     validateStatusChange(toBeUpdated, status, user);
 
     if (oldStatus !== ProposalStatus.Draft) {
-      // TODO: Validation of content if not DRAFT
+      // TODO: Implement content validation for non-draft proposals
+      // This should validate that all required fields are filled before allowing status change
     }
 
     toBeUpdated.status = status;
@@ -903,7 +904,9 @@ export class ProposalMiscService {
       (result) => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value.success),
     ).length;
 
-    console.log(`Zip creation summary: ${successful} files added, ${failed} files skipped for proposal ${proposalId}.`);
+    this.logger.log(
+      `Zip creation summary: ${successful} files added, ${failed} files skipped for proposal ${proposalId}.`,
+    );
     if (successful === 0) {
       throw new NotFoundException('No accessible files found for this proposal');
     }

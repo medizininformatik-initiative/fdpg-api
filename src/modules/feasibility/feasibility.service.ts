@@ -1,4 +1,10 @@
-import { BadGatewayException, ForbiddenException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios, { AxiosInstance, isAxiosError } from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { FeasibilityUserQueryDetailDto } from './dto/feasibility-user-query-detail.dto';
@@ -12,6 +18,8 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class FeasibilityService {
+  private readonly logger = new Logger(FeasibilityService.name);
+
   constructor(
     private feasibilityClient: FeasibilityClient,
     private configService: ConfigService,
@@ -30,7 +38,7 @@ export class FeasibilityService {
       const response = await this.apiClient.get<IFeasibilityUserQueryDetail[]>(`${this.basePath}/by-user/${userId}`);
       return response.data.map((detail) => plainToInstance(FeasibilityUserQueryDetailDto, detail));
     } catch (error) {
-      console.log(error);
+      this.logger.error('Failed to fetch feasibility queries by user', error);
       const isAxiosError = axios.isAxiosError(error);
       const gatewayError = {
         message: 'Failed to fetch feasibility queries by user from external service',
