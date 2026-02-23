@@ -56,10 +56,16 @@ export class StatusChangeService {
           conditionProposalRejected: true,
         });
       case ProposalStatus.LocationCheck:
-        return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG], {
-          conditionProposalLocationCheck: true,
-          conditionProposalUacCheck: true,
-        });
+        return await this.sendMails(
+          proposal,
+          proposalUrl,
+          [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG, EmailRoleTargets.DIZ],
+          {
+            conditionProposalLocationCheck: true,
+            conditionProposalUacCheck: true,
+          },
+          proposal.openDizChecks,
+        );
       case ProposalStatus.Contracting:
         return await this.sendMails(proposal, proposalUrl, [EmailRoleTargets.RESEARCHER], {
           conditionProposalContracting: true,

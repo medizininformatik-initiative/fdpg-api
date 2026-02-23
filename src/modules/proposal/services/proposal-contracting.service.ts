@@ -121,7 +121,13 @@ export class ProposalContractingService {
 
     addHistoryItemForDizConditionReviewApproval(toBeUpdated, user, vote.value, hasCondition);
 
-    await toBeUpdated.save();
+    const saveResult = await toBeUpdated.save();
+
+    // Check if voting is complete after DIZ condition review
+    // This is needed because conditional UAC approvals don't count as "voted" until DIZ reviews them
+    if (vote.value) {
+      await this.eventEngineService.handleProposalDizApproval(saveResult, true, user.miiLocation);
+    }
   }
 
   async revertLocationVote(proposalId: string, location: string, user: IRequestUser): Promise<void> {

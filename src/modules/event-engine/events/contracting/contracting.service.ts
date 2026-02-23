@@ -51,7 +51,8 @@ export class ContractingService {
   async handleLocationSign(proposal: Proposal, proposalUrl: string) {
     const emailTasks: Promise<void>[] = [];
 
-    if (proposal.isContractingComplete) {
+    // Don't send notifications when contracting is skipped
+    if (proposal.isContractingComplete && !proposal.contractingSkipped) {
       const fdpgTask = async () => {
         const validFdpgContacts = await this.keycloakUtilService
           .getFdpgMemberLevelContacts(proposal)
