@@ -62,6 +62,7 @@ export const researcherEmail = (
       conditionProposalRework: !!emailParameterMap['conditionProposalRework'],
       conditionProposalFdpgCheck: !!emailParameterMap['conditionProposalFdpgCheck'],
       conditionProposalLocationCheck: !!emailParameterMap['conditionProposalLocationCheck'],
+      conditionProposalUacCheck: !!emailParameterMap['conditionProposalUacCheck'],
       conditionProposalContracting: !!emailParameterMap['conditionProposalContracting'],
       conditionProposalDataDelivery: !!emailParameterMap['conditionProposalDataDelivery'],
       conditionProposalDataReady: !!emailParameterMap['conditionProposalDataReady'],
