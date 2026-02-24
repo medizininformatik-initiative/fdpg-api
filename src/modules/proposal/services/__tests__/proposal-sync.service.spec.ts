@@ -634,5 +634,4 @@ describe('ProposalSyncService', () => {
       expect(proposalWithRetry.registerInfo.syncRetryCount).toBe(2);
     });
   });
-
 });

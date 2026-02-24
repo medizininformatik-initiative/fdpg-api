@@ -97,12 +97,7 @@ describe('RegistrationFormReportService', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      const result = await service.handleReportCreate(
-        mockProposal as any,
-        reportCreateDto,
-        [mockFile],
-        mockUser,
-      );
+      const result = await service.handleReportCreate(mockProposal as any, reportCreateDto, [mockFile], mockUser);
 
       expect(mockRegistrationFormCrudService.checkProposalType).toHaveBeenCalledWith(mockProposal);
       expect(mockRegistrationFormCrudService.getRegistration).toHaveBeenCalled();
@@ -215,13 +210,7 @@ describe('RegistrationFormReportService', () => {
         keepUploads: ['upload-1'],
       };
 
-      const result = await service.handleReportUpdate(
-        mockProposal as any,
-        'report-123',
-        reportUpdateDto,
-        [],
-        mockUser,
-      );
+      const result = await service.handleReportUpdate(mockProposal as any, 'report-123', reportUpdateDto, [], mockUser);
 
       expect(mockRegistrationFormCrudService.getRegistration).toHaveBeenCalled();
       expect(mockRegistration.save).toHaveBeenCalled();

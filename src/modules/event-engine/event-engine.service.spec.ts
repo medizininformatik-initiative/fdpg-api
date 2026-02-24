@@ -258,14 +258,22 @@ describe('EventEngineService', () => {
   it('should handleProposalPublicationCreate', async () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationCreate(proposal as any, publication);
-    expect(publicationNotificationService.handlePublicationCreate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+    expect(publicationNotificationService.handlePublicationCreate).toHaveBeenCalledWith(
+      proposal,
+      publication,
+      expectedUrl,
+    );
   });
 
   it('should handleProposalPublicationUpdate', async () => {
     const publicationId = 'pub-123';
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationUpdate(proposal as any, publicationId, publication);
-    expect(publicationNotificationService.handlePublicationUpdate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+    expect(publicationNotificationService.handlePublicationUpdate).toHaveBeenCalledWith(
+      proposal,
+      publication,
+      expectedUrl,
+    );
   });
 
   it('should call handleDataDeliveryInitiated with the correct arguments', async () => {
