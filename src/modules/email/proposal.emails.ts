@@ -13,7 +13,9 @@ export const buildParticipatingEmailSummary = (
   proposalUrl: string,
 ): ITemplateEmail => {
   const projectResearchers = [
-    `${proposal.projectResponsible.researcher.firstName} ${proposal.projectResponsible.researcher.lastName}`,
+    ...(proposal.projectResponsible?.researcher
+      ? [`${proposal.projectResponsible.researcher.firstName} ${proposal.projectResponsible.researcher.lastName}`]
+      : []),
     ...(proposal.participants
       ? proposal.participants.map(
           (participant) => `${participant.researcher.firstName} ${participant.researcher.lastName}`,

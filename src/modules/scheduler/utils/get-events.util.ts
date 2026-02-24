@@ -99,7 +99,7 @@ export const getEventsFromSet = (eventSet: IProposalScheduleEventSet) => {
               return null;
             }
 
-            if (eventSet.proposal.participants.length === 0) {
+            if (eventSet.proposal.participants.length === 0 && !eventSet.proposal.projectResponsible?.researcher) {
               return null;
             }
 
