@@ -396,7 +396,7 @@ export class ProposalCrudService {
   private addParticipatingScientistIndicator(plain: Record<string, unknown>, user: IRequestUser) {
     const participants = plain.participants as Array<{ researcher?: { email?: string } }> | undefined;
     const projectResponsible = plain.projectResponsible as { researcher?: { email?: string } } | undefined;
-    
+
     plain.isParticipatingScientist =
       (participants || []).filter((participant) => participant.researcher?.email === user.email).length > 0 ||
       projectResponsible?.researcher?.email === user.email;

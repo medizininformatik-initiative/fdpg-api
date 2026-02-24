@@ -1873,5 +1873,4 @@ describe('ProposalMiscService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
   });
-
 });

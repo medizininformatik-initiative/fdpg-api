@@ -3,4 +3,3 @@ export enum ModificationContext {
   Publication = 'PUBLICATION',
   Report = 'REPORT',
 }
-

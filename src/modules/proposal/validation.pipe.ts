@@ -23,7 +23,7 @@ export class ProposalValidationPipe implements PipeTransform<any> {
 
   async transform(value: unknown, argumentMetadata: ArgumentMetadata) {
     let object = tryPlainToClass(value, argumentMetadata, { groups: [], excludeExtraneousValues: true });
-    
+
     const transformGroups = this.getValidationGroups(object as ProposalBaseDto | MongoIdParamDto);
     object = tryPlainToClass(value, argumentMetadata, { groups: transformGroups, excludeExtraneousValues: true });
 

@@ -108,19 +108,19 @@ describe('StorageService', () => {
   describe('copyToPublicBucket', () => {
     it('should throw NotFoundException if blob does not exist', async () => {
       clientMock.statObject.mockRejectedValueOnce('doesnotexist');
-      
+
       const call = storageService.copyToPublicBucket(blobName);
       const error = await getError(async () => await call);
-      
+
       expect(error).toBeInstanceOf(NotFoundException);
     });
 
     it('should copy blob to public bucket', async () => {
       clientMock.statObject.mockResolvedValueOnce('exists');
       clientMock.copyObject.mockResolvedValueOnce({});
-      
+
       await storageService.copyToPublicBucket(blobName);
-      
+
       expect(clientMock.copyObject).toHaveBeenCalledTimes(1);
     });
   });

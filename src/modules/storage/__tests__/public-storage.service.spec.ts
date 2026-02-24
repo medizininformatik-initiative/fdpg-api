@@ -54,7 +54,6 @@ describe('PublicStorageService', () => {
     });
   });
 
-
   describe('uploadFile', () => {
     it('should throw error when upload fails', async () => {
       const mockFile = {
@@ -85,7 +84,6 @@ describe('PublicStorageService', () => {
     });
   });
 
-
   describe('deleteBlob', () => {
     it('should not throw error when blob does not exist', async () => {
       jest.spyOn(service, 'blobExists').mockResolvedValue(false);
@@ -101,4 +99,3 @@ describe('PublicStorageService', () => {
     });
   });
 });
-
