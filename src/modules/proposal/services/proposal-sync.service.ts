@@ -268,45 +268,75 @@ export class ProposalSyncService {
           wpId ? `[3/5] ✓ Project logo uploaded (WordPress ID: ${wpId})` : `[3/5] ✓ No project logo processed`,
       );
 
-      // Step 4: Upload attachments if available
-      const reportAttachmentIds = await this.logStep(
+      // Step 4: Upload attachments if available (organized by report)
+      const reportAttachmentsPerReport = await this.logStep(
         '[4/5]',
         `Processing report attachments for project ${proposal.projectAbbreviation}`,
         async () => {
-          const ids: number[] = [];
-          const reportAttachments = proposal.reports?.flatMap((report) => report.uploads) || [];
+          const attachmentsByReport: number[][] = [];
+          const reports = proposal.reports || [];
 
-          if (reportAttachments.length === 0) {
-            this.logger.log('No report attachments to process');
-            return ids;
+          if (reports.length === 0) {
+            this.logger.log('No reports to process attachments for');
+            return attachmentsByReport;
           }
 
-          this.logger.log(`Found ${reportAttachments.length} report attachment(s) to process`);
+          // Limit to maximum 3 reports for ACPT registration
+          const reportsToProcess = reports.slice(0, 3);
+          let totalUploaded = 0;
 
-          for (const attachment of reportAttachments) {
-            if (attachment?.blobName) {
-              try {
-                this.logger.log(`Copying report attachment to public bucket: ${attachment.fileName}`);
-                const targetBlobName = `${attachment.blobName}-${attachment.fileName}`;
-                const publicAttachmentUrl = await this.storageService.copyToPublicBucketWithName(
-                  attachment.blobName,
-                  targetBlobName,
-                );
-                const result = await this.acptPluginClient.importFile({
-                  fileUrl: publicAttachmentUrl,
-                  title: attachment.fileName,
-                  altText: proposal.projectAbbreviation + ' Report Attachment',
-                });
-                ids.push(result.id);
-                this.logger.log(`✓ Uploaded attachment: ${attachment.fileName} (WordPress ID: ${result.id})`);
-              } catch (error) {
-                this.logger.error(`Failed to upload attachment ${attachment.fileName}: ${error.message}`, error.stack);
+          for (let reportIndex = 0; reportIndex < reportsToProcess.length; reportIndex++) {
+            const report = reportsToProcess[reportIndex];
+            const reportAttachments = report.uploads || [];
+            const uploadedIds: number[] = [];
+
+            if (reportAttachments.length === 0) {
+              this.logger.log(`Report ${reportIndex + 1} has no attachments`);
+              attachmentsByReport.push(uploadedIds);
+              continue;
+            }
+
+            this.logger.log(`Report ${reportIndex + 1} has ${reportAttachments.length} attachment(s) to process`);
+
+            for (const attachment of reportAttachments) {
+              if (attachment?.blobName) {
+                try {
+                  this.logger.log(
+                    `Copying report ${reportIndex + 1} attachment to public bucket: ${attachment.fileName}`,
+                  );
+                  const targetBlobName = `${attachment.blobName}-${attachment.fileName}`;
+                  const publicAttachmentUrl = await this.storageService.copyToPublicBucketWithName(
+                    attachment.blobName,
+                    targetBlobName,
+                  );
+                  const result = await this.acptPluginClient.importFile({
+                    fileUrl: publicAttachmentUrl,
+                    title: attachment.fileName,
+                    altText: `${proposal.projectAbbreviation} Report ${reportIndex + 1} Attachment`,
+                  });
+                  uploadedIds.push(result.id);
+
+                  this.logger.log(
+                    `✓ Uploaded report ${reportIndex + 1} attachment: ${attachment.fileName} (WordPress ID: ${result.id})`,
+                  );
+                } catch (error) {
+                  this.logger.error(
+                    `Failed to upload report ${reportIndex + 1} attachment ${attachment.fileName}: ${error.message}`,
+                    error.stack,
+                  );
+                }
               }
             }
+
+            attachmentsByReport.push(uploadedIds);
           }
-          return ids;
+
+          return attachmentsByReport;
         },
-        (ids) => `[4/5] ✓ Uploaded ${ids.length} report attachment(s)`,
+        (attachmentsByReport) => {
+          const totalAttachments = attachmentsByReport.reduce((sum, arr) => sum + arr.length, 0);
+          return `[4/5] ✓ Uploaded ${totalAttachments} report attachment(s) across ${attachmentsByReport.length} report(s)`;
+        },
       );
 
       // Step 5: Build project payload and create/update in WordPress
@@ -320,7 +350,7 @@ export class ProposalSyncService {
             locationIds,
             participantInstituteIds,
             projectLogoWPId,
-            reportAttachmentIds,
+            reportAttachmentsPerReport,
           );
 
           try {
@@ -603,7 +633,7 @@ export class ProposalSyncService {
     locationIds: string[],
     participantInstituteIds: string[],
     projectLogoWPId: number | undefined = undefined,
-    reportAttachmentIds: number[] = [],
+    reportAttachmentsPerReport: number[][] = [],
   ): Promise<AcptProjectDto> {
     const meta: AcptMetaField[] = [];
 
@@ -636,14 +666,6 @@ export class ProposalSyncService {
         box: 'project-fields',
         field: 'fdpgx-projectlogo',
         value: [projectLogoWPId.toString()],
-      });
-    }
-
-    if (reportAttachmentIds.length > 0) {
-      meta.push({
-        box: 'project-fields',
-        field: 'fdpgx-attachements',
-        value: reportAttachmentIds.map((id) => id.toString()),
       });
     }
 
@@ -891,15 +913,34 @@ export class ProposalSyncService {
     }
 
     if (proposal.reports && proposal.reports.length > 0) {
-      const reportContents: string[] = proposal.reports
-        .map((report) => report.content)
-        .filter((content) => !!content) as string[];
+      // Limit to maximum 3 reports for registration proposals
+      const reportsToSync = proposal.reports.slice(0, 3);
+      reportsToSync.forEach((report, index) => {
+        if (report.title) {
+          meta.push({
+            box: 'project-fields',
+            field: `fdpgx-projectresults${index + 1}title`,
+            value: report.title,
+          });
+        }
+        if (report.content) {
+          meta.push({
+            box: 'project-fields',
+            field: `fdpgx-projectresults${index + 1}content`,
+            value: report.content,
+          });
+        }
+      });
 
-      if (reportContents.length > 0) {
-        meta.push({
-          box: 'project-fields',
-          field: 'fdpgx-projectresults',
-          value: reportContents,
+      if (reportAttachmentsPerReport.length > 0) {
+        reportAttachmentsPerReport.forEach((attachmentIds, index) => {
+          if (attachmentIds.length > 0) {
+            meta.push({
+              box: 'project-fields',
+              field: `fdpgx-projectresults${index + 1}attachments`,
+              value: attachmentIds.map((id) => id.toString()),
+            });
+          }
         });
       }
     }
