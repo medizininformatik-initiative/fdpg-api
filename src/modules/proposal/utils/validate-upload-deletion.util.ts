@@ -58,6 +58,7 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
   const isEditable = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.Rework;
 
   if (!hasEditRights || (!isGeneralAccessType && upload.type !== UseCaseUpload.FeasibilityQuery)) {
+  if (!hasEditRights || (!isGeneralAccessType && upload.type !== UseCaseUpload.FeasibilityQuery)) {
     throwForbiddenError();
   }
 

@@ -7,6 +7,7 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
 import { Proposal } from '../schema/proposal.schema';
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
+import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
@@ -70,6 +71,7 @@ export const validateStatusChange = (
     },
     [ProposalStatus.Contracting]: {
       [ProposalStatus.ExpectDataDelivery]: () => isFdpg(user),
+      [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
       [ProposalStatus.Rejected]: () => isOwner(user, toBeUpdated) || isEditor(user, toBeUpdated),
     },
     [ProposalStatus.ExpectDataDelivery]: {
