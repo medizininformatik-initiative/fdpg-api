@@ -9,12 +9,13 @@ import { LocationVoteService } from './events/location-vote/location-vote.servic
 import { ProposalLockService } from './events/proposal-lock/proposal-lock.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
-import { ReportsService } from './events/reports/reports.service';
-import { PublicationsService } from './events/publications/publications.service';
+import { ReportNotificationService } from './events/reports/report-notification.service';
+import { PublicationNotificationService } from './events/publications/publication-notification.service';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
 import { ProposalModule } from '../proposal/proposal.module';
+import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
 
 @Module({
   providers: [
@@ -26,10 +27,11 @@ import { ProposalModule } from '../proposal/proposal.module';
     LocationVoteService,
     ContractingService,
     ProposalLockService,
-    ReportsService,
-    PublicationsService,
+    ReportNotificationService,
+    PublicationNotificationService,
     DeadlineEventService,
     ParticipantEmailSummaryService,
+    DataDeliveryEventService,
   ],
   imports: [forwardRef(() => ProposalModule), UserModule, EmailModule, CacheModule.register()],
   exports: [EventEngineService],

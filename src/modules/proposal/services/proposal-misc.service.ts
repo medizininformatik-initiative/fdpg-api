@@ -1,4 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import * as JSZip from 'jszip';
 import { Types } from 'mongoose';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
@@ -8,6 +10,7 @@ import { KeycloakService } from '../../user/keycloak.service';
 import { FdpgChecklistUpdateDto, initChecklist } from '../dto/proposal/fdpg-checklist.dto';
 import { ResearcherIdentityDto } from '../dto/proposal/participants/researcher.dto';
 import { ProposalStatus } from '../enums/proposal-status.enum';
+import { ProposalType } from '../enums/proposal-type.enum';
 import { updateFdpgChecklist } from '../utils/add-fdpg-checklist.util';
 import {
   addHistoryItemForChangedDeadline,
@@ -33,7 +36,7 @@ import { ProposalFormService } from 'src/modules/proposal-form/proposal-form.ser
 import { ProposalFormDto } from 'src/modules/proposal-form/dto/proposal-form.dto';
 import { ProposalPdfService } from './proposal-pdf.service';
 import { ProposalValidation } from '../enums/porposal-validation.enum';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformOptions, plainToClass } from 'class-transformer';
 import { UseCaseUpload } from '../enums/upload-type.enum';
 import { addUpload, getBlobName } from '../utils/proposal.utils';
 import { UploadDto, UploadGetDto } from '../dto/upload.dto';
@@ -52,7 +55,6 @@ import { ProposalGetDto } from '../dto/proposal/proposal.dto';
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { Participant } from '../schema/sub-schema/participant.schema';
 import { mergeDeep } from '../utils/merge-proposal.util';
-import { ProposalDocument } from '../schema/proposal.schema';
 import { ProjectResponsible } from '../schema/sub-schema/project-responsible.schema';
 import { DizDetailsCreateDto, DizDetailsGetDto, DizDetailsUpdateDto } from '../dto/proposal/diz-details.dto';
 import { ConflictException } from '@nestjs/common';
@@ -60,12 +62,22 @@ import { recalculateAllUacDelayStatus } from '../utils/uac-delay-tracking.util';
 import { convert } from 'html-to-text';
 import { CsvDownloadResponseDto } from '../dto/csv-download.dto';
 import { ParticipantRole } from '../schema/sub-schema/participants/participant-role.schema';
+import { Proposal, ProposalDocument } from '../schema/proposal.schema';
 import { ApplicantDto } from '../dto/proposal/applicant.dto';
 import { LocationService } from 'src/modules/location/service/location.service';
+import { Location } from 'src/modules/location/schema/location.schema';
+import { ProjectAssigneeDto } from '../dto/proposal/project-assignee.dto';
+import { HistoryEventType } from '../enums/history-event.enum';
+import { ProposalSyncService } from './proposal-sync.service';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class ProposalMiscService {
+  private readonly logger = new Logger(ProposalMiscService.name);
+
   constructor(
+    @InjectModel(Proposal.name)
+    private proposalModel: Model<ProposalDocument>,
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
     private statusChangeService: StatusChangeService,
@@ -78,6 +90,7 @@ export class ProposalMiscService {
     private uploadService: ProposalUploadService,
     private feasibilityService: FeasibilityService,
     private locationService: LocationService,
+    private proposalSyncService: ProposalSyncService,
   ) {}
 
   async getResearcherInfo(proposalId: string, user: IRequestUser): Promise<ResearcherIdentityDto[]> {
@@ -149,7 +162,11 @@ export class ProposalMiscService {
     results.forEach((result) => {
       if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
         researchers.map((researcher) => {
-          if (researcher.email.toLocaleLowerCase() === result.value[0].email.toLocaleLowerCase()) {
+          if (
+            researcher.email &&
+            result.value[0].email &&
+            researcher.email.toLocaleLowerCase() === result.value[0].email.toLocaleLowerCase()
+          ) {
             const isEmailVerified = !result.value.some((user) => !user.emailVerified);
             const hasRequiredActions = result.value.some((user) => user.requiredActions.length > 0);
             researcher.isExisting = true;
@@ -173,7 +190,8 @@ export class ProposalMiscService {
     validateStatusChange(toBeUpdated, status, user);
 
     if (oldStatus !== ProposalStatus.Draft) {
-      // TODO: Validation of content if not DRAFT
+      // TODO: Implement content validation for non-draft proposals
+      // This should validate that all required fields are filled before allowing status change
     }
 
     toBeUpdated.status = status;
@@ -184,6 +202,21 @@ export class ProposalMiscService {
 
     if (toBeUpdated.status === ProposalStatus.LocationCheck) {
       await this.proposalPdfService.createProposalPdf(saveResult, user);
+    }
+
+    // Auto-sync when approving registering form (FdpgCheck -> Published)
+    const isApprovalToPublished =
+      oldStatus === ProposalStatus.FdpgCheck &&
+      status === ProposalStatus.Published &&
+      toBeUpdated.type === ProposalType.RegisteringForm;
+
+    if (isApprovalToPublished) {
+      try {
+        await this.proposalSyncService.syncProposal(proposalId, user);
+        this.logger.log(`Auto-sync completed successfully for proposal ${proposalId}`);
+      } catch (error) {
+        this.logger.error(`Auto-sync failed for proposal ${proposalId}: ${error.message}`);
+      }
     }
   }
 
@@ -240,6 +273,27 @@ export class ProposalMiscService {
       return {
         _id: 'isRegistrationLinkSent',
         isRegistrationLinkSent: toBeUpdated.fdpgChecklist.isRegistrationLinkSent,
+      } as any;
+    }
+
+    if (checklistUpdate.initialViewing !== undefined) {
+      return {
+        _id: 'initialViewing',
+        initialViewing: toBeUpdated.fdpgChecklist.initialViewing,
+      } as any;
+    }
+
+    if (checklistUpdate.depthCheck !== undefined) {
+      return {
+        _id: 'depthCheck',
+        depthCheck: toBeUpdated.fdpgChecklist.depthCheck,
+      } as any;
+    }
+
+    if (checklistUpdate.ethicsCheck !== undefined) {
+      return {
+        _id: 'ethicsCheck',
+        ethicsCheck: toBeUpdated.fdpgChecklist.ethicsCheck,
       } as any;
     }
 
@@ -616,7 +670,7 @@ export class ProposalMiscService {
     return { downloadUrl, filename, expiresAt };
   }
 
-  private canUpdateParticipants(proposal: any, user: IRequestUser): boolean {
+  private canUpdateParticipants(proposal: ProposalDocument, user: IRequestUser): boolean {
     const isEditableStatus = [ProposalStatus.Draft, ProposalStatus.Rework, ProposalStatus.FdpgCheck].includes(
       proposal.status,
     );
@@ -688,7 +742,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
   async removeParticipant(id: string, participantId: string, user: IRequestUser): Promise<ProposalGetDto> {
     const proposal = await this.proposalCrudService.findDocument(id, user, undefined, true);
@@ -711,7 +766,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
   async createDizDetails(
     proposalId: string,
@@ -724,7 +780,10 @@ export class ProposalMiscService {
       throw new NotFoundException('Proposal not found');
     }
 
-    validateProposalAccess(proposal, user, true);
+    const userLocationDoc = await this.locationService.findById(user.miiLocation);
+    const userLocation = userLocationDoc?.toObject() as Location;
+
+    validateProposalAccess(proposal, user, userLocation, true);
 
     // Only DIZ members can create DIZ details
     if (user.singleKnownRole !== Role.DizMember) {
@@ -767,7 +826,10 @@ export class ProposalMiscService {
       throw new NotFoundException('Proposal not found');
     }
 
-    validateProposalAccess(proposal, user, true);
+    const userLocationDoc = await this.locationService.findById(user.miiLocation);
+    const userLocation = userLocationDoc?.toObject() as Location;
+
+    validateProposalAccess(proposal, user, userLocation, true);
 
     // Only DIZ members can update DIZ details
     if (user.singleKnownRole !== Role.DizMember) {
@@ -792,6 +854,7 @@ export class ProposalMiscService {
       groups: [ProposalValidation.IsOutput],
     });
   }
+
   async exportAllUploadsAsZip(
     proposalId: string,
     user: IRequestUser,
@@ -841,7 +904,9 @@ export class ProposalMiscService {
       (result) => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value.success),
     ).length;
 
-    console.log(`Zip creation summary: ${successful} files added, ${failed} files skipped for proposal ${proposalId}.`);
+    this.logger.log(
+      `Zip creation summary: ${successful} files added, ${failed} files skipped for proposal ${proposalId}.`,
+    );
     if (successful === 0) {
       throw new NotFoundException('No accessible files found for this proposal');
     }
@@ -921,7 +986,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   async makeParticipantResponsible(
@@ -992,7 +1058,8 @@ export class ProposalMiscService {
     return plainToClass(ProposalGetDto, savedProposal.toObject(), {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput],
-    });
+      selectedDataSources: [...(savedProposal.selectedDataSources ? savedProposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
   }
 
   private addFormerResponsibleToParticipants(
@@ -1022,5 +1089,31 @@ export class ProposalMiscService {
         });
       }
     }
+  }
+
+  async updateProjectAssignee(
+    proposalId: string,
+    user: IRequestUser,
+    projectAssigneeDto?: ProjectAssigneeDto,
+  ): Promise<void> {
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+
+    proposalDoc.set({
+      projectAssignee: projectAssigneeDto,
+    });
+
+    proposalDoc.history.push({
+      type: HistoryEventType.ProjectAssigneChange,
+      data: { newAssigneeMail: projectAssigneeDto ? projectAssigneeDto.email : '(removed)' },
+      proposalVersion: proposalDoc.version,
+      createdAt: new Date(),
+    });
+
+    await proposalDoc.save();
+  }
+
+  async getProposalWithUiMetaInformation(proposalId: string, user: IRequestUser): Promise<any> {
+    const proposalDoc = await this.proposalCrudService.findDocument(proposalId, user);
+    return this.proposalFormService.getProposalUiFields(proposalDoc);
   }
 }

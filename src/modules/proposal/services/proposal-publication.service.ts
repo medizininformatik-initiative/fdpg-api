@@ -3,23 +3,41 @@ import { plainToClass } from 'class-transformer';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { EventEngineService } from '../../event-engine/event-engine.service';
 import { PublicationCreateDto, PublicationGetDto, PublicationUpdateDto } from '../dto/proposal/publication.dto';
+import { ModificationContext } from '../enums/modification-context.enum';
 import { ProposalCrudService } from './proposal-crud.service';
 import { getAllPublicationsProjection } from '../schema/constants/get-all-publications.projection';
 import { Publication, PublicationDocument } from '../schema/sub-schema/publication.schema';
+import { RegistrationFormPublicationService } from './registration-form-publication.service';
 
 @Injectable()
 export class ProposalPublicationService {
   constructor(
     private proposalCrudService: ProposalCrudService,
     private eventEngineService: EventEngineService,
+    private registerFormPublicationService: RegistrationFormPublicationService,
   ) {}
+
+  private readonly projection = {
+    projectAbbreviation: 1,
+    publications: 1,
+    owner: 1,
+    type: 1,
+    registerFormId: 1,
+    registerInfo: 1,
+  };
 
   async createPublication(
     proposalId: string,
     publicationCreateDto: PublicationCreateDto,
     user: IRequestUser,
   ): Promise<PublicationGetDto[]> {
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    const proposal = await this.proposalCrudService.findDocument(
+      proposalId,
+      user,
+      this.projection,
+      true,
+      ModificationContext.Publication,
+    );
 
     proposal.publications = [
       ...proposal.publications,
@@ -29,6 +47,7 @@ export class ProposalPublicationService {
         updatedAt: new Date(),
       },
     ];
+    await this.registerFormPublicationService.setRegistrationOutOfSync(proposal);
 
     const saveResult = await proposal.save();
 
@@ -37,7 +56,8 @@ export class ProposalPublicationService {
       return plainToClass(PublicationGetDto, plain, { strategy: 'excludeAll' });
     });
 
-    await this.eventEngineService.handleProposalPublicationCreate(proposal, publicationCreateDto);
+    await this.eventEngineService.handleProposalPublicationCreate(saveResult, publicationCreateDto);
+    await this.registerFormPublicationService.handlePublicationCreate(saveResult, publicationCreateDto, user);
 
     return allPublicationsReturn;
   }
@@ -59,7 +79,13 @@ export class ProposalPublicationService {
     publicationUpdateDto: PublicationUpdateDto,
     user: IRequestUser,
   ): Promise<PublicationGetDto[]> {
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    const proposal = await this.proposalCrudService.findDocument(
+      proposalId,
+      user,
+      this.projection,
+      true,
+      ModificationContext.Publication,
+    );
 
     const publicationIdx = proposal.publications.findIndex(
       (publication: PublicationDocument) => publication._id.toString() === publicationId,
@@ -77,6 +103,7 @@ export class ProposalPublicationService {
       updatedAt: new Date(),
       createdAt,
     };
+    await this.registerFormPublicationService.setRegistrationOutOfSync(proposal);
 
     const saveResult = await proposal.save();
 
@@ -85,13 +112,26 @@ export class ProposalPublicationService {
       return plainToClass(PublicationGetDto, plain, { strategy: 'excludeAll' });
     });
 
-    await this.eventEngineService.handleProposalPublicationUpdate(proposal, publicationUpdateDto);
+    await this.eventEngineService.handleProposalPublicationUpdate(saveResult, publicationId, publicationUpdateDto);
+
+    await this.registerFormPublicationService.handlePublicationUpdate(
+      saveResult,
+      publicationId,
+      publicationUpdateDto,
+      user,
+    );
 
     return allPublicationsReturn;
   }
 
   async deletePublication(proposalId: string, publicationId: string, user: IRequestUser): Promise<void> {
-    const proposal = await this.proposalCrudService.findDocument(proposalId, user, undefined, true);
+    const proposal = await this.proposalCrudService.findDocument(
+      proposalId,
+      user,
+      this.projection,
+      true,
+      ModificationContext.Publication,
+    );
 
     const publicationIdx = proposal.publications.findIndex(
       (publication: Publication) => publication._id.toString() === publicationId,
@@ -101,10 +141,10 @@ export class ProposalPublicationService {
       return;
     }
 
-    const deletedPublications = proposal.publications.splice(publicationIdx, 1);
-
-    await this.eventEngineService.handleProposalPublicationDelete(proposal, deletedPublications[0]);
+    proposal.publications.splice(publicationIdx, 1);
+    await this.registerFormPublicationService.setRegistrationOutOfSync(proposal);
 
     await proposal.save();
+    await this.registerFormPublicationService.handlePublicationDelete(proposal, publicationId, user);
   }
 }

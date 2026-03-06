@@ -13,19 +13,20 @@ import { LocationVoteService } from './events/location-vote/location-vote.servic
 import { ProposalLockService } from './events/proposal-lock/proposal-lock.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
-import { ReportsService } from './events/reports/reports.service';
 import { ReportDto } from '../proposal/dto/proposal/report.dto';
 import { PublicationCreateDto, PublicationUpdateDto } from '../proposal/dto/proposal/publication.dto';
-import { Publication } from '../proposal/schema/sub-schema/publication.schema';
-import { PublicationsService } from './events/publications/publications.service';
 import { Answer } from '../comment/schema/answer.schema';
 import { CommentAnswerEventService } from './events/comments/comment-answer-event.service';
 import { CommentType } from '../comment/enums/comment-type.enum';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { DueDateEnum } from '../proposal/enums/due-date.enum';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
+import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
+import { Location } from '../location/schema/location.schema';
+import { PublicationNotificationService } from './events/publications/publication-notification.service';
+import { ReportNotificationService } from './events/reports/report-notification.service';
 
-type MongoDocument = Document<any, any, any> & { _id: any };
+type MongoDocument = Document<unknown, unknown, unknown> & { _id: unknown };
 type ProposalMeta = Omit<Proposal, 'userProject'>;
 type ProposalMetaDocument = Promise<ProposalMeta & MongoDocument>;
 
@@ -41,11 +42,12 @@ export class EventEngineService {
     private commentAnswerEventService: CommentAnswerEventService,
     private locationVoteService: LocationVoteService,
     private contractingService: ContractingService,
-    private reportsService: ReportsService,
-    private publicationsService: PublicationsService,
+    private reportNotificationService: ReportNotificationService,
+    private publicationNotificationService: PublicationNotificationService,
     private configService: ConfigService,
     private deadlineEventService: DeadlineEventService,
     private participantEmailSummaryService: ParticipantEmailSummaryService,
+    private dataDeliveryEventService: DataDeliveryEventService,
   ) {
     this.portalHost = this.configService.get('PORTAL_HOST');
   }
@@ -100,10 +102,18 @@ export class EventEngineService {
       await this.locationVoteService.handleUacApproval(proposal, vote, location, proposalUrl);
     }
   }
+
   async handleProposalContractSign(proposal: Proposal, vote: boolean, user: IRequestUser) {
     if (proposal) {
       const proposalUrl = this.getProposalUrl(proposal);
       await this.contractingService.handleContractSign(proposal, vote, user, proposalUrl);
+    }
+  }
+
+  async handleProposalContractingSkip(proposal: Proposal) {
+    if (proposal) {
+      const proposalUrl = this.getProposalUrl(proposal);
+      await this.contractingService.handleLocationSign(proposal, proposalUrl);
     }
   }
 
@@ -137,48 +147,42 @@ export class EventEngineService {
   async handleProposalReportCreate(proposal: Proposal, report: ReportDto) {
     if (proposal && report) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportsService.handleReportCreate(proposal, report, proposalUrl);
-    }
-  }
-
-  async handleProposalReportUpdate(proposal: Proposal, report: ReportDto) {
-    if (proposal && report) {
-      const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportsService.handleReportUpdate(proposal, report, proposalUrl);
-    }
-  }
-
-  async handleProposalReportDelete(proposal: Proposal, report: ReportDto) {
-    if (proposal && report) {
-      const proposalUrl = this.getProposalUrl(proposal);
-      await this.reportsService.handleReportDelete(proposal, report, proposalUrl);
+      await this.reportNotificationService.handleReportCreate(proposal, report, proposalUrl);
     }
   }
 
   async handleProposalPublicationCreate(proposal: Proposal, publication: PublicationCreateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationsService.handlePublicationCreate(proposal, publication, proposalUrl);
+      await this.publicationNotificationService.handlePublicationCreate(proposal, publication, proposalUrl);
     }
   }
 
-  async handleProposalPublicationUpdate(proposal: Proposal, publication: PublicationUpdateDto) {
+  async handleProposalPublicationUpdate(proposal: Proposal, publicationId: string, publication: PublicationUpdateDto) {
     if (proposal && publication) {
       const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationsService.handlePublicationUpdate(proposal, publication, proposalUrl);
-    }
-  }
-
-  async handleProposalPublicationDelete(proposal: Proposal, publication: Publication) {
-    if (proposal && publication) {
-      const proposalUrl = this.getProposalUrl(proposal);
-      await this.publicationsService.handlePublicationDelete(proposal, publication, proposalUrl);
+      await this.publicationNotificationService.handlePublicationUpdate(proposal, publication, proposalUrl);
     }
   }
 
   async handleDeadlineChange(proposal: Proposal, changeList: Record<DueDateEnum, Date | null>) {
     const proposalUrl = this.getProposalUrl(proposal);
     await this.deadlineEventService.sendForDeadlineChange(proposal, changeList, proposalUrl);
+  }
+
+  async handleDataDeliveryInitiated(proposal: Proposal, locations: Location[]) {
+    const proposalUrl = this.getProposalUrl(proposal);
+    await this.dataDeliveryEventService.handleDataDeliveryInitiated(proposal, proposalUrl, locations);
+  }
+
+  async handleDataDeliveryDataReady(proposal: Proposal, locations: Location[]) {
+    const proposalUrl = this.getProposalUrl(proposal);
+    await this.dataDeliveryEventService.handleDataDeliveryDataReady(proposal, proposalUrl, locations);
+  }
+
+  async handleDataDeliveryDataReturn(proposal: Proposal) {
+    const proposalUrl = this.getProposalUrl(proposal);
+    await this.dataDeliveryEventService.handleDataDeliveryDataReturn(proposal, proposalUrl);
   }
 
   async handleParticipatingResearcherSummarySchedule(event: Schedule) {

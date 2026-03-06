@@ -38,6 +38,7 @@ describe('JwtStrategy', () => {
       req.headers['x-selected-role'] = Role.Researcher;
       const roles = [Role.Researcher];
       const payload = {
+        sub: 'test-user-id',
         realm_access: {
           roles,
         },
@@ -55,6 +56,7 @@ describe('JwtStrategy', () => {
       const assignedDataSources = dataSources.join(';');
 
       const payload = {
+        sub: 'test-user-id',
         realm_access: {
           roles,
         },
@@ -73,6 +75,7 @@ describe('JwtStrategy', () => {
       const assignedDataSources = undefined;
 
       const payload = {
+        sub: 'test-user-id',
         realm_access: {
           roles,
         },
@@ -87,6 +90,7 @@ describe('JwtStrategy', () => {
       let req = { headers: {} } as unknown as Request;
       req.headers['x-selected-role'] = role;
       const payload = {
+        sub: 'test-user-id',
         realm_access: {
           roles: [role],
         },
@@ -100,6 +104,7 @@ describe('JwtStrategy', () => {
       let req = { headers: {} } as unknown as Request;
       req.headers['x-selected-role'] = Role.Researcher;
       const payload = {
+        sub: 'test-user-id',
         MII_LOCATION: location,
       };
       const expected = location === 'KUM' ? true : false;

@@ -8,7 +8,7 @@ import { UseCaseUpload } from '../enums/upload-type.enum';
 import { StorageService } from 'src/modules/storage/storage.service';
 import { UploadDto } from '../dto/upload.dto';
 import { Proposal, ProposalDocument } from '../schema/proposal.schema';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformOptions, plainToClass } from 'class-transformer';
 import { OutputGroup } from 'src/shared/enums/output-group.enum';
 import { ProposalValidation } from '../enums/porposal-validation.enum';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
@@ -134,14 +134,16 @@ export class ProposalPdfService {
 
   async createPdfBuffer(
     proposal: ProposalDocument,
-    dataPrivacyTextForUsage: any[],
+    dataPrivacyTextForUsage: Array<{ headline: string; text: string; usageType: string }>,
     dataSources: PlatformIdentifier[],
   ): Promise<Buffer> {
     const plain = proposal.toObject();
     const getDto = plainToClass(ProposalGetDto, plain, {
       strategy: 'excludeAll',
       groups: [ProposalValidation.IsOutput, OutputGroup.PdfOutput],
-    });
+      selectedDataSources: [...(proposal.selectedDataSources ? proposal.selectedDataSources : [])],
+    } as ClassTransformOptions);
+
     const pdfBuffer = await this.pdfEngineService.createProposalPdf(getDto, dataPrivacyTextForUsage, dataSources);
     return pdfBuffer;
   }

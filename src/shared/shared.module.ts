@@ -8,6 +8,7 @@ import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
 import { Comment, getCommentSchemaFactory } from 'src/modules/comment/schema/comment.schema';
 import { Connection } from 'mongoose';
 import { Location } from 'src/modules/location/schema/location.schema';
+import { KeycloakServiceAccountService } from './utils/keycloak-service-account.service';
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { Location } from 'src/modules/location/schema/location.schema';
     SchedulerModule,
   ],
   controllers: [],
-  providers: [SharedService],
-  exports: [SharedService],
+  providers: [SharedService, KeycloakServiceAccountService],
+  exports: [SharedService, KeycloakServiceAccountService],
 })
 export class SharedModule {}

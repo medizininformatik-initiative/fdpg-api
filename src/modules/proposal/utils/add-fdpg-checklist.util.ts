@@ -17,6 +17,18 @@ export const updateFdpgChecklist = (proposal: Proposal, checklistUpdate: FdpgChe
     proposal.fdpgChecklist.isRegistrationLinkSent = checklistUpdate.isRegistrationLinkSent;
   }
 
+  if (checklistUpdate.initialViewing !== undefined) {
+    proposal.fdpgChecklist.initialViewing = checklistUpdate.initialViewing;
+  }
+
+  if (checklistUpdate.depthCheck !== undefined) {
+    proposal.fdpgChecklist.depthCheck = checklistUpdate.depthCheck;
+  }
+
+  if (checklistUpdate.ethicsCheck !== undefined) {
+    proposal.fdpgChecklist.ethicsCheck = checklistUpdate.ethicsCheck;
+  }
+
   if (checklistUpdate.fdpgInternalCheckNotes !== undefined) {
     proposal.fdpgChecklist.fdpgInternalCheckNotes = checklistUpdate.fdpgInternalCheckNotes?.trim() ?? null;
   }
@@ -26,7 +38,14 @@ export const updateFdpgChecklist = (proposal: Proposal, checklistUpdate: FdpgChe
   }
 
   const targetFields = ['checkListVerification', 'projectProperties'] as const;
-  const excludedFields = ['_id', 'isRegistrationLinkSent', 'fdpgInternalCheckNotes'] as const;
+  const excludedFields = [
+    '_id',
+    'isRegistrationLinkSent',
+    'initialViewing',
+    'depthCheck',
+    'ethicsCheck',
+    'fdpgInternalCheckNotes',
+  ] as const;
 
   for (const field of targetFields) {
     const items = proposal.fdpgChecklist[field];

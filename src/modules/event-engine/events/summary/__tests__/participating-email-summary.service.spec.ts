@@ -7,6 +7,8 @@ import { ParticipantEmailSummaryService } from '../participant-email-summary.ser
 import { HistoryEventType } from 'src/modules/proposal/enums/history-event.enum';
 import { HistoryEvent } from 'src/modules/proposal/schema/sub-schema/history-event.schema';
 import { Participant } from 'src/modules/proposal/schema/sub-schema/participant.schema';
+import { Researcher } from 'src/modules/proposal/schema/sub-schema/participants/researcher.schema';
+import { ProjectResponsible } from 'src/modules/proposal/schema/sub-schema/project-responsible.schema';
 
 describe('ParticipantEmailSummaryService', () => {
   let participantEmailSummaryService: ParticipantEmailSummaryService;
@@ -82,7 +84,12 @@ describe('ParticipantEmailSummaryService', () => {
     it('should take history changes into account', async () => {
       const proposaloverr = {
         ...proposal,
-        participants: [{ researcher: { email: 'email' } } as any as Participant],
+        projectResponsible: {
+          researcher: { email: 'email', firstName: 'first', lastName: 'lastname' } as any as Researcher,
+        } as ProjectResponsible,
+        participants: [
+          { researcher: { email: 'email', firstName: 'first', lastName: 'lastname' } } as any as Participant,
+        ],
         history: [
           { type: HistoryEventType.ProposalRejected, createdAt: new Date('13 May, 1997 09:00:00') } as HistoryEvent,
           { type: HistoryEventType.ProposalFdpgCheck, createdAt: new Date('13 May, 1997 09:30:00') } as HistoryEvent,

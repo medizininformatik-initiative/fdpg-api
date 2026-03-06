@@ -1,5 +1,6 @@
 import { configureTelemetry } from './telemetry';
 import * as dotenv from 'dotenv';
+import { Logger } from 'nestjs-pino';
 
 dotenv.config({ path: `.env.local` });
 dotenv.config();
@@ -21,6 +22,8 @@ import * as mongoose from 'mongoose';
 import { ValidationExceptionFilter } from './exceptions/validation/validation-exception.filter';
 import { AppModule } from './modules/app/app.module';
 import { API_PREFIX } from './shared/constants/global.constants';
+import * as promClient from 'prom-client';
+import * as promMid from 'nestjs-prometheus-middleware';
 
 // Configure swagger function
 function configureSwagger(app: INestApplication) {
@@ -108,7 +111,11 @@ function configureCors(app: INestApplication): void {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  app.useLogger(app.get(Logger));
 
   app.setGlobalPrefix(API_PREFIX);
   app.useGlobalFilters(new ValidationExceptionFilter());
@@ -119,6 +126,22 @@ async function bootstrap() {
 
   if (process.env.ENV !== 'production') {
     mongoose.set('debug', true);
+  }
+
+  const configService = app.get(ConfigService);
+  const environment = configService.get('ENV', 'local');
+
+  if ((process.env.ENABLE_TELEMETRY ?? '').toLowerCase() === 'true') {
+    promClient.register.setDefaultLabels({
+      app: 'FDPG-API_' + environment,
+    });
+
+    app.use(
+      promMid({
+        metricsPath: '/api/metrics',
+        collectDefaultMetrics: false,
+      }),
+    );
   }
 
   // Adds DI for validators:

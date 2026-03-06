@@ -15,7 +15,7 @@ import { ProposalCrudService } from '../services/proposal-crud.service';
 export class IsUniqueAbbreviationConstraint implements ValidatorConstraintInterface {
   constructor(private readonly proposalCrudService: ProposalCrudService) {}
 
-  async validate(projectAbbreviation: any, args: ValidationArguments) {
+  async validate(projectAbbreviation: string, args: ValidationArguments) {
     const object = args.object as ProposalUpdateDto;
     if (isMongoId(object._id) || !object._id) {
       return this.proposalCrudService.checkUnique({ projectAbbreviation }, object._id);

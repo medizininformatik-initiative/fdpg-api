@@ -6,4 +6,5 @@ export enum Role {
   DizMember = 'DizMember',
   UacMember = 'UacMember',
   RegisteringMember = 'RegisteringMember',
+  DataManagementOffice = 'DataManagementOffice',
 }

@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
@@ -15,9 +16,6 @@ import { validate as isValidUuid } from 'uuid';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PasswordResetDto } from './dto/password-reset.dto';
 import { ResendInvitationDto } from './dto/resend-invitation.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserQueryDto } from './dto/user-query.dto';
-import { UserEmailResponseDto } from './dto/user-response.dto';
 import { KeycloakLocale } from './enums/keycloak-locale.enum';
 import { KeycloakRequiredAction } from './enums/keycloak-required-action.enum';
 import { handleRegisterErrors, throwInvalidLocation } from './error-handling/create-user.errors';
@@ -27,9 +25,13 @@ import { IKeycloakActionsEmail } from './types/keycloak-actions-email.interface'
 import { IKeycloakRole } from './types/keycloak-role-assignment.interface';
 import { IKeycloakUserQuery } from './types/keycloak-user-query.interface';
 import { ICreateKeycloakUser, IGetKeycloakUser } from './types/keycloak-user.interface';
+import { IKeycloakRegistrationEvent } from './types/keycloak-registration-event.interface';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class KeycloakService {
+  private readonly logger = new Logger(KeycloakService.name);
+
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private keycloakClient: KeycloakClient,
@@ -123,7 +125,7 @@ export class KeycloakService {
       }
 
       keycloakUser.attributes.MII_LOCATION = [location];
-      console.log(keycloakUser.attributes.MII_LOCATION);
+      this.logger.debug(`Setting MII_LOCATION for user: ${keycloakUser.attributes.MII_LOCATION}`);
     }
 
     const userId = await this.registerUser(keycloakUser);
@@ -200,7 +202,7 @@ export class KeycloakService {
 
       return roleMap;
     } catch (error) {
-      console.log(error);
+      this.logger.error('Failed to fetch available roles from keycloak', error);
       throw new InternalServerErrorException('Failed to fetch available roles from keycloak');
     }
   }
@@ -211,7 +213,7 @@ export class KeycloakService {
     try {
       await this.apiClient.post<never>(`/users/${userId}/role-mappings/realm`, roleAssignments);
     } catch (error) {
-      console.log(error);
+      this.logger.error('Failed to assign role to user in keycloak', error);
       throw new InternalServerErrorException('Failed to assign role to user in keycloak');
     }
   }
@@ -269,35 +271,25 @@ export class KeycloakService {
     }
   }
 
-  async getUserEmails(query: UserQueryDto): Promise<UserEmailResponseDto> {
-    let allUsers: IGetKeycloakUser[] = await this.cacheManager.get<IGetKeycloakUser[]>(CacheKey.AllUsers);
+  // for this request to work, add in keycloak admin console:
+  // Clients -> fdpg-api -> add "view-events" to "Service Account Roles"
+  // Client Scopes -> fdpg-api-dedicated -> add "view-events"
+  async getRegistrationEvents(dateFrom: string): Promise<IKeycloakRegistrationEvent[]> {
+    try {
+      const dateObj = new Date(dateFrom);
+      const epochTimestamp = dateObj.getTime().toString();
 
-    if (!allUsers) {
-      // cache for 1 hour
-      allUsers = await this.getUsers();
-      const oneHourInMs = 60 * 60 * 1000;
-      await this.cacheManager.set(CacheKey.AllUsers, allUsers, oneHourInMs);
+      const params = new URLSearchParams();
+      params.append('type', 'REGISTER');
+      params.append('dateFrom', epochTimestamp);
+      params.append('max', '100');
+
+      const { data } = await this.apiClient.get<IKeycloakRegistrationEvent[]>(`/events?${params.toString()}`);
+
+      return data || [];
+    } catch (error) {
+      console.error('Failed to fetch registration events from Keycloak:', error);
+      return [];
     }
-
-    const lowerCasedSearch = query.startsWith?.toLowerCase();
-    const emails = allUsers.reduce<string[]>((acc, user) => {
-      if (!user.emailVerified || user.requiredActions.length > 0) {
-        return acc;
-      }
-      if (!user.attributes?.MII_LOCATION) {
-        return acc;
-      }
-      if (lowerCasedSearch && !user.email.toLowerCase().startsWith(lowerCasedSearch)) {
-        return acc;
-      }
-      acc.push(user.email);
-
-      return acc;
-    }, []);
-
-    return {
-      emails,
-      total: emails.length,
-    };
   }
 }

@@ -9,6 +9,7 @@ export enum PanelQuery {
   ResearcherFinished = 'RESEARCHER_FINISHED',
 
   // DIZ
+  DizComingUp = 'DIZ_COMING_UP',
   DizPending = 'DIZ_PENDING',
   DizOngoing = 'DIZ_ONGOING',
   DizFinished = 'DIZ_FINISHED',
@@ -28,4 +29,19 @@ export enum PanelQuery {
   FdpgOngoingToCheck = 'FDPG_ONGOING_TO_CHECK',
   FdpgOngoingInWork = 'FDPG_ONGOING_IN_WORK',
   FdpgFinished = 'FDPG_FINISHED',
+  FdpgOverview = 'FDPG_OVERVIEW',
+
+  // Published Page Panels
+  PublishedDraft = 'PUBLISHED_DRAFT',
+  PublishedPending = 'PUBLISHED_PENDING',
+  PublishedCompleted = 'PUBLISHED_COMPLETED',
+
+  // FDPG Published Page Panels
+  FdpgPublishedRequested = 'FDPG_PUBLISHED_REQUESTED',
+  FdpgPublishedReady = 'FDPG_PUBLISHED_READY',
+  FdpgPublishedPublished = 'FDPG_PUBLISHED_PUBLISHED',
+  FdpgPublishedDraft = 'FDPG_PUBLISHED_DRAFT',
+  // DataManagementOffice
+  DmsPending = 'DMS_PENDING',
+  DmsApproved = 'DMS_APPROVED',
 }

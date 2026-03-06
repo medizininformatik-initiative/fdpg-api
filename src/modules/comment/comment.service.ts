@@ -43,7 +43,8 @@ export class CommentService {
     const isFdpgMember = this.hasFdpgLevelPermissions(user.singleKnownRole);
     const isMessage =
       createCommentDto.type === CommentType.ProposalMessageToOwner ||
-      createCommentDto.type === CommentType.ProposalMessageToLocation;
+      createCommentDto.type === CommentType.ProposalMessageToLocation ||
+      createCommentDto.type === CommentType.ProposalMessageToDmst;
 
     const isTaskOrMessageForFdpg =
       (isMessage && !isFdpgMember) || createCommentDto.type === CommentType.ProposalTaskFdpg;
@@ -144,6 +145,7 @@ export class CommentService {
   async findForItem(commentReference: CommentReferenceDto, user: IRequestUser): Promise<CommentGetDto[]> {
     const filter: FilterQuery<Comment> = { ...commentReference };
     const projection = { status: 1 };
+
     const proposal = await this.proposalCrudService.findDocument(
       commentReference.referenceDocumentId,
       user,

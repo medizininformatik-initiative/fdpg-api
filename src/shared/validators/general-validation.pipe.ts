@@ -8,15 +8,14 @@ import { getErrorMessages, tryPlainToClass } from 'src/shared/utils/validation-p
 // Attention: Pipe will return the transformed object and not the input value!
 // This might cause stripping out properties and therefore unexpected behavior!
 
-export abstract class GeneralValidationPipe implements PipeTransform<any> {
-  async transform(value: any, argumentMetadata: ArgumentMetadata) {
-    let object: any;
+export abstract class GeneralValidationPipe implements PipeTransform<unknown> {
+  async transform(value: unknown, argumentMetadata: ArgumentMetadata) {
+    let object: unknown;
     object = tryPlainToClass(value, argumentMetadata);
 
-    const errors = await validate(object, {
+    const errors = await validate(object as object, {
       always: true,
       groups: ['GENERAL_DEFAULT_GROUP'],
-      excludeExtraneousValues: true,
     });
     const errorMessages = getErrorMessages(errors);
 

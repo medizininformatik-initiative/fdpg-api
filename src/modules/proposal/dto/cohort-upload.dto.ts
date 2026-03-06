@@ -88,7 +88,7 @@ export class CohortUploadDto {
     name: 'file',
     format: 'binary',
   })
-  file: any;
+  file: Express.Multer.File;
 
   @Expose()
   @Type(() => SelectedCohortUploadDto)

@@ -7,7 +7,10 @@ import { KeycloakService } from 'src/modules/user/keycloak.service';
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
-import { ProposalDocument } from '../../schema/proposal.schema';
+import { ProposalType } from '../../enums/proposal-type.enum';
+import { HistoryEventType } from '../../enums/history-event.enum';
+import { Proposal, ProposalDocument } from '../../schema/proposal.schema';
+import { getModelToken } from '@nestjs/mongoose';
 import { ParticipantType } from '../../enums/participant-type.enum';
 import { IGetKeycloakUser } from 'src/modules/user/types/keycloak-user.interface';
 import {
@@ -39,6 +42,7 @@ import { addUpload, getBlobName } from '../../utils/proposal.utils';
 import { FeasibilityService } from 'src/modules/feasibility/feasibility.service';
 import { LocationService } from 'src/modules/location/service/location.service';
 import { LocationDto } from 'src/modules/location/dto/location.dto';
+import { ProposalSyncService } from '../proposal-sync.service';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -52,13 +56,17 @@ jest.mock('../../utils/validate-status-change.util', () => ({
   validateStatusChange: jest.fn(),
 }));
 
-jest.mock('../../utils/proposal-history.util', () => ({
-  addHistoryItemForStatus: jest.fn(),
-  addHistoryItemForProposalLock: jest.fn(),
-  addHistoryItemForChangedDeadline: jest.fn(),
-  addHistoryItemForParticipantsUpdated: jest.fn(),
-  addHistoryItemForParticipantRemoved: jest.fn(),
-}));
+jest.mock('../../utils/proposal-history.util', () => {
+  const actual = jest.requireActual('../../utils/proposal-history.util');
+  return {
+    addHistoryItemForStatus: jest.fn(),
+    addHistoryItemForProposalLock: jest.fn(),
+    addHistoryItemForChangedDeadline: jest.fn(),
+    addHistoryItemForParticipantsUpdated: jest.fn(),
+    addHistoryItemForParticipantRemoved: jest.fn(),
+    addHistoryItemForCopyAsInternalRegistration: actual.addHistoryItemForCopyAsInternalRegistration,
+  };
+});
 
 jest.mock('../../utils/validate-fdpg-check-status.util', () => ({
   validateFdpgCheckStatus: jest.fn(),
@@ -239,6 +247,15 @@ describe('ProposalMiscService', () => {
       providers: [
         ProposalMiscService,
         {
+          provide: getModelToken(Proposal.name),
+          useValue: {
+            findOne: jest.fn(),
+            findById: jest.fn(),
+            create: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
           provide: ProposalCrudService,
           useValue: {
             findDocument: jest.fn(),
@@ -280,6 +297,7 @@ describe('ProposalMiscService', () => {
           provide: ProposalFormService,
           useValue: {
             findAll: jest.fn(),
+            getCurrentVersion: jest.fn(),
           },
         },
         {
@@ -313,6 +331,15 @@ describe('ProposalMiscService', () => {
           provide: LocationService,
           useValue: {
             findAll: jest.fn(),
+            findById: jest.fn().mockImplementation(() => undefined),
+          },
+        },
+        {
+          provide: ProposalSyncService,
+          useValue: {
+            syncProposal: jest.fn(),
+            syncAllProposals: jest.fn(),
+            retrySync: jest.fn(),
           },
         },
       ],

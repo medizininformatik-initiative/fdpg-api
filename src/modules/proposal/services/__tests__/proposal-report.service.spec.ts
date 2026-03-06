@@ -4,12 +4,15 @@ import { EventEngineService } from 'src/modules/event-engine/event-engine.servic
 import { Role } from 'src/shared/enums/role.enum';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { ReportCreateDto, ReportUpdateDto } from '../../dto/proposal/report.dto';
+import { ModificationContext } from '../../enums/modification-context.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { UseCaseUpload } from '../../enums/upload-type.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { addReport, addReportUpload, getBlobName } from '../../utils/proposal.utils';
 import { ProposalCrudService } from '../proposal-crud.service';
 import { ProposalReportService } from '../proposal-report.service';
+import { RegistrationFormReportService } from '../registration-form-report.service';
+import { PublicStorageService } from 'src/modules/storage';
 import { Upload } from '../../schema/sub-schema/upload.schema';
 import { Report } from '../../schema/sub-schema/report.schema';
 import { getError } from 'test/get-error';
@@ -76,6 +79,7 @@ describe('ProposalReportService', () => {
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
   let storageService: jest.Mocked<StorageService>;
+  let registrationFormReportService: jest.Mocked<RegistrationFormReportService>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -92,8 +96,6 @@ describe('ProposalReportService', () => {
           provide: EventEngineService,
           useValue: {
             handleProposalReportCreate: jest.fn(),
-            handleProposalReportUpdate: jest.fn(),
-            handleProposalReportDelete: jest.fn(),
           },
         },
         {
@@ -104,6 +106,23 @@ describe('ProposalReportService', () => {
             getSasUrl: jest.fn().mockReturnValue('downloadUrl'),
           },
         },
+        {
+          provide: PublicStorageService,
+          useValue: {
+            uploadFile: jest.fn(),
+            getPresignedUrl: jest.fn().mockReturnValue('publicDownloadUrl'),
+            deleteFile: jest.fn(),
+          },
+        },
+        {
+          provide: RegistrationFormReportService,
+          useValue: {
+            handleReportCreate: jest.fn(),
+            handleReportUpdate: jest.fn(),
+            handleReportDelete: jest.fn(),
+            setRegistrationOutOfSync: jest.fn(),
+          },
+        },
       ],
       imports: [],
     }).compile();
@@ -112,6 +131,9 @@ describe('ProposalReportService', () => {
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
     storageService = module.get<StorageService>(StorageService) as jest.Mocked<StorageService>;
+    registrationFormReportService = module.get<RegistrationFormReportService>(
+      RegistrationFormReportService,
+    ) as jest.Mocked<RegistrationFormReportService>;
   });
 
   it('should be defined', () => {
@@ -143,8 +165,9 @@ describe('ProposalReportService', () => {
       expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
         proposalId,
         request.user,
-        { projectAbbreviation: 1, reports: 1, owner: 1 },
+        { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
         true,
+        ModificationContext.Report,
       );
 
       expect(result.title).toBe('title');
@@ -190,6 +213,8 @@ describe('ProposalReportService', () => {
         'reports.title': 1,
         'reports.createdAt': 1,
         'reports.updatedAt': 1,
+        type: 1,
+        registerInfo: 1,
       };
 
       const result = await proposalReportService.getAllReports(proposalId, request.user);
@@ -313,7 +338,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       const result = await proposalReportService.updateReport(
         proposalId,
@@ -323,12 +348,14 @@ describe('ProposalReportService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
-      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalReportUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: proposalId }),
-        expect.objectContaining({ content: 'content' }),
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
       );
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(result.uploads.length).toBe(2);
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
       expect(result.uploads[1].downloadUrl).toBe('downloadUrl');
@@ -374,7 +401,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       const result = await proposalReportService.updateReport(
         proposalId,
@@ -384,12 +411,14 @@ describe('ProposalReportService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
-      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalReportUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: proposalId }),
-        expect.objectContaining({ content: 'content' }),
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
       );
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(result.uploads.length).toBe(2);
       expect(result.uploads[0].downloadUrl).toBe('downloadUrl');
       expect(result.uploads[1].downloadUrl).toBe('downloadUrl');
@@ -433,7 +462,7 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       const call = proposalReportService.updateReport(
         proposalId,
@@ -445,7 +474,13 @@ describe('ProposalReportService', () => {
       const error = await getError(async () => await call);
 
       expect(error).toBeInstanceOf(NotFoundException);
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
+      );
     });
   });
 
@@ -469,16 +504,18 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       await proposalReportService.deleteReport(proposalId, reportId, request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
-      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalReportDelete).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: proposalId }),
-        expect.objectContaining({ content: 'content' }),
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
       );
+      expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(storageService.deleteManyBlobs).toHaveBeenCalledWith(['blobName']);
     });
 
@@ -501,14 +538,19 @@ describe('ProposalReportService', () => {
 
       proposalCrudService.findDocument.mockResolvedValue(proposalDocument);
 
-      const projection = { projectAbbreviation: 1, reports: 1, owner: 1 };
+      const projection = { projectAbbreviation: 1, reports: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 };
 
       await proposalReportService.deleteReport(proposalId, notFoundReportId, request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, projection, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        projection,
+        true,
+        ModificationContext.Report,
+      );
 
       expect(proposalDocument.save).not.toHaveBeenCalled();
-      expect(eventEngineService.handleProposalReportDelete).not.toHaveBeenCalled();
       expect(storageService.deleteManyBlobs).not.toHaveBeenCalled();
     });
   });

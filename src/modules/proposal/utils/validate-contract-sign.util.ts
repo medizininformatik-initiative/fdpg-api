@@ -1,5 +1,4 @@
 import { ForbiddenException } from '@nestjs/common';
-import { isNotEmptyObject } from 'class-validator';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
@@ -16,16 +15,7 @@ export const validateContractSign = (
   file?: Express.Multer.File,
 ) => {
   if (vote.value === true) {
-    const hasContractAttached = file?.buffer;
-    if (!hasContractAttached) {
-      const errorInfo = new ValidationErrorInfo({
-        constraint: 'hasContract',
-        message: 'No Contract attached',
-        property: 'file',
-        code: BadRequestError.ContractSignNoContract,
-      });
-      throw new ValidationException([errorInfo]);
-    }
+    validateFile(file);
   }
 
   if (proposal.status !== ProposalStatus.Contracting) {
@@ -39,6 +29,14 @@ export const validateContractSign = (
   } else {
     // Just in case
     throw new ForbiddenException();
+  }
+};
+
+export const validateContractSkip = (proposal: Proposal, file?: Express.Multer.File) => {
+  validateFile(file);
+
+  if (proposal.status !== ProposalStatus.Contracting) {
+    throw new ForbiddenException('The current status does not allow to skip contracts');
   }
 };
 
@@ -62,5 +60,18 @@ const validateForLocation = (proposal: Proposal, user: IRequestUser) => {
     throw new ForbiddenException(
       'The contract could not be signed. The location might be not valid to sign or already did',
     );
+  }
+};
+
+const validateFile = (file?: Express.Multer.File) => {
+  const hasContractAttached = file?.buffer;
+  if (!hasContractAttached) {
+    const errorInfo = new ValidationErrorInfo({
+      constraint: 'hasContract',
+      message: 'No Contract attached',
+      property: 'file',
+      code: BadRequestError.ContractSignNoContract,
+    });
+    throw new ValidationException([errorInfo]);
   }
 };

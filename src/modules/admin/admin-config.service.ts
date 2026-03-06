@@ -117,7 +117,7 @@ export class AdminConfigService {
       logoBase64 = `data:${logo.mimetype};base64,${logo.buffer.toString('base64')}`;
     }
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       ...alertConfig,
       updatedAt: new Date(),
       type: ConfigType.Alert,

@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as SendInBlue from '@sendinblue/client';
 import { EmailCategory } from './types/email-category.enum';
 import { IEmail, ITemplateEmail } from './types/email.interface';
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
   private apiInstance: SendInBlue.TransactionalEmailsApi;
   constructor(private readonly configService: ConfigService) {
     this.apiInstance = new SendInBlue.TransactionalEmailsApi();
@@ -16,6 +17,7 @@ export class EmailService {
     this.preventEmailSending =
       (this.configService.get<string>('EMAIL_SERVICE_PREVENT_ALL') ?? '').toLowerCase() === 'true';
     this.environment = this.configService.get<string>('ENV');
+    this.forwardAllMailsTo = this.configService.get<string>('FORWARD_ALL_MAILS_TO');
   }
 
   private senderInformation = {
@@ -24,10 +26,14 @@ export class EmailService {
   };
   private preventEmailSending: boolean;
   private environment: string;
+  private forwardAllMailsTo?: string;
 
   async send(email: IEmail | ITemplateEmail): Promise<void> {
+    if (!!this.forwardAllMailsTo && this.forwardAllMailsTo.length > 0 && this.environment === 'local') {
+      email.to = [this.forwardAllMailsTo];
+    }
     if (this.preventEmailSending && this.environment === 'local') {
-      console.log('Prevent sending emails to: ', email.to);
+      this.logger.log('Prevent sending emails to: ', email.to);
     }
     if (email.to.length <= 0 || this.preventEmailSending) {
       return;
@@ -63,10 +69,7 @@ export class EmailService {
     try {
       await this.apiInstance.sendTransacEmail(transactionalEmail);
     } catch (error) {
-      console.log('Failed sending email');
-      console.log(error);
-
-      console.log(JSON.stringify(error));
+      this.logger.error('Failed sending email', error);
     }
   }
 }

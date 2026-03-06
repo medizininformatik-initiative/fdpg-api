@@ -1,14 +1,17 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import { InternalServerErrorException, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { BadRequestError } from 'src/shared/enums/bad-request-error.enum';
 import { ResendInvitationDto } from '../dto/resend-invitation.dto';
 
-export const handleActionsEmailError = (error: any) => {
+const logger = new Logger('UserInviteErrors');
+
+export const handleActionsEmailError = (error: unknown) => {
   if (axios.isAxiosError(error)) {
-    let isKeycloakErrorMessage = (error.response.data as any).errorMessage !== undefined;
-    let isKeycloakError = (error.response.data as any).error !== undefined;
+    const responseData = error.response?.data as Record<string, unknown>;
+    let isKeycloakErrorMessage = responseData?.errorMessage !== undefined;
+    let isKeycloakError = responseData?.error !== undefined;
 
     if (isKeycloakErrorMessage) {
       let errorInfo: ValidationErrorInfo;
@@ -48,6 +51,6 @@ export const handleActionsEmailError = (error: any) => {
       throw new ValidationException([errorInfo]);
     }
   }
-  console.log(error);
+  logger.error('Failed to execute actions email in keycloak', error);
   throw new InternalServerErrorException('Failed to execute actions email in keycloak');
 };

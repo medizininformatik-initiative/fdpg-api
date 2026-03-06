@@ -26,6 +26,7 @@ export enum SupportedMimetype {
   Png = 'image/png',
   Svg = 'image/svg+xml',
   Tiff = 'image/tiff',
+  Gif = 'image/gif',
   Text = 'text/plain',
   RichText = 'text/richtext',
   RtfText = 'text/rtf',

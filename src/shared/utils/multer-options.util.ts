@@ -8,6 +8,7 @@ const images = [
   SupportedMimetype.Bmp,
   SupportedMimetype.Svg,
   SupportedMimetype.Tiff,
+  SupportedMimetype.Gif,
   SupportedMimetype.Heic,
   SupportedMimetype.Heif,
 ];

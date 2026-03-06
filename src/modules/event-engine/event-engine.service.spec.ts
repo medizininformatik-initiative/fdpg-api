@@ -9,12 +9,14 @@ import { CommentEventService } from './events/comments/comment-event.service';
 import { ContractingService } from './events/contracting/contracting.service';
 import { LocationVoteService } from './events/location-vote/location-vote.service';
 import { ProposalLockService } from './events/proposal-lock/proposal-lock.service';
-import { PublicationsService } from './events/publications/publications.service';
-import { ReportsService } from './events/reports/reports.service';
+import { PublicationNotificationService } from './events/publications/publication-notification.service';
+import { ReportNotificationService } from './events/reports/report-notification.service';
 import { StatusChangeService } from './events/status-change/status-change.service';
 import { StatusReminderService } from './events/status-reminder/status-reminder.service';
 import { DeadlineEventService } from './events/deadlines/deadline-event.service';
 import { ParticipantEmailSummaryService } from './events/summary/participant-email-summary.service';
+import { DataDeliveryEventService } from './events/data-delivery/data-delivery-event.service';
+import { Location } from '../location/schema/location.schema';
 
 describe('EventEngineService', () => {
   let eventEngineService: EventEngineService;
@@ -26,9 +28,12 @@ describe('EventEngineService', () => {
   let commentAnswerEventService: CommentAnswerEventService;
   let locationVoteService: LocationVoteService;
   let contractingService: ContractingService;
-  let reportsService: ReportsService;
-  let publicationsService: PublicationsService;
+  let reportNotificationService: ReportNotificationService;
+  let publicationNotificationService: PublicationNotificationService;
   let configService: ConfigService;
+  let dataDeliveryEventService: DataDeliveryEventService;
+  let deadlineEventService: DeadlineEventService;
+  let participantEmailSummaryService: ParticipantEmailSummaryService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -82,22 +87,20 @@ describe('EventEngineService', () => {
           provide: ContractingService,
           useValue: {
             handleContractSign: jest.fn(),
+            handleLocationSign: jest.fn(),
           },
         },
         {
-          provide: ReportsService,
+          provide: ReportNotificationService,
           useValue: {
             handleReportCreate: jest.fn(),
-            handleReportUpdate: jest.fn(),
-            handleReportDelete: jest.fn(),
           },
         },
         {
-          provide: PublicationsService,
+          provide: PublicationNotificationService,
           useValue: {
             handlePublicationCreate: jest.fn(),
             handlePublicationUpdate: jest.fn(),
-            handlePublicationDelete: jest.fn(),
           },
         },
         {
@@ -118,6 +121,14 @@ describe('EventEngineService', () => {
             handleParticipatingScientistSummary: jest.fn(),
           },
         },
+        {
+          provide: DataDeliveryEventService,
+          useValue: {
+            handleDataDeliveryInitiated: jest.fn(),
+            handleDataDeliveryDataReady: jest.fn(),
+            handleDataDeliveryDataReturn: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -130,9 +141,12 @@ describe('EventEngineService', () => {
     commentAnswerEventService = module.get<CommentAnswerEventService>(CommentAnswerEventService);
     locationVoteService = module.get<LocationVoteService>(LocationVoteService);
     contractingService = module.get<ContractingService>(ContractingService);
-    reportsService = module.get<ReportsService>(ReportsService);
-    publicationsService = module.get<PublicationsService>(PublicationsService);
+    reportNotificationService = module.get<ReportNotificationService>(ReportNotificationService);
+    publicationNotificationService = module.get<PublicationNotificationService>(PublicationNotificationService);
     configService = module.get<ConfigService>(ConfigService);
+    dataDeliveryEventService = module.get<DataDeliveryEventService>(DataDeliveryEventService);
+    deadlineEventService = module.get<DeadlineEventService>(DeadlineEventService);
+    participantEmailSummaryService = module.get<ParticipantEmailSummaryService>(ParticipantEmailSummaryService);
   });
 
   const proposal = {
@@ -140,6 +154,8 @@ describe('EventEngineService', () => {
     status: 'status',
     statusChangeDate: new Date(),
   };
+
+  const locations = [{ _id: 'loc1' } as Location, { _id: 'loc2' } as Location];
 
   const expectedUrl = `PORTAL_HOST/proposals/${proposal._id}/details`;
 
@@ -152,7 +168,7 @@ describe('EventEngineService', () => {
     await eventEngineService.handleProposalLockChange(proposal as any);
     expect(proposalLockService.handleProposalLockChange).toHaveBeenCalledWith(proposal, expectedUrl);
   });
-  proposalModel;
+
   it('should handleProposalStatusSchedule', async () => {
     const saveMock = jest.fn();
     jest.spyOn(proposalModel, 'findById').mockResolvedValueOnce({
@@ -236,36 +252,97 @@ describe('EventEngineService', () => {
   it('should handleProposalReportCreate', async () => {
     const report = { content: 'report' } as any;
     await eventEngineService.handleProposalReportCreate(proposal as any, report);
-    expect(reportsService.handleReportCreate).toHaveBeenCalledWith(proposal, report, expectedUrl);
-  });
-
-  it('should handleProposalReportUpdate', async () => {
-    const report = { content: 'report' } as any;
-    await eventEngineService.handleProposalReportUpdate(proposal as any, report);
-    expect(reportsService.handleReportUpdate).toHaveBeenCalledWith(proposal, report, expectedUrl);
-  });
-
-  it('should handleProposalReportDelete', async () => {
-    const report = { content: 'report' } as any;
-    await eventEngineService.handleProposalReportDelete(proposal as any, report);
-    expect(reportsService.handleReportDelete).toHaveBeenCalledWith(proposal, report, expectedUrl);
+    expect(reportNotificationService.handleReportCreate).toHaveBeenCalledWith(proposal, report, expectedUrl);
   });
 
   it('should handleProposalPublicationCreate', async () => {
     const publication = { content: 'publication' } as any;
     await eventEngineService.handleProposalPublicationCreate(proposal as any, publication);
-    expect(publicationsService.handlePublicationCreate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+    expect(publicationNotificationService.handlePublicationCreate).toHaveBeenCalledWith(
+      proposal,
+      publication,
+      expectedUrl,
+    );
   });
 
   it('should handleProposalPublicationUpdate', async () => {
+    const publicationId = 'pub-123';
     const publication = { content: 'publication' } as any;
-    await eventEngineService.handleProposalPublicationUpdate(proposal as any, publication);
-    expect(publicationsService.handlePublicationUpdate).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+    await eventEngineService.handleProposalPublicationUpdate(proposal as any, publicationId, publication);
+    expect(publicationNotificationService.handlePublicationUpdate).toHaveBeenCalledWith(
+      proposal,
+      publication,
+      expectedUrl,
+    );
   });
 
-  it('should handleProposalPublicationDelete', async () => {
-    const publication = { content: 'publication' } as any;
-    await eventEngineService.handleProposalPublicationDelete(proposal as any, publication);
-    expect(publicationsService.handlePublicationDelete).toHaveBeenCalledWith(proposal, publication, expectedUrl);
+  it('should call handleDataDeliveryInitiated with the correct arguments', async () => {
+    await eventEngineService.handleDataDeliveryInitiated(proposal as any, locations);
+
+    expect(dataDeliveryEventService.handleDataDeliveryInitiated).toHaveBeenCalledWith(proposal, expectedUrl, locations);
+  });
+
+  it('should call handleDataDeliveryDataReady with the correct arguments', async () => {
+    await eventEngineService.handleDataDeliveryDataReady(proposal as any, locations);
+
+    expect(dataDeliveryEventService.handleDataDeliveryDataReady).toHaveBeenCalledWith(proposal, expectedUrl, locations);
+  });
+
+  it('should call handleDataDeliveryDataReturn with the correct arguments', async () => {
+    await eventEngineService.handleDataDeliveryDataReturn(proposal as any);
+
+    expect(dataDeliveryEventService.handleDataDeliveryDataReturn).toHaveBeenCalledWith(proposal, expectedUrl);
+  });
+
+  it('should handleProposalContractingSkip', async () => {
+    await eventEngineService.handleProposalContractingSkip(proposal as any);
+    expect(contractingService.handleLocationSign).toHaveBeenCalledWith(proposal, expectedUrl);
+  });
+
+  it('should handleDeadlineChange', async () => {
+    const changeList = {
+      FEASIBILITY_PANEL_REVIEW: new Date('2024-01-01'),
+      UAC_REVIEW: null,
+    } as any;
+    await eventEngineService.handleDeadlineChange(proposal as any, changeList);
+    expect(deadlineEventService.sendForDeadlineChange).toHaveBeenCalledWith(proposal, changeList, expectedUrl);
+  });
+
+  it('should handleParticipatingResearcherSummarySchedule', async () => {
+    const saveMock = jest.fn();
+    const dueAfter = new Date('2024-01-15T10:00:00Z');
+    jest.spyOn(proposalModel, 'findById').mockResolvedValueOnce({
+      ...proposal,
+      save: saveMock,
+      scheduledEvents: [
+        {
+          scheduleId: 'scheduleId',
+        },
+        {
+          scheduleId: 'scheduleId2',
+        },
+      ],
+    });
+
+    const event = {
+      referenceDocumentId: 'proposalId',
+      dueAfter: dueAfter,
+      _id: {
+        toString: () => 'scheduleId',
+      },
+    } as any;
+
+    await eventEngineService.handleParticipatingResearcherSummarySchedule(event);
+
+    const expectedFromDate = new Date(dueAfter);
+    expectedFromDate.setDate(expectedFromDate.getDate() - 1);
+    expectedFromDate.setHours(0, 0, 0, 0);
+
+    expect(participantEmailSummaryService.handleParticipatingScientistSummary).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'proposalId' }),
+      expectedUrl,
+      expectedFromDate,
+    );
+    expect(saveMock).toHaveBeenCalled();
   });
 });

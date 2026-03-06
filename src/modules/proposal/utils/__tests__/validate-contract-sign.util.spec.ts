@@ -3,7 +3,7 @@ import { Proposal } from '../../schema/proposal.schema';
 import { SignContractDto } from '../../dto/sign-contract.dto';
 import { Role } from 'src/shared/enums/role.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
-import { validateContractSign } from '../validate-contract-sign.util';
+import { validateContractSign, validateContractSkip } from '../validate-contract-sign.util';
 import { ValidationException } from 'src/exceptions/validation/validation.exception';
 import { ValidationErrorInfo } from 'src/shared/dto/validation/validation-error-info.dto';
 import { ForbiddenException } from '@nestjs/common';
@@ -166,5 +166,32 @@ describe('validateContractSign', () => {
     it('throws generic ForbiddenException for unsupported role', () => {
       expect(() => validateContractSign(baseProposal, otherUser, voteFalse, undefined)).toThrow(ForbiddenException);
     });
+  });
+});
+
+describe('validateContractSkip', () => {
+  const validFile = { buffer: Buffer.from('fake') } as any;
+  const validProposal = { status: ProposalStatus.Contracting } as any;
+
+  it('should throw ValidationException (BadRequest) if file is missing', () => {
+    try {
+      validateContractSkip(validProposal, undefined);
+    } catch (e) {
+      expect(e).toBeInstanceOf(ValidationException);
+    }
+  });
+
+  it('should throw ForbiddenException if status is not Contracting', () => {
+    const invalidProposal = { status: ProposalStatus.Draft } as any;
+
+    expect(() => {
+      validateContractSkip(invalidProposal, validFile);
+    }).toThrow(ForbiddenException);
+  });
+
+  it('should pass if file exists and status is Contracting', () => {
+    expect(() => {
+      validateContractSkip(validProposal, validFile);
+    }).not.toThrow();
   });
 });

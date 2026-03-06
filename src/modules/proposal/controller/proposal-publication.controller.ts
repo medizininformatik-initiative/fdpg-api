@@ -13,7 +13,7 @@ import { ProposalPublicationService } from '../services/proposal-publication.ser
 export class ProposalPublicationController {
   constructor(private readonly proposalPublicationService: ProposalPublicationService) {}
 
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.RegisteringMember)
   @Post(':id/publications')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -26,7 +26,7 @@ export class ProposalPublicationController {
     return this.proposalPublicationService.createPublication(id, publicationCreateDto, user);
   }
 
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.RegisteringMember)
   @Get(':id/publications')
   @ProposalValidation()
   @ApiNotFoundResponse({ description: 'Proposal could not be found' })
@@ -38,7 +38,7 @@ export class ProposalPublicationController {
     return this.proposalPublicationService.getAllPublications(id, user);
   }
 
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.RegisteringMember)
   @Put(':mainId/publications/:subId')
   @ApiNotFoundResponse({ description: 'Item to update could not be found' })
   @ProposalValidation()
@@ -51,7 +51,7 @@ export class ProposalPublicationController {
     return this.proposalPublicationService.updatePublication(mainId, subId, publicationUpdateDto, user);
   }
 
-  @Auth(Role.Researcher)
+  @Auth(Role.Researcher, Role.RegisteringMember)
   @Delete(':mainId/publications/:subId')
   @UsePipes(ValidationPipe)
   @ApiNotFoundResponse({ description: 'Publication or proposal could not be found' })

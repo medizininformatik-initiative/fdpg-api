@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ITokenResult } from '../../shared/types/token-result.interface';
+import { applyAxiosMonitoring } from 'src/monitoring/apply-axios-monitoring';
 @Injectable()
 export class KeycloakClient {
   constructor(private configService: ConfigService) {
@@ -36,6 +37,8 @@ export class KeycloakClient {
         'Content-Type': 'application/json',
       },
     });
+
+    applyAxiosMonitoring(this.client);
   }
 
   private async obtainToken() {

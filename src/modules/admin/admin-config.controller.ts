@@ -27,7 +27,7 @@ import { createMulterOptions } from 'src/shared/utils/multer-options.util';
 export class AdminConfigController {
   constructor(private adminConfigService: AdminConfigService) {}
 
-  @Auth(Role.Admin, Role.Researcher)
+  @Auth(Role.Admin, Role.Researcher, Role.RegisteringMember)
   @Get(':platform/terms')
   @AdminValidation()
   @ApiOperation({ summary: 'Returns the configuration for the terms and condition dialog' })
@@ -48,7 +48,7 @@ export class AdminConfigController {
     return this.adminConfigService.updateTermsConfig(platform, termsConfig);
   }
 
-  @Auth(Role.Admin, Role.Researcher)
+  @Auth(Role.Admin, Role.Researcher, Role.RegisteringMember)
   @Get(':platform/type-of-use-data-privacy')
   @AdminValidation()
   @ApiOperation({ summary: 'Returns the configuration for the Data Privacy of usage types and condition dialog' })
@@ -69,14 +69,14 @@ export class AdminConfigController {
     return this.adminConfigService.updateDataPrivacyConfig(platform, dataPrivacyConfig);
   }
 
-  @Auth(Role.Admin, Role.Researcher)
+  @Auth(Role.Admin, Role.Researcher, Role.RegisteringMember)
   @Get('data-sources')
   @ApiOperation({ summary: 'Gets available data sources for proposals' })
   async getDataSources(): Promise<DataSourceDto> {
     return this.adminConfigService.getDataSources();
   }
 
-  @Auth(Role.Admin, Role.Researcher)
+  @Auth(...Object.values(Role))
   @Get('alert')
   @AdminValidation()
   @ApiOperation({ summary: 'Returns the configuration for the Alert banner' })

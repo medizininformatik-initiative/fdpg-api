@@ -6,6 +6,7 @@ import { getErrorMessages, tryPlainToClass } from 'src/shared/utils/validation-p
 import { ProposalBaseDto } from './dto/proposal/proposal.dto';
 import { ProposalValidation } from './enums/porposal-validation.enum';
 import { ProposalStatus } from './enums/proposal-status.enum';
+import { ProposalType } from './enums/proposal-type.enum';
 import { ProposalTypeOfUse } from './enums/proposal-type-of-use.enum';
 import { FileDto } from 'src/shared/dto/file.dto';
 import { PlatformIdentifier } from '../admin/enums/platform-identifier.enum';
@@ -20,14 +21,15 @@ export class ProposalValidationPipe implements PipeTransform<any> {
     this.isCreation = isCreation;
   }
 
-  async transform(value: any, argumentMetadata: ArgumentMetadata) {
-    let object: ProposalBaseDto | MongoIdParamDto | any;
-    const transformGroups = this.getValidationGroups(object);
+  async transform(value: unknown, argumentMetadata: ArgumentMetadata) {
+    let object = tryPlainToClass(value, argumentMetadata, { groups: [], excludeExtraneousValues: true });
+
+    const transformGroups = this.getValidationGroups(object as ProposalBaseDto | MongoIdParamDto);
     object = tryPlainToClass(value, argumentMetadata, { groups: transformGroups, excludeExtraneousValues: true });
 
-    const groups = this.getValidationGroups(object);
+    const groups = this.getValidationGroups(object as ProposalBaseDto | MongoIdParamDto);
 
-    const errors = await validate(object, { always: true, groups });
+    const errors = await validate(object as object, { always: true, groups });
     const errorMessages = getErrorMessages(errors);
 
     if (errors.length > 0) {
@@ -85,6 +87,19 @@ export class ProposalValidationPipe implements PipeTransform<any> {
     // If DIFE is selected, add DIFE validation group
     if (object.selectedDataSources?.includes(PlatformIdentifier.DIFE)) {
       groups.push(ProposalValidation.IsDIFEDataSource);
+    }
+
+    // If MII is selected, add MII validation group
+    if (object.selectedDataSources?.includes(PlatformIdentifier.Mii)) {
+      groups.push(ProposalValidation.IsMiiDataSource);
+    }
+
+    // If this is a register proposal, add register validation group
+    if (object.type === ProposalType.RegisteringForm) {
+      groups.push(ProposalValidation.IsRegister);
+    } else {
+      // Add special group for non-register, non-draft validations
+      groups.push(ProposalValidation.IsNotDraftAndNotRegister);
     }
 
     return groups;

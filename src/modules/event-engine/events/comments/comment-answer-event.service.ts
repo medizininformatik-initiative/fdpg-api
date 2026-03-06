@@ -86,9 +86,6 @@ export class CommentAnswerEventService {
 
     const locations = reduceParticipatingLocations(proposal, commentLocation);
 
-    console.log({ locations });
-    console.log(this.PREVENT_MESSAGE_TO_LOCATION_ANSWER);
-
     if (!this.PREVENT_MESSAGE_TO_LOCATION_ANSWER) {
       const emailTasks: Promise<void>[] = [];
       if (locations.diz.length > 0) {

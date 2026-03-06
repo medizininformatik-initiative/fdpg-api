@@ -22,10 +22,10 @@ export class LocationFetchService {
 
     const miiCodesystemLocationDtos: MiiCodesystemLocationDto[] =
       response.data?.concept
-        ?.filter?.((apiDto: any) => apiDto)
-        ?.filter?.((apiDto: any) => apiDto.code)
+        ?.filter?.((apiDto: unknown) => apiDto)
+        ?.filter?.((apiDto: Record<string, unknown>) => apiDto.code)
         .map?.(
-          (apiDto: any) =>
+          (apiDto: Record<string, unknown>) =>
             ({
               code: apiDto.code,
               display: apiDto.display,
@@ -50,12 +50,13 @@ export class LocationFetchService {
   }
 
   private getPropertyValue(
-    apiDto: any,
+    apiDto: Record<string, unknown>,
     propertyName: keyof MiiCodesystemLocationDto,
     expectedType: 'code' | 'string' | 'boolean' | 'date',
   ): string | boolean | undefined {
-    const property = apiDto.property.find((entry: { code: string }) => entry.code === propertyName);
+    const properties = apiDto.property as Array<Record<string, unknown>> | undefined;
+    const property = properties?.find((entry: Record<string, unknown>) => entry.code === propertyName);
     const propertyKey = this.propertyValueKeyMap[expectedType];
-    return property?.[propertyKey];
+    return property?.[propertyKey] as string | boolean | undefined;
   }
 }

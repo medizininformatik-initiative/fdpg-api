@@ -3,7 +3,7 @@ import { ProposalUpdateDto } from '../dto/proposal/proposal.dto';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { isDeepStrictEqual } from 'util';
 
-const removeObsoleteArrayMember = (target: any[], source: any[]) => {
+const removeObsoleteArrayMember = (target: Array<{ _id: unknown }>, source: Array<{ _id?: string }>) => {
   const spliceOut = [];
   target.forEach((targetItem, targetIndex) => {
     const sourceIndex = source.findIndex((sourceItem) => sourceItem._id === targetItem._id.toString());
@@ -18,7 +18,7 @@ const removeObsoleteArrayMember = (target: any[], source: any[]) => {
   spliceOut.forEach((targetIndex) => target.splice(targetIndex, 1));
 };
 
-const updateAndAddArrayMembers = (target: any[], source: any[]) => {
+const updateAndAddArrayMembers = (target: Array<{ _id: unknown }>, source: Array<{ _id?: string }>) => {
   source.forEach((sourceItem, sourceIndex) => {
     const targetIndex = target.findIndex((targetItem) => targetItem._id.toString() === sourceItem._id);
     if (targetIndex !== -1) {

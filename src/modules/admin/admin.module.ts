@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { StorageModule } from '../storage/storage.module';
 import { AdminConfigController } from './admin-config.controller';

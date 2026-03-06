@@ -1,6 +1,6 @@
 import { isNotEmpty, isString, registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
 
-export const isNotEmptyString = (value: any): boolean => isString(value) && isNotEmpty(value.trim());
+export const isNotEmptyString = (value: unknown): boolean => isString(value) && isNotEmpty(value.trim());
 
 export function IsNotEmptyString(validationOptions?: ValidationOptions) {
   return (object: object, propertyName: string) => {
@@ -10,7 +10,7 @@ export function IsNotEmptyString(validationOptions?: ValidationOptions) {
       propertyName,
       options: validationOptions,
       validator: {
-        validate: (value: any): boolean => isNotEmptyString(value),
+        validate: (value: unknown): boolean => isNotEmptyString(value),
         defaultMessage: (validationArguments?: ValidationArguments): string =>
           `${validationArguments.property} should not be an empty string`,
       },

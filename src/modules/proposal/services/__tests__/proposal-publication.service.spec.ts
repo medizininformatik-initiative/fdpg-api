@@ -1,10 +1,11 @@
 import { EventEngineService } from 'src/modules/event-engine/event-engine.service';
 import { ProposalCrudService } from '../proposal-crud.service';
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProposalPublicationService } from '../proposal-publication.service';
+import { RegistrationFormPublicationService } from '../registration-form-publication.service';
 import { FdpgRequest } from 'src/shared/types/request-user.interface';
 import { Role } from 'src/shared/enums/role.enum';
+import { ModificationContext } from '../../enums/modification-context.enum';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalDocument } from '../../schema/proposal.schema';
 import { PublicationCreateDto, PublicationUpdateDto } from '../../dto/proposal/publication.dto';
@@ -73,6 +74,7 @@ describe('ProposalPublicationService', () => {
 
   let proposalCrudService: jest.Mocked<ProposalCrudService>;
   let eventEngineService: jest.Mocked<EventEngineService>;
+  let registrationFormPublicationService: jest.Mocked<RegistrationFormPublicationService>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -90,7 +92,15 @@ describe('ProposalPublicationService', () => {
           useValue: {
             handleProposalPublicationCreate: jest.fn(),
             handleProposalPublicationUpdate: jest.fn(),
-            handleProposalPublicationDelete: jest.fn(),
+          },
+        },
+        {
+          provide: RegistrationFormPublicationService,
+          useValue: {
+            handlePublicationCreate: jest.fn(),
+            handlePublicationUpdate: jest.fn(),
+            handlePublicationDelete: jest.fn(),
+            setRegistrationOutOfSync: jest.fn(),
           },
         },
       ],
@@ -100,6 +110,9 @@ describe('ProposalPublicationService', () => {
     proposalPublicationService = module.get<ProposalPublicationService>(ProposalPublicationService);
     proposalCrudService = module.get<ProposalCrudService>(ProposalCrudService) as jest.Mocked<ProposalCrudService>;
     eventEngineService = module.get<EventEngineService>(EventEngineService) as jest.Mocked<EventEngineService>;
+    registrationFormPublicationService = module.get<RegistrationFormPublicationService>(
+      RegistrationFormPublicationService,
+    ) as jest.Mocked<RegistrationFormPublicationService>;
   });
 
   it('should be defined', () => {
@@ -180,12 +193,22 @@ describe('ProposalPublicationService', () => {
         request.user,
       );
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
+        true,
+        ModificationContext.Publication,
+      );
       expect(result.length).toEqual(1);
       expect(result[0].title).toEqual(publicationUpdateDto.title);
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
       expect(eventEngineService.handleProposalPublicationUpdate).toHaveBeenCalledWith(
-        proposalDocument,
+        expect.objectContaining({
+          _id: proposalId,
+          status: ProposalStatus.FdpgCheck,
+        }),
+        'publicationId',
         publicationUpdateDto,
       );
     });
@@ -213,7 +236,13 @@ describe('ProposalPublicationService', () => {
 
       expect(error).toBeInstanceOf(NotFoundException);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
+        true,
+        ModificationContext.Publication,
+      );
 
       expect(proposalDocument.save).not.toHaveBeenCalledTimes(1);
       expect(eventEngineService.handleProposalPublicationUpdate).not.toHaveBeenCalledWith(
@@ -236,9 +265,14 @@ describe('ProposalPublicationService', () => {
 
       await proposalPublicationService.deletePublication(proposalId, 'publicationId', request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
+        true,
+        ModificationContext.Publication,
+      );
       expect(proposalDocument.save).toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalPublicationDelete).toHaveBeenCalledWith(proposalDocument, publication);
     });
 
     it('should not save if a publication is not found to be deleted', async () => {
@@ -253,13 +287,15 @@ describe('ProposalPublicationService', () => {
 
       const call = proposalPublicationService.deletePublication(proposalId, 'publicationIdNotExisting', request.user);
 
-      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(proposalId, request.user, undefined, true);
+      expect(proposalCrudService.findDocument).toHaveBeenCalledWith(
+        proposalId,
+        request.user,
+        { projectAbbreviation: 1, publications: 1, owner: 1, type: 1, registerFormId: 1, registerInfo: 1 },
+        true,
+        ModificationContext.Publication,
+      );
 
       expect(proposalDocument.save).not.toHaveBeenCalledTimes(1);
-      expect(eventEngineService.handleProposalPublicationDelete).not.toHaveBeenCalledWith(
-        proposalDocument,
-        publication,
-      );
     });
   });
 });
