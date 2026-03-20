@@ -8,6 +8,7 @@ import { DataPrivacyConfig, DataPrivacyConfigSchema } from './schema/data-privac
 import { AlertConfig, AlertConfigSchema } from './schema/alert/alert-config.schema';
 import { SharedModule } from 'src/shared/shared.module';
 import { LocationModule } from '../location/location.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { LocationModule } from '../location/location.module';
       { name: AlertConfig.name, schema: AlertConfigSchema },
     ]),
     SharedModule,
+    CacheModule.register(),
   ],
   controllers: [AdminConfigController],
   providers: [AdminConfigService],

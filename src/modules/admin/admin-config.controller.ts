@@ -1,5 +1,6 @@
 import {
   Body,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -108,5 +109,14 @@ export class AdminConfigController {
     @Body() alertConfig: AlertConfigCreateDto,
   ): Promise<void> {
     return this.adminConfigService.updateAlertConfig(alertConfig, logo);
+  }
+
+  @Auth(Role.Admin)
+  @Delete('cache')
+  @ApiNoContentResponse({ description: 'Caches successfully invalidated.' })
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Invalidates caches' })
+  async invalidateCaches(): Promise<void> {
+    return await this.adminConfigService.invalidateCaches();
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToClass } from 'class-transformer';
 import { Model } from 'mongoose';
@@ -12,6 +12,8 @@ import { AlertConfig, AlertConfigDocument } from './schema/alert/alert-config.sc
 import { TermsConfig, TermsConfigDocument } from './schema/terms/terms-config.schema';
 import { DataSourceDto } from './dto/data-source.dto';
 import { StorageService } from '../storage/storage.service';
+import { Cache } from 'node_modules/cache-manager/dist/index.cjs';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class AdminConfigService {
@@ -25,6 +27,7 @@ export class AdminConfigService {
     @InjectModel(AlertConfig.name)
     private alertConfigModel: Model<AlertConfigDocument>,
     private storageService: StorageService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async findTermsConfig(platform: PlatformIdentifier): Promise<TermsConfigGetDto> {
@@ -131,5 +134,9 @@ export class AdminConfigService {
 
     // Simply overwrite the database record - no file cleanup needed for base64
     await this.alertConfigModel.updateOne({ type: ConfigType.Alert }, { $set: updateData }, { upsert: true });
+  }
+
+  async invalidateCaches(): Promise<void> {
+    await this.cacheManager.clear();
   }
 }
