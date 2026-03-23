@@ -153,6 +153,7 @@ describe('FdpgFilterUtil', () => {
         expect(result).toEqual({
           status: {
             $in: [
+              ProposalStatus.Rework,
               ProposalStatus.FdpgCheck,
               ProposalStatus.LocationCheck,
               ProposalStatus.Contracting,
