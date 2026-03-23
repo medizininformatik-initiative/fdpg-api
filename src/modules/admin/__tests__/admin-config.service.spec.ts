@@ -13,6 +13,7 @@ import { DataPrivacyConfigDocument } from '../schema/data-privacy/data-privacy-c
 import { TermsConfig, TermsConfigDocument } from '../schema/terms/terms-config.schema';
 import { AlertConfigDocument } from '../schema/alert/alert-config.schema';
 import { StorageService } from '../../storage/storage.service';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 jest.mock('class-transformer', () => {
   const original = jest.requireActual('class-transformer');
@@ -38,6 +39,7 @@ describe('AdminConfigService', () => {
   let termsConfigModel: Model<TermsConfigDocument>;
   let dataPrivacyModel: Model<DataPrivacyConfigDocument>;
   let alertConfigModel: Model<AlertConfigDocument>;
+  let cacheManager: Cache;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -77,6 +79,12 @@ describe('AdminConfigService', () => {
             uploadFile: jest.fn(),
             getSasUrl: jest.fn(),
             deleteBlob: jest.fn(),
+          },
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            clear: jest.fn(),
           },
         },
       ],

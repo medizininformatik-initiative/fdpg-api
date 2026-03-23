@@ -45,6 +45,7 @@ const ARCHIVED = { status: ProposalStatus.Archived };
 const FDPG_OVERVIEW = {
   status: {
     $in: [
+      ProposalStatus.Rework,
       ProposalStatus.FdpgCheck,
       ProposalStatus.LocationCheck,
       ProposalStatus.Contracting,

@@ -121,3 +121,5 @@ dist
 /storage
 
 .DS_Store
+
+/.vscode/
