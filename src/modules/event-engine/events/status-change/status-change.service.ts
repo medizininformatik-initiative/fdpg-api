@@ -62,7 +62,6 @@ export class StatusChangeService {
           [EmailRoleTargets.RESEARCHER, EmailRoleTargets.FDPG, EmailRoleTargets.DIZ],
           {
             conditionProposalLocationCheck: true,
-            conditionProposalUacCheck: true,
           },
           proposal.openDizChecks,
         );
