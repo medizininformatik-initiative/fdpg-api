@@ -15,6 +15,7 @@ configureTelemetry({
 import { ConfigService } from '@nestjs/config';
 import { INestApplication, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/swagger';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { useContainer } from 'class-validator';
@@ -111,11 +112,14 @@ function configureCors(app: INestApplication): void {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
 
   app.useLogger(app.get(Logger));
+
+  app.useBodyParser('json', { limit: '1mb' });
+  app.useBodyParser('urlencoded', { limit: '1mb', extended: true });
 
   app.setGlobalPrefix(API_PREFIX);
   app.useGlobalFilters(new ValidationExceptionFilter());
