@@ -12,6 +12,7 @@ import { Transform } from 'class-transformer';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorator';
 import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
@@ -31,7 +32,7 @@ export class TypeOfUseDto extends WithIdForObjectDto {
   @Expose()
   @IsOptional()
   @IsNotEmptyString()
-  @MaxLength(10_000)
+  @MaxLengthHtml(10_000)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o, context) => {
     const proposal = context?.object;
@@ -59,7 +60,8 @@ export class TypeOfUseDto extends WithIdForObjectDto {
     const proposal = context?.object;
     return proposal?.selectedDataSources?.includes(PlatformIdentifier.Mii);
   })
-  @UiWidget({ type: 'textfield' })
+  @UiWidget({ type: 'richtext' })
+  @MaxLengthHtml(5_000)
   targetFormatOther?: string;
 
   @Expose()

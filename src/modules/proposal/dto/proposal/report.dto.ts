@@ -7,6 +7,7 @@ import { ExposeUpload } from '../../decorators/expose-uploads.decorator';
 import { IsArray, MaxLength, ValidateNested } from 'class-validator';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { FileDto } from 'src/shared/dto/file.dto';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 @Exclude()
 export class ReportBaseDto {
@@ -16,7 +17,7 @@ export class ReportBaseDto {
   title: string;
 
   @Expose()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @IsNotEmptyString()
   @ApiProperty({
     description: 'The content of a report is only delivered when requesting a single report',

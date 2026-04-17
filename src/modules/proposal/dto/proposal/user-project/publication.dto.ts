@@ -5,6 +5,7 @@ import { WithIdForArrayDto } from 'src/shared/dto/with-id-for-array.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { PublicationType } from '../../../enums/publication-type.enum';
 import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 export class PublicationDto extends WithIdForArrayDto {
   @Expose()
@@ -16,7 +17,7 @@ export class PublicationDto extends WithIdForArrayDto {
   @Expose()
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsRegister] })
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @UiWidget({ type: 'richtext' })
   description: string;
 
