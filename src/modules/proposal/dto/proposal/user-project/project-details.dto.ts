@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, MaxLength, ValidateIf } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { Department } from 'src/modules/proposal/enums/department.enum';
 import { ProposalValidation } from 'src/modules/proposal/enums/porposal-validation.enum';
@@ -7,10 +7,11 @@ import { ExposeForDataSources } from 'src/shared/decorators/data-source.decorato
 import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 export class ProjectDetailsDto extends WithIdForObjectDto {
   @Expose()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @ExposeForDataSources([PlatformIdentifier.Mii])
@@ -28,21 +29,21 @@ export class ProjectDetailsDto extends WithIdForObjectDto {
   department: Department[];
 
   @Expose()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @UiWidget({ type: 'richtext' })
   scientificBackground: string;
 
   @Expose()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @UiWidget({ type: 'richtext' })
   hypothesisAndQuestionProjectGoals: string;
 
   @Expose()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @IsNotEmptyString({ groups: [ProposalValidation.IsNotDraft] })
   @IsOptional({ groups: [ProposalValidation.IsDraft, ProposalValidation.IsDIFEDataSource] })
   @UiWidget({ type: 'richtext' })
@@ -50,7 +51,7 @@ export class ProjectDetailsDto extends WithIdForObjectDto {
 
   @Expose()
   @IsOptional()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   @UiWidget({ type: 'richtext' })
@@ -58,13 +59,13 @@ export class ProjectDetailsDto extends WithIdForObjectDto {
 
   @Expose()
   @IsOptional()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @UiWidget({ type: 'richtext' })
   literature: string;
 
   @Expose()
   @IsOptional()
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @ExposeForDataSources([PlatformIdentifier.Mii])
   @ValidateIf((o) => o.selectedDataSources?.includes(PlatformIdentifier.Mii))
   @UiWidget({ type: 'richtext' })

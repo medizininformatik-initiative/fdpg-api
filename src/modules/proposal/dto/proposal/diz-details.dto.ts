@@ -1,6 +1,7 @@
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 export class DizDetailsCreateDto {
   @Expose()
@@ -12,7 +13,7 @@ export class DizDetailsCreateDto {
   @Expose()
   @IsString()
   @IsNotEmpty()
-  @MaxLength(5000)
+  @MaxLengthHtml(5000)
   documentationLinks: string;
 }
 

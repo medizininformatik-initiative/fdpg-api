@@ -4,6 +4,7 @@ import { WithIdForObjectDto } from 'src/shared/dto/with-id-for-object.dto';
 import { IsNotEmptyString } from 'src/shared/validators/is-not-empty-string.validator';
 import { ProposalValidation } from '../../enums/porposal-validation.enum';
 import { UiWidget } from 'src/shared/decorators/ui-widget.decorator';
+import { MaxLengthHtml } from 'src/shared/validators/max-length-html.validator';
 
 export class RequestedDataDto extends WithIdForObjectDto {
   @Expose()
@@ -16,7 +17,7 @@ export class RequestedDataDto extends WithIdForObjectDto {
       ProposalValidation.IsRegister,
     ],
   })
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @UiWidget({ type: 'richtext' })
   patientInfo: string;
 
@@ -30,7 +31,7 @@ export class RequestedDataDto extends WithIdForObjectDto {
       ProposalValidation.IsRegister,
     ],
   })
-  @MaxLength(10000)
+  @MaxLengthHtml(10000)
   @UiWidget({ type: 'richtext' })
   dataInfo: string;
 
