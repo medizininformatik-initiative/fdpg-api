@@ -49,61 +49,14 @@ export class LocationVoteService {
       emailTasks.push(uacTask());
     }
 
-    if (this.isVotingComplete(proposal)) {
-      this.logger.log(
-        `[DizApproval] Voting complete for proposal ${proposal._id}! Sending notifications to Researcher and FDPG.`,
-      );
-
-      const researcherTask = async () => {
-        try {
-          const validOwnerContacts = await this.keycloakUtilService.getValidContactsByUserIds([proposal.owner.id]);
-          this.logger.log(`[DizApproval] Researcher contacts for ${proposal._id}: ${validOwnerContacts.join(', ')}`);
-
-          const mail = researcherEmail(validOwnerContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
-            conditionProposalUacCheck: true,
-            timestamp: proposal.deadlines.DUE_DAYS_LOCATION_CHECK,
-          });
-
-          await this.emailService.send(mail);
-          this.logger.log(`[DizApproval] Successfully sent email to Researcher for proposal ${proposal._id}`);
-        } catch (error) {
-          this.logger.error(
-            `[DizApproval] Failed to send email to Researcher for proposal ${proposal._id}`,
-            error.stack,
-          );
-          throw error;
-        }
-      };
-
-      const fdpgTask = async () => {
-        try {
-          const validFdpgContacts = await this.keycloakUtilService
-            .getFdpgMemberLevelContacts(proposal)
-            .then((members) => members.map((member) => member.email));
-          this.logger.log(`[DizApproval] FDPG contacts for ${proposal._id}: ${validFdpgContacts.join(', ')}`);
-
-          const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
-            conditionProposalUacCheck: true,
-            timestamp: proposal.deadlines.DUE_DAYS_LOCATION_CHECK,
-          });
-
-          await this.emailService.send(mail);
-          this.logger.log(`[DizApproval] Successfully sent email to FDPG for proposal ${proposal._id}`);
-        } catch (error) {
-          this.logger.error(`[DizApproval] Failed to send email to FDPG for proposal ${proposal._id}`, error.stack);
-          throw error;
-        }
-      };
-
-      emailTasks.push(researcherTask(), fdpgTask());
-    }
-
     const results = await Promise.allSettled(emailTasks);
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
         this.logger.error(`[DizApproval] Email task ${index} failed for proposal ${proposal._id}:`, result.reason);
       }
     });
+
+    await this.sendCompletedMailIfNecessary(proposal, vote, location, proposalUrl);
   }
 
   async handleUacApproval(proposal: Proposal, vote: boolean, location: string, proposalUrl: string) {
@@ -124,57 +77,53 @@ export class LocationVoteService {
       emailTasks.push(dizTask());
     }
 
+    const results = await Promise.allSettled(emailTasks);
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        this.logger.error(`[UacApproval] Email task ${index} failed for proposal ${proposal._id}:`, result.reason);
+      }
+    });
+
+    await this.sendCompletedMailIfNecessary(proposal, vote, location, proposalUrl);
+  }
+
+  async sendCompletedMailIfNecessary(proposal: Proposal, vote: boolean, location: string, proposalUrl: string) {
+    const emailTasks: Promise<void>[] = [];
+
     if (this.isVotingComplete(proposal)) {
       this.logger.log(
-        `[UacApproval] Voting complete for proposal ${proposal._id}! Sending notifications to Researcher and FDPG.`,
+        `[CompletedMailCheck] Voting complete for proposal ${proposal._id}! Sending notifications to Researcher and FDPG.`,
       );
-
-      const researcherTask = async () => {
-        try {
-          const validOwnerContacts = await this.keycloakUtilService.getValidContactsByUserIds([proposal.owner.id]);
-          this.logger.log(`[UacApproval] Researcher contacts for ${proposal._id}: ${validOwnerContacts.join(', ')}`);
-
-          const mail = researcherEmail(validOwnerContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
-            conditionProposalUacCheck: true,
-          });
-
-          await this.emailService.send(mail);
-          this.logger.log(`[UacApproval] Successfully sent email to Researcher for proposal ${proposal._id}`);
-        } catch (error) {
-          this.logger.error(
-            `[UacApproval] Failed to send email to Researcher for proposal ${proposal._id}`,
-            error.stack,
-          );
-          throw error;
-        }
-      };
 
       const fdpgTask = async () => {
         try {
           const validFdpgContacts = await this.keycloakUtilService
             .getFdpgMemberLevelContacts(proposal)
             .then((members) => members.map((member) => member.email));
-          this.logger.log(`[UacApproval] FDPG contacts for ${proposal._id}: ${validFdpgContacts.join(', ')}`);
 
           const mail = fdpgEmail(validFdpgContacts, proposal, [EmailCategory.LocationVote], proposalUrl, {
             conditionProposalUacCheck: true,
+            timestamp: proposal.deadlines.DUE_DAYS_LOCATION_CHECK,
           });
 
           await this.emailService.send(mail);
-          this.logger.log(`[UacApproval] Successfully sent email to FDPG for proposal ${proposal._id}`);
+          this.logger.log(`Successfully sent email to FDPG for proposal ${proposal._id}`);
         } catch (error) {
-          this.logger.error(`[UacApproval] Failed to send email to FDPG for proposal ${proposal._id}`, error.stack);
+          this.logger.error(`Failed to send email to FDPG for proposal ${proposal._id}`, error.stack);
           throw error;
         }
       };
 
-      emailTasks.push(researcherTask(), fdpgTask());
+      emailTasks.push(fdpgTask());
     }
 
     const results = await Promise.allSettled(emailTasks);
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        this.logger.error(`[UacApproval] Email task ${index} failed for proposal ${proposal._id}:`, result.reason);
+        this.logger.error(
+          `[CompletedMailCheck] Email task ${index} failed for proposal ${proposal._id}:`,
+          result.reason,
+        );
       }
     });
   }

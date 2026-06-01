@@ -122,6 +122,8 @@ export class ProposalContractingService {
     addHistoryItemForDizConditionReviewApproval(toBeUpdated, user, vote.value, hasCondition);
 
     await toBeUpdated.save();
+
+    await this.eventEngineService.handleProposalSecondDizApproval(toBeUpdated, vote.value, user.miiLocation);
   }
 
   async revertLocationVote(proposalId: string, location: string, user: IRequestUser): Promise<void> {
