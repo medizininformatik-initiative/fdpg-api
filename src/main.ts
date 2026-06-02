@@ -128,7 +128,7 @@ async function bootstrap() {
   configureSwagger(app);
   configureCors(app);
 
-  if (process.env.ENV !== 'production') {
+  if (process.env.ENV !== 'production' && (process.env.MONGOOSE_DEBUG ?? 'true').toLowerCase() !== 'false') {
     mongoose.set('debug', true);
   }
 
