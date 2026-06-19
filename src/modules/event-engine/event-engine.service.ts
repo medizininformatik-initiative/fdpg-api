@@ -96,6 +96,13 @@ export class EventEngineService {
     }
   }
 
+  async handleProposalSecondDizApproval(proposal: Proposal, vote: boolean, location: string) {
+    if (proposal) {
+      const proposalUrl = this.getProposalUrl(proposal);
+      await this.locationVoteService.sendCompletedMailIfNecessary(proposal, vote, location, proposalUrl);
+    }
+  }
+
   async handleProposalUacApproval(proposal: Proposal, vote: boolean, location: string) {
     if (proposal) {
       const proposalUrl = this.getProposalUrl(proposal);
