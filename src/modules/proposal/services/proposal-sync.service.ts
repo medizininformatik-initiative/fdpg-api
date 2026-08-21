@@ -17,6 +17,7 @@ import { StorageService } from '../../storage/storage.service';
 import { DirectUpload } from '../enums/upload-type.enum';
 import { LocationDto } from 'src/modules/location/dto/location.dto';
 import { BiosampleCode } from '../enums/biosample-code.enum';
+import { Department } from '../enums/department.enum';
 
 @Injectable()
 export class ProposalSyncService {
@@ -744,11 +745,13 @@ export class ProposalSyncService {
       });
     }
 
-    if (proposal.registerInfo?.projectCategory) {
+    if (proposal.userProject?.projectDetails?.department) {
       meta.push({
         box: 'project-fields',
         field: 'fdpgx-medicalfields',
-        value: [proposal.registerInfo.projectCategory],
+        value: proposal.userProject?.projectDetails?.department.map((dep) =>
+          Object.keys(Department).find((key) => Department[key] === dep),
+        ),
       });
     }
 
