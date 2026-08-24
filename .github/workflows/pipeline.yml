@@ -44,7 +44,6 @@ jobs:
           path: '**/reports/coverage/cobertura-coverage.xml'
           minimum_coverage: 75
           fail_below_threshold: false
-          only_changed_files: true
 
   build_container_image:
     name: 'Build Container Image'
