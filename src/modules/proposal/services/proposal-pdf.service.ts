@@ -159,6 +159,6 @@ export class ProposalPdfService {
       const DifeDataPrivacyText = await this.adminConfigService.getDataPrivacyConfig(PlatformIdentifier.DIFE);
       dataPrivacyTextForUsage.push(DifeDataPrivacyText.messages.all);
     }
-    return dataPrivacyTextForUsage;
+    return dataPrivacyTextForUsage.filter(Boolean);
   }
 }
