@@ -203,6 +203,20 @@ describe('ProposalPdfService', () => {
     });
   });
 
+  describe('createPrivacyTextForUsage', () => {
+    it('should drop entries with no configured text instead of leaving holes', async () => {
+      // privacyTextMock has no text configured for the DIFE 'all' key used below,
+      // and toEqual/toHaveBeenCalledWith silently ignore undefined array items,
+      // so this test asserts on length to actually catch a regression.
+      const proposal = getProposalDocument();
+
+      const result = await proposalPdfService.createPrivacyTextForUsage(proposal as any);
+
+      expect(result).toHaveLength(1);
+      expect(result).toEqual([{ headline: 'headline', text: 'text' }]);
+    });
+  });
+
   describe('getFeasibilityJson', () => {
     it('should set status for LocationCheck and create the proposal Pdf', async () => {
       const feasibilityId = 'feasibilityId';
