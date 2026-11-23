@@ -1,3 +1,4 @@
+import { emailMatcher } from 'src/shared/utils/email.util';
 import { ForbiddenException } from '@nestjs/common';
 import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
@@ -113,8 +114,8 @@ describe('DizFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'diz@example.com' } } },
-            { 'projectResponsible.researcher.email': 'diz@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('diz@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('diz@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -131,8 +132,8 @@ describe('DizFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'diz@example.com' } } },
-            { 'projectResponsible.researcher.email': 'diz@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('diz@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('diz@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -149,8 +150,8 @@ describe('DizFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'diz@example.com' } } },
-            { 'projectResponsible.researcher.email': 'diz@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('diz@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('diz@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -183,8 +184,8 @@ describe('DizFilterUtil', () => {
             {
               $or: [
                 { ownerId: 'user-123' },
-                { participants: { $elemMatch: { 'researcher.email': 'diz@example.com' } } },
-                { 'projectResponsible.researcher.email': 'diz@example.com' },
+                { participants: { $elemMatch: { 'researcher.email': emailMatcher('diz@example.com') } } },
+                { 'projectResponsible.researcher.email': emailMatcher('diz@example.com') },
               ],
               type: ProposalType.RegisteringForm,
               'registerInfo.isInternalRegistration': { $ne: true },

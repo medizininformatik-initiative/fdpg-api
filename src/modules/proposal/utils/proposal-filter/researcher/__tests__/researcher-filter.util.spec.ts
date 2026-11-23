@@ -1,3 +1,4 @@
+import { emailMatcher } from 'src/shared/utils/email.util';
 import { ForbiddenException } from '@nestjs/common';
 import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
@@ -32,8 +33,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           status: ProposalStatus.Draft,
           type: { $eq: ProposalType.ApplicationForm },
@@ -48,8 +49,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           status: {
             $in: [
@@ -71,8 +72,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           status: {
             $in: [
@@ -94,8 +95,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           status: { $in: [ProposalStatus.Rejected, ProposalStatus.ReadyToArchive] },
           type: { $eq: ProposalType.ApplicationForm },
@@ -110,8 +111,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           status: ProposalStatus.Archived,
         });
@@ -128,8 +129,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -146,8 +147,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -164,8 +165,8 @@ describe('ResearcherFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'researcher@example.com' } } },
-            { 'projectResponsible.researcher.email': 'researcher@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('researcher@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('researcher@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -212,8 +213,8 @@ describe('ResearcherFilterUtil', () => {
 
         expect(result.$or).toEqual([
           { ownerId: 'user-456' },
-          { participants: { $elemMatch: { 'researcher.email': 'different@example.com' } } },
-          { 'projectResponsible.researcher.email': 'different@example.com' },
+          { participants: { $elemMatch: { 'researcher.email': emailMatcher('different@example.com') } } },
+          { 'projectResponsible.researcher.email': emailMatcher('different@example.com') },
         ]);
       });
     });
