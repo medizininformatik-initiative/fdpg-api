@@ -37,6 +37,7 @@ import { researcherAllowedQuery } from '../utils/proposal-filter/researcher/rese
 import { fdpgAllowedQuery } from '../utils/proposal-filter/fdpg/fdpg-filter.util';
 import { dizAllowedQuery } from '../utils/proposal-filter/diz/diz-filter.util';
 import { uacAllowedQuery } from '../utils/proposal-filter/uac/uac-filter.util';
+import { isSameEmail } from 'src/shared/utils/email.util';
 
 @Injectable()
 export class ProposalCrudService {
@@ -398,7 +399,7 @@ export class ProposalCrudService {
     const projectResponsible = plain.projectResponsible as { researcher?: { email?: string } } | undefined;
 
     plain.isParticipatingScientist =
-      (participants || []).filter((participant) => participant.researcher?.email === user.email).length > 0 ||
-      projectResponsible?.researcher?.email === user.email;
+      (participants || []).filter((participant) => isSameEmail(participant.researcher?.email, user.email)).length > 0 ||
+      isSameEmail(projectResponsible?.researcher?.email, user.email);
   }
 }

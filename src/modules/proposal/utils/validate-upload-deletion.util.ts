@@ -7,6 +7,7 @@ import { ProposalDocument } from '../schema/proposal.schema';
 import { Upload } from '../schema/sub-schema/upload.schema';
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
+import { isSameEmail } from 'src/shared/utils/email.util';
 
 const generalAccessTypes = [
   DirectUpload.EthicVote,
@@ -47,12 +48,11 @@ const checkForResearcher = (proposal: ProposalDocument, upload: Upload, user: IR
   const isEditor =
     (proposal.participants || []).some(
       (participant) =>
-        participant.researcher.email === user.email &&
+        isSameEmail(participant.researcher.email, user.email) &&
         [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
           participant.participantRole.role,
         ),
-    ) ||
-    (proposal.projectResponsible?.researcher?.email === user.email && !!proposal.projectResponsible?.researcher?.email);
+    ) || isSameEmail(proposal.projectResponsible?.researcher?.email, user.email);
   const hasEditRights = isOwner || isEditor;
   const isGeneralAccessType = generalAccessTypes.includes(upload.type);
   const isEditable = proposal.status === ProposalStatus.Draft || proposal.status === ProposalStatus.Rework;

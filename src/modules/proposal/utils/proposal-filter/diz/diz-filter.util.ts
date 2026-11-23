@@ -7,6 +7,7 @@ import { Proposal } from 'src/modules/proposal/schema/proposal.schema';
 import { Role } from 'src/shared/enums/role.enum';
 import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { getRegisterProposalsForUser } from '../proposal-filter.util';
+import { emailMatcher } from 'src/shared/utils/email.util';
 
 export const dizAllowedQuery = [
   PanelQuery.DizComingUp,
@@ -132,8 +133,8 @@ const getFilterForArchived = (user: IRequestUser): FilterQuery<Proposal> => {
       {
         $or: [
           { ownerId: user.userId },
-          { participants: { $elemMatch: { 'researcher.email': user.email } } },
-          { 'projectResponsible.researcher.email': user.email },
+          { participants: { $elemMatch: { 'researcher.email': emailMatcher(user.email) } } },
+          { 'projectResponsible.researcher.email': emailMatcher(user.email) },
         ],
         type: ProposalType.RegisteringForm,
         'registerInfo.isInternalRegistration': { $ne: true },

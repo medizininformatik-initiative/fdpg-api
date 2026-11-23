@@ -8,6 +8,7 @@ import { ProposalType } from '../enums/proposal-type.enum';
 import { ProposalDocument } from '../schema/proposal.schema';
 import { PlatformIdentifier } from 'src/modules/admin/enums/platform-identifier.enum';
 import { Location } from 'src/modules/location/schema/location.schema';
+import { isSameEmail } from 'src/shared/utils/email.util';
 
 export const validateProposalAccess = (
   proposal: ProposalDocument,
@@ -102,8 +103,8 @@ const checkAccessForRegisteringMember = (
 
 const isParticipatingScientist = (proposal: ProposalDocument, user: IRequestUser) => {
   return (
-    proposal.participants.filter((participant) => participant.researcher.email === user.email).length > 0 ||
-    proposal.projectResponsible?.researcher?.email === user.email
+    proposal.participants.filter((participant) => isSameEmail(participant.researcher.email, user.email)).length > 0 ||
+    isSameEmail(proposal.projectResponsible?.researcher?.email, user.email)
   );
 };
 
