@@ -7,6 +7,7 @@ import { IRequestUser } from 'src/shared/types/request-user.interface';
 import { FilterQuery } from 'mongoose';
 import { RESEARCHER_STATUS } from './researcher-filter.constants';
 import { getRegisterProposalsForUser } from '../proposal-filter.util';
+import { emailMatcher } from 'src/shared/utils/email.util';
 
 export const researcherAllowedQuery = [
   PanelQuery.Draft,
@@ -45,12 +46,12 @@ export const getFilterForResearcher = (panelQuery: PanelQuery, user: IRequestUse
         {
           participants: {
             $elemMatch: {
-              'researcher.email': user.email,
+              'researcher.email': emailMatcher(user.email),
             },
           },
         },
         {
-          'projectResponsible.researcher.email': user.email,
+          'projectResponsible.researcher.email': emailMatcher(user.email),
         },
       ],
       status: RESEARCHER_STATUS[panelQuery],

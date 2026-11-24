@@ -7,6 +7,7 @@ import { ProposalStatus } from '../enums/proposal-status.enum';
 import { ProposalType } from '../enums/proposal-type.enum';
 import { Proposal } from '../schema/proposal.schema';
 import { ParticipantRoleType } from '../enums/participant-role-type.enum';
+import { isSameEmail } from 'src/shared/utils/email.util';
 
 const isOwner = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher && user.userId === proposal.ownerId;
@@ -22,13 +23,12 @@ const isEditor = (user: IRequestUser, proposal: Proposal) =>
   user.singleKnownRole === Role.Researcher &&
   ((proposal.participants || []).some(
     (participant) =>
-      participant.researcher.email === user.email &&
+      isSameEmail(participant.researcher.email, user.email) &&
       [ParticipantRoleType.Researcher, ParticipantRoleType.ResponsibleScientist].includes(
         participant.participantRole.role,
       ),
   ) ||
-    (proposal.projectResponsible?.researcher?.email === user.email &&
-      !!proposal.projectResponsible?.researcher?.email));
+    isSameEmail(proposal.projectResponsible?.researcher?.email, user.email));
 
 const isResearcherOrFdpg = (user: IRequestUser, proposal: Proposal) =>
   isOwner(user, proposal) || isEditor(user, proposal) || isFdpg(user);

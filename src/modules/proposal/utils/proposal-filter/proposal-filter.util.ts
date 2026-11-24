@@ -11,6 +11,7 @@ import { getFilterForUac } from './uac/uac-filter.util';
 import { ProposalStatus } from '../../enums/proposal-status.enum';
 import { ProposalType } from '../../enums/proposal-type.enum';
 import { getFilterForDmo } from './dmo/dmo-filter.util';
+import { emailMatcher } from 'src/shared/utils/email.util';
 
 export const getRegisterProposalsForUser = (
   user: IRequestUser,
@@ -18,8 +19,8 @@ export const getRegisterProposalsForUser = (
 ): FilterQuery<Proposal> => ({
   $or: [
     { ownerId: user.userId },
-    { participants: { $elemMatch: { 'researcher.email': user.email } } },
-    { 'projectResponsible.researcher.email': user.email },
+    { participants: { $elemMatch: { 'researcher.email': emailMatcher(user.email) } } },
+    { 'projectResponsible.researcher.email': emailMatcher(user.email) },
   ],
   type: ProposalType.RegisteringForm,
   'registerInfo.isInternalRegistration': { $ne: true },
