@@ -73,7 +73,7 @@ describe('FeasibilityService', () => {
 
       const result = await service.getQueriesByUser(userId);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`api/v5/query/data/by-user/${userId}`);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`api/v6/query/data/by-user/${userId}`);
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
@@ -120,7 +120,7 @@ describe('FeasibilityService', () => {
 
       const result = await service.getQueryById(queryId);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`api/v5/query/data/${queryId}`);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`api/v6/query/data/${queryId}`);
       expect(result).toEqual(mockResponse.data);
     });
   });
@@ -137,7 +137,7 @@ describe('FeasibilityService', () => {
       const result = await service.getQueryContentById(queryId, 'JSON');
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        `api/v5/query/data/${queryId}/crtdl`,
+        `api/v6/query/data/${queryId}/crtdl`,
         expect.objectContaining({
           headers: { Accept: 'application/json' },
           responseType: 'json',
@@ -185,7 +185,7 @@ describe('FeasibilityService', () => {
       }
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith(
-        `api/v5/query/data/${queryId}/crtdl`,
+        `api/v6/query/data/${queryId}/crtdl`,
         expect.objectContaining({
           headers: { Accept: 'application/zip' },
           responseType: 'arraybuffer',
@@ -201,7 +201,7 @@ describe('FeasibilityService', () => {
       const mockQuery = { id: queryId, label: 'Test Query' };
       const mockPostResponse = {
         headers: {
-          location: 'api/v5/query/data/456',
+          location: 'api/v6/query/data/456',
         },
       };
 
@@ -210,9 +210,9 @@ describe('FeasibilityService', () => {
 
       const result = await service.getRedirectUrl(queryId, userId);
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`api/v5/query/data/${queryId}`);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`api/v6/query/data/${queryId}`);
       expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        `api/v5/query/data/by-user/${userId}`,
+        `api/v6/query/data/by-user/${userId}`,
         mockQuery,
         expect.objectContaining({
           params: expect.objectContaining({
@@ -290,7 +290,7 @@ describe('FeasibilityService', () => {
       const mockQuery = { id: queryId };
       const mockPostResponse = {
         headers: {
-          location: 'api/v5/query/data/456',
+          location: 'api/v6/query/data/456',
         },
       };
 

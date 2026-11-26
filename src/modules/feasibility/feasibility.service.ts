@@ -28,7 +28,7 @@ export class FeasibilityService {
 
     this.QUERY_LIEFTIME_MINUTES = this.configService.get('FEASIBILITY_QUERY_LIEFTIME_MINUTES', 5) * 1;
   }
-  private readonly basePath = 'api/v5/query/data';
+  private readonly basePath = 'api/v6/query/data';
   private apiClient: AxiosInstance;
 
   private QUERY_LIEFTIME_MINUTES: number;
