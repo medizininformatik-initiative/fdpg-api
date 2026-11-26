@@ -1,3 +1,4 @@
+import { emailMatcher } from 'src/shared/utils/email.util';
 import { ForbiddenException } from '@nestjs/common';
 import { PanelQuery } from 'src/modules/proposal/enums/panel-query.enum';
 import { ProposalStatus } from 'src/modules/proposal/enums/proposal-status.enum';
@@ -100,8 +101,8 @@ describe('UacFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'uac@example.com' } } },
-            { 'projectResponsible.researcher.email': 'uac@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('uac@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('uac@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -118,8 +119,8 @@ describe('UacFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'uac@example.com' } } },
-            { 'projectResponsible.researcher.email': 'uac@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('uac@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('uac@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
@@ -136,8 +137,8 @@ describe('UacFilterUtil', () => {
         expect(result).toEqual({
           $or: [
             { ownerId: 'user-123' },
-            { participants: { $elemMatch: { 'researcher.email': 'uac@example.com' } } },
-            { 'projectResponsible.researcher.email': 'uac@example.com' },
+            { participants: { $elemMatch: { 'researcher.email': emailMatcher('uac@example.com') } } },
+            { 'projectResponsible.researcher.email': emailMatcher('uac@example.com') },
           ],
           type: ProposalType.RegisteringForm,
           'registerInfo.isInternalRegistration': { $ne: true },
